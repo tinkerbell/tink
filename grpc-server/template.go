@@ -3,7 +3,7 @@ package grpcserver
 import (
 	"context"
 
-	"github.com/packethost/cacher/pg"
+	"github.com/packethost/rover/db"
 	"github.com/packethost/rover/metrics"
 	"github.com/packethost/rover/protos/template"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,7 +19,7 @@ func (s *server) Create(ctx context.Context, in *template.WorkflowTemplate) (*te
 	msg := ""
 	labels["op"] = "createtemplate"
 	msg = "creating a new Teamplate"
-	fn := func() error { return pg.CreateTemplate(ctx, s.db, in.Name, in.Data) }
+	fn := func() error { return db.CreateTemplate(ctx, s.db, in.Name, in.Data) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
@@ -31,7 +31,7 @@ func (s *server) Create(ctx context.Context, in *template.WorkflowTemplate) (*te
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
-		if pqErr := pg.Error(err); pqErr != nil {
+		if pqErr := db.Error(err); pqErr != nil {
 			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
 		}
 		l.Error(err)
