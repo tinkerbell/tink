@@ -1,0 +1,19 @@
+{
+  "CN": "rover",
+  "hosts": [
+    "rover.@FACILITY@.packet.net",
+    "rover.rover",
+    "rover",
+    "localhost",
+    "127.0.0.1"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "L": "@FACILITY@"
+    }
+  ]
+}
