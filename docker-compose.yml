@@ -1,0 +1,10 @@
+version: '2.1'
+services:    
+  cli:
+    build:
+      context: cmd/rover
+    environment:
+      ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
+      ROVER_CERT_URL: http://127.0.0.1:42112/cert
+    network_mode: host
+
