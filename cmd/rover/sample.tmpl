@@ -1,0 +1,30 @@
+version: '0.1'
+name: packet_osie_provision
+global_timeout: 600
+tasks:
+- name: “OS Installation”
+  worker: {{target:worker1}}
+  actions:
+  - name: "server_partitioning"
+    image: server_partition:latest
+    timeout: 60
+    command: do_partition create
+    on-timeout: do_partion recover -timeout
+    on-failure: do_partion recover -failure
+  - name: os_install
+    image: os_installer
+    timeout: 60
+    command: “os_install”
+    on-timeout: “os_install -timeout”
+    on-failure: “os_install -failure”
+    Params:
+         hostname: {{hostname}}
+- name: "Updated Cacher Entries"
+  worker: {{.target.worker2}}
+  actions:
+  - name: "Update cacher entries"
+    image: cacher_client
+    timeout: {{.cacher_timeout}}
+    command: “cacher_client -update”
+    on-timeout: “cacher_client update-failed”
+    on-failure: “cacher_client update-failed”
