@@ -1,0 +1,19 @@
+syntax = "proto3";
+package template;
+
+import "google/protobuf/timestamp.proto";
+
+service Template {
+	rpc Create(WorkflowTemplate) returns (Empty);
+}
+
+message Empty {
+}
+
+message WorkflowTemplate {
+	string name = 1;
+	bytes data = 2;
+	google.protobuf.Timestamp insertedAt = 3;
+	google.protobuf.Timestamp deletedAt = 4;
+}
+
