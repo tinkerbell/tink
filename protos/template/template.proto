@@ -4,7 +4,7 @@ package template;
 import "google/protobuf/timestamp.proto";
 
 service Template {
-	rpc Create(WorkflowTemplate) returns (Empty);
+	rpc Create(WorkflowTemplate) returns (CreateResponse);
 }
 
 message Empty {
@@ -17,3 +17,6 @@ message WorkflowTemplate {
 	google.protobuf.Timestamp deletedAt = 4;
 }
 
+message CreateResponse {
+	string id = 1;
+}
