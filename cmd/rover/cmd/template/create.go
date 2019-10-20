@@ -49,9 +49,8 @@ func createTemplate(c *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	tmpClient := client.ConnectGRPC()
 	req := template.WorkflowTemplate{Name: templateName, Data: data}
-	id, err := tmpClient.Create(context.Background(), &req)
+	id, err := client.TemplateClient.Create(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
 	}
