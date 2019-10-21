@@ -3,7 +3,7 @@ name: packet_osie_provision
 global_timeout: 600
 tasks:
 - name: “OS Installation”
-  worker: {{target:worker1}}
+  worker: "{{index .Targets "machine1"}}"
   actions:
   - name: "server_partitioning"
     image: server_partition:latest
@@ -18,13 +18,13 @@ tasks:
     on-timeout: “os_install -timeout”
     on-failure: “os_install -failure”
     Params:
-         hostname: {{hostname}}
-- name: "Updated Cacher Entries"
-  worker: {{.target.worker2}}
+         hostname: "localhost"
+- name: "Updated DB Entries"
+  worker: "{{index .Targets "machine2"}}"
   actions:
-  - name: "Update cacher entries"
-    image: cacher_client
-    timeout: {{.cacher_timeout}}
-    command: “cacher_client -update”
-    on-timeout: “cacher_client update-failed”
-    on-failure: “cacher_client update-failed”
+  - name: "Update DB entries"
+    image: rover_client
+    timeout: 50
+    command: “rover_client -update”
+    on-timeout: “rover_client update-timeout”
+    on-failure: “rover_client update-failed”
