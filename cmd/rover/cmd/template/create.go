@@ -37,7 +37,7 @@ func addFlags() {
 	createCmd.MarkPersistentFlagRequired(fName)
 }
 
-func createTemplate(c *cobra.Command, args []string) {
+func readTemplateData() []byte {
 	f, err := os.Open(filePath)
 	if err != nil {
 		log.Fatal(err)
@@ -48,8 +48,11 @@ func createTemplate(c *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	return data
+}
 
-	req := template.WorkflowTemplate{Name: templateName, Data: data}
+func createTemplate(c *cobra.Command, args []string) {
+	req := template.WorkflowTemplate{Name: templateName, Data: readTemplateData()}
 	id, err := client.TemplateClient.Create(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)

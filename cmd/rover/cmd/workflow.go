@@ -11,7 +11,7 @@ import (
 var workflowCmd = &cobra.Command{
 	Use:     "workflow",
 	Short:   "rover workflow client",
-	Example: "cacherc workflow [command]",
+	Example: "rover workflow [command]",
 	Args: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("%v requires arguments", c.UseLine())
