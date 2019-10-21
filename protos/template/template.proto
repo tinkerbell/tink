@@ -12,10 +12,11 @@ message Empty {
 }
 
 message WorkflowTemplate {
-	string name = 1;
-	bytes data = 2;
-	google.protobuf.Timestamp insertedAt = 3;
-	google.protobuf.Timestamp deletedAt = 4;
+	string id = 1;
+	string name = 2;
+	bytes data = 3;
+	google.protobuf.Timestamp insertedAt = 4;
+	google.protobuf.Timestamp deletedAt = 5;
 }
 
 message CreateResponse {
