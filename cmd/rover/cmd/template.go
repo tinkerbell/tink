@@ -11,7 +11,7 @@ import (
 var templateCmd = &cobra.Command{
 	Use:     "template",
 	Short:   "rover template client",
-	Example: "cacherc template [command]",
+	Example: "rover template [command]",
 	Args: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("%v requires arguments", c.UseLine())

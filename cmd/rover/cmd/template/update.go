@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/packethost/cacher/protos/template"
 	"github.com/packethost/rover/client"
-	"github.com/packethost/rover/protos/template"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
@@ -16,6 +16,14 @@ var updateCmd = &cobra.Command{
 	Use:     "update [id] [flags]",
 	Short:   "update a template",
 	Example: "rover template update [id] [flags]",
+	PreRunE: func(c *cobra.Command, args []string) error {
+		name, _ := c.Flags().GetString(fName)
+		path, _ := c.Flags().GetString(fPath)
+		if name == "" && path == "" {
+			return fmt.Errorf("%v requires at least one flag", c.UseLine())
+		}
+		return nil
+	},
 	Args: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("%v requires argument", c.UseLine())
@@ -27,12 +35,6 @@ var updateCmd = &cobra.Command{
 		}
 		return nil
 	},
-	PreRunE: func(c *cobra.Command, args []string) error {
-		if !c.HasLocalFlags() {
-			return fmt.Errorf("%v requires at least one flag", c.UseLine())
-		}
-		return nil
-	},
 	Run: func(c *cobra.Command, args []string) {
 		for _, arg := range args {
 			updateTemplate(arg)
@@ -41,7 +43,7 @@ var updateCmd = &cobra.Command{
 }
 
 func updateTemplate(id string) {
-	req := template.UpdateRequest{Id: id}
+	req := template.WorkflowTemplate{Id: id}
 	if filePath == "" && templateName != "" {
 		req.Name = templateName
 	} else if filePath != "" && templateName == "" {
@@ -51,11 +53,11 @@ func updateTemplate(id string) {
 		req.Data = readTemplateData()
 	}
 
-	res, err := client.TemplateClient.Update(context.Background(), &req)
+	_, err := client.TemplateClient.Update(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Fatalln(res)
+	log.Fatalln(id)
 
 }
 
