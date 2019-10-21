@@ -1,0 +1,31 @@
+syntax = "proto3";
+package template;
+
+import "google/protobuf/timestamp.proto";
+
+service Template {
+	rpc Create(WorkflowTemplate) returns (CreateResponse);
+	rpc Get(GetRequest) returns (WorkflowTemplate);
+	rpc Delete(GetRequest) returns (Empty);
+	rpc List(Empty) returns (stream WorkflowTemplate);
+	rpc Update(WorkflowTemplate) returns (Empty);
+}
+
+message Empty {
+}
+
+message WorkflowTemplate {
+	string id = 1;
+	string name = 2;
+	bytes data = 3;
+	google.protobuf.Timestamp insertedAt = 4;
+	google.protobuf.Timestamp deletedAt = 5;
+}
+
+message CreateResponse {
+	string id = 1;
+}
+
+message GetRequest {
+	string id = 1;
+}
