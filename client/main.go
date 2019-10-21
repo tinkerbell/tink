@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/packethost/rover/protos/targets"
 	"github.com/packethost/rover/protos/template"
 	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
@@ -17,6 +18,7 @@ import (
 // gRPC clients
 var (
 	TemplateClient template.TemplateClient
+	TargetClient   targets.TargetClient
 	WorkflowClient workflow.WorkflowClient
 )
 
@@ -61,4 +63,5 @@ func init() {
 	}
 	TemplateClient = template.NewTemplateClient(conn)
 	WorkflowClient = workflow.NewWorkflowClient(conn)
+	TargetClient = targets.NewTargetClient(conn)
 }
