@@ -18,7 +18,7 @@ var (
 	templateName string
 )
 
-// createCmd represents the create sub command for template command
+// createCmd represents the create subcommand for template command
 var createCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "create a workflow template ",

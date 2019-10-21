@@ -5,6 +5,7 @@ import "google/protobuf/timestamp.proto";
 
 service Template {
 	rpc Create(WorkflowTemplate) returns (CreateResponse);
+	rpc Get(GetRequest) returns (WorkflowTemplate);
 }
 
 message Empty {
@@ -18,5 +19,9 @@ message WorkflowTemplate {
 }
 
 message CreateResponse {
+	string id = 1;
+}
+
+message GetRequest {
 	string id = 1;
 }
