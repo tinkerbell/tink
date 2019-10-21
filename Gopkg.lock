@@ -2,12 +2,44 @@
 
 
 [[projects]]
+  digest = "1:320e7ead93de9fd2b0e59b50fd92a4d50c1f8ab455d96bc2eb083267453a9709"
+  name = "github.com/asaskevich/govalidator"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
+  version = "v9"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   pruneopts = "UT"
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
+
+[[projects]]
+  digest = "1:3bca1e4623bc7e1f9849a14fe730c093953727991f0592be3dad0168cb67758e"
+  name = "github.com/go-openapi/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0b2a0a1f89aa2eec2d13e03cd80ab0fdaf01f8ce"
+  version = "v0.19.2"
+
+[[projects]]
+  digest = "1:787b399bfeddd801aca6144bd9928f4fe1d40eadcb09c59fcbd421cc528ea11c"
+  name = "github.com/go-openapi/strfmt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6faa644e1cdafc07f7b38eb06c1af5f92128f289"
+  version = "v0.19.3"
+
+[[projects]]
+  digest = "1:586ea76dbd0374d6fb649a91d70d652b7fe0ccffb8910a77468e7702e7901f3d"
+  name = "github.com/go-stack/stack"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2fee6af1a9795aafbe0253a0cfbdf668e1fb8a9a"
+  version = "v1.8.0"
 
 [[projects]]
   digest = "1:f5ce1529abc1204444ec73779f44f94e2fa8fcdb7aca3c355b0c95947e4005c6"
@@ -51,6 +83,17 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:f895aa2df9d02f28bbee37f1f069be9841b20ad8a20fc08f9bccc60619864051"
+  name = "github.com/jedib0t/go-pretty"
+  packages = [
+    "table",
+    "text",
+  ]
+  pruneopts = "UT"
+  revision = "1ec860a8cda361fb569dcefd79f058d17845f21b"
+  version = "v4.3.0"
+
+[[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
   name = "github.com/magiconair/properties"
   packages = ["."]
@@ -59,12 +102,32 @@
   version = "v1.8.1"
 
 [[projects]]
+  digest = "1:0356f3312c9bd1cbeda81505b7fd437501d8e778ab66998ef69f00d7f9b3a0d7"
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3ee7d812e62a0804a7d0a324e0249ca2db3476d3"
+  version = "v0.0.4"
+
+[[projects]]
   digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   pruneopts = "UT"
   revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
   version = "v1.1.2"
+
+[[projects]]
+  branch = "rover-api"
+  digest = "1:4684edebc289ca4e0a7f313b421281708d363bd2f1919e022d69620b86c55073"
+  name = "github.com/packethost/cacher"
+  packages = [
+    "protos/targets",
+    "protos/template",
+    "protos/workflow",
+  ]
+  pruneopts = "UT"
+  revision = ""
 
 [[projects]]
   digest = "1:bbd3997f0121200f72b64d7a3826eb8a0b910d6a4c19894c9fe2852b9e5eaf3b"
@@ -142,6 +205,21 @@
   version = "v1.4.0"
 
 [[projects]]
+  digest = "1:8458b1a19a304c09d8f109a9463a419f703e3d1a81615afcaf3593dcce6749b9"
+  name = "go.mongodb.org/mongo-driver"
+  packages = [
+    "bson",
+    "bson/bsoncodec",
+    "bson/bsonrw",
+    "bson/bsontype",
+    "bson/primitive",
+    "x/bsonx/bsoncore",
+  ]
+  pruneopts = "UT"
+  revision = "1261197350f3ad46a907489aee7ecc49b39efb82"
+  version = "v1.1.2"
+
+[[projects]]
   branch = "master"
   digest = "1:c21f1f304711b9da16a0aabaa6a2dd697576e9ef5ac0bbd806fed6998cb6c6d6"
   name = "golang.org/x/net"
@@ -158,9 +236,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1b4659321ce4f2c003bd052a71087f420a949690fe6b08772709099035c07eaa"
+  digest = "1:44480e76e73bb8d3104753f3618943ff331f2225c867c69af330e3e7f89b2e35"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   pruneopts = "UT"
   revision = "727590c5006e77ca5247972f47e877f4929fc985"
 
@@ -251,16 +332,16 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/golang/protobuf/proto",
-    "github.com/golang/protobuf/ptypes/timestamp",
+    "github.com/jedib0t/go-pretty/table",
+    "github.com/packethost/cacher/protos/targets",
+    "github.com/packethost/cacher/protos/template",
+    "github.com/packethost/cacher/protos/workflow",
     "github.com/pkg/errors",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "google.golang.org/grpc",
-    "google.golang.org/grpc/codes",
     "google.golang.org/grpc/credentials",
-    "google.golang.org/grpc/status",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

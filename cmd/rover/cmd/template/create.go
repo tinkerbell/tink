@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/packethost/rover/client"
-	"github.com/packethost/rover/protos/template"
+	"github.com/packethost/cacher/protos/template"
 	"github.com/spf13/cobra"
 )
 

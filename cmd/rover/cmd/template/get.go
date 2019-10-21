@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/packethost/rover/client"
-	"github.com/packethost/rover/protos/template"
+	"github.com/packethost/cacher/protos/template"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
