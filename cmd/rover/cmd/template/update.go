@@ -7,10 +7,6 @@ import (
 
 	"github.com/packethost/cacher/protos/template"
 	"github.com/packethost/rover/client"
-<<<<<<< HEAD
-=======
-	"github.com/packethost/cacher/protos/template"
->>>>>>> c3be060... moved protos to cacher
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
