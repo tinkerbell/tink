@@ -8,6 +8,7 @@ service Template {
 	rpc Get(GetRequest) returns (WorkflowTemplate);
 	rpc Delete(GetRequest) returns (Empty);
 	rpc List(Empty) returns (stream WorkflowTemplate);
+	rpc Update(UpdateRequest) returns (CreateResponse);
 }
 
 message Empty {
@@ -27,4 +28,10 @@ message CreateResponse {
 
 message GetRequest {
 	string id = 1;
+}
+
+message UpdateRequest {
+	string id = 1;
+	string name = 2;
+	bytes data = 3;
 }

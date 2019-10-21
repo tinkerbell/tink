@@ -1,0 +1,68 @@
+package template
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/packethost/rover/client"
+	"github.com/packethost/rover/protos/template"
+	uuid "github.com/satori/go.uuid"
+	"github.com/spf13/cobra"
+)
+
+// updateCmd represents the get subcommand for template command
+var updateCmd = &cobra.Command{
+	Use:     "update [id] [flags]",
+	Short:   "update a template",
+	Example: "rover template update [id] [flags]",
+	Args: func(c *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return fmt.Errorf("%v requires argument", c.UseLine())
+		}
+		for _, arg := range args {
+			if _, err := uuid.FromString(arg); err != nil {
+				return fmt.Errorf("invalid uuid: %s", arg)
+			}
+		}
+		return nil
+	},
+	PreRunE: func(c *cobra.Command, args []string) error {
+		if !c.HasLocalFlags() {
+			return fmt.Errorf("%v requires at least one flag", c.UseLine())
+		}
+		return nil
+	},
+	Run: func(c *cobra.Command, args []string) {
+		for _, arg := range args {
+			updateTemplate(arg)
+		}
+	},
+}
+
+func updateTemplate(id string) {
+	req := template.UpdateRequest{Id: id}
+	if filePath == "" && templateName != "" {
+		req.Name = templateName
+	} else if filePath != "" && templateName == "" {
+		req.Data = readTemplateData()
+	} else {
+		req.Name = templateName
+		req.Data = readTemplateData()
+	}
+
+	res, err := client.TemplateClient.Update(context.Background(), &req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Fatalln(res)
+
+}
+
+func init() {
+	flags := updateCmd.PersistentFlags()
+	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
+	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric)")
+
+	SubCommands = append(SubCommands, updateCmd)
+}
