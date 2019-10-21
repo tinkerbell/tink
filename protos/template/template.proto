@@ -7,6 +7,7 @@ service Template {
 	rpc Create(WorkflowTemplate) returns (CreateResponse);
 	rpc Get(GetRequest) returns (WorkflowTemplate);
 	rpc Delete(GetRequest) returns (Empty);
+	rpc List(Empty) returns (stream WorkflowTemplate);
 }
 
 message Empty {
