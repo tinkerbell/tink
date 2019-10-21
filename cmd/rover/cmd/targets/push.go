@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/packethost/rover/client"
-	"github.com/packethost/rover/protos/targets"
+	"github.com/packethost/cacher/protos/targets"
 	"github.com/spf13/cobra"
 )
 

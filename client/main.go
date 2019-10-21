@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/packethost/rover/protos/targets"
-	"github.com/packethost/rover/protos/template"
-	"github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/cacher/protos/targets"
+	"github.com/packethost/cacher/protos/template"
+	"github.com/packethost/cacher/protos/workflow"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
