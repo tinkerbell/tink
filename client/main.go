@@ -7,9 +7,15 @@ import (
 	"net/http"
 	"os"
 
+<<<<<<< HEAD
 	"github.com/packethost/cacher/protos/targets"
 	"github.com/packethost/cacher/protos/template"
 	"github.com/packethost/cacher/protos/workflow"
+=======
+	"github.com/packethost/rover/protos/targets"
+	"github.com/packethost/rover/protos/template"
+	"github.com/packethost/rover/protos/workflow"
+>>>>>>> 77bd68e... Added targets CLI
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
