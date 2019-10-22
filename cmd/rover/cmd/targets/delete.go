@@ -11,9 +11,9 @@ import (
 
 // idCmd represents the id command
 var deleteCmd = &cobra.Command{
-	Use:     "deleteByID",
+	Use:     "delete",
 	Short:   "Delete targets by id",
-	Example: "rover targets deleteByID 224ee6ab-ad62-4070-a900-ed816444cec0 cb76ae54-93e9-401c-a5b2-d455bb3800b1",
+	Example: "rover target delete 224ee6ab-ad62-4070-a900-ed816444cec0 cb76ae54-93e9-401c-a5b2-d455bb3800b1",
 	Args: func(_ *cobra.Command, args []string) error {
 		return verifyUUIDs(args)
 	},

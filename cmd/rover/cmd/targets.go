@@ -9,9 +9,9 @@ import (
 
 // templateCmd represents the template sub-command
 var targetCmd = &cobra.Command{
-	Use:     "targets",
-	Short:   "rover targets client",
-	Example: "rover targets [command]",
+	Use:     "target",
+	Short:   "rover target client",
+	Example: "rover target [command]",
 	Args: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("%v requires arguments", c.UseLine())

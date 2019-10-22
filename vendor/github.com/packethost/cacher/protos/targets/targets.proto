@@ -4,8 +4,9 @@ package targets;
 service Target {
 	rpc CreateTargets(PushRequest) returns (UUID);
 	rpc TargetByID(GetRequest) returns (Targets);
-    rpc UpdateTargetByID(UpdateRequest) returns (Empty);
+        rpc UpdateTargetByID(UpdateRequest) returns (Empty);
 	rpc DeleteTargetByID(GetRequest) returns (Empty);
+	rpc ListTargets(Empty) returns (stream TargetList);
 }
 
 message PushRequest {
@@ -30,4 +31,9 @@ message Empty {
 
 message Targets {
 	string JSON = 1;
+}
+
+message TargetList {
+	string ID = 1;
+	string data = 2;
 }

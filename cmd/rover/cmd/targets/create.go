@@ -16,9 +16,9 @@ import (
 
 // pushCmd represents the push command
 var createTargets = &cobra.Command{
-	Use:     "push",
-	Short:   "Push targets to cacher",
-	Example: `rover targets push '{targets": {"machine1": "mac_addr=98:67:f5:86","machine2": "ip_addr=192.168.1.5"}}'`,
+	Use:     "create",
+	Short:   "create targets to cacher",
+	Example: `rover target create '{targets": {"machine1": {"mac_addr"="98:67:f5:86:0","machine2": {"ip_addr":"192.168.1.5"}}}'`,
 	Args: func(_ *cobra.Command, args []string) error {
 		s := struct {
 			targets map[string]string
