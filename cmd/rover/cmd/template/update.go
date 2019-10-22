@@ -47,6 +47,7 @@ func updateTemplate(id string) {
 	if filePath == "" && templateName != "" {
 		req.Name = templateName
 	} else if filePath != "" && templateName == "" {
+		validateTemplate()
 		req.Data = readTemplateData()
 	} else {
 		req.Name = templateName
@@ -57,8 +58,7 @@ func updateTemplate(id string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Fatalln(id)
-
+	fmt.Println("Updated Template: ", id)
 }
 
 func init() {

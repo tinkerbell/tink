@@ -119,7 +119,7 @@
 
 [[projects]]
   branch = "rover-api"
-  digest = "1:4684edebc289ca4e0a7f313b421281708d363bd2f1919e022d69620b86c55073"
+  digest = "1:81a43e613579024f97861cb773a2163d259d75e213fd05a53a0080ade4f0ffd6"
   name = "github.com/packethost/cacher"
   packages = [
     "protos/targets",
@@ -127,7 +127,7 @@
     "protos/workflow",
   ]
   pruneopts = "UT"
-  revision = ""
+  revision = "f94b7cdcb3110aaa0f4ea95ed2af932f7ef0c166"
 
 [[projects]]
   digest = "1:bbd3997f0121200f72b64d7a3826eb8a0b910d6a4c19894c9fe2852b9e5eaf3b"
