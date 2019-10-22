@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/jedib0t/go-pretty/table"
-	"github.com/packethost/rover/client"
 	"github.com/packethost/cacher/protos/template"
+	"github.com/packethost/rover/client"
 	"github.com/spf13/cobra"
 )
 
 // table headers
 var (
-	id         = "Template ID"
-	name       = "Template Name"
-	insertedAt = "Inserted At"
-	deletedAt  = "Deleted At"
+	id        = "Template ID"
+	name      = "Template Name"
+	createdAt = "Created At"
+	updatedAt = "Updated At"
 )
 
 // listCmd represents the list subcommand for template command
@@ -36,7 +36,7 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		t := table.NewWriter()
 		t.SetOutputMirror(os.Stdout)
-		t.AppendHeader(table.Row{id, name, insertedAt, deletedAt})
+		t.AppendHeader(table.Row{id, name, createdAt, updatedAt})
 		listTemplates(cmd, t)
 		t.Render()
 	},
@@ -51,17 +51,11 @@ func listTemplates(cmd *cobra.Command, t table.Writer) {
 	var tmp *template.WorkflowTemplate
 	err = nil
 	for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
-		in := *tmp.InsertedAt
-		del := *tmp.DeletedAt
-		if del.Seconds > 0 {
-			t.AppendRows([]table.Row{
-				{tmp.Id, tmp.Name, time.Unix(in.Seconds, 0), time.Unix(del.Seconds, 0)},
-			})
-		} else {
-			t.AppendRows([]table.Row{
-				{tmp.Id, tmp.Name, time.Unix(in.Seconds, 0), ""},
-			})
-		}
+		cr := *tmp.CreatedAt
+		up := *tmp.UpdatedAt
+		t.AppendRows([]table.Row{
+			{tmp.Id, tmp.Name, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
+		})
 	}
 
 	if err != nil && err != io.EOF {

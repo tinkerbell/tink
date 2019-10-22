@@ -2,12 +2,14 @@ package template
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	tt "text/template"
 
-	"github.com/packethost/rover/client"
 	"github.com/packethost/cacher/protos/template"
+	"github.com/packethost/rover/client"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +26,7 @@ var createCmd = &cobra.Command{
 	Short:   "create a workflow template ",
 	Example: "rover template create [flags]",
 	Run: func(c *cobra.Command, args []string) {
+		validateTemplate()
 		createTemplate(c, args)
 	},
 }
@@ -35,6 +38,13 @@ func addFlags() {
 
 	createCmd.MarkPersistentFlagRequired(fPath)
 	createCmd.MarkPersistentFlagRequired(fName)
+}
+
+func validateTemplate() {
+	_, err := tt.ParseFiles(filePath)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func readTemplateData() []byte {
@@ -53,11 +63,11 @@ func readTemplateData() []byte {
 
 func createTemplate(c *cobra.Command, args []string) {
 	req := template.WorkflowTemplate{Name: templateName, Data: readTemplateData()}
-	id, err := client.TemplateClient.Create(context.Background(), &req)
+	res, err := client.TemplateClient.Create(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Fatalln(id)
+	fmt.Println("Created Template: ", res.Id)
 }
 
 func init() {
