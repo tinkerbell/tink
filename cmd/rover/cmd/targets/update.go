@@ -2,10 +2,8 @@ package targets
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/packethost/cacher/protos/targets"
 	"github.com/packethost/rover/client"
@@ -42,11 +40,10 @@ func addFlags() {
 }
 
 func validateData(c *cobra.Command, args []string) error {
-	s := struct {
-		targets map[string]string
-	}{}
-	if json.NewDecoder(strings.NewReader(jsonData)).Decode(&s) != nil {
-		return fmt.Errorf("invalid json: %s", jsonData)
+	err := isValidData([]byte(jsonData))
+	if err != nil {
+		fmt.Println(err)
+		return err
 	}
 	return nil
 }
