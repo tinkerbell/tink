@@ -10,9 +10,9 @@ import (
 var (
 	CacheDuration prometheus.ObserverVec
 	CacheErrors   *prometheus.CounterVec
-	cacheHits     *prometheus.CounterVec
+	CacheHits     *prometheus.CounterVec
 	CacheInFlight *prometheus.GaugeVec
-	cacheStalls   *prometheus.CounterVec
+	CacheStalls   *prometheus.CounterVec
 	CacheTotals   *prometheus.CounterVec
 
 	ingestCount    *prometheus.CounterVec
@@ -38,7 +38,7 @@ func SetupMetrics(facility string, logger log.Logger) {
 		Name: "cache_ops_errors_total",
 		Help: "Number of cache errors.",
 	}, []string{"service", "facility", "method", "op"}).MustCurryWith(curryLabels)
-	cacheHits = promauto.NewCounterVec(prometheus.CounterOpts{
+	CacheHits = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "cache_hit_total",
 		Help: "Number of cache hits.",
 	}, []string{"service", "facility", "method", "op"}).MustCurryWith(curryLabels)
@@ -46,7 +46,7 @@ func SetupMetrics(facility string, logger log.Logger) {
 		Name: "cache_ops_current_total",
 		Help: "Number of in flight cache requests.",
 	}, []string{"service", "facility", "method", "op"}).MustCurryWith(curryLabels)
-	cacheStalls = promauto.NewCounterVec(prometheus.CounterOpts{
+	CacheStalls = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "cache_stall_total",
 		Help: "Number of cache stalled due to DB.",
 	}, []string{"service", "facility", "method", "op"}).MustCurryWith(curryLabels)
@@ -64,14 +64,14 @@ func SetupMetrics(facility string, logger log.Logger) {
 	}
 	initCounterLabels(CacheErrors, labels)
 	initGaugeLabels(CacheInFlight, labels)
-	initCounterLabels(cacheStalls, labels)
+	initCounterLabels(CacheStalls, labels)
 	initCounterLabels(CacheTotals, labels)
 	labels = []prometheus.Labels{
 		{"method": "Push", "op": "insert"},
 		{"method": "Push", "op": "delete"},
 	}
 	initObserverLabels(CacheDuration, labels)
-	initCounterLabels(cacheHits, labels)
+	initCounterLabels(CacheHits, labels)
 
 	labels = []prometheus.Labels{
 		{"method": "ByMAC", "op": "get"},
@@ -84,10 +84,10 @@ func SetupMetrics(facility string, logger log.Logger) {
 	}
 	initCounterLabels(CacheErrors, labels)
 	initGaugeLabels(CacheInFlight, labels)
-	initCounterLabels(cacheStalls, labels)
+	initCounterLabels(CacheStalls, labels)
 	initCounterLabels(CacheTotals, labels)
 	initObserverLabels(CacheDuration, labels)
-	initCounterLabels(cacheHits, labels)
+	initCounterLabels(CacheHits, labels)
 
 	ingestCount = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "ingest_op_count_total",

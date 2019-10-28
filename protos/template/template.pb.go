@@ -57,10 +57,12 @@ func (m *Empty) XXX_DiscardUnknown() {
 var xxx_messageInfo_Empty proto.InternalMessageInfo
 
 type WorkflowTemplate struct {
-	Name                 string               `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Data                 []byte               `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	InsertedAt           *timestamp.Timestamp `protobuf:"bytes,3,opt,name=insertedAt,proto3" json:"insertedAt,omitempty"`
-	DeletedAt            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=deletedAt,proto3" json:"deletedAt,omitempty"`
+	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string               `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Data                 []byte               `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	CreatedAt            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	UpdatedAt            *timestamp.Timestamp `protobuf:"bytes,5,opt,name=updatedAt,proto3" json:"updatedAt,omitempty"`
+	DeletedAt            *timestamp.Timestamp `protobuf:"bytes,6,opt,name=deletedAt,proto3" json:"deletedAt,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -91,6 +93,13 @@ func (m *WorkflowTemplate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_WorkflowTemplate proto.InternalMessageInfo
 
+func (m *WorkflowTemplate) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 func (m *WorkflowTemplate) GetName() string {
 	if m != nil {
 		return m.Name
@@ -105,9 +114,16 @@ func (m *WorkflowTemplate) GetData() []byte {
 	return nil
 }
 
-func (m *WorkflowTemplate) GetInsertedAt() *timestamp.Timestamp {
+func (m *WorkflowTemplate) GetCreatedAt() *timestamp.Timestamp {
 	if m != nil {
-		return m.InsertedAt
+		return m.CreatedAt
+	}
+	return nil
+}
+
+func (m *WorkflowTemplate) GetUpdatedAt() *timestamp.Timestamp {
+	if m != nil {
+		return m.UpdatedAt
 	}
 	return nil
 }
@@ -119,29 +135,115 @@ func (m *WorkflowTemplate) GetDeletedAt() *timestamp.Timestamp {
 	return nil
 }
 
+type CreateResponse struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreateResponse) Reset()         { *m = CreateResponse{} }
+func (m *CreateResponse) String() string { return proto.CompactTextString(m) }
+func (*CreateResponse) ProtoMessage()    {}
+func (*CreateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b1b68e1b5f001c74, []int{2}
+}
+
+func (m *CreateResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreateResponse.Unmarshal(m, b)
+}
+func (m *CreateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreateResponse.Marshal(b, m, deterministic)
+}
+func (m *CreateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateResponse.Merge(m, src)
+}
+func (m *CreateResponse) XXX_Size() int {
+	return xxx_messageInfo_CreateResponse.Size(m)
+}
+func (m *CreateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreateResponse proto.InternalMessageInfo
+
+func (m *CreateResponse) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type GetRequest struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetRequest) Reset()         { *m = GetRequest{} }
+func (m *GetRequest) String() string { return proto.CompactTextString(m) }
+func (*GetRequest) ProtoMessage()    {}
+func (*GetRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b1b68e1b5f001c74, []int{3}
+}
+
+func (m *GetRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetRequest.Unmarshal(m, b)
+}
+func (m *GetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetRequest.Marshal(b, m, deterministic)
+}
+func (m *GetRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetRequest.Merge(m, src)
+}
+func (m *GetRequest) XXX_Size() int {
+	return xxx_messageInfo_GetRequest.Size(m)
+}
+func (m *GetRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetRequest proto.InternalMessageInfo
+
+func (m *GetRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*Empty)(nil), "template.Empty")
 	proto.RegisterType((*WorkflowTemplate)(nil), "template.WorkflowTemplate")
+	proto.RegisterType((*CreateResponse)(nil), "template.CreateResponse")
+	proto.RegisterType((*GetRequest)(nil), "template.GetRequest")
 }
 
 func init() { proto.RegisterFile("template.proto", fileDescriptor_b1b68e1b5f001c74) }
 
 var fileDescriptor_b1b68e1b5f001c74 = []byte{
-	// 209 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2b, 0x49, 0xcd, 0x2d,
-	0xc8, 0x49, 0x2c, 0x49, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x80, 0xf1, 0xa5, 0xe4,
-	0xd3, 0xf3, 0xf3, 0xd3, 0x73, 0x52, 0xf5, 0xc1, 0xe2, 0x49, 0xa5, 0x69, 0xfa, 0x25, 0x99, 0xb9,
-	0xa9, 0xc5, 0x25, 0x89, 0xb9, 0x05, 0x10, 0xa5, 0x4a, 0xec, 0x5c, 0xac, 0xae, 0xb9, 0x05, 0x25,
-	0x95, 0x4a, 0x1b, 0x18, 0xb9, 0x04, 0xc2, 0xf3, 0x8b, 0xb2, 0xd3, 0x72, 0xf2, 0xcb, 0x43, 0xa0,
-	0xda, 0x85, 0x84, 0xb8, 0x58, 0xf2, 0x12, 0x73, 0x53, 0x25, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83,
-	0xc0, 0x6c, 0x90, 0x58, 0x4a, 0x62, 0x49, 0xa2, 0x04, 0x93, 0x02, 0xa3, 0x06, 0x4f, 0x10, 0x98,
-	0x2d, 0x64, 0xc5, 0xc5, 0x95, 0x99, 0x57, 0x9c, 0x5a, 0x54, 0x92, 0x9a, 0xe2, 0x58, 0x22, 0xc1,
-	0xac, 0xc0, 0xa8, 0xc1, 0x6d, 0x24, 0xa5, 0x07, 0xb1, 0x5b, 0x0f, 0x66, 0xb7, 0x5e, 0x08, 0xcc,
-	0xee, 0x20, 0x24, 0xd5, 0x42, 0x16, 0x5c, 0x9c, 0x29, 0xa9, 0x39, 0xa9, 0x10, 0xad, 0x2c, 0x04,
-	0xb5, 0x22, 0x14, 0x1b, 0x39, 0x72, 0x71, 0xc0, 0x5d, 0x6a, 0xca, 0xc5, 0xe6, 0x5c, 0x94, 0x0a,
-	0x62, 0x49, 0xe9, 0xc1, 0x43, 0x03, 0xdd, 0x3f, 0x52, 0xfc, 0x08, 0x39, 0xb0, 0xaf, 0x93, 0xd8,
-	0xc0, 0x36, 0x18, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x6b, 0x4d, 0xd6, 0x9a, 0x42, 0x01, 0x00,
-	0x00,
+	// 315 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0x4d, 0x4b, 0xc3, 0x40,
+	0x10, 0x65, 0x63, 0x5b, 0xdb, 0xa9, 0x46, 0x59, 0x3c, 0x84, 0x20, 0x18, 0x72, 0xea, 0x29, 0x95,
+	0x7a, 0xd0, 0x8b, 0x8a, 0xf8, 0xd1, 0x8b, 0xa7, 0x50, 0xf1, 0xbc, 0x75, 0xa7, 0x25, 0x98, 0x74,
+	0xd7, 0xee, 0x14, 0xf1, 0x37, 0xfa, 0x87, 0x3c, 0x4a, 0xb7, 0xcd, 0x06, 0x22, 0x34, 0xde, 0x36,
+	0x6f, 0xde, 0x7b, 0xf3, 0x66, 0x26, 0xe0, 0x13, 0x16, 0x3a, 0x17, 0x84, 0x89, 0x5e, 0x2a, 0x52,
+	0xbc, 0x5b, 0x7e, 0x87, 0x67, 0x73, 0xa5, 0xe6, 0x39, 0x0e, 0x2d, 0x3e, 0x5d, 0xcd, 0x86, 0x94,
+	0x15, 0x68, 0x48, 0x14, 0x7a, 0x43, 0x8d, 0xf7, 0xa1, 0xfd, 0x58, 0x68, 0xfa, 0x8a, 0x7f, 0x18,
+	0x1c, 0xbf, 0xaa, 0xe5, 0xfb, 0x2c, 0x57, 0x9f, 0x93, 0xad, 0x9c, 0xfb, 0xe0, 0x65, 0x32, 0x60,
+	0x11, 0x1b, 0xf4, 0x52, 0x2f, 0x93, 0x9c, 0x43, 0x6b, 0x21, 0x0a, 0x0c, 0x3c, 0x8b, 0xd8, 0xf7,
+	0x1a, 0x93, 0x82, 0x44, 0xb0, 0x17, 0xb1, 0xc1, 0x41, 0x6a, 0xdf, 0xfc, 0x0a, 0x7a, 0x6f, 0x4b,
+	0x14, 0x84, 0xf2, 0x8e, 0x82, 0x56, 0xc4, 0x06, 0xfd, 0x51, 0x98, 0x6c, 0xa2, 0x24, 0x65, 0x94,
+	0x64, 0x52, 0x46, 0x49, 0x2b, 0xf2, 0x5a, 0xb9, 0xd2, 0x72, 0xab, 0x6c, 0x37, 0x2b, 0x1d, 0x79,
+	0xad, 0x94, 0x98, 0xe3, 0x46, 0xd9, 0x69, 0x56, 0x3a, 0x72, 0x1c, 0x81, 0x7f, 0x6f, 0x03, 0xa4,
+	0x68, 0xb4, 0x5a, 0x98, 0x3f, 0x73, 0xc7, 0xa7, 0x00, 0x63, 0xa4, 0x14, 0x3f, 0x56, 0x68, 0xa8,
+	0x5e, 0x1d, 0x7d, 0x7b, 0xd0, 0x75, 0x2b, 0x7b, 0x2a, 0xcd, 0x1c, 0x12, 0x26, 0xee, 0x3c, 0xf5,
+	0x05, 0x87, 0x41, 0x55, 0xab, 0x45, 0xb8, 0x85, 0xfe, 0x18, 0xc9, 0x99, 0x9c, 0x54, 0xc4, 0x2a,
+	0x49, 0xb8, 0xc3, 0x9a, 0x5f, 0x82, 0xff, 0x60, 0x47, 0x6c, 0xf0, 0x38, 0xaa, 0x50, 0xfb, 0x27,
+	0xf0, 0x1b, 0x38, 0x7c, 0xce, 0x8c, 0x6b, 0x6d, 0x78, 0x9d, 0xb1, 0xab, 0xed, 0x39, 0xe3, 0xd7,
+	0xe0, 0xbf, 0xd8, 0xab, 0xfc, 0x6b, 0x03, 0x75, 0xf3, 0x69, 0xc7, 0x1e, 0xeb, 0xe2, 0x37, 0x00,
+	0x00, 0xff, 0xff, 0x5f, 0x79, 0x4f, 0x01, 0xd5, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -156,7 +258,11 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type TemplateClient interface {
-	Create(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error)
+	CreateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error)
+	GetTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error)
+	DeleteTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error)
+	ListTemplates(ctx context.Context, in *Empty, opts ...grpc.CallOption) (Template_ListTemplatesClient, error)
+	UpdateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type templateClient struct {
@@ -167,9 +273,68 @@ func NewTemplateClient(cc *grpc.ClientConn) TemplateClient {
 	return &templateClient{cc}
 }
 
-func (c *templateClient) Create(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
+func (c *templateClient) CreateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
+	out := new(CreateResponse)
+	err := c.cc.Invoke(ctx, "/template.Template/CreateTemplate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *templateClient) GetTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
+	out := new(WorkflowTemplate)
+	err := c.cc.Invoke(ctx, "/template.Template/GetTemplate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *templateClient) DeleteTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/template.Template/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/template.Template/DeleteTemplate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *templateClient) ListTemplates(ctx context.Context, in *Empty, opts ...grpc.CallOption) (Template_ListTemplatesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Template_serviceDesc.Streams[0], "/template.Template/ListTemplates", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &templateListTemplatesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Template_ListTemplatesClient interface {
+	Recv() (*WorkflowTemplate, error)
+	grpc.ClientStream
+}
+
+type templateListTemplatesClient struct {
+	grpc.ClientStream
+}
+
+func (x *templateListTemplatesClient) Recv() (*WorkflowTemplate, error) {
+	m := new(WorkflowTemplate)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *templateClient) UpdateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/template.Template/UpdateTemplate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -178,35 +343,126 @@ func (c *templateClient) Create(ctx context.Context, in *WorkflowTemplate, opts 
 
 // TemplateServer is the server API for Template service.
 type TemplateServer interface {
-	Create(context.Context, *WorkflowTemplate) (*Empty, error)
+	CreateTemplate(context.Context, *WorkflowTemplate) (*CreateResponse, error)
+	GetTemplate(context.Context, *GetRequest) (*WorkflowTemplate, error)
+	DeleteTemplate(context.Context, *GetRequest) (*Empty, error)
+	ListTemplates(*Empty, Template_ListTemplatesServer) error
+	UpdateTemplate(context.Context, *WorkflowTemplate) (*Empty, error)
 }
 
 // UnimplementedTemplateServer can be embedded to have forward compatible implementations.
 type UnimplementedTemplateServer struct {
 }
 
-func (*UnimplementedTemplateServer) Create(ctx context.Context, req *WorkflowTemplate) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+func (*UnimplementedTemplateServer) CreateTemplate(ctx context.Context, req *WorkflowTemplate) (*CreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateTemplate not implemented")
+}
+func (*UnimplementedTemplateServer) GetTemplate(ctx context.Context, req *GetRequest) (*WorkflowTemplate, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTemplate not implemented")
+}
+func (*UnimplementedTemplateServer) DeleteTemplate(ctx context.Context, req *GetRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteTemplate not implemented")
+}
+func (*UnimplementedTemplateServer) ListTemplates(req *Empty, srv Template_ListTemplatesServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListTemplates not implemented")
+}
+func (*UnimplementedTemplateServer) UpdateTemplate(ctx context.Context, req *WorkflowTemplate) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateTemplate not implemented")
 }
 
 func RegisterTemplateServer(s *grpc.Server, srv TemplateServer) {
 	s.RegisterService(&_Template_serviceDesc, srv)
 }
 
-func _Template_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Template_CreateTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(WorkflowTemplate)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TemplateServer).Create(ctx, in)
+		return srv.(TemplateServer).CreateTemplate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/template.Template/Create",
+		FullMethod: "/template.Template/CreateTemplate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TemplateServer).Create(ctx, req.(*WorkflowTemplate))
+		return srv.(TemplateServer).CreateTemplate(ctx, req.(*WorkflowTemplate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Template_GetTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TemplateServer).GetTemplate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/template.Template/GetTemplate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TemplateServer).GetTemplate(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Template_DeleteTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TemplateServer).DeleteTemplate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/template.Template/DeleteTemplate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TemplateServer).DeleteTemplate(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Template_ListTemplates_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TemplateServer).ListTemplates(m, &templateListTemplatesServer{stream})
+}
+
+type Template_ListTemplatesServer interface {
+	Send(*WorkflowTemplate) error
+	grpc.ServerStream
+}
+
+type templateListTemplatesServer struct {
+	grpc.ServerStream
+}
+
+func (x *templateListTemplatesServer) Send(m *WorkflowTemplate) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Template_UpdateTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WorkflowTemplate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TemplateServer).UpdateTemplate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/template.Template/UpdateTemplate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TemplateServer).UpdateTemplate(ctx, req.(*WorkflowTemplate))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -216,10 +472,28 @@ var _Template_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*TemplateServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Create",
-			Handler:    _Template_Create_Handler,
+			MethodName: "CreateTemplate",
+			Handler:    _Template_CreateTemplate_Handler,
+		},
+		{
+			MethodName: "GetTemplate",
+			Handler:    _Template_GetTemplate_Handler,
+		},
+		{
+			MethodName: "DeleteTemplate",
+			Handler:    _Template_DeleteTemplate_Handler,
+		},
+		{
+			MethodName: "UpdateTemplate",
+			Handler:    _Template_UpdateTemplate_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ListTemplates",
+			Handler:       _Template_ListTemplates_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "template.proto",
 }

@@ -122,17 +122,6 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:f895aa2df9d02f28bbee37f1f069be9841b20ad8a20fc08f9bccc60619864051"
-  name = "github.com/jedib0t/go-pretty"
-  packages = [
-    "table",
-    "text",
-  ]
-  pruneopts = "UT"
-  revision = "1ec860a8cda361fb569dcefd79f058d17845f21b"
-  version = "v4.3.0"
-
-[[projects]]
   branch = "master"
   digest = "1:ee780c2838219eedc4146248ddf9b82bb6a4a344425ee1aeb9f0d6eb8435614d"
   name = "github.com/lib/pq"
@@ -142,8 +131,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "3427c32cb71afc948325f299f040e53c1dd78979"
-  version = "v1.2.0"
+  revision = "f91d3411e481ed313eeab65ebfe9076466c39d01"
 
 [[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
@@ -184,6 +172,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
+
+[[projects]]
+  branch = "rearrangement"
+  digest = "1:e6cc73c3f2970d7de1432455eeaf5240ac4f6c695111a4bc5e9e238787b4dbd5"
+  name = "github.com/packethost/cacher"
+  packages = ["pg"]
+  pruneopts = "UT"
+  revision = "7d90e835be6094aff40ba3f0f4cb12394da02d9f"
 
 [[projects]]
   branch = "master"
@@ -264,6 +260,14 @@
   pruneopts = "UT"
   revision = "d450a931d7a085523b60f0f7c98487333a8ce5fa"
   version = "v1.0.2"
+
+[[projects]]
+  digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:bd1ae00087d17c5a748660b8e89e1043e1e5479d0fea743352cda2f8dd8c4f84"
@@ -471,15 +475,18 @@
   input-imports = [
     "github.com/golang/protobuf/proto",
     "github.com/golang/protobuf/protoc-gen-go",
+    "github.com/golang/protobuf/ptypes",
     "github.com/golang/protobuf/ptypes/timestamp",
     "github.com/grpc-ecosystem/go-grpc-prometheus",
     "github.com/jedib0t/go-pretty/table",
     "github.com/lib/pq",
+    "github.com/packethost/cacher/pg",
     "github.com/packethost/pkg/log",
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promauto",
     "github.com/prometheus/client_golang/prometheus/promhttp",
+    "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/cobra",
     "github.com/spf13/viper",

@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/x509"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -12,24 +13,10 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func connectGRPC(client string) {}
-
-// ConnectGRPC returns a rover gRPC client
-func ConnectGRPC() template.TemplateClient {
-	c, err := new()
-	if err != nil {
-		panic(err)
-	}
-	return c
-}
-
-func new() (template.TemplateClient, error) {
-	conn, err := getConnection()
-	if err != nil {
-		return nil, err
-	}
-	return template.NewTemplateClient(conn), nil
-}
+// gRPC clients
+var (
+	TemplateClient template.TemplateClient
+)
 
 func getConnection() (*grpc.ClientConn, error) {
 	certURL := os.Getenv("ROVER_CERT_URL")
@@ -63,4 +50,12 @@ func getConnection() (*grpc.ClientConn, error) {
 		return nil, errors.Wrap(err, "connect to rover server")
 	}
 	return conn, nil
+}
+
+func init() {
+	conn, err := getConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+	TemplateClient = template.NewTemplateClient(conn)
 }

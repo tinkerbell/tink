@@ -2,9 +2,11 @@ package template
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	tt "text/template"
 
 	"github.com/packethost/rover/client"
 	"github.com/packethost/rover/protos/template"
@@ -18,12 +20,13 @@ var (
 	templateName string
 )
 
-// createCmd represents the create sub command for template command
+// createCmd represents the create subcommand for template command
 var createCmd = &cobra.Command{
 	Use:     "create",
 	Short:   "create a workflow template ",
 	Example: "rover template create [flags]",
 	Run: func(c *cobra.Command, args []string) {
+		validateTemplate()
 		createTemplate(c, args)
 	},
 }
@@ -37,7 +40,14 @@ func addFlags() {
 	createCmd.MarkPersistentFlagRequired(fName)
 }
 
-func createTemplate(c *cobra.Command, args []string) {
+func validateTemplate() {
+	_, err := tt.ParseFiles(filePath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func readTemplateData() []byte {
 	f, err := os.Open(filePath)
 	if err != nil {
 		log.Fatal(err)
@@ -48,12 +58,16 @@ func createTemplate(c *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	return data
+}
 
-	tmpClient := client.ConnectGRPC()
-	req := template.WorkflowTemplate{Name: templateName, Data: data}
-	if _, err := tmpClient.Create(context.Background(), &req); err != nil {
+func createTemplate(c *cobra.Command, args []string) {
+	req := template.WorkflowTemplate{Name: templateName, Data: readTemplateData()}
+	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
+	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Created Template: ", res.Id)
 }
 
 func init() {

@@ -1,4 +1,4 @@
-package db
+package pg
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 var logger log.Logger
 
 // ConnectDB returns a connection to postgres database
-func ConnectDB(lg log.Logger) *sql.DB {
-	logger = lg
+func ConnectDB(l log.Logger) *sql.DB {
+	logger = l
 	db, err := sql.Open("postgres", "")
 	if err != nil {
 		logger.Error(err)

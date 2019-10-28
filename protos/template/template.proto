@@ -4,16 +4,29 @@ package template;
 import "google/protobuf/timestamp.proto";
 
 service Template {
-	rpc Create(WorkflowTemplate) returns (Empty);
+	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse);
+	rpc GetTemplate(GetRequest) returns (WorkflowTemplate);
+	rpc DeleteTemplate(GetRequest) returns (Empty);
+	rpc ListTemplates(Empty) returns (stream WorkflowTemplate);
+	rpc UpdateTemplate(WorkflowTemplate) returns (Empty);
 }
 
 message Empty {
 }
 
 message WorkflowTemplate {
-	string name = 1;
-	bytes data = 2;
-	google.protobuf.Timestamp insertedAt = 3;
-	google.protobuf.Timestamp deletedAt = 4;
+	string id = 1;
+	string name = 2;
+	bytes data = 3;
+	google.protobuf.Timestamp createdAt = 4;
+	google.protobuf.Timestamp updatedAt = 5;
+	google.protobuf.Timestamp deletedAt = 6;
 }
 
+message CreateResponse {
+	string id = 1;
+}
+
+message GetRequest {
+	string id = 1;
+}
