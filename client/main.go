@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/packethost/rover/protos/target"
 	"github.com/packethost/rover/protos/template"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -16,6 +17,7 @@ import (
 // gRPC clients
 var (
 	TemplateClient template.TemplateClient
+	TargetClient   target.TargetClient
 )
 
 func getConnection() (*grpc.ClientConn, error) {
@@ -58,4 +60,5 @@ func init() {
 		log.Fatal(err)
 	}
 	TemplateClient = template.NewTemplateClient(conn)
+	TargetClient = target.NewTargetClient(conn)
 }

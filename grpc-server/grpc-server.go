@@ -15,6 +15,7 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/packethost/rover/db"
 	"github.com/packethost/rover/metrics"
+	"github.com/packethost/rover/protos/target"
 	"github.com/packethost/rover/protos/template"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -61,8 +62,10 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 		server.modT = modT
 	}
 
+	// register servers
 	s := grpc.NewServer(params...)
 	template.RegisterTemplateServer(s, server)
+	target.RegisterTargetServer(s, server)
 	grpc_prometheus.Register(s)
 
 	go func() {

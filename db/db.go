@@ -53,3 +53,22 @@ func truncate(db *sql.DB) error {
 	}
 	return err
 }
+
+func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (string, error) {
+	row := db.QueryRowContext(ctx, query, args...)
+
+	buf := []byte{}
+	err := row.Scan(&buf)
+	if err == nil {
+		return string(buf), nil
+	}
+
+	if err != sql.ErrNoRows {
+		err = errors.Wrap(err, "SELECT")
+		logger.Error(err)
+	} else {
+		err = nil
+	}
+
+	return "", err
+}

@@ -19,7 +19,7 @@ var (
 	ingestErrors   *prometheus.CounterVec
 	ingestDuration *prometheus.GaugeVec
 
-	watchMissTotal prometheus.Counter
+	WatchMissTotal prometheus.Counter
 )
 
 // SetupMetrics sets the defaults for metrics
@@ -110,7 +110,7 @@ func SetupMetrics(facility string, logger log.Logger) {
 	initGaugeLabels(ingestDuration, labels)
 	initCounterLabels(ingestErrors, labels)
 
-	watchMissTotal = promauto.NewCounter(prometheus.CounterOpts{
+	WatchMissTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "watch_miss_count_total",
 		Help: "Number of missed updates due to a blocked channel.",
 	})
