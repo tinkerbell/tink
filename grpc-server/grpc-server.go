@@ -17,6 +17,7 @@ import (
 	"github.com/packethost/rover/metrics"
 	"github.com/packethost/rover/protos/target"
 	"github.com/packethost/rover/protos/template"
+	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -66,6 +67,7 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 	s := grpc.NewServer(params...)
 	template.RegisterTemplateServer(s, server)
 	target.RegisterTargetServer(s, server)
+	workflow.RegisterWorkflowSvcServer(s, server)
 	grpc_prometheus.Register(s)
 
 	go func() {

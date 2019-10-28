@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,6 +24,40 @@ var _ = math.Inf
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+
+type State int32
+
+const (
+	State_PENDING State = 0
+	State_RUNNING State = 1
+	State_FAILED  State = 2
+	State_TIMEOUT State = 3
+	State_SUCCESS State = 4
+)
+
+var State_name = map[int32]string{
+	0: "PENDING",
+	1: "RUNNING",
+	2: "FAILED",
+	3: "TIMEOUT",
+	4: "SUCCESS",
+}
+
+var State_value = map[string]int32{
+	"PENDING": 0,
+	"RUNNING": 1,
+	"FAILED":  2,
+	"TIMEOUT": 3,
+	"SUCCESS": 4,
+}
+
+func (x State) String() string {
+	return proto.EnumName(State_name, int32(x))
+}
+
+func (State) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_892c7f566756b0be, []int{0}
+}
 
 type Empty struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -55,6 +90,101 @@ func (m *Empty) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Empty proto.InternalMessageInfo
 
+type Workflow struct {
+	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Template             string               `protobuf:"bytes,2,opt,name=template,proto3" json:"template,omitempty"`
+	Target               string               `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
+	State                State                `protobuf:"varint,4,opt,name=state,proto3,enum=workflow.State" json:"state,omitempty"`
+	CreatedAt            *timestamp.Timestamp `protobuf:"bytes,5,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	UpdatedAt            *timestamp.Timestamp `protobuf:"bytes,6,opt,name=updatedAt,proto3" json:"updatedAt,omitempty"`
+	DeletedAt            *timestamp.Timestamp `protobuf:"bytes,7,opt,name=deletedAt,proto3" json:"deletedAt,omitempty"`
+	Data                 string               `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *Workflow) Reset()         { *m = Workflow{} }
+func (m *Workflow) String() string { return proto.CompactTextString(m) }
+func (*Workflow) ProtoMessage()    {}
+func (*Workflow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_892c7f566756b0be, []int{1}
+}
+
+func (m *Workflow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Workflow.Unmarshal(m, b)
+}
+func (m *Workflow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Workflow.Marshal(b, m, deterministic)
+}
+func (m *Workflow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Workflow.Merge(m, src)
+}
+func (m *Workflow) XXX_Size() int {
+	return xxx_messageInfo_Workflow.Size(m)
+}
+func (m *Workflow) XXX_DiscardUnknown() {
+	xxx_messageInfo_Workflow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Workflow proto.InternalMessageInfo
+
+func (m *Workflow) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *Workflow) GetTemplate() string {
+	if m != nil {
+		return m.Template
+	}
+	return ""
+}
+
+func (m *Workflow) GetTarget() string {
+	if m != nil {
+		return m.Target
+	}
+	return ""
+}
+
+func (m *Workflow) GetState() State {
+	if m != nil {
+		return m.State
+	}
+	return State_PENDING
+}
+
+func (m *Workflow) GetCreatedAt() *timestamp.Timestamp {
+	if m != nil {
+		return m.CreatedAt
+	}
+	return nil
+}
+
+func (m *Workflow) GetUpdatedAt() *timestamp.Timestamp {
+	if m != nil {
+		return m.UpdatedAt
+	}
+	return nil
+}
+
+func (m *Workflow) GetDeletedAt() *timestamp.Timestamp {
+	if m != nil {
+		return m.DeletedAt
+	}
+	return nil
+}
+
+func (m *Workflow) GetData() string {
+	if m != nil {
+		return m.Data
+	}
+	return ""
+}
+
 type CreateRequest struct {
 	Template             string   `protobuf:"bytes,1,opt,name=template,proto3" json:"template,omitempty"`
 	Target               string   `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
@@ -67,7 +197,7 @@ func (m *CreateRequest) Reset()         { *m = CreateRequest{} }
 func (m *CreateRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateRequest) ProtoMessage()    {}
 func (*CreateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_892c7f566756b0be, []int{1}
+	return fileDescriptor_892c7f566756b0be, []int{2}
 }
 
 func (m *CreateRequest) XXX_Unmarshal(b []byte) error {
@@ -102,24 +232,123 @@ func (m *CreateRequest) GetTarget() string {
 	return ""
 }
 
+type CreateResponse struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreateResponse) Reset()         { *m = CreateResponse{} }
+func (m *CreateResponse) String() string { return proto.CompactTextString(m) }
+func (*CreateResponse) ProtoMessage()    {}
+func (*CreateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_892c7f566756b0be, []int{3}
+}
+
+func (m *CreateResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreateResponse.Unmarshal(m, b)
+}
+func (m *CreateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreateResponse.Marshal(b, m, deterministic)
+}
+func (m *CreateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateResponse.Merge(m, src)
+}
+func (m *CreateResponse) XXX_Size() int {
+	return xxx_messageInfo_CreateResponse.Size(m)
+}
+func (m *CreateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreateResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreateResponse proto.InternalMessageInfo
+
+func (m *CreateResponse) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type GetRequest struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetRequest) Reset()         { *m = GetRequest{} }
+func (m *GetRequest) String() string { return proto.CompactTextString(m) }
+func (*GetRequest) ProtoMessage()    {}
+func (*GetRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_892c7f566756b0be, []int{4}
+}
+
+func (m *GetRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetRequest.Unmarshal(m, b)
+}
+func (m *GetRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetRequest.Marshal(b, m, deterministic)
+}
+func (m *GetRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetRequest.Merge(m, src)
+}
+func (m *GetRequest) XXX_Size() int {
+	return xxx_messageInfo_GetRequest.Size(m)
+}
+func (m *GetRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetRequest proto.InternalMessageInfo
+
+func (m *GetRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
 func init() {
+	proto.RegisterEnum("workflow.State", State_name, State_value)
 	proto.RegisterType((*Empty)(nil), "workflow.Empty")
+	proto.RegisterType((*Workflow)(nil), "workflow.Workflow")
 	proto.RegisterType((*CreateRequest)(nil), "workflow.CreateRequest")
+	proto.RegisterType((*CreateResponse)(nil), "workflow.CreateResponse")
+	proto.RegisterType((*GetRequest)(nil), "workflow.GetRequest")
 }
 
 func init() { proto.RegisterFile("workflow.proto", fileDescriptor_892c7f566756b0be) }
 
 var fileDescriptor_892c7f566756b0be = []byte{
-	// 140 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2b, 0xcf, 0x2f, 0xca,
-	0x4e, 0xcb, 0xc9, 0x2f, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x80, 0xf1, 0x95, 0xd8,
-	0xb9, 0x58, 0x5d, 0x73, 0x0b, 0x4a, 0x2a, 0x95, 0x9c, 0xb9, 0x78, 0x9d, 0x8b, 0x52, 0x13, 0x4b,
-	0x52, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0xa4, 0xb8, 0x38, 0x4a, 0x52, 0x73, 0x0b,
-	0x72, 0x12, 0x4b, 0x52, 0x25, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83, 0xe0, 0x7c, 0x21, 0x31, 0x2e,
-	0xb6, 0x92, 0xc4, 0xa2, 0xf4, 0xd4, 0x12, 0x09, 0x26, 0xb0, 0x0c, 0x94, 0x67, 0xe4, 0xc6, 0xc5,
-	0x11, 0x0e, 0x35, 0x59, 0xc8, 0x8a, 0x8b, 0x0f, 0x62, 0x60, 0x08, 0x4c, 0x97, 0xb8, 0x1e, 0xdc,
-	0x19, 0x28, 0x56, 0x49, 0xf1, 0x23, 0x24, 0xc0, 0x8e, 0x49, 0x62, 0x03, 0x3b, 0xd3, 0x18, 0x10,
-	0x00, 0x00, 0xff, 0xff, 0x79, 0xb5, 0x4b, 0xd5, 0xb8, 0x00, 0x00, 0x00,
+	// 409 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x52, 0x5d, 0x8f, 0x93, 0x40,
+	0x14, 0x75, 0xd8, 0x42, 0xd9, 0x4b, 0x16, 0xc9, 0xc4, 0x28, 0x21, 0x26, 0x12, 0x12, 0x93, 0xc6,
+	0x07, 0xd6, 0xd4, 0xc4, 0xf5, 0xb5, 0xa1, 0x48, 0x9a, 0x54, 0x34, 0xd0, 0xc6, 0x67, 0x5a, 0xa6,
+	0x0d, 0x11, 0x04, 0x61, 0x6a, 0xe3, 0x2f, 0xf3, 0xcf, 0xf9, 0x60, 0x66, 0x80, 0xa1, 0xad, 0x6e,
+	0xfa, 0x36, 0xe7, 0xde, 0x73, 0xe6, 0x9e, 0xfb, 0x01, 0xfa, 0xb1, 0xac, 0xbf, 0xed, 0xf2, 0xf2,
+	0xe8, 0x56, 0x75, 0x49, 0x4b, 0xac, 0xf6, 0xd8, 0x7a, 0xb5, 0x2f, 0xcb, 0x7d, 0x4e, 0xee, 0x79,
+	0x7c, 0x73, 0xd8, 0xdd, 0xd3, 0xac, 0x20, 0x0d, 0x4d, 0x8a, 0xaa, 0xa5, 0x3a, 0x63, 0x90, 0xfd,
+	0xa2, 0xa2, 0xbf, 0x9c, 0xdf, 0x12, 0xa8, 0x5f, 0x3b, 0x19, 0xd6, 0x41, 0xca, 0x52, 0x13, 0xd9,
+	0x68, 0x72, 0x1b, 0x49, 0x59, 0x8a, 0x2d, 0x50, 0x29, 0x29, 0xaa, 0x3c, 0xa1, 0xc4, 0x94, 0x78,
+	0x54, 0x60, 0xfc, 0x1c, 0x14, 0x9a, 0xd4, 0x7b, 0x42, 0xcd, 0x1b, 0x9e, 0xe9, 0x10, 0x7e, 0x0d,
+	0x72, 0x43, 0x99, 0x60, 0x64, 0xa3, 0x89, 0x3e, 0x7d, 0xea, 0x0a, 0x93, 0x31, 0x0b, 0x47, 0x6d,
+	0x16, 0x7f, 0x80, 0xdb, 0x6d, 0x4d, 0x12, 0x4a, 0xd2, 0x19, 0x35, 0x65, 0x1b, 0x4d, 0xb4, 0xa9,
+	0xe5, 0xb6, 0xae, 0xdd, 0xde, 0xb5, 0xbb, 0xea, 0x5d, 0x47, 0x03, 0x99, 0x29, 0x0f, 0x55, 0xda,
+	0x29, 0x95, 0xeb, 0x4a, 0x41, 0x66, 0xca, 0x94, 0xe4, 0xa4, 0x55, 0x8e, 0xaf, 0x2b, 0x05, 0x19,
+	0x63, 0x18, 0xa5, 0x09, 0x4d, 0x4c, 0x95, 0xb7, 0xca, 0xdf, 0x8e, 0x07, 0x77, 0x1e, 0x37, 0x15,
+	0x91, 0x1f, 0x07, 0xd2, 0xd0, 0xb3, 0x69, 0xa1, 0x47, 0xa7, 0x25, 0x9d, 0x4e, 0xcb, 0xb1, 0x41,
+	0xef, 0x3f, 0x69, 0xaa, 0xf2, 0x7b, 0x43, 0x2e, 0x77, 0xe0, 0xbc, 0x04, 0x08, 0x08, 0xed, 0x6b,
+	0x5c, 0x64, 0xdf, 0x04, 0x20, 0xf3, 0xb1, 0x62, 0x0d, 0xc6, 0x5f, 0xfc, 0x70, 0xbe, 0x08, 0x03,
+	0xe3, 0x09, 0x03, 0xd1, 0x3a, 0x0c, 0x19, 0x40, 0x18, 0x40, 0xf9, 0x38, 0x5b, 0x2c, 0xfd, 0xb9,
+	0x21, 0xb1, 0xc4, 0x6a, 0xf1, 0xc9, 0xff, 0xbc, 0x5e, 0x19, 0x37, 0x0c, 0xc4, 0x6b, 0xcf, 0xf3,
+	0xe3, 0xd8, 0x18, 0x4d, 0xff, 0x20, 0xd0, 0xfa, 0x3b, 0x88, 0x7f, 0x6e, 0xb1, 0xd7, 0x1b, 0x13,
+	0xc7, 0xf1, 0x62, 0xd8, 0xe4, 0x59, 0xdf, 0x96, 0xf9, 0x6f, 0xa2, 0xeb, 0xe5, 0x01, 0xb4, 0x80,
+	0x50, 0xf1, 0xc3, 0xb3, 0x81, 0x38, 0xb4, 0x64, 0xe1, 0x21, 0x2a, 0x98, 0x0f, 0xa0, 0xcf, 0xf9,
+	0xf0, 0xaf, 0x68, 0x4f, 0xae, 0x8b, 0x9f, 0x33, 0x7e, 0x0f, 0x77, 0xcb, 0xac, 0x11, 0x25, 0x1b,
+	0x7c, 0xc9, 0xf8, 0x5f, 0xb9, 0xb7, 0x68, 0xa3, 0xf0, 0xfd, 0xbf, 0xfb, 0x1b, 0x00, 0x00, 0xff,
+	0xff, 0x1a, 0x67, 0xd5, 0x29, 0x53, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -130,74 +359,210 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// WorkflowClient is the client API for Workflow service.
+// WorkflowSvcClient is the client API for WorkflowSvc service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type WorkflowClient interface {
-	CreateTemplate(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*Empty, error)
+type WorkflowSvcClient interface {
+	CreateWorkflow(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
+	GetWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error)
+	DeleteWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error)
+	ListWorkflows(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowSvc_ListWorkflowsClient, error)
 }
 
-type workflowClient struct {
+type workflowSvcClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewWorkflowClient(cc *grpc.ClientConn) WorkflowClient {
-	return &workflowClient{cc}
+func NewWorkflowSvcClient(cc *grpc.ClientConn) WorkflowSvcClient {
+	return &workflowSvcClient{cc}
 }
 
-func (c *workflowClient) CreateTemplate(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/workflow.Workflow/CreateTemplate", in, out, opts...)
+func (c *workflowSvcClient) CreateWorkflow(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
+	out := new(CreateResponse)
+	err := c.cc.Invoke(ctx, "/workflow.WorkflowSvc/CreateWorkflow", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// WorkflowServer is the server API for Workflow service.
-type WorkflowServer interface {
-	CreateTemplate(context.Context, *CreateRequest) (*Empty, error)
+func (c *workflowSvcClient) GetWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error) {
+	out := new(Workflow)
+	err := c.cc.Invoke(ctx, "/workflow.WorkflowSvc/GetWorkflow", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-// UnimplementedWorkflowServer can be embedded to have forward compatible implementations.
-type UnimplementedWorkflowServer struct {
+func (c *workflowSvcClient) DeleteWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/workflow.WorkflowSvc/DeleteWorkflow", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-func (*UnimplementedWorkflowServer) CreateTemplate(ctx context.Context, req *CreateRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateTemplate not implemented")
+func (c *workflowSvcClient) ListWorkflows(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowSvc_ListWorkflowsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_WorkflowSvc_serviceDesc.Streams[0], "/workflow.WorkflowSvc/ListWorkflows", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &workflowSvcListWorkflowsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
 
-func RegisterWorkflowServer(s *grpc.Server, srv WorkflowServer) {
-	s.RegisterService(&_Workflow_serviceDesc, srv)
+type WorkflowSvc_ListWorkflowsClient interface {
+	Recv() (*Workflow, error)
+	grpc.ClientStream
 }
 
-func _Workflow_CreateTemplate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+type workflowSvcListWorkflowsClient struct {
+	grpc.ClientStream
+}
+
+func (x *workflowSvcListWorkflowsClient) Recv() (*Workflow, error) {
+	m := new(Workflow)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// WorkflowSvcServer is the server API for WorkflowSvc service.
+type WorkflowSvcServer interface {
+	CreateWorkflow(context.Context, *CreateRequest) (*CreateResponse, error)
+	GetWorkflow(context.Context, *GetRequest) (*Workflow, error)
+	DeleteWorkflow(context.Context, *GetRequest) (*Empty, error)
+	ListWorkflows(*Empty, WorkflowSvc_ListWorkflowsServer) error
+}
+
+// UnimplementedWorkflowSvcServer can be embedded to have forward compatible implementations.
+type UnimplementedWorkflowSvcServer struct {
+}
+
+func (*UnimplementedWorkflowSvcServer) CreateWorkflow(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateWorkflow not implemented")
+}
+func (*UnimplementedWorkflowSvcServer) GetWorkflow(ctx context.Context, req *GetRequest) (*Workflow, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflow not implemented")
+}
+func (*UnimplementedWorkflowSvcServer) DeleteWorkflow(ctx context.Context, req *GetRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkflow not implemented")
+}
+func (*UnimplementedWorkflowSvcServer) ListWorkflows(req *Empty, srv WorkflowSvc_ListWorkflowsServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListWorkflows not implemented")
+}
+
+func RegisterWorkflowSvcServer(s *grpc.Server, srv WorkflowSvcServer) {
+	s.RegisterService(&_WorkflowSvc_serviceDesc, srv)
+}
+
+func _WorkflowSvc_CreateWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkflowServer).CreateTemplate(ctx, in)
+		return srv.(WorkflowSvcServer).CreateWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/workflow.Workflow/CreateTemplate",
+		FullMethod: "/workflow.WorkflowSvc/CreateWorkflow",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkflowServer).CreateTemplate(ctx, req.(*CreateRequest))
+		return srv.(WorkflowSvcServer).CreateWorkflow(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Workflow_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "workflow.Workflow",
-	HandlerType: (*WorkflowServer)(nil),
+func _WorkflowSvc_GetWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowSvcServer).GetWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/workflow.WorkflowSvc/GetWorkflow",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowSvcServer).GetWorkflow(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowSvc_DeleteWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowSvcServer).DeleteWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/workflow.WorkflowSvc/DeleteWorkflow",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowSvcServer).DeleteWorkflow(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkflowSvc_ListWorkflows_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(WorkflowSvcServer).ListWorkflows(m, &workflowSvcListWorkflowsServer{stream})
+}
+
+type WorkflowSvc_ListWorkflowsServer interface {
+	Send(*Workflow) error
+	grpc.ServerStream
+}
+
+type workflowSvcListWorkflowsServer struct {
+	grpc.ServerStream
+}
+
+func (x *workflowSvcListWorkflowsServer) Send(m *Workflow) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+var _WorkflowSvc_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "workflow.WorkflowSvc",
+	HandlerType: (*WorkflowSvcServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateTemplate",
-			Handler:    _Workflow_CreateTemplate_Handler,
+			MethodName: "CreateWorkflow",
+			Handler:    _WorkflowSvc_CreateWorkflow_Handler,
+		},
+		{
+			MethodName: "GetWorkflow",
+			Handler:    _WorkflowSvc_GetWorkflow_Handler,
+		},
+		{
+			MethodName: "DeleteWorkflow",
+			Handler:    _WorkflowSvc_DeleteWorkflow_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ListWorkflows",
+			Handler:       _WorkflowSvc_ListWorkflows_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "workflow.proto",
 }

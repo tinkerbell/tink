@@ -9,6 +9,7 @@ import (
 
 	"github.com/packethost/rover/protos/target"
 	"github.com/packethost/rover/protos/template"
+	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -18,6 +19,7 @@ import (
 var (
 	TemplateClient template.TemplateClient
 	TargetClient   target.TargetClient
+	WorkflowClient workflow.WorkflowSvcClient
 )
 
 func getConnection() (*grpc.ClientConn, error) {
@@ -61,4 +63,5 @@ func init() {
 	}
 	TemplateClient = template.NewTemplateClient(conn)
 	TargetClient = target.NewTargetClient(conn)
+	WorkflowClient = workflow.NewWorkflowSvcClient(conn)
 }

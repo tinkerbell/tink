@@ -122,6 +122,17 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:f895aa2df9d02f28bbee37f1f069be9841b20ad8a20fc08f9bccc60619864051"
+  name = "github.com/jedib0t/go-pretty"
+  packages = [
+    "table",
+    "text",
+  ]
+  pruneopts = "UT"
+  revision = "1ec860a8cda361fb569dcefd79f058d17845f21b"
+  version = "v4.3.0"
+
+[[projects]]
   branch = "master"
   digest = "1:ee780c2838219eedc4146248ddf9b82bb6a4a344425ee1aeb9f0d6eb8435614d"
   name = "github.com/lib/pq"
@@ -172,14 +183,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
-
-[[projects]]
-  branch = "rearrangement"
-  digest = "1:e6cc73c3f2970d7de1432455eeaf5240ac4f6c695111a4bc5e9e238787b4dbd5"
-  name = "github.com/packethost/cacher"
-  packages = ["pg"]
-  pruneopts = "UT"
-  revision = "7d90e835be6094aff40ba3f0f4cb12394da02d9f"
 
 [[projects]]
   branch = "master"
@@ -480,7 +483,6 @@
     "github.com/grpc-ecosystem/go-grpc-prometheus",
     "github.com/jedib0t/go-pretty/table",
     "github.com/lib/pq",
-    "github.com/packethost/cacher/pg",
     "github.com/packethost/pkg/log",
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/prometheus",

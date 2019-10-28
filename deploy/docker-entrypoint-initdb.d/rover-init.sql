@@ -36,3 +36,15 @@ CREATE INDEX IF NOT EXISTS idx_rid ON targets (id);
 CREATE INDEX IF NOT EXISTS idx_rdeleted_at ON targets (deleted_at NULLS FIRST);
 CREATE INDEX IF NOT EXISTS idxgin_rtype ON targets USING GIN (data JSONB_PATH_OPS);
 
+CREATE TABLE IF NOT EXISTS workflow (
+	id UUID UNIQUE NOT NULL
+	, template UUID NOT NULL
+	, target UUID NOT NULL
+	, state SMALLINT default 0
+	, created_at TIMESTAMPTZ
+	, updated_at TIMESTAMPTZ
+	, deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_wid ON workflow (id);
+CREATE INDEX IF NOT EXISTS idx_wdeleted_at ON workflow (deleted_at NULLS FIRST);
