@@ -2,4 +2,5 @@
 bin/
 certs/
 rover-linux-x86_64
+rover-worker-linux-x86_64
 

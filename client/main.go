@@ -22,7 +22,8 @@ var (
 	WorkflowClient workflow.WorkflowSvcClient
 )
 
-func getConnection() (*grpc.ClientConn, error) {
+// GetConnection returns a gRPC client connection
+func GetConnection() (*grpc.ClientConn, error) {
 	certURL := os.Getenv("ROVER_CERT_URL")
 	if certURL == "" {
 		return nil, errors.New("undefined ROVER_CERT_URL")
@@ -57,7 +58,7 @@ func getConnection() (*grpc.ClientConn, error) {
 }
 
 func init() {
-	conn, err := getConnection()
+	conn, err := GetConnection()
 	if err != nil {
 		log.Fatal(err)
 	}

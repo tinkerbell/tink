@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/packethost/rover/db"
+	exec "github.com/packethost/rover/executor"
 	"github.com/packethost/rover/metrics"
 	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
@@ -47,8 +48,14 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
+	data, _ := createYaml(ctx, s.db, in.Template, in.Target)
+	err := exec.LoadWorkflow(id.String(), data)
+	if err != nil {
+		return &workflow.CreateResponse{}, err
+	}
+
 	logger.Info(msg)
-	err := fn()
+	err = fn()
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -190,7 +197,7 @@ func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, tar string) (st
 func renderTemplate(tempData string, tarData []byte) (string, error) {
 	type machine map[string]string
 	type Environment struct {
-		Targets map[string]machine `json: "targets"`
+		Targets map[string]machine `json:"targets"`
 	}
 
 	var env Environment

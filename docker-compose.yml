@@ -47,4 +47,38 @@ services:
       ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
       ROVER_CERT_URL: http://127.0.0.1:42112/cert
     network_mode: host
+  
+  registry:
+    build:
+      context: registry
+    ports:
+      - 443:443
+    network_mode: host  
+  
+  # TODO: get rid of workers
+  worker1:
+    image: 127.0.0.1/worker
+    privileged: true
+    environment:
+      ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
+      ROVER_CERT_URL: http://127.0.0.1:42112/cert
+      WORKER_ID: "02:42:db:98:4b:1e"
+      DOCKER_REGISTRY: 127.0.0.1
+      DOCKER_API_VERSION: v1.40
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
+
+  worker2:
+    image: 127.0.0.1/worker
+    privileged: true
+    environment:
+      ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
+      ROVER_CERT_URL: http://127.0.0.1:42112/cert
+      WORKER_ID: "192.168.1.5"
+      DOCKER_REGISTRY: 127.0.0.1
+      DOCKER_API_VERSION: v1.40
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
 
