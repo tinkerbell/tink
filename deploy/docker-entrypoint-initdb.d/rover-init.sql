@@ -48,3 +48,29 @@ CREATE TABLE IF NOT EXISTS workflow (
 
 CREATE INDEX IF NOT EXISTS idx_wid ON workflow (id);
 CREATE INDEX IF NOT EXISTS idx_wdeleted_at ON workflow (deleted_at NULLS FIRST);
+
+CREATE TABLE IF NOT EXISTS wfstate (
+        wfId UUID UNIQUE NOT NULL
+        , currentActionState int
+        , currentWorker UUID
+        , actionList JSONB
+        , currentActionIndex int
+);
+
+CREATE INDEX IF NOT EXISTS idx_wid ON wfstate (wfId);
+
+CREATE TABLE IF NOT EXISTS wfevent (
+        wfId UUID UNIQUE NOT NULL
+        , taskName VARCHAR(200)
+        , actionName VARCHAR(200)
+        , secondsExecuted int
+	, message VARCHAR(200)
+	, status int
+);
+
+CREATE INDEX IF NOT EXISTS idx_wid ON wfevent (wfId);
+
+CREATE TABLE IF NOT EXISTS wfworker (
+        wfId UUID NOT NULL
+        , worker UUID NOT NULL
+);

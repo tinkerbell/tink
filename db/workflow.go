@@ -3,12 +3,59 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"net"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
+	"gopkg.in/yaml.v2"
 )
+
+type (
+	// Workflow holds details about the workflow to be executed
+	WfYamlstruct struct {
+		Version       string `yaml:"version"`
+		Name          string `yaml:"name"`
+		ID            string `yaml:"id"`
+		WorkflowID    string `yaml:"work_id"`
+		GlobalTimeout int    `yaml:"global_timeout"`
+		Tasks         []Task `yaml:"tasks"`
+		//logger      *zap.logger
+		Status string
+	}
+
+	// Task represents a task to be performed in a worflow
+	Task struct {
+		Name      string `yaml:"name"`
+		WorkeAddr string `yaml:"worker"`
+		Actions   []Act  `yaml:"actions"`
+		Onfailure string `yaml:"on-failure"`
+		Ontimeout string `yaml:"on-timeout"`
+	}
+
+	// Act is the basic executional unit for a workflow
+	Act struct {
+		Name      string `yaml:"name"`
+		Image     string `yaml:"image"`
+		Timeout   int    `yaml:"timeout"`
+		Ontimeout string `yaml:"on-timeout"`
+		Onfailure string `yaml:"on-failure"`
+	}
+)
+
+type Action struct {
+	TaskName  string
+	WorkerID  uuid.UUID
+	Name      string
+	Image     string
+	Timeout   int
+	Ontimeout string
+	Onfailure string
+}
 
 // Workflow represents a workflow instance in database
 type Workflow struct {
@@ -35,9 +82,158 @@ func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow) error {
 		(updated_at, deleted_at, template, target, state) = ($1, NULL, $2, $3, $4);
 	`, time.Now(), wf.Template, wf.Target, wf.State, wf.ID)
 	if err != nil {
-		return errors.Wrap(err, "INSERT")
+		return errors.Wrap(err, "INSERT in to workflow")
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrap(err, "COMMIT")
+	}
+	return nil
+}
+
+func parseYaml(ymlContent []byte) (*WfYamlstruct, error) {
+	var workflow = WfYamlstruct{}
+	err := yaml.Unmarshal(ymlContent, &workflow)
+	if err != nil {
+		return &WfYamlstruct{}, err
+	}
+	return &workflow, nil
+}
+
+func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, error) {
+	arg := `
+	{
+	  "network_ports": [
+	    {
+	      "data": {
+		"mac": "` + mac + `"
+	      }
+	    }
+	  ]
+	}
+	`
+	query := `
+	SELECT id
+	FROM hardware
+	WHERE
+		deleted_at IS NULL
+	AND
+		data @> $1
+	`
+
+	return get(ctx, db, query, arg)
+}
+
+func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
+	arg := ip
+
+	query := `
+	SELECT id
+	FROM hardware
+	WHERE
+		deleted_at IS NULL
+	AND
+		id = $1
+	`
+	return get(ctx, db, query, arg)
+}
+
+func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
+	_, err := net.ParseMAC(addr)
+	if err != nil {
+		ip := net.ParseIP(addr)
+		if ip == nil || ip.To4() == nil {
+			return "", fmt.Errorf("invalid worker address: %s", addr)
+		} else {
+			return getWorkerIDbyIP(ctx, db, addr)
+
+		}
+	} else {
+		fmt.Println("Getting the worker ID by MAC")
+		return getWorkerIDbyMac(ctx, db, addr)
+	}
+}
+
+func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfId uuid.UUID, workerId uuid.UUID) error {
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return errors.Wrap(err, "BEGIN transaction")
+	}
+	_, err = tx.Exec(`
+	INSERT INTO
+		wfworker (wfid, worker)
+	VALUES
+		($1, $2);
+	`, wfId, workerId)
+	if err != nil {
+		return errors.Wrap(err, "INSERT in to wfworker")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrap(err, "COMMIT")
+	}
+	return nil
+}
+
+func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID) error {
+	wfymldata, err := parseYaml([]byte(yamlData))
+	if err != nil {
+		return err
+	}
+	var actionList []Action
+	var uniqueWorkerID uuid.UUID
+	for _, task := range wfymldata.Tasks {
+		workerID, err := getWorkerID(ctx, db, task.WorkeAddr)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Worker ID", workerID)
+		workerUID, err := uuid.FromString(workerID)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Worker UID", workerUID)
+		if uniqueWorkerID != workerUID {
+			insertIntoWfWorkerTable(ctx, db, id, workerUID)
+			uniqueWorkerID = workerUID
+		}
+		for _, ac := range task.Actions {
+			action := Action{
+				TaskName:  task.Name,
+				WorkerID:  workerUID,
+				Name:      ac.Name,
+				Image:     ac.Image,
+				Timeout:   ac.Timeout,
+				Ontimeout: ac.Ontimeout,
+				Onfailure: ac.Onfailure,
+			}
+			actionList = append(actionList, action)
+		}
+	}
+	actionData, err := json.Marshal(actionList)
+	if err != nil {
+		return err
+	}
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return errors.Wrap(err, "BEGIN transaction")
+	}
+
+	_, err = tx.Exec(`
+	INSERT INTO
+		wfstate (wfid, actionList, currentActionIndex)
+	VALUES
+		($1, $2, $3)
+	ON CONFLICT (wfid)
+	DO
+	UPDATE SET
+		(wfid, actionList, currentActionIndex) = ($1, $2, $3);
+	`, id, actionData, 0)
+	if err != nil {
+		return errors.Wrap(err, "INSERT in to wfstate")
+	}
 	err = tx.Commit()
 	if err != nil {
 		return errors.Wrap(err, "COMMIT")
