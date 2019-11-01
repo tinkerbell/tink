@@ -51,6 +51,8 @@ CREATE INDEX IF NOT EXISTS idx_wdeleted_at ON workflow (deleted_at NULLS FIRST);
 
 CREATE TABLE IF NOT EXISTS workflow_state (
         workflow_id UUID UNIQUE NOT NULL
+        , current_task_name VARCHAR(200)
+        , current_action_name VARCHAR(200)
         , current_action_state SMALLINT
         , current_worker UUID
         , action_list JSONB
