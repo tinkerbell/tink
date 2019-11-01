@@ -196,11 +196,38 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, wo
 	return nil
 }
 
+func validateUniqueTaskAndActionName(tasks []Task) error {
+	taskNameMap := make(map[string]struct{})
+	for _, task := range tasks {
+		_, ok := taskNameMap[task.Name]
+		if ok {
+			return fmt.Errorf("Provided template has duplicate task name \"%s\"", task.Name)
+		} else {
+			taskNameMap[task.Name] = struct{}{}
+			actionNameMap := make(map[string]struct{})
+			for _, action := range task.Actions {
+				_, ok := actionNameMap[action.Name]
+				if ok {
+					return fmt.Errorf("Provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
+				} else {
+					actionNameMap[action.Name] = struct{}{}
+				}
+			}
+
+		}
+	}
+	return nil
+}
+
 // Insert actions in the workflow_state table
 func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID) error {
 	wfymldata, err := parseYaml([]byte(yamlData))
 	if err != nil {
 		return err
+	}
+	err = validateUniqueTaskAndActionName(wfymldata.Tasks)
+	if err != nil {
+		return errors.Wrap(err, "Invalid Template")
 	}
 	var actionList []WorkflowAction
 	var uniqueWorkerID uuid.UUID
