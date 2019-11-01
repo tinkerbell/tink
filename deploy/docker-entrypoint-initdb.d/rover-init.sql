@@ -49,28 +49,28 @@ CREATE TABLE IF NOT EXISTS workflow (
 CREATE INDEX IF NOT EXISTS idx_wid ON workflow (id);
 CREATE INDEX IF NOT EXISTS idx_wdeleted_at ON workflow (deleted_at NULLS FIRST);
 
-CREATE TABLE IF NOT EXISTS wfstate (
-        wfId UUID UNIQUE NOT NULL
-        , currentActionState int
-        , currentWorker UUID
-        , actionList JSONB
-        , currentActionIndex int
+CREATE TABLE IF NOT EXISTS workflow_state (
+        workflow_id UUID UNIQUE NOT NULL
+        , current_action_state SMALLINT
+        , current_worker UUID
+        , action_list JSONB
+        , current_action_index int
 );
 
-CREATE INDEX IF NOT EXISTS idx_wid ON wfstate (wfId);
+CREATE INDEX IF NOT EXISTS idx_wfid ON workflow_state (workflow_id);
 
-CREATE TABLE IF NOT EXISTS wfevent (
-        wfId UUID UNIQUE NOT NULL
-        , taskName VARCHAR(200)
-        , actionName VARCHAR(200)
-        , secondsExecuted int
+CREATE TABLE IF NOT EXISTS workflow_event (
+        workflow_id UUID  NOT NULL
+        , task_name VARCHAR(200)
+        , action_name VARCHAR(200)
+        , execution_time int
 	, message VARCHAR(200)
-	, status int
+	, status SMALLINT
 );
 
-CREATE INDEX IF NOT EXISTS idx_wid ON wfevent (wfId);
+CREATE INDEX IF NOT EXISTS idx_event ON workflow_event (workflow_id);
 
-CREATE TABLE IF NOT EXISTS wfworker (
-        wfId UUID NOT NULL
-        , worker UUID NOT NULL
+CREATE TABLE IF NOT EXISTS workflow_worker_map (
+        workflow_id UUID NOT NULL
+        , worker_id UUID NOT NULL
 );
