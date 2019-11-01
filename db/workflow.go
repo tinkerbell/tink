@@ -123,17 +123,40 @@ func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, erro
 }
 
 func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
-	arg := ip
+	instance := `
+        {
+          "instance": {
+            "ip_addresses": [
+              {
+                "address": "` + ip + `"
+              }
+            ]
+          }
+        }
+        `
+	hardwareOrManagement := `
+        {
+                "ip_addresses": [
+                        {
+                                "address": "` + ip + `"
+                        }
+                ]
+        }
+		`
 
 	query := `
-	SELECT id
-	FROM hardware
-	WHERE
-		deleted_at IS NULL
-	AND
-		id = $1
-	`
-	return get(ctx, db, query, arg)
+        SELECT id
+        FROM hardware
+        WHERE
+                deleted_at IS NULL
+        AND (
+                data @> $1
+                OR
+                data @> $2
+        )
+        `
+
+	return get(ctx, db, query, instance, hardwareOrManagement)
 }
 
 func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
@@ -147,7 +170,6 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 
 		}
 	} else {
-		fmt.Println("Getting the worker ID by MAC")
 		return getWorkerIDbyMac(ctx, db, addr)
 	}
 }
@@ -186,6 +208,8 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
 		if err != nil {
 			return err
+		} else if workerID == "" {
+			return fmt.Errorf("Target mentioned with refernece %s not found", task.WorkerAddr)
 		}
 		workerUID, err := uuid.FromString(workerID)
 		if err != nil {
