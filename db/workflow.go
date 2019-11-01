@@ -21,40 +21,37 @@ type (
 		Version       string `yaml:"version"`
 		Name          string `yaml:"name"`
 		ID            string `yaml:"id"`
-		WorkflowID    string `yaml:"work_id"`
 		GlobalTimeout int    `yaml:"global_timeout"`
 		Tasks         []Task `yaml:"tasks"`
-		//logger      *zap.logger
-		Status string
 	}
 
 	// Task represents a task to be performed in a worflow
 	Task struct {
-		Name      string `yaml:"name"`
-		WorkeAddr string `yaml:"worker"`
-		Actions   []Act  `yaml:"actions"`
-		Onfailure string `yaml:"on-failure"`
-		Ontimeout string `yaml:"on-timeout"`
+		Name       string   `yaml:"name"`
+		WorkerAddr string   `yaml:"worker"`
+		Actions    []Action `yaml:"actions"`
+		OnFailure  string   `yaml:"on-failure"`
+		OnTimeout  string   `yaml:"on-timeout"`
 	}
 
-	// Act is the basic executional unit for a workflow
-	Act struct {
+	// Action is the basic executional unit for a workflow
+	Action struct {
 		Name      string `yaml:"name"`
 		Image     string `yaml:"image"`
 		Timeout   int    `yaml:"timeout"`
-		Ontimeout string `yaml:"on-timeout"`
-		Onfailure string `yaml:"on-failure"`
+		OnTimeout string `yaml:"on-timeout"`
+		OnFailure string `yaml:"on-failure"`
 	}
 )
 
-type Action struct {
+type WorkflowAction struct {
 	TaskName  string
 	WorkerID  uuid.UUID
 	Name      string
 	Image     string
 	Timeout   int
-	Ontimeout string
-	Onfailure string
+	OnTimeout string
+	OnFailure string
 }
 
 // Workflow represents a workflow instance in database
@@ -155,19 +152,19 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 	}
 }
 
-func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfId uuid.UUID, workerId uuid.UUID) error {
+func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, workerID uuid.UUID) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 	_, err = tx.Exec(`
 	INSERT INTO
-		wfworker (wfid, worker)
+		workflow_worker_map (workflow_id, worker_id)
 	VALUES
 		($1, $2);
-	`, wfId, workerId)
+	`, wfID, workerID)
 	if err != nil {
-		return errors.Wrap(err, "INSERT in to wfworker")
+		return errors.Wrap(err, "INSERT in to workflow_worker_map")
 	}
 
 	err = tx.Commit()
@@ -177,37 +174,36 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfId uuid.UUID, wo
 	return nil
 }
 
+// Insert actions in the workflow_state table
 func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID) error {
 	wfymldata, err := parseYaml([]byte(yamlData))
 	if err != nil {
 		return err
 	}
-	var actionList []Action
+	var actionList []WorkflowAction
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
-		workerID, err := getWorkerID(ctx, db, task.WorkeAddr)
+		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
 		if err != nil {
 			return err
 		}
-		fmt.Println("Worker ID", workerID)
 		workerUID, err := uuid.FromString(workerID)
 		if err != nil {
 			return err
 		}
-		fmt.Println("Worker UID", workerUID)
 		if uniqueWorkerID != workerUID {
 			insertIntoWfWorkerTable(ctx, db, id, workerUID)
 			uniqueWorkerID = workerUID
 		}
 		for _, ac := range task.Actions {
-			action := Action{
+			action := WorkflowAction{
 				TaskName:  task.Name,
 				WorkerID:  workerUID,
 				Name:      ac.Name,
 				Image:     ac.Image,
 				Timeout:   ac.Timeout,
-				Ontimeout: ac.Ontimeout,
-				Onfailure: ac.Onfailure,
+				OnTimeout: ac.OnTimeout,
+				OnFailure: ac.OnFailure,
 			}
 			actionList = append(actionList, action)
 		}
@@ -223,16 +219,16 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 
 	_, err = tx.Exec(`
 	INSERT INTO
-		wfstate (wfid, actionList, currentActionIndex)
+		workflow_state (workflow_id, action_list, current_action_index)
 	VALUES
 		($1, $2, $3)
-	ON CONFLICT (wfid)
+	ON CONFLICT (workflow_id)
 	DO
 	UPDATE SET
-		(wfid, actionList, currentActionIndex) = ($1, $2, $3);
+		(workflow_id, action_list, current_action_index) = ($1, $2, $3);
 	`, id, actionData, 0)
 	if err != nil {
-		return errors.Wrap(err, "INSERT in to wfstate")
+		return errors.Wrap(err, "INSERT in to workflow_state")
 	}
 	err = tx.Commit()
 	if err != nil {
