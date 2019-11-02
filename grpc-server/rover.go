@@ -20,5 +20,5 @@ func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowAct
 
 // ReportActionStatus implements rover.ReportActionStatus
 func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*empty.Empty, error) {
-	return exec.ReportActionStatus(context, req)
+	return exec.ReportActionStatus(context, req, s.db)
 }

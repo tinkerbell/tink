@@ -42,11 +42,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 			Target:   in.Target,
 			State:    workflow.State_value[workflow.State_PENDING.String()],
 		}
-		err := db.CreateWorkflow(ctx, s.db, wf)
-		if err != nil {
-			return err
-		}
-		data, err = createYaml(ctx, s.db, in.Template, in.Target)
+		data, err := createYaml(ctx, s.db, in.Template, in.Target)
 		if err != nil {
 			return err
 		}
@@ -54,6 +50,11 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		if err != nil {
 			return err
 		}
+		err = db.CreateWorkflow(ctx, s.db, wf)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 

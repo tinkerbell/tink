@@ -2,9 +2,11 @@ package executor
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
+	"github.com/packethost/rover/db"
 	pb "github.com/packethost/rover/protos/rover"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -100,7 +102,7 @@ func GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest)
 }
 
 // ReportActionStatus implements rover.ReportActionStatus
-func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*empty.Empty, error) {
+func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, sdb *sql.DB) (*empty.Empty, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
@@ -141,6 +143,14 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (
 	wfContext.CurrentAction = req.GetActionName()
 	wfContext.CurrentActionState = req.GetActionStatus()
 	wfContext.CurrentActionIndex = actionIndex
+	err := db.UpdateWorkflowStateTable(context, sdb, wfContext)
+	if err != nil {
+		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_state table. Error : %s", err)
+	}
+	err = db.InsertIntoWorkflowEventTable(context, sdb, req)
+	if err != nil {
+		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_event table. Error : %s", err)
+	}
 	fmt.Printf("Current context %s\n", wfContext)
 	return &empty.Empty{}, nil
 }

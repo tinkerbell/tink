@@ -51,7 +51,7 @@ message WorkflowAction {
     string task_name = 1;
     string name = 2;
     string image = 3;
-    string timeout = 4;
+    int64 timeout = 4;
     string command = 5;
     string on_timeout = 6;
     string on_failure = 7;
