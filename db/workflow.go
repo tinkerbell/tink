@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	pb "github.com/packethost/rover/protos/rover"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/yaml.v2"
@@ -30,29 +31,18 @@ type (
 		Name       string   `yaml:"name"`
 		WorkerAddr string   `yaml:"worker"`
 		Actions    []Action `yaml:"actions"`
-		OnFailure  string   `yaml:"on-failure"`
-		OnTimeout  string   `yaml:"on-timeout"`
 	}
 
 	// Action is the basic executional unit for a workflow
 	Action struct {
 		Name      string `yaml:"name"`
 		Image     string `yaml:"image"`
-		Timeout   int    `yaml:"timeout"`
+		Timeout   int64  `yaml:"timeout"`
+		Command   string `yaml:"command"`
 		OnTimeout string `yaml:"on-timeout"`
 		OnFailure string `yaml:"on-failure"`
 	}
 )
-
-type WorkflowAction struct {
-	TaskName  string
-	WorkerID  uuid.UUID
-	Name      string
-	Image     string
-	Timeout   int
-	OnTimeout string
-	OnFailure string
-}
 
 // Workflow represents a workflow instance in database
 type Workflow struct {
@@ -229,7 +219,7 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	if err != nil {
 		return errors.Wrap(err, "Invalid Template")
 	}
-	var actionList []WorkflowAction
+	var actionList []pb.WorkflowAction
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
@@ -247,12 +237,13 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			uniqueWorkerID = workerUID
 		}
 		for _, ac := range task.Actions {
-			action := WorkflowAction{
+			action := pb.WorkflowAction{
 				TaskName:  task.Name,
-				WorkerID:  workerUID,
+				WorkerId:  workerUID.String(),
 				Name:      ac.Name,
 				Image:     ac.Image,
 				Timeout:   ac.Timeout,
+				Command:   ac.Command,
 				OnTimeout: ac.OnTimeout,
 				OnFailure: ac.OnFailure,
 			}
@@ -431,6 +422,54 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 		return errors.Wrap(err, "UPDATE")
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrap(err, "COMMIT")
+	}
+	return nil
+}
+
+func UpdateWorkflowStateTable(ctx context.Context, db *sql.DB, wfContext *pb.WorkflowContext) error {
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return errors.Wrap(err, "BEGIN transaction")
+	}
+
+	_, err = tx.Exec(`
+	UPDATE workflow_state
+	SET current_task_name = $2,
+		current_action_name = $3,
+		current_action_state = $4, 
+		current_worker = $5, 
+		current_action_index = $6
+	WHERE
+		workflow_id = $1;
+	`, wfContext.WorkflowId, wfContext.CurrentTask, wfContext.CurrentAction, wfContext.CurrentActionState, wfContext.CurrentWorker, wfContext.CurrentActionIndex)
+	if err != nil {
+		return errors.Wrap(err, "INSERT in to workflow_state")
+	}
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrap(err, "COMMIT")
+	}
+	return nil
+}
+
+func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.WorkflowActionStatus) error {
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return errors.Wrap(err, "BEGIN transaction")
+	}
+
+	_, err = tx.Exec(`
+	INSERT INTO
+		workflow_event (workflow_id, task_name, action_name, execution_time, message, status)
+	VALUES
+		($1, $2, $3, $4, $5, $6);
+	`, wfEvent.WorkflowId, wfEvent.TaskName, wfEvent.ActionName, wfEvent.Seconds, wfEvent.Message, wfEvent.ActionStatus)
+	if err != nil {
+		return errors.Wrap(err, "INSERT in to workflow_state")
+	}
 	err = tx.Commit()
 	if err != nil {
 		return errors.Wrap(err, "COMMIT")
