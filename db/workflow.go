@@ -261,14 +261,14 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 
 	_, err = tx.Exec(`
 	INSERT INTO
-		workflow_state (workflow_id, action_list, current_action_index)
+		workflow_state (workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index)
 	VALUES
-		($1, $2, $3)
+		($1, $2, $3, $4, $5, $6, $7)
 	ON CONFLICT (workflow_id)
 	DO
 	UPDATE SET
-		(workflow_id, action_list, current_action_index) = ($1, $2, $3);
-	`, id, actionData, 0)
+		(workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index) = ($1, $2, $3, $4, $5, $6, $7);
+	`, id, "", "", "", 0, actionData, 0)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_state")
 	}
@@ -277,6 +277,36 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		return errors.Wrap(err, "COMMIT")
 	}
 	return nil
+}
+
+func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]string, error) {
+	rows, err := db.Query(`
+	SELECT workflow_id
+	FROM workflow_worker_map
+	WHERE
+		worker_id = $1;
+	`, id)
+	if err != nil {
+		return nil, err
+	}
+	var wfID []string
+	defer rows.Close()
+	var workerId string
+
+	for rows.Next() {
+		err = rows.Scan(&workerId)
+		if err != nil {
+			err = errors.Wrap(err, "SELECT from worflow_worker_map")
+			logger.Error(err)
+			return nil, err
+		}
+		wfID = append(wfID, workerId)
+	}
+	err = rows.Err()
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return wfID, err
 }
 
 // GetWorkflow returns a workflow
@@ -429,7 +459,7 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 	return nil
 }
 
-func UpdateWorkflowStateTable(ctx context.Context, db *sql.DB, wfContext *pb.WorkflowContext) error {
+func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.WorkflowContext) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -453,6 +483,61 @@ func UpdateWorkflowStateTable(ctx context.Context, db *sql.DB, wfContext *pb.Wor
 		return errors.Wrap(err, "COMMIT")
 	}
 	return nil
+}
+
+func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*pb.WorkflowContext, error) {
+	query := `
+	SELECT current_worker, current_task_name, current_action_name, current_action_index, current_action_state
+	FROM workflow_state
+	WHERE
+		workflow_id = $1;
+	`
+	row := db.QueryRowContext(ctx, query, wfId)
+	var cw, ct, ca string
+	var cai int64
+	var cas pb.ActionState
+	err := row.Scan(&cw, &ct, &ca, &cai, &cas)
+	if err == nil {
+		return &pb.WorkflowContext{
+			WorkflowId:         wfId,
+			CurrentWorker:      cw,
+			CurrentTask:        ct,
+			CurrentAction:      ca,
+			CurrentActionIndex: cai,
+			CurrentActionState: cas}, nil
+	}
+	if err != sql.ErrNoRows {
+		err = errors.Wrap(err, "SELECT from worflow_state")
+		logger.Error(err)
+	} else {
+		err = nil
+	}
+	return &pb.WorkflowContext{}, nil
+}
+
+func GetWorkflowActions(ctx context.Context, db *sql.DB, wfId string) (*pb.WorkflowActionList, error) {
+	query := `
+	SELECT action_list
+	FROM workflow_state
+	WHERE
+		workflow_id = $1;
+	`
+	row := db.QueryRowContext(ctx, query, wfId)
+	var actionList string
+	err := row.Scan(&actionList)
+	if err == nil {
+		actions := []*pb.WorkflowAction{}
+		err = json.Unmarshal([]byte(actionList), &actions)
+		return &pb.WorkflowActionList{
+			ActionList: actions}, nil
+	}
+	if err != sql.ErrNoRows {
+		err = errors.Wrap(err, "SELECT from worflow_state")
+		logger.Error(err)
+	} else {
+		err = nil
+	}
+	return &pb.WorkflowActionList{}, nil
 }
 
 func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.WorkflowActionStatus) error {
