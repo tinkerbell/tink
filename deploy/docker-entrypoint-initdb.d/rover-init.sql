@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS workflow_state (
         , current_task_name VARCHAR(200)
         , current_action_name VARCHAR(200)
         , current_action_state SMALLINT
-        , current_worker UUID
+        , current_worker VARCHAR(200)
         , action_list JSONB
         , current_action_index int
 );
