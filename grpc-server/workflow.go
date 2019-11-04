@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	"github.com/packethost/rover/db"
-	exec "github.com/packethost/rover/executor"
 	"github.com/packethost/rover/metrics"
 	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
@@ -34,6 +33,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	labels["op"] = "createworkflow"
 	msg = "creating a new workflow"
 	id := uuid.NewV4()
+	//var data string
 	fn := func() error {
 		wf := db.Workflow{
 			ID:       id.String(),
@@ -41,21 +41,27 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 			Target:   in.Target,
 			State:    workflow.State_value[workflow.State_PENDING.String()],
 		}
-		return db.CreateWorkflow(ctx, s.db, wf)
+		data, err := createYaml(ctx, s.db, in.Template, in.Target)
+		if err != nil {
+			return err
+		}
+		err = db.InsertActionList(ctx, s.db, data, id)
+		if err != nil {
+			return err
+		}
+		err = db.CreateWorkflow(ctx, s.db, wf)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	data, _ := createYaml(ctx, s.db, in.Template, in.Target)
-	err := exec.LoadWorkflow(id.String(), data)
-	if err != nil {
-		return &workflow.CreateResponse{}, err
-	}
-
 	logger.Info(msg)
-	err = fn()
+	err := fn()
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()

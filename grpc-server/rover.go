@@ -10,15 +10,15 @@ import (
 
 // GetWorkflowContexts implements rover.GetWorkflowContexts
 func (s *server) GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest) (*pb.WorkflowContextList, error) {
-	return exec.GetWorkflowContexts(context, req)
+	return exec.GetWorkflowContexts(context, req, s.db)
 }
 
 // GetWorkflowActions implements rover.GetWorkflowActions
 func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest) (*pb.WorkflowActionList, error) {
-	return exec.GetWorkflowActions(context, req)
+	return exec.GetWorkflowActions(context, req, s.db)
 }
 
 // ReportActionStatus implements rover.ReportActionStatus
 func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*empty.Empty, error) {
-	return exec.ReportActionStatus(context, req)
+	return exec.ReportActionStatus(context, req, s.db)
 }

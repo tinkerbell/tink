@@ -2,80 +2,31 @@ package executor
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
+	"github.com/packethost/rover/db"
 	pb "github.com/packethost/rover/protos/rover"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	yaml "gopkg.in/yaml.v2"
 )
-
-var (
-	workflowcontexts = map[string]*pb.WorkflowContext{}
-	workflowactions  = map[string]*pb.WorkflowActionList{}
-	workers          = map[string][]string{}
-)
-
-// LoadWorkflow loads workflow in memory and polulates required constructs
-func LoadWorkflow(id, data string) error {
-	var wf Workflow
-	err := yaml.Unmarshal([]byte(data), &wf)
-	if err != nil {
-		return err
-	}
-	workflowcontexts[id] = &pb.WorkflowContext{WorkflowId: id}
-	updateWorkflowActions(id, wf.Tasks)
-	fmt.Println(workers)
-	fmt.Println(*(workflowcontexts[id]))
-	fmt.Println(*(workflowactions[id]))
-
-	// ingest()
-	return nil
-}
-
-func updateWorkflowActions(id string, tasks []Task) {
-	list := []*pb.WorkflowAction{}
-	for _, task := range tasks {
-		for _, action := range task.Actions {
-			list = append(list, &pb.WorkflowAction{
-				WorkerId: task.Worker,
-				TaskName: task.Name,
-				Name:     action.Name,
-				Image:    action.Image,
-			})
-
-			wfs := workers[task.Worker]
-			add := true
-			for _, wf := range wfs {
-				if id == wf {
-					add = false
-					break
-				}
-			}
-			if add {
-				workers[task.Worker] = append(wfs, id)
-			}
-		}
-	}
-	workflowactions[id] = &pb.WorkflowActionList{ActionList: list}
-}
 
 // GetWorkflowContexts implements rover.GetWorkflowContexts
-func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest) (*pb.WorkflowContextList, error) {
+func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest, sdb *sql.DB) (*pb.WorkflowContextList, error) {
 	if len(req.WorkerId) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "worker_id is invalid")
 	}
-	wfs, ok := workers[req.WorkerId]
-	if !ok {
+	wfs, _ := db.GetfromWfWorkflowTable(context, sdb, req.WorkerId)
+	if wfs == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Worker not found for any workflows")
 	}
 
 	wfContexts := []*pb.WorkflowContext{}
 
 	for _, wf := range wfs {
-		wfContext, ok := workflowcontexts[wf]
-		if !ok {
+		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
+		if err != nil {
 			return nil, status.Errorf(codes.Aborted, "Invalid workflow %s found for worker %s", wf, req.WorkerId)
 		}
 		wfContexts = append(wfContexts, wfContext)
@@ -87,20 +38,20 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 }
 
 // GetWorkflowActions implements rover.GetWorkflowActions
-func GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest) (*pb.WorkflowActionList, error) {
+func GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest, sdb *sql.DB) (*pb.WorkflowActionList, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
 	}
-	actions, ok := workflowactions[wfID]
-	if !ok {
+	actions, err := db.GetWorkflowActions(context, sdb, wfID)
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
 	}
 	return actions, nil
 }
 
 // ReportActionStatus implements rover.ReportActionStatus
-func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*empty.Empty, error) {
+func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, sdb *sql.DB) (*empty.Empty, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
@@ -112,12 +63,12 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (
 		return nil, status.Errorf(codes.InvalidArgument, "action_name is invalid")
 	}
 	fmt.Printf("Received action status: %s\n", req)
-	wfContext, ok := workflowcontexts[wfID]
-	if !ok {
+	wfContext, err := db.GetWorkflowContexts(context, sdb, wfID)
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Workflow context not found for workflow %s", wfID)
 	}
-	wfActions, ok := workflowactions[wfID]
-	if !ok {
+	wfActions, err := db.GetWorkflowActions(context, sdb, wfID)
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Workflow actions not found for workflow %s", wfID)
 	}
 
@@ -141,6 +92,14 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (
 	wfContext.CurrentAction = req.GetActionName()
 	wfContext.CurrentActionState = req.GetActionStatus()
 	wfContext.CurrentActionIndex = actionIndex
+	err = db.UpdateWorkflowState(context, sdb, wfContext)
+	if err != nil {
+		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_state table. Error : %s", err)
+	}
+	err = db.InsertIntoWorkflowEventTable(context, sdb, req)
+	if err != nil {
+		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_event table. Error : %s", err)
+	}
 	fmt.Printf("Current context %s\n", wfContext)
 	return &empty.Empty{}, nil
 }
