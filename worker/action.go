@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -19,6 +20,11 @@ var (
 )
 
 func executeAction(ctx context.Context, action *pb.WorkflowAction) error {
+	err := pullActionImage(ctx, action.GetImage())
+	if err != nil {
+		log.Fatalln("Action: ", action.Name, "Failed for error: ", err)
+		return err
+	}
 	id, err := createContainer(ctx, action)
 	if err != nil {
 		log.Fatalln("Action: ", action.Name, "Failed for error: ", err)
@@ -31,8 +37,30 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) error {
 		log.Fatalln("Action: ", action.Name, "Failed for error: ", err)
 		return err
 	}
-	// TODO: use "github.com/docker/docker/pkg/stdcopy"
+
 	io.Copy(os.Stdout, out)
+	return nil
+}
+
+func pullActionImage(ctx context.Context, image string) error {
+	f, err := os.Open("/" + registry + "/ca.crt")
+	defer f.Close()
+	if err != nil {
+		log.Fatalln("Failed to LOAD the certificate for registry:", registry)
+		return err
+	}
+	auth, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Fatalln("Failed to READ the certificate for registry:", registry)
+		return err
+	}
+
+	rw, err := cli.ImagePull(ctx, registry+"/"+image, types.ImagePullOptions{RegistryAuth: string(auth)})
+	defer rw.Close()
+	if err != nil {
+		log.Fatalln("Failed to pull Docker image", err)
+		return err
+	}
 	return nil
 }
 
@@ -42,6 +70,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction) (string, er
 		AttachStdout: true,
 		AttachStderr: true,
 	}
+
 	resp, err := cli.ContainerCreate(ctx, config, nil, nil, action.GetName())
 	if err != nil {
 		log.Fatalln(err)

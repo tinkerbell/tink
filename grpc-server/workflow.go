@@ -33,6 +33,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	labels["op"] = "createworkflow"
 	msg = "creating a new workflow"
 	id := uuid.NewV4()
+	//var data string
 	fn := func() error {
 		wf := db.Workflow{
 			ID:       id.String(),
@@ -52,7 +53,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		if err != nil {
 			return err
 		}
-
 		return nil
 	}
 
