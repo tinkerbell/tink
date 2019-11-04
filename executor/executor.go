@@ -12,64 +12,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var (
-//workflowcontexts = map[string]*pb.WorkflowContext{}
-//workflowactions = map[string]*pb.WorkflowActionList{}
-//workers         = map[string][]string{}
-)
-
-// LoadWorkflow loads workflow in memory and populates required constructs
-/*func LoadWorkflow(id, data string) error {
-	var wf Workflow
-	err := yaml.Unmarshal([]byte(data), &wf)
-	if err != nil {
-		return err
-	}
-	workflowcontexts[id] = &pb.WorkflowContext{WorkflowId: id}
-	updateWorkflowActions(id, wf.Tasks)
-	fmt.Println(workers)
-	fmt.Println(*(workflowcontexts[id]))
-	fmt.Println(*(workflowactions[id]))
-
-	// ingest()
-	return nil
-}
-
-
-func updateWorkflowActions(id string, tasks []Task) {
-	list := []*pb.WorkflowAction{}
-	for _, task := range tasks {
-		for _, action := range task.Actions {
-			list = append(list, &pb.WorkflowAction{
-				WorkerId: task.Worker,
-				TaskName: task.Name,
-				Name:     action.Name,
-				Image:    action.Image,
-			})
-
-			wfs := workers[task.Worker]
-			add := true
-			for _, wf := range wfs {
-				if id == wf {
-					add = false
-					break
-				}
-			}
-			if add {
-				workers[task.Worker] = append(wfs, id)
-			}
-		}
-	}
-	workflowactions[id] = &pb.WorkflowActionList{ActionList: list}
-}*/
-
 // GetWorkflowContexts implements rover.GetWorkflowContexts
 func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest, sdb *sql.DB) (*pb.WorkflowContextList, error) {
 	if len(req.WorkerId) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "worker_id is invalid")
 	}
 	wfs, _ := db.GetfromWfWorkflowTable(context, sdb, req.WorkerId)
-	//wfs, ok := workers[req.WorkerId]
 	if wfs == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Worker not found for any workflows")
 	}
@@ -78,7 +26,6 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 
 	for _, wf := range wfs {
 		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
-		//wfContext, ok := workflowcontexts[wf]
 		if err != nil {
 			return nil, status.Errorf(codes.Aborted, "Invalid workflow %s found for worker %s", wf, req.WorkerId)
 		}

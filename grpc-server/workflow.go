@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	"github.com/packethost/rover/db"
-	//exec "github.com/packethost/rover/executor"
 	"github.com/packethost/rover/metrics"
 	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
@@ -34,7 +33,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	labels["op"] = "createworkflow"
 	msg = "creating a new workflow"
 	id := uuid.NewV4()
-	//var data string
 	fn := func() error {
 		wf := db.Workflow{
 			ID:       id.String(),
@@ -61,11 +59,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-
-	//err := exec.LoadWorkflow(id.String(), data)
-	//if err != nil {
-	//	return &workflow.CreateResponse{}, err
-	//}
 
 	logger.Info(msg)
 	err := fn()
