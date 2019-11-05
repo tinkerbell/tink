@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/docker/distribution/reference"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	pb "github.com/packethost/rover/protos/rover"
@@ -52,13 +53,31 @@ type Workflow struct {
 }
 
 // CreateWorkflow creates a new workflow
-func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow) error {
+func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, data string, id uuid.UUID) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	_, err = tx.Exec(`
+	err = insertActionList(ctx, db, data, id, tx)
+	if err != nil {
+		return errors.Wrap(err, "Failed to insert in workflow_state")
+
+	}
+	err = insertInWorkflow(ctx, db, wf, tx)
+	if err != nil {
+		return errors.Wrap(err, "Failed to workflow")
+
+	}
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrap(err, "COMMIT")
+	}
+	return nil
+}
+
+func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) error {
+	_, err := tx.Exec(`
 	INSERT INTO
 		workflow (created_at, updated_at, template, target, state, id)
 	VALUES
@@ -71,105 +90,11 @@ func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow) error {
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow")
 	}
-
-	err = tx.Commit()
-	if err != nil {
-		return errors.Wrap(err, "COMMIT")
-	}
 	return nil
 }
 
-func parseYaml(ymlContent []byte) (*WfYamlstruct, error) {
-	var workflow = WfYamlstruct{}
-	err := yaml.Unmarshal(ymlContent, &workflow)
-	if err != nil {
-		return &WfYamlstruct{}, err
-	}
-	return &workflow, nil
-}
-
-func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, error) {
-	arg := `
-	{
-	  "network_ports": [
-	    {
-	      "data": {
-		"mac": "` + mac + `"
-	      }
-	    }
-	  ]
-	}
-	`
-	query := `
-	SELECT id
-	FROM hardware
-	WHERE
-		deleted_at IS NULL
-	AND
-		data @> $1
-	`
-
-	return get(ctx, db, query, arg)
-}
-
-func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
-	instance := `
-        {
-          "instance": {
-            "ip_addresses": [
-              {
-                "address": "` + ip + `"
-              }
-            ]
-          }
-        }
-        `
-	hardwareOrManagement := `
-        {
-                "ip_addresses": [
-                        {
-                                "address": "` + ip + `"
-                        }
-                ]
-        }
-		`
-
-	query := `
-        SELECT id
-        FROM hardware
-        WHERE
-                deleted_at IS NULL
-        AND (
-                data @> $1
-                OR
-                data @> $2
-        )
-        `
-
-	return get(ctx, db, query, instance, hardwareOrManagement)
-}
-
-func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
-	_, err := net.ParseMAC(addr)
-	if err != nil {
-		ip := net.ParseIP(addr)
-		if ip == nil || ip.To4() == nil {
-			return "", fmt.Errorf("invalid worker address: %s", addr)
-		} else {
-			return getWorkerIDbyIP(ctx, db, addr)
-
-		}
-	} else {
-		return getWorkerIDbyMac(ctx, db, addr)
-	}
-}
-
-func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, workerID uuid.UUID) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
-	if err != nil {
-		return errors.Wrap(err, "BEGIN transaction")
-	}
-	_, err = tx.Exec(`
+func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, workerID uuid.UUID, tx *sql.Tx) error {
+	_, err := tx.Exec(`
 	INSERT INTO
 		workflow_worker_map (workflow_id, worker_id)
 	VALUES
@@ -178,44 +103,16 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, wo
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_worker_map")
 	}
-
-	err = tx.Commit()
-	if err != nil {
-		return errors.Wrap(err, "COMMIT")
-	}
-	return nil
-}
-
-func validateUniqueTaskAndActionName(tasks []Task) error {
-	taskNameMap := make(map[string]struct{})
-	for _, task := range tasks {
-		_, ok := taskNameMap[task.Name]
-		if ok {
-			return fmt.Errorf("Provided template has duplicate task name \"%s\"", task.Name)
-		} else {
-			taskNameMap[task.Name] = struct{}{}
-			actionNameMap := make(map[string]struct{})
-			for _, action := range task.Actions {
-				_, ok := actionNameMap[action.Name]
-				if ok {
-					return fmt.Errorf("Provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
-				} else {
-					actionNameMap[action.Name] = struct{}{}
-				}
-			}
-
-		}
-	}
 	return nil
 }
 
 // Insert actions in the workflow_state table
-func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID) error {
+func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID, tx *sql.Tx) error {
 	wfymldata, err := parseYaml([]byte(yamlData))
 	if err != nil {
 		return err
 	}
-	err = validateUniqueTaskAndActionName(wfymldata.Tasks)
+	err = validateTemplateValues(wfymldata.Tasks)
 	if err != nil {
 		return errors.Wrap(err, "Invalid Template")
 	}
@@ -233,7 +130,10 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			return err
 		}
 		if uniqueWorkerID != workerUID {
-			insertIntoWfWorkerTable(ctx, db, id, workerUID)
+			err = insertIntoWfWorkerTable(ctx, db, id, workerUID, tx)
+			if err != nil {
+				return err
+			}
 			uniqueWorkerID = workerUID
 		}
 		for _, ac := range task.Actions {
@@ -254,11 +154,10 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	if err != nil {
 		return err
 	}
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	/*tx, err = db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
-	}
-
+	}*/
 	_, err = tx.Exec(`
 	INSERT INTO
 		workflow_state (workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index)
@@ -271,10 +170,6 @@ func InsertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	`, id, "", "", "", 0, actionData, 0)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_state")
-	}
-	err = tx.Commit()
-	if err != nil {
-		return errors.Wrap(err, "COMMIT")
 	}
 	return nil
 }
@@ -558,6 +453,143 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 	err = tx.Commit()
 	if err != nil {
 		return errors.Wrap(err, "COMMIT")
+	}
+	return nil
+}
+
+func parseYaml(ymlContent []byte) (*WfYamlstruct, error) {
+	var workflow = WfYamlstruct{}
+	err := yaml.Unmarshal(ymlContent, &workflow)
+	if err != nil {
+		return &WfYamlstruct{}, err
+	}
+	return &workflow, nil
+}
+
+func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, error) {
+	arg := `
+	{
+	  "network_ports": [
+	    {
+	      "data": {
+		"mac": "` + mac + `"
+	      }
+	    }
+	  ]
+	}
+	`
+	query := `
+	SELECT id
+	FROM hardware
+	WHERE
+		deleted_at IS NULL
+	AND
+		data @> $1
+	`
+
+	return get(ctx, db, query, arg)
+}
+
+func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
+	instance := `
+        {
+          "instance": {
+            "ip_addresses": [
+              {
+                "address": "` + ip + `"
+              }
+            ]
+          }
+        }
+        `
+	hardwareOrManagement := `
+        {
+                "ip_addresses": [
+                        {
+                                "address": "` + ip + `"
+                        }
+                ]
+        }
+		`
+
+	query := `
+        SELECT id
+        FROM hardware
+        WHERE
+                deleted_at IS NULL
+        AND (
+                data @> $1
+                OR
+                data @> $2
+        )
+        `
+
+	return get(ctx, db, query, instance, hardwareOrManagement)
+}
+
+func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
+	_, err := net.ParseMAC(addr)
+	if err != nil {
+		ip := net.ParseIP(addr)
+		if ip == nil || ip.To4() == nil {
+			return "", fmt.Errorf("invalid worker address: %s", addr)
+		} else {
+			return getWorkerIDbyIP(ctx, db, addr)
+
+		}
+	} else {
+		return getWorkerIDbyMac(ctx, db, addr)
+	}
+}
+
+func isValidLength(name string) error {
+	if len(name) > 200 {
+		return fmt.Errorf("Task/Action Name %s in the Temlate as more than 200 characters", name)
+	}
+	return nil
+}
+
+func isValidImageName(name string) error {
+	_, err := reference.ParseNormalizedNamed(name)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
+}
+
+func validateTemplateValues(tasks []Task) error {
+	taskNameMap := make(map[string]struct{})
+	for _, task := range tasks {
+		err := isValidLength(task.Name)
+		if err != nil {
+			return err
+		}
+		_, ok := taskNameMap[task.Name]
+		if ok {
+			return fmt.Errorf("Provided template has duplicate task name \"%s\"", task.Name)
+		} else {
+			taskNameMap[task.Name] = struct{}{}
+			actionNameMap := make(map[string]struct{})
+			for _, action := range task.Actions {
+				err := isValidLength(action.Name)
+				if err != nil {
+					return err
+				}
+				err = isValidImageName(action.Image)
+				if err != nil {
+					return fmt.Errorf("Invalid Image name %s", action.Image)
+				}
+
+				_, ok := actionNameMap[action.Name]
+				if ok {
+					return fmt.Errorf("Provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
+				} else {
+					actionNameMap[action.Name] = struct{}{}
+				}
+			}
+
+		}
 	}
 	return nil
 }

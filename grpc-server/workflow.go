@@ -42,14 +42,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 			State:    workflow.State_value[workflow.State_PENDING.String()],
 		}
 		data, err := createYaml(ctx, s.db, in.Template, in.Target)
-		if err != nil {
-			return err
-		}
-		err = db.InsertActionList(ctx, s.db, data, id)
-		if err != nil {
-			return err
-		}
-		err = db.CreateWorkflow(ctx, s.db, wf)
+		err = db.CreateWorkflow(ctx, s.db, wf, data, id)
 		if err != nil {
 			return err
 		}
