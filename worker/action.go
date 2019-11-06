@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -20,7 +21,7 @@ var (
 )
 
 func executeAction(ctx context.Context, action *pb.WorkflowAction) error {
-	err := pullActionImage(ctx, action.GetImage())
+	err := pullActionImage(ctx, action)
 	if err != nil {
 		log.Fatalln("Action: ", action.Name, "Failed for error: ", err)
 		return err
@@ -42,23 +43,27 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) error {
 	return nil
 }
 
-func pullActionImage(ctx context.Context, image string) error {
-	f, err := os.Open("/" + registry + "/ca.crt")
-	defer f.Close()
-	if err != nil {
-		log.Fatalln("Failed to LOAD the certificate for registry:", registry)
-		return err
-	}
-	auth, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Fatalln("Failed to READ the certificate for registry:", registry)
-		return err
+func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
+	user := os.Getenv("REGISTRY_USERNAME")
+	pwd := os.Getenv("REGISTRY_PASSWORD")
+	if user == "" || pwd == "" {
+		log.Fatalln(fmt.Errorf("requried REGISTRY_USERNAME and REGISTRY_PASSWORD"))
 	}
 
-	rw, err := cli.ImagePull(ctx, registry+"/"+image, types.ImagePullOptions{RegistryAuth: string(auth)})
-	defer rw.Close()
+	authConfig := types.AuthConfig{
+		Username:      user,
+		Password:      pwd,
+		ServerAddress: registry,
+	}
+	encodedJSON, err := json.Marshal(authConfig)
 	if err != nil {
-		log.Fatalln("Failed to pull Docker image", err)
+		panic(err)
+	}
+	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
+
+	_, err = cli.ImagePull(ctx, registry+"/"+action.GetImage(), types.ImagePullOptions{RegistryAuth: authStr})
+	if err != nil {
+		log.Fatalln("Failed to pull image for action", err)
 		return err
 	}
 	return nil

@@ -83,7 +83,10 @@ func initializeWorker(client pb.RoverClient) error {
 				fmt.Printf("Sent action status %s\n", actionStatus)
 
 				// start executing the action
-				executeAction(ctx, actions.GetActionList()[actionIndex])
+				err = executeAction(ctx, actions.GetActionList()[actionIndex])
+				if err != nil {
+					return err
+				}
 
 				actionStatus = &pb.WorkflowActionStatus{
 					WorkflowId:   wfID,
