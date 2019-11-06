@@ -37,6 +37,7 @@ message WorkflowContext {
     string current_action = 4;
     int64 current_action_index = 5;
     ActionState current_action_state = 6;
+    int64 total_number_of_actions = 7;
 }
 
 message WorkflowContextList {

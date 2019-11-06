@@ -9,6 +9,7 @@ import (
 
 	"github.com/packethost/rover/db"
 	"github.com/packethost/rover/metrics"
+	"github.com/packethost/rover/protos/rover"
 	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,6 +43,9 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 			State:    workflow.State_value[workflow.State_PENDING.String()],
 		}
 		data, err := createYaml(ctx, s.db, in.Template, in.Target)
+		if err != nil {
+			return errors.Wrap(err, "Failed to create Yaml")
+		}
 		err = db.CreateWorkflow(ctx, s.db, wf, data, id)
 		if err != nil {
 			return err
@@ -179,6 +183,44 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowSvc_Li
 
 	metrics.CacheHits.With(labels).Inc()
 	return nil
+}
+
+func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest) (*workflow.WorkflowContext, error) {
+	logger.Info("GetworkflowContext")
+	labels := prometheus.Labels{"method": "GetWorkflowContext", "op": ""}
+	metrics.CacheInFlight.With(labels).Inc()
+	defer metrics.CacheInFlight.With(labels).Dec()
+
+	msg := ""
+	labels["op"] = "get"
+	msg = "getting a workflow"
+
+	fn := func() (*rover.WorkflowContext, error) { return db.GetWorkflowContexts(ctx, s.db, in.Id) }
+	metrics.CacheTotals.With(labels).Inc()
+	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
+	defer timer.ObserveDuration()
+
+	logger.Info(msg)
+	w, err := fn()
+	logger.Info("done " + msg)
+	if err != nil {
+		metrics.CacheErrors.With(labels).Inc()
+		l := logger
+		if pqErr := db.Error(err); pqErr != nil {
+			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
+		}
+		l.Error(err)
+	}
+	wf := &workflow.WorkflowContext{
+		WorkflowId:           w.WorkflowId,
+		CurrentWorker:        w.CurrentWorker,
+		CurrentTask:          w.CurrentTask,
+		CurrentAction:        w.CurrentAction,
+		CurrentActionIndex:   w.CurrentActionIndex,
+		CurrentActionState:   workflow.ActionState(w.CurrentActionState),
+		TotalNumberOfActions: w.TotalNumberOfActions,
+	}
+	return wf, err
 }
 
 func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, tar string) (string, error) {

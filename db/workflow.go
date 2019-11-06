@@ -117,6 +117,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		return errors.Wrap(err, "Invalid Template")
 	}
 	var actionList []pb.WorkflowAction
+	var totalActions int64
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
@@ -148,26 +149,24 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 				OnFailure: ac.OnFailure,
 			}
 			actionList = append(actionList, action)
+			totalActions++
 		}
 	}
 	actionData, err := json.Marshal(actionList)
 	if err != nil {
 		return err
 	}
-	/*tx, err = db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
-	if err != nil {
-		return errors.Wrap(err, "BEGIN transaction")
-	}*/
+
 	_, err = tx.Exec(`
 	INSERT INTO
-		workflow_state (workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index)
+		workflow_state (workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index, total_number_of_actions)
 	VALUES
-		($1, $2, $3, $4, $5, $6, $7)
+		($1, $2, $3, $4, $5, $6, $7, $8)
 	ON CONFLICT (workflow_id)
 	DO
 	UPDATE SET
-		(workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index) = ($1, $2, $3, $4, $5, $6, $7);
-	`, id, "", "", "", 0, actionData, 0)
+		(workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index, total_number_of_actions) = ($1, $2, $3, $4, $5, $6, $7, $8);
+	`, id, "", "", "", 0, actionData, 0, totalActions)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_state")
 	}
@@ -382,24 +381,25 @@ func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.Workflow
 
 func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*pb.WorkflowContext, error) {
 	query := `
-	SELECT current_worker, current_task_name, current_action_name, current_action_index, current_action_state
+	SELECT current_worker, current_task_name, current_action_name, current_action_index, current_action_state, total_number_of_actions
 	FROM workflow_state
 	WHERE
 		workflow_id = $1;
 	`
 	row := db.QueryRowContext(ctx, query, wfId)
 	var cw, ct, ca string
-	var cai int64
+	var cai, tact int64
 	var cas pb.ActionState
-	err := row.Scan(&cw, &ct, &ca, &cai, &cas)
+	err := row.Scan(&cw, &ct, &ca, &cai, &cas, &tact)
 	if err == nil {
 		return &pb.WorkflowContext{
-			WorkflowId:         wfId,
-			CurrentWorker:      cw,
-			CurrentTask:        ct,
-			CurrentAction:      ca,
-			CurrentActionIndex: cai,
-			CurrentActionState: cas}, nil
+			WorkflowId:           wfId,
+			CurrentWorker:        cw,
+			CurrentTask:          ct,
+			CurrentAction:        ca,
+			CurrentActionIndex:   cai,
+			CurrentActionState:   cas,
+			TotalNumberOfActions: tact}, nil
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from worflow_state")

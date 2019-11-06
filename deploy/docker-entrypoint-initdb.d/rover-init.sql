@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS workflow_state (
         , current_worker VARCHAR(200)
         , action_list JSONB
         , current_action_index int
+        , total_number_of_actions INT
 );
 
 CREATE INDEX IF NOT EXISTS idx_wfid ON workflow_state (workflow_id);
