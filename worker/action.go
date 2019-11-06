@@ -99,7 +99,7 @@ func init() {
 	if registry == "" {
 		log.Fatalln(fmt.Errorf("requried DOCKER_REGISTRY"))
 	}
-	c, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion(os.Getenv("DOCKER_API_VERSION")))
+	c, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		log.Fatalln(err)
 	}
