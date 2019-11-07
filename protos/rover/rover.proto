@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 package rover;
 
@@ -70,5 +71,6 @@ message WorkflowActionStatus {
     ActionState action_status = 4;
     int64 seconds = 5;
     string message = 6;
+    google.protobuf.Timestamp createdAt = 7;
 
 }

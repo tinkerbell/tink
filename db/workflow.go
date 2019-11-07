@@ -79,14 +79,14 @@ func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, data string, i
 func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 	INSERT INTO
-		workflow (created_at, updated_at, template, target, state, id)
+		workflow (created_at, updated_at, template, target, id)
 	VALUES
-		($1, $1, $2, $3, $4, $5)
+		($1, $1, $2, $3, $4)
 	ON CONFLICT (id)
 	DO
 	UPDATE SET
-		(updated_at, deleted_at, template, target, state) = ($1, NULL, $2, $3, $4);
-	`, time.Now(), wf.Template, wf.Target, wf.State, wf.ID)
+		(updated_at, deleted_at, template, target) = ($1, NULL, $2, $3);
+	`, time.Now(), wf.Template, wf.Target, wf.ID)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow")
 	}
@@ -206,7 +206,7 @@ func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]strin
 // GetWorkflow returns a workflow
 func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
 	query := `
-	SELECT template, target, state
+	SELECT template, target
 	FROM workflow
 	WHERE
 		id = $1
@@ -215,10 +215,9 @@ func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
 	`
 	row := db.QueryRowContext(ctx, query, id)
 	var tmp, tar string
-	var state int32
-	err := row.Scan(&tmp, &tar, &state)
+	err := row.Scan(&tmp, &tar)
 	if err == nil {
-		return Workflow{ID: id, Template: tmp, Target: tar, State: state}, nil
+		return Workflow{ID: id, Template: tmp, Target: tar}, nil
 	}
 
 	if err != sql.ErrNoRows {
@@ -261,7 +260,7 @@ func DeleteWorkflow(ctx context.Context, db *sql.DB, id string, state int32) err
 // ListWorkflows returns all workflows
 func ListWorkflows(db *sql.DB, fn func(wf Workflow) error) error {
 	rows, err := db.Query(`
-	SELECT id, template, target, state, created_at, updated_at
+	SELECT id, template, target, created_at, updated_at
 	FROM workflow
 	WHERE
 		deleted_at IS NULL;
@@ -273,13 +272,12 @@ func ListWorkflows(db *sql.DB, fn func(wf Workflow) error) error {
 
 	defer rows.Close()
 	var (
-		state        int32
 		id, tmp, tar string
 		crAt, upAt   time.Time
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &tmp, &tar, &state, &crAt, &upAt)
+		err = rows.Scan(&id, &tmp, &tar, &crAt, &upAt)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT")
 			logger.Error(err)
@@ -290,7 +288,6 @@ func ListWorkflows(db *sql.DB, fn func(wf Workflow) error) error {
 			ID:       id,
 			Template: tmp,
 			Target:   tar,
-			State:    state,
 		}
 		wf.CreatedAt, _ = ptypes.TimestampProto(crAt)
 		wf.UpdatedAt, _ = ptypes.TimestampProto(upAt)
@@ -319,27 +316,24 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 		SET
 			updated_at = NOW(), template = $2
 		WHERE
-			id = $1
-		AND
-			state != $3;`, wf.ID, wf.Template, state)
+			id = $1;
+		`, wf.ID, wf.Template)
 	} else if wf.Target != "" && wf.Template == "" {
 		_, err = tx.Exec(`
 		UPDATE workflow
 		SET
 			updated_at = NOW(), target = $2
 		WHERE
-			id = $1
-		AND
-			state != $3;`, wf.ID, wf.Target, state)
+			id = $1;
+		`, wf.ID, wf.Target)
 	} else {
 		_, err = tx.Exec(`
 		UPDATE workflow
 		SET
 			updated_at = NOW(), template = $2, target = $3
 		WHERE
-			id = $1
-		AND
-			state != $4;`, wf.ID, wf.Template, wf.Target, state)
+			id = $1;
+		`, wf.ID, wf.Template, wf.Target)
 	}
 
 	if err != nil {
@@ -435,18 +429,19 @@ func GetWorkflowActions(ctx context.Context, db *sql.DB, wfId string) (*pb.Workf
 	return &pb.WorkflowActionList{}, nil
 }
 
-func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.WorkflowActionStatus) error {
+func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
+	// TODO "created_at" field should be set in worker and come in the request
 	_, err = tx.Exec(`
 	INSERT INTO
-		workflow_event (workflow_id, task_name, action_name, execution_time, message, status)
+		workflow_event (workflow_id, task_name, action_name, execution_time, message, status, created_at)
 	VALUES
-		($1, $2, $3, $4, $5, $6);
-	`, wfEvent.WorkflowId, wfEvent.TaskName, wfEvent.ActionName, wfEvent.Seconds, wfEvent.Message, wfEvent.ActionStatus)
+		($1, $2, $3, $4, $5, $6, $7);
+	`, wfEvent.WorkflowId, wfEvent.TaskName, wfEvent.ActionName, wfEvent.Seconds, wfEvent.Message, wfEvent.ActionStatus, time)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_state")
 	}
@@ -455,6 +450,58 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 		return errors.Wrap(err, "COMMIT")
 	}
 	return nil
+}
+
+// ShowWorkflowEvents returns all workflows
+func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionStatus) error) error {
+	rows, err := db.Query(`
+       SELECT workflow_id, task_name, action_name, execution_time, message, status, created_at
+	   FROM workflow_event
+	   WHERE 
+			   workflow_id = $1
+		ORDER BY 
+				created_at ASC;
+	   `, wfId)
+
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+	var (
+		status                int32
+		secs                  int64
+		id, tName, aName, msg string
+		evTime                time.Time
+	)
+
+	for rows.Next() {
+		err = rows.Scan(&id, &tName, &aName, &secs, &msg, &status, &evTime)
+		if err != nil {
+			err = errors.Wrap(err, "SELECT")
+			logger.Error(err)
+			return err
+		}
+		createdAt, _ := ptypes.TimestampProto(evTime)
+		wfs := pb.WorkflowActionStatus{
+			WorkflowId:   id,
+			TaskName:     tName,
+			ActionName:   aName,
+			Seconds:      secs,
+			Message:      msg,
+			ActionStatus: pb.ActionState(status),
+			CreatedAt:    createdAt,
+		}
+		err = fn(wfs)
+		if err != nil {
+			return err
+		}
+	}
+	err = rows.Err()
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	return err
 }
 
 func parseYaml(ymlContent []byte) (*WfYamlstruct, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/packethost/rover/db"
@@ -96,7 +97,9 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, s
 	if err != nil {
 		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_state table. Error : %s", err)
 	}
-	err = db.InsertIntoWorkflowEventTable(context, sdb, req)
+	// TODO the below "time" would be a part of the request which is coming form worker.
+	time := time.Now()
+	err = db.InsertIntoWorkflowEventTable(context, sdb, req, time)
 	if err != nil {
 		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_event table. Error : %s", err)
 	}

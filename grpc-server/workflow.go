@@ -169,7 +169,6 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowSvc_Li
 			Id:        w.ID,
 			Template:  w.Template,
 			Target:    w.Target,
-			State:     state[w.State],
 			CreatedAt: w.CreatedAt,
 			UpdatedAt: w.UpdatedAt,
 		}
@@ -221,6 +220,46 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 		TotalNumberOfActions: w.TotalNumberOfActions,
 	}
 	return wf, err
+}
+
+// ShowWorflowevents  implements workflow.ShowWorflowEvents
+func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowSvc_ShowWorkflowEventsServer) error {
+	logger.Info("List workflows Events")
+	labels := prometheus.Labels{"method": "ShowWorkflowEvents", "op": "list"}
+	metrics.CacheTotals.With(labels).Inc()
+	metrics.CacheInFlight.With(labels).Inc()
+	defer metrics.CacheInFlight.With(labels).Dec()
+
+	s.dbLock.RLock()
+	ready := s.dbReady
+	s.dbLock.RUnlock()
+	if !ready {
+		metrics.CacheStalls.With(labels).Inc()
+		return errors.New("DB is not ready")
+	}
+
+	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
+	defer timer.ObserveDuration()
+	err := db.ShowWorkflowEvents(s.db, req.Id, func(w rover.WorkflowActionStatus) error {
+		wfs := &workflow.WorkflowActionStatus{
+			WorkflowId:   w.WorkflowId,
+			TaskName:     w.TaskName,
+			ActionName:   w.ActionName,
+			ActionStatus: workflow.ActionState(w.ActionStatus),
+			Seconds:      w.Seconds,
+			Message:      w.Message,
+			CreatedAt:    w.CreatedAt,
+		}
+		return stream.Send(wfs)
+	})
+
+	if err != nil {
+		metrics.CacheErrors.With(labels).Inc()
+		return err
+	}
+	logger.Info("Done Listing workflows Events")
+	metrics.CacheHits.With(labels).Inc()
+	return nil
 }
 
 func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, tar string) (string, error) {

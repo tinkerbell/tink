@@ -40,7 +40,6 @@ CREATE TABLE IF NOT EXISTS workflow (
 	id UUID UNIQUE NOT NULL
 	, template UUID NOT NULL
 	, target UUID NOT NULL
-	, state SMALLINT default 0
 	, created_at TIMESTAMPTZ
 	, updated_at TIMESTAMPTZ
 	, deleted_at TIMESTAMPTZ
@@ -69,6 +68,7 @@ CREATE TABLE IF NOT EXISTS workflow_event (
         , execution_time int
 	, message VARCHAR(200)
 	, status SMALLINT
+        , created_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_event ON workflow_event (workflow_id);

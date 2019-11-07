@@ -33,7 +33,7 @@ var listCmd = &cobra.Command{
 	Run: func(c *cobra.Command, args []string) {
 		t := table.NewWriter()
 		t.SetOutputMirror(os.Stdout)
-		t.AppendHeader(table.Row{hID, hTemplate, hTarget, hState, hCreatedAt, hUpdatedAt})
+		t.AppendHeader(table.Row{hID, hTemplate, hTarget, hCreatedAt, hUpdatedAt})
 		listWorkflows(c, t)
 		t.Render()
 
@@ -52,7 +52,7 @@ func listWorkflows(c *cobra.Command, t table.Writer) {
 		cr := *wf.CreatedAt
 		up := *wf.UpdatedAt
 		t.AppendRows([]table.Row{
-			{wf.Id, wf.Template, wf.Target, wf.State, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
+			{wf.Id, wf.Template, wf.Target, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
 		})
 	}
 

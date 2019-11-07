@@ -9,7 +9,7 @@ service WorkflowSvc {
     rpc DeleteWorkflow(GetRequest) returns (Empty);
     rpc ListWorkflows(Empty) returns (stream Workflow);
     rpc GetWorkflowContext(GetRequest) returns (WorkflowContext);
-    //rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus);
+    rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus);
 }
 
 message Empty {
@@ -72,5 +72,5 @@ message WorkflowActionStatus {
     ActionState action_status = 4;
     int64 seconds = 5;
     string message = 6;
-
+    google.protobuf.Timestamp createdAt = 7;
 }
