@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -23,11 +24,21 @@ func initializeWorker(client pb.RoverClient) error {
 
 	ctx := context.Background()
 	for {
-		fetchLatestContext(ctx, client, workerID)
+		err := fetchLatestContext(ctx, client, workerID)
+		if err != nil {
+			return err
+		}
+
 		if allWorkflowsFinished() {
 			fmt.Println("All workflows finished")
 			return nil
 		}
+
+		cli, err = initializeDockerClient()
+		if err != nil {
+			return err
+		}
+
 		for wfID, wfContext := range workflowcontexts {
 			actions, ok := workflowactions[wfID]
 			if !ok {
@@ -48,8 +59,8 @@ func initializeWorker(client pb.RoverClient) error {
 				}
 				if wfContext.GetCurrentActionState() != pb.ActionState_ACTION_SUCCESS {
 					fmt.Printf("Current context %s\n", wfContext)
-					fmt.Println("Sleep for 1 second...")
-					time.Sleep(1 * time.Second)
+					fmt.Printf("Sleep for %d seconds\n", retryInterval)
+					time.Sleep(retryInterval)
 					continue
 				}
 				nextAction := actions.GetActionList()[wfContext.GetCurrentActionIndex()+1]
@@ -62,8 +73,8 @@ func initializeWorker(client pb.RoverClient) error {
 			if turn {
 				fmt.Printf("Starting with action %s\n", actions.GetActionList()[actionIndex])
 			} else {
-				fmt.Println("Sleep for 2 seconds..")
-				time.Sleep(2 * time.Second)
+				fmt.Printf("Sleep for %d seconds\n", retryInterval)
+				time.Sleep(retryInterval)
 			}
 
 			for turn {
@@ -76,7 +87,8 @@ func initializeWorker(client pb.RoverClient) error {
 					Seconds:      0,
 					Message:      "Started execution",
 				}
-				_, err := client.ReportActionStatus(ctx, actionStatus)
+
+				err := reportActionStatus(ctx, client, actionStatus)
 				if err != nil {
 					exitWithGrpcError(err)
 				}
@@ -96,14 +108,7 @@ func initializeWorker(client pb.RoverClient) error {
 					Seconds:      2,
 					Message:      "Finished execution",
 				}
-				_, err = client.ReportActionStatus(ctx, &pb.WorkflowActionStatus{
-					WorkflowId:   wfID,
-					TaskName:     action.GetTaskName(),
-					ActionName:   action.GetName(),
-					ActionStatus: pb.ActionState_ACTION_SUCCESS,
-					Seconds:      2,
-					Message:      "Finished execution",
-				})
+				err = reportActionStatus(ctx, client, actionStatus)
 				if err != nil {
 					exitWithGrpcError(err)
 				}
@@ -126,22 +131,23 @@ func initializeWorker(client pb.RoverClient) error {
 	}
 }
 
-func fetchLatestContext(ctx context.Context, client pb.RoverClient, workerID string) {
+func fetchLatestContext(ctx context.Context, client pb.RoverClient, workerID string) error {
 	fmt.Printf("Fetching latest context for worker %s\n", workerID)
 	res, err := client.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
 	if err != nil {
-		exitWithGrpcError(err)
+		return err
 	}
 	for _, wfContext := range res.GetWorkflowContexts() {
 		workflowcontexts[wfContext.WorkflowId] = wfContext
 		if _, ok := workflowactions[wfContext.WorkflowId]; !ok {
 			wfActions, err := client.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfContext.WorkflowId})
 			if err != nil {
-				exitWithGrpcError(err)
+				return err
 			}
 			workflowactions[wfContext.WorkflowId] = wfActions
 		}
 	}
+	return nil
 }
 
 func allWorkflowsFinished() bool {
@@ -165,4 +171,19 @@ func exitWithGrpcError(err error) {
 
 func isLastAction(wfContext *pb.WorkflowContext, actions *pb.WorkflowActionList) bool {
 	return int(wfContext.GetCurrentActionIndex()) == len(actions.GetActionList())-1
+}
+
+func reportActionStatus(ctx context.Context, client pb.RoverClient, actionStatus *pb.WorkflowActionStatus) error {
+	var err error
+	for r := 1; r <= retries; r++ {
+		_, err = client.ReportActionStatus(ctx, actionStatus)
+		if err != nil {
+			log.Println(err)
+			log.Printf("Retrying after %v seconds", retryInterval)
+			<-time.After(retryInterval * time.Second)
+			continue
+		}
+		return nil
+	}
+	return err
 }
