@@ -5,12 +5,17 @@ COPY tls /tls
 WORKDIR /tls
 RUN [ "sh", "gencerts.sh" ]
 
+
+FROM registry:2 AS auth
+ARG REGISTRY_USERNAME
+ARG REGISTRY_PASSWORD
+RUN mkdir /auth \
+  && htpasswd -Bbn ${REGISTRY_USERNAME} ${REGISTRY_PASSWORD} > /auth/htpasswd
+
 FROM registry:2
-WORKDIR /certs
-COPY --from=base /tls/server.pem .
-COPY --from=base /tls/server-key.pem .
-ENV REGISTRY_HTTP_ADDR=0.0.0.0:443
-ENV REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.pem
-ENV REGISTRY_HTTP_TLS_KEY=/certs/server-key.pem
+RUN mkdir -p /certs /auth 
+COPY --from=base /tls/server.pem /certs
+COPY --from=base /tls/server-key.pem /certs
+COPY --from=auth /auth/htpasswd /auth
 EXPOSE 443
 
