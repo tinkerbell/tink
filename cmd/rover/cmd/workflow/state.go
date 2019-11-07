@@ -34,8 +34,7 @@ var stateCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			wfProgress := "0%"
-			wfProgress = calWorkflowProgress(wf.CurrentActionIndex, wf.TotalNumberOfActions, int(wf.CurrentActionState))
+			wfProgress := calWorkflowProgress(wf.CurrentActionIndex, wf.TotalNumberOfActions, int(wf.CurrentActionState))
 			t.AppendRow(table.Row{"Workflow ID", wf.WorkflowId})
 			t.AppendRow(table.Row{"Workflow Progress", wfProgress})
 			t.AppendRow(table.Row{"Current Task", wf.CurrentTask})

@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	hTaskName      = "Task_name"
-	hActionName    = "Action_name"
-	hExecutionTime = "Execution_time"
+	hTaskName      = "Task Name"
+	hActionName    = "Action Name"
+	hExecutionTime = "Execution Time"
 	hMessage       = "Message"
-	hStatus        = "Action_status"
+	hStatus        = "Action Status"
 )
 
 // showCmd represents the events subcommand for workflow command

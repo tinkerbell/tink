@@ -117,7 +117,6 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		return errors.Wrap(err, "Invalid Template")
 	}
 	var actionList []pb.WorkflowAction
-	var totalActions int64
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
@@ -149,9 +148,9 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 				OnFailure: ac.OnFailure,
 			}
 			actionList = append(actionList, action)
-			totalActions++
 		}
 	}
+	totalActions := int64(len(actionList))
 	actionData, err := json.Marshal(actionList)
 	if err != nil {
 		return err
