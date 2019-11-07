@@ -95,7 +95,9 @@ func initializeWorker(client pb.RoverClient) error {
 				fmt.Printf("Sent action status %s\n", actionStatus)
 
 				// start executing the action
+				start := time.Now()
 				err = executeAction(ctx, actions.GetActionList()[actionIndex])
+				elapsed := time.Since(start)
 				if err != nil {
 					return err
 				}
@@ -105,7 +107,7 @@ func initializeWorker(client pb.RoverClient) error {
 					TaskName:     action.GetTaskName(),
 					ActionName:   action.GetName(),
 					ActionStatus: pb.ActionState_ACTION_SUCCESS,
-					Seconds:      2,
+					Seconds:      int64(elapsed.Seconds()),
 					Message:      "Finished execution",
 				}
 				err = reportActionStatus(ctx, client, actionStatus)
