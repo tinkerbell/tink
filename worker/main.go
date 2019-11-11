@@ -18,7 +18,6 @@ const (
 
 var (
 	rClient       pb.RoverClient
-	conn          *grpc.ClientConn
 	retryInterval time.Duration
 	retries       int
 )
@@ -27,11 +26,12 @@ func main() {
 	setupRetry()
 	conn, err := tryClientConnection()
 	if err != nil {
-		rClient = pb.NewRoverClient(conn)
-		err := initializeWorker(rClient)
-		if err != nil {
-			log.Fatalln(err)
-		}
+		log.Fatalln(err)
+	}
+	rClient = pb.NewRoverClient(conn)
+	err = initializeWorker(rClient)
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
 

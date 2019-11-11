@@ -59,7 +59,6 @@ func calWorkflowProgress(cur int64, total int64, state int) string {
 		taskCompleted = cur
 	}
 	progress := (taskCompleted * 100) / total
-	fmt.Println("Value of progress  is ", progress)
 	perc := strconv.Itoa(int(progress)) + "%"
 
 	return fmt.Sprintf("%s", perc)
