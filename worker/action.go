@@ -57,10 +57,12 @@ func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	_, err = cli.ImagePull(ctx, registry+"/"+action.GetImage(), types.ImagePullOptions{RegistryAuth: authStr})
+	out, err := cli.ImagePull(ctx, registry+"/"+action.GetImage(), types.ImagePullOptions{RegistryAuth: authStr})
 	if err != nil {
 		return errors.Wrap(err, "DOCKER PULL")
 	}
+	defer out.Close()
+	io.Copy(os.Stdout, out)
 	return nil
 }
 
@@ -69,7 +71,10 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction) (string, er
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
 		AttachStderr: true,
-		Cmd:          []string{action.Command},
+	}
+
+	if action.Command != "" {
+		config.Cmd = []string{action.Command}
 	}
 
 	resp, err := cli.ContainerCreate(ctx, config, nil, nil, action.GetName())
