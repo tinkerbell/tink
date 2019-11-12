@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	hWorkerID      = "Worker ID"
 	hTaskName      = "Task Name"
 	hActionName    = "Action Name"
 	hExecutionTime = "Execution Time"
@@ -35,7 +36,7 @@ var showCmd = &cobra.Command{
 	Run: func(c *cobra.Command, args []string) {
 		t := table.NewWriter()
 		t.SetOutputMirror(os.Stdout)
-		t.AppendHeader(table.Row{hID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
+		t.AppendHeader(table.Row{hWorkerID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
 		listEvents(c, t, args)
 		t.Render()
 
@@ -53,7 +54,7 @@ func listEvents(c *cobra.Command, t table.Writer, args []string) {
 		err = nil
 		for event, err := events.Recv(); err == nil && event != nil; event, err = events.Recv() {
 			t.AppendRows([]table.Row{
-				{event.WorkflowId, event.TaskName, event.ActionName, event.Seconds, event.Message, event.ActionStatus},
+				{event.WorkerId, event.TaskName, event.ActionName, event.Seconds, event.Message, event.ActionStatus},
 			})
 		}
 		if err != nil && err != io.EOF {

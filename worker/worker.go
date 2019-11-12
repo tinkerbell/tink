@@ -86,6 +86,7 @@ func initializeWorker(client pb.RoverClient) error {
 					ActionStatus: pb.ActionState_ACTION_IN_PROGRESS,
 					Seconds:      0,
 					Message:      "Started execution",
+					WorkerId:     action.GetWorkerId(),
 				}
 
 				err := reportActionStatus(ctx, client, actionStatus)
@@ -96,20 +97,30 @@ func initializeWorker(client pb.RoverClient) error {
 
 				// start executing the action
 				start := time.Now()
-				err = executeAction(ctx, actions.GetActionList()[actionIndex])
+				message, status, err := executeAction(ctx, actions.GetActionList()[actionIndex])
 				elapsed := time.Since(start)
-				if err != nil {
+
+				actionStatus = &pb.WorkflowActionStatus{
+					WorkflowId: wfID,
+					TaskName:   action.GetTaskName(),
+					ActionName: action.GetName(),
+					Seconds:    int64(elapsed.Seconds()),
+					WorkerId:   action.GetWorkerId(),
+				}
+
+				if err != nil || status != 0 {
+					actionStatus.ActionStatus = pb.ActionState_ACTION_FAILED
+					actionStatus.Message = message
+					rerr := reportActionStatus(ctx, client, actionStatus)
+					if rerr != nil {
+						exitWithGrpcError(rerr)
+					}
 					return err
 				}
 
-				actionStatus = &pb.WorkflowActionStatus{
-					WorkflowId:   wfID,
-					TaskName:     action.GetTaskName(),
-					ActionName:   action.GetName(),
-					ActionStatus: pb.ActionState_ACTION_SUCCESS,
-					Seconds:      int64(elapsed.Seconds()),
-					Message:      "Finished execution",
-				}
+				actionStatus.ActionStatus = pb.ActionState_ACTION_SUCCESS
+				actionStatus.Message = "Finished Execution Successfully"
+
 				err = reportActionStatus(ctx, client, actionStatus)
 				if err != nil {
 					exitWithGrpcError(err)

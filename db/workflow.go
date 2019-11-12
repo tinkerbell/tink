@@ -437,12 +437,12 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 	// TODO "created_at" field should be set in worker and come in the request
 	_, err = tx.Exec(`
 	INSERT INTO
-		workflow_event (workflow_id, task_name, action_name, execution_time, message, status, created_at)
+		workflow_event (workflow_id, worker_id, task_name, action_name, execution_time, message, status, created_at)
 	VALUES
-		($1, $2, $3, $4, $5, $6, $7);
-	`, wfEvent.WorkflowId, wfEvent.TaskName, wfEvent.ActionName, wfEvent.Seconds, wfEvent.Message, wfEvent.ActionStatus, time)
+		($1, $2, $3, $4, $5, $6, $7, $8);
+	`, wfEvent.WorkflowId, wfEvent.WorkerId, wfEvent.TaskName, wfEvent.ActionName, wfEvent.Seconds, wfEvent.Message, wfEvent.ActionStatus, time)
 	if err != nil {
-		return errors.Wrap(err, "INSERT in to workflow_state")
+		return errors.Wrap(err, "INSERT in to workflow_event")
 	}
 	err = tx.Commit()
 	if err != nil {
@@ -454,7 +454,7 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 // ShowWorkflowEvents returns all workflows
 func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionStatus) error) error {
 	rows, err := db.Query(`
-       SELECT workflow_id, task_name, action_name, execution_time, message, status, created_at
+       SELECT worker_id, task_name, action_name, execution_time, message, status, created_at
 	   FROM workflow_event
 	   WHERE 
 			   workflow_id = $1
@@ -483,7 +483,7 @@ func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionSt
 		}
 		createdAt, _ := ptypes.TimestampProto(evTime)
 		wfs := pb.WorkflowActionStatus{
-			WorkflowId:   id,
+			WorkerId:     id,
 			TaskName:     tName,
 			ActionName:   aName,
 			Seconds:      secs,

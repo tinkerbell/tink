@@ -62,7 +62,8 @@ CREATE TABLE IF NOT EXISTS workflow_state (
 CREATE INDEX IF NOT EXISTS idx_wfid ON workflow_state (workflow_id);
 
 CREATE TABLE IF NOT EXISTS workflow_event (
-        workflow_id UUID  NOT NULL
+        workflow_id UUID NOT NULL
+        , worker_id UUID  NOT NULL
         , task_name VARCHAR(200)
         , action_name VARCHAR(200)
         , execution_time int
@@ -71,7 +72,7 @@ CREATE TABLE IF NOT EXISTS workflow_event (
         , created_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_event ON workflow_event (workflow_id);
+CREATE INDEX IF NOT EXISTS idx_event ON workflow_event (created_at);
 
 CREATE TABLE IF NOT EXISTS workflow_worker_map (
         workflow_id UUID NOT NULL

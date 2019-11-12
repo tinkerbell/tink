@@ -242,7 +242,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	defer timer.ObserveDuration()
 	err := db.ShowWorkflowEvents(s.db, req.Id, func(w rover.WorkflowActionStatus) error {
 		wfs := &workflow.WorkflowActionStatus{
-			WorkflowId:   w.WorkflowId,
+			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,
 			ActionName:   w.ActionName,
 			ActionStatus: workflow.ActionState(w.ActionStatus),

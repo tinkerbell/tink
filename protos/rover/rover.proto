@@ -72,5 +72,5 @@ message WorkflowActionStatus {
     int64 seconds = 5;
     string message = 6;
     google.protobuf.Timestamp createdAt = 7;
-
+    string worker_id = 8;
 }
