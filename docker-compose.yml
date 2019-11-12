@@ -1,77 +1,65 @@
 version: '2.1'
 services:
- server:
-  build: .
-  environment: 
-   FACILITY: ${FACILITY:-lab1}
-   PACKET_ENV: ${PACKET_ENV:-testing}
-   PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-   ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
-   ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
-   PGDATABASE: rover
-   PGHOST: db
-   PGPASSWORD: rover
-   PGPORT: 5432
-   PGSSLMODE: disable
-   PGUSER: rover
-  depends_on:
-   - "db"
-  healthcheck:
-   test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42112/cert"]
-   interval: 5s
-   timeout: 2s
-   retries: 30
-  ports:
-   - 42111:42111/tcp
-   - 42112:42112/tcp
- db:
-  build:
-   context: deploy
-  environment:
-   POSTGRES_DB: rover
-   POSTGRES_PASSWORD: rover
-   POSTGRES_USER: rover
-  ports:
-   - 5432:5432
-  healthcheck:
-   test: ["CMD-SHELL", "pg_isready -U rover"]
-   interval: 1s
-   timeout: 1s
-   retries: 30
- cli:
-  build:
-   context: cmd/rover
-  environment:
-   ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
-   ROVER_CERT_URL: http://127.0.0.1:42112/cert
-  network_mode: host
- registry:
-  build:
-   context: registry
-   args: 
-    REGISTRY_USERNAME: admin
-    REGISTRY_PASSWORD: admin
-  environment: 
-   REGISTRY_HTTP_ADDR: 0.0.0.0:443
-   REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
-   REGISTRY_HTTP_TLS_KEY: /certs/server-key.pem
-   REGISTRY_AUTH: htpasswd
-   REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
-   REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-  network_mode: host
- worker:
-  build:
-   context: worker
-  privileged: true
-  environment:
-   REGISTRY_USERNAME: admin
-   REGISTRY_PASSWORD: admin
-   ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
-   ROVER_CERT_URL: http://127.0.0.1:42112/cert
-   WORKER_ID: "f9f56dff-098a-4c5f-a51c-19ad35de85d1"
-   DOCKER_REGISTRY: 192.168.1.7
-   DOCKER_API_VERSION: v1.40
-  volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
-  - /etc/docker/cert.d/192.168.43.194:/192.168.43.194
-  network_mode: host
+  server:
+    build: .
+    environment: 
+      FACILITY: ${FACILITY:-lab1}
+      PACKET_ENV: ${PACKET_ENV:-testing}
+      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
+      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
+      PGDATABASE: rover
+      PGHOST: db
+      PGPASSWORD: rover
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: rover
+    depends_on:
+      - "db"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42112/cert"]
+      interval: 5s
+      timeout: 2s
+      retries: 30
+    ports:
+      - 42111:42111/tcp
+      - 42112:42112/tcp
+
+  db:
+    build:
+      context: deploy
+    environment:
+      POSTGRES_DB: rover
+      POSTGRES_PASSWORD: rover
+      POSTGRES_USER: rover
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rover"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+      
+  cli:
+    build:
+      context: cmd/rover
+    environment:
+      ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
+      ROVER_CERT_URL: http://127.0.0.1:42112/cert
+    network_mode: host
+  
+  registry:
+    build:
+      context: registry
+      args: 
+        REGISTRY_USERNAME: username
+        REGISTRY_PASSWORD: password
+    environment: 
+      REGISTRY_HTTP_ADDR: 0.0.0.0:443
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
+      REGISTRY_HTTP_TLS_KEY: /certs/server-key.pem
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+    network_mode: host
+  

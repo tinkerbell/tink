@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -27,7 +25,7 @@ var (
 func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int, error) {
 	err := pullActionImage(ctx, action)
 	if err != nil {
-		return fmt.Sprintf("Failed to pull Image"), 1, errors.Wrap(err, "DOCKER PULL")
+		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
 	}
 
 	startedAt := time.Now()
@@ -37,7 +35,6 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 	}
 
 	stopLogs := make(chan bool)
-	logs := new(bytes.Buffer)
 	go func(srt time.Time, exit chan bool) {
 		req := func(sr string) {
 			// get logs the runtime container
@@ -46,18 +43,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 				stopLogs <- true
 			}
 			defer rc.Close()
-
-			// create new scanner from the container output
-			scanner := bufio.NewScanner(rc)
-
-			// scan entire container output
-			for scanner.Scan() {
-				// write all the logs from the scanner
-				logs.Write(append(scanner.Bytes(), []byte("\n")...))
-				io.Copy(os.Stdout, logs)
-				// flush the buffer of logs
-				logs.Reset()
-			}
+			io.Copy(os.Stdout, rc)
 		}
 	Loop:
 		for {
