@@ -70,8 +70,6 @@ func initializeWorker(client pb.RoverClient) error {
 					continue
 				default:
 					fmt.Printf("Current context %s\n", wfContext)
-					fmt.Printf("Sleep for %d seconds\n", retryInterval)
-					time.Sleep(retryInterval)
 					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()]
 					actionIndex = int(wfContext.GetCurrentActionIndex())
 				}
@@ -175,24 +173,16 @@ func fetchLatestContext(ctx context.Context, client pb.RoverClient, workerID str
 }
 
 func allWorkflowsFinished() bool {
-	wfStatus := false
 	for wfID, wfContext := range workflowcontexts {
 		actions := workflowactions[wfID]
 		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_FAILED || wfContext.GetCurrentActionState() == pb.ActionState_ACTION_TIMEOUT {
-			fmt.Printf("Workflow %s is Failed or Timeout\n", wfID)
-			wfStatus = true
-		} else {
-			if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions) {
-				wfStatus = true
-			} else {
-				wfStatus = false
-			}
+			continue
 		}
-		if !wfStatus {
-			return wfStatus
+		if !(wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions)) {
+			return false
 		}
 	}
-	return wfStatus
+	return true
 }
 
 func exitWithGrpcError(err error) {

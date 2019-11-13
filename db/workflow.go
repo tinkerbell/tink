@@ -97,8 +97,11 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, wo
 	_, err := tx.Exec(`
 	INSERT INTO
 		workflow_worker_map (workflow_id, worker_id)
-	VALUES
-		($1, $2);
+	SELECT $1, $2
+	WHERE 
+		NOT EXISTS (
+			SELECT workflow_id FROM workflow_worker_map WHERE workflow_id = $1 AND worker_id = $2
+		);
 	`, wfID, workerID)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_worker_map")
