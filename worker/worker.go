@@ -47,26 +47,36 @@ func initializeWorker(client pb.RoverClient) error {
 
 			turn := false
 			actionIndex := 0
+			var nextAction *pb.WorkflowAction
 			if wfContext.GetCurrentAction() == "" {
 				if actions.GetActionList()[0].GetWorkerId() == workerID {
 					actionIndex = 0
 					turn = true
 				}
 			} else {
-				if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions) {
-					fmt.Printf("Worflow %s completed\n", wfID)
+				switch wfContext.GetCurrentActionState() {
+				case pb.ActionState_ACTION_SUCCESS:
+					if isLastAction(wfContext, actions) {
+						fmt.Printf("Workflow %s completed successfully\n", wfID)
+						continue
+					}
+					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()+1]
+					actionIndex = int(wfContext.GetCurrentActionIndex()) + 1
+				case pb.ActionState_ACTION_FAILED:
+					fmt.Printf("Workflow %s Failed\n", wfID)
 					continue
-				}
-				if wfContext.GetCurrentActionState() != pb.ActionState_ACTION_SUCCESS {
+				case pb.ActionState_ACTION_TIMEOUT:
+					fmt.Printf("Workflow %s Timeout\n", wfID)
+					continue
+				default:
 					fmt.Printf("Current context %s\n", wfContext)
 					fmt.Printf("Sleep for %d seconds\n", retryInterval)
 					time.Sleep(retryInterval)
-					continue
+					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()]
+					actionIndex = int(wfContext.GetCurrentActionIndex())
 				}
-				nextAction := actions.GetActionList()[wfContext.GetCurrentActionIndex()+1]
 				if nextAction.GetWorkerId() == workerID {
 					turn = true
-					actionIndex = int(wfContext.GetCurrentActionIndex()) + 1
 				}
 			}
 
@@ -79,28 +89,29 @@ func initializeWorker(client pb.RoverClient) error {
 
 			for turn {
 				action := actions.GetActionList()[actionIndex]
-				actionStatus := &pb.WorkflowActionStatus{
-					WorkflowId:   wfID,
-					TaskName:     action.GetTaskName(),
-					ActionName:   action.GetName(),
-					ActionStatus: pb.ActionState_ACTION_IN_PROGRESS,
-					Seconds:      0,
-					Message:      "Started execution",
-					WorkerId:     action.GetWorkerId(),
+				if wfContext.GetCurrentActionState() != pb.ActionState_ACTION_IN_PROGRESS {
+					actionStatus := &pb.WorkflowActionStatus{
+						WorkflowId:   wfID,
+						TaskName:     action.GetTaskName(),
+						ActionName:   action.GetName(),
+						ActionStatus: pb.ActionState_ACTION_IN_PROGRESS,
+						Seconds:      0,
+						Message:      "Started execution",
+						WorkerId:     action.GetWorkerId(),
+					}
+					err := reportActionStatus(ctx, client, actionStatus)
+					if err != nil {
+						exitWithGrpcError(err)
+					}
+					fmt.Printf("Sent action status %s\n", actionStatus)
 				}
-
-				err := reportActionStatus(ctx, client, actionStatus)
-				if err != nil {
-					exitWithGrpcError(err)
-				}
-				fmt.Printf("Sent action status %s\n", actionStatus)
 
 				// start executing the action
 				start := time.Now()
 				message, status, err := executeAction(ctx, actions.GetActionList()[actionIndex])
 				elapsed := time.Since(start)
 
-				actionStatus = &pb.WorkflowActionStatus{
+				actionStatus := &pb.WorkflowActionStatus{
 					WorkflowId: wfID,
 					TaskName:   action.GetTaskName(),
 					ActionName: action.GetName(),
@@ -164,13 +175,24 @@ func fetchLatestContext(ctx context.Context, client pb.RoverClient, workerID str
 }
 
 func allWorkflowsFinished() bool {
+	wfStatus := false
 	for wfID, wfContext := range workflowcontexts {
 		actions := workflowactions[wfID]
-		if !(wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions)) {
-			return false
+		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_FAILED || wfContext.GetCurrentActionState() == pb.ActionState_ACTION_TIMEOUT {
+			fmt.Printf("Workflow %s is Failed or Timeout\n", wfID)
+			wfStatus = true
+		} else {
+			if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions) {
+				wfStatus = true
+			} else {
+				wfStatus = false
+			}
+		}
+		if !wfStatus {
+			return wfStatus
 		}
 	}
-	return true
+	return wfStatus
 }
 
 func exitWithGrpcError(err error) {
