@@ -245,9 +245,7 @@ func DeleteWorkflow(ctx context.Context, db *sql.DB, id string, state int32) err
 		deleted_at = NOW()
 	WHERE
 		id = $1
-	AND
-		state != $2;
-	`, id, state)
+	`, id)
 	if err != nil {
 		return errors.Wrap(err, "UPDATE")
 	}
