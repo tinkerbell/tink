@@ -94,6 +94,7 @@ func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) 
 }
 
 func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, workerID uuid.UUID, tx *sql.Tx) error {
+	// TODO This command is not 100% reliable for concurrent write operations
 	_, err := tx.Exec(`
 	INSERT INTO
 		workflow_worker_map (workflow_id, worker_id)

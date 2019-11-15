@@ -29,7 +29,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 	}
 
 	startedAt := time.Now()
-	id, err := createContainer(ctx, action)
+	id, err := createContainer(ctx, action, action.Command)
 	if err != nil {
 		return fmt.Sprintf("Failed to run container"), 1, errors.Wrap(err, "DOCKER CREATE")
 	}
@@ -67,7 +67,33 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 
 	status, err := waitContainer(ctx, id, stopLogs)
 	if err != nil {
-		return fmt.Sprintf("Failed to wait for completion"), status, errors.Wrap(err, "DOCKER_WAIT")
+		rerr := removeContainer(ctx, id)
+		if rerr != nil {
+			fmt.Println("Failed to remove container as ", rerr)
+		}
+		return fmt.Sprintf("Failed to wait for completion of action"), status, errors.Wrap(err, "DOCKER_WAIT")
+	}
+	rerr := removeContainer(ctx, id)
+	if rerr != nil {
+		return fmt.Sprintf("Failed to remove container of action"), status, errors.Wrap(rerr, "DOCKER_REMOVE")
+	}
+	if status != 0 {
+		id, err = createContainer(ctx, action, action.OnFailure)
+		if err != nil {
+			fmt.Println("Failed to run on-failure command: ", err)
+		}
+		_, err = waitContainer(ctx, id, stopLogs)
+		if err != nil {
+			rerr := removeContainer(ctx, id)
+			if rerr != nil {
+				fmt.Println("Failed to remove container as ", rerr)
+			}
+			fmt.Println("Failed to wait for on-failure command: ", err)
+		}
+		rerr := removeContainer(ctx, id)
+		if rerr != nil {
+			fmt.Println("Failed to remove container as ", rerr)
+		}
 	}
 	fmt.Println("Action container exits with status code ", status)
 	return fmt.Sprintf("Successfull Execution"), status, nil
@@ -100,15 +126,15 @@ func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 	return nil
 }
 
-func createContainer(ctx context.Context, action *pb.WorkflowAction) (string, error) {
+func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string) (string, error) {
 	config := &container.Config{
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
 		AttachStderr: true,
 	}
 
-	if action.Command != "" {
-		config.Cmd = []string{action.Command}
+	if cmd != "" {
+		config.Cmd = []string{cmd}
 	}
 
 	resp, err := cli.ContainerCreate(ctx, config, nil, nil, action.GetName())
@@ -152,8 +178,25 @@ func waitContainer(ctx context.Context, id string, stopLogs chan bool) (int, err
 		return int(status.StatusCode), nil
 	case err := <-errC:
 		stopLogs <- true
-		return 0, err
+		return 1, err
 	}
+}
+
+func removeContainer(ctx context.Context, id string) error {
+	// create options for removing container
+	opts := types.ContainerRemoveOptions{
+		Force:         true,
+		RemoveLinks:   false,
+		RemoveVolumes: true,
+	}
+	fmt.Println("Start removing container ", id)
+	// send API call to remove the container
+	err := cli.ContainerRemove(ctx, id, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func initializeDockerClient() (*client.Client, error) {
