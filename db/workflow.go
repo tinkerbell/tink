@@ -240,11 +240,29 @@ func DeleteWorkflow(ctx context.Context, db *sql.DB, id string, state int32) err
 	}
 
 	_, err = tx.Exec(`
+	DELETE FROM workflow_worker_map
+	WHERE
+		workflow_id = $1;
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "Delete Workflow Error")
+	}
+
+	_, err = tx.Exec(`
+	DELETE FROM workflow_state
+	WHERE
+		workflow_id = $1;
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "Delete Workflow Error")
+	}
+
+	_, err = tx.Exec(`
 	UPDATE workflow
 	SET
 		deleted_at = NOW()
 	WHERE
-		id = $1
+		id = $1;
 	`, id)
 	if err != nil {
 		return errors.Wrap(err, "UPDATE")
