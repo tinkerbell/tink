@@ -23,15 +23,15 @@ services:
       - "certs"
       - "db"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42112/cert"]
+      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
       timeout: 2s
       retries: 30
     volumes: 
       - ./certs:/certs/${FACILITY}
     ports:
-      - 42111:42111/tcp
-      - 42112:42112/tcp
+      - 42113:42113/tcp
+      - 42114:42114/tcp
 
   db:
     build:
@@ -52,8 +52,8 @@ services:
     build:
       context: cmd/rover
     environment:
-      ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
-      ROVER_CERT_URL: http://127.0.0.1:42112/cert
+      ROVER_GRPC_AUTHORITY: 127.0.0.1:42113
+      ROVER_CERT_URL: http://127.0.0.1:42114/cert
     network_mode: host
   
   registry:

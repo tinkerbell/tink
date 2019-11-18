@@ -26,7 +26,7 @@ import (
 
 var (
 	logger         log.Logger
-	grpcListenAddr = ":42111"
+	grpcListenAddr = ":42113"
 )
 
 // Server is the gRPC server for rover
