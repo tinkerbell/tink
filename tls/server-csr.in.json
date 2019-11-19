@@ -2,6 +2,7 @@
   "CN": "rover",
   "hosts": [
     "rover.@FACILITY@.packet.net",
+    "rover.registry",
     "rover.rover",
     "rover",
     "localhost",

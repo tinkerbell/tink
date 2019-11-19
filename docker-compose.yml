@@ -1,5 +1,10 @@
 version: '2.1'
 services:
+  certs:
+    build: tls
+    volumes:
+      - ./certs:/certs
+
   server:
     build: .
     environment: 
@@ -15,15 +20,18 @@ services:
       PGSSLMODE: disable
       PGUSER: rover
     depends_on:
+      - "certs"
       - "db"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42112/cert"]
+      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
       timeout: 2s
       retries: 30
+    volumes: 
+      - ./certs:/certs/${FACILITY}
     ports:
-      - 42111:42111/tcp
-      - 42112:42112/tcp
+      - 42113:42113/tcp
+      - 42114:42114/tcp
 
   db:
     build:
@@ -44,8 +52,8 @@ services:
     build:
       context: cmd/rover
     environment:
-      ROVER_GRPC_AUTHORITY: 127.0.0.1:42111
-      ROVER_CERT_URL: http://127.0.0.1:42112/cert
+      ROVER_GRPC_AUTHORITY: 127.0.0.1:42113
+      ROVER_CERT_URL: http://127.0.0.1:42114/cert
     network_mode: host
   
   registry:
@@ -61,5 +69,7 @@ services:
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+    volumes: 
+      - ./certs:/certs
     network_mode: host
   

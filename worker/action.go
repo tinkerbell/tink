@@ -33,9 +33,6 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
 	}
 
-	startedAt := time.Now()
-
-	//create container with timeout context
 	id, err := createContainer(ctx, action, action.Command)
 	if err != nil {
 		return fmt.Sprintf("Failed to create container"), 1, errors.Wrap(err, "DOCKER CREATE")
@@ -48,6 +45,8 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 		timeCtx, cancel = context.WithTimeout(context.Background(), 1*time.Hour)
 	}
 	defer cancel()
+	//run container with timeout context
+	startedAt := time.Now()
 	err = runContainer(timeCtx, id)
 	if err != nil {
 		return fmt.Sprintf("Failed to run container"), 1, errors.Wrap(err, "DOCKER RUN")
@@ -233,7 +232,6 @@ func removeContainer(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

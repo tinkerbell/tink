@@ -16,7 +16,7 @@ import (
 var (
 	gitRev         = "unknown"
 	gitRevJSON     []byte
-	httpListenAddr = ":42112"
+	httpListenAddr = ":42114"
 	startTime      = time.Now()
 	logger         log.Logger
 )
