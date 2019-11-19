@@ -118,7 +118,13 @@ func initializeWorker(client pb.RoverClient) error {
 				}
 
 				if err != nil || status != 0 {
-					actionStatus.ActionStatus = pb.ActionState_ACTION_FAILED
+					if status == 2 {
+						fmt.Printf("Action \"%s\" from task \"%s\" timeout\n", action.GetName(), action.GetTaskName())
+						actionStatus.ActionStatus = pb.ActionState_ACTION_TIMEOUT
+					} else {
+						fmt.Printf("Action \"%s\" from task \"%s\" failed\n", action.GetName(), action.GetTaskName())
+						actionStatus.ActionStatus = pb.ActionState_ACTION_FAILED
+					}
 					actionStatus.Message = message
 					rerr := reportActionStatus(ctx, client, actionStatus)
 					if rerr != nil {

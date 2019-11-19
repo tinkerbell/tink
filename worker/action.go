@@ -22,6 +22,11 @@ var (
 	cli      *client.Client
 )
 
+var (
+	ActionFailed  = 1
+	ActionTimeout = 2
+)
+
 func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int, error) {
 	err := pullActionImage(ctx, action)
 	if err != nil {
@@ -29,11 +34,24 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 	}
 
 	startedAt := time.Now()
+
+	//create container with timeout context
 	id, err := createContainer(ctx, action, action.Command)
 	if err != nil {
-		return fmt.Sprintf("Failed to run container"), 1, errors.Wrap(err, "DOCKER CREATE")
+		return fmt.Sprintf("Failed to create container"), 1, errors.Wrap(err, "DOCKER CREATE")
 	}
-
+	var timeCtx context.Context
+	var cancel context.CancelFunc
+	if action.Timeout > 0 {
+		timeCtx, cancel = context.WithTimeout(context.Background(), time.Duration(action.Timeout)*time.Second)
+	} else {
+		timeCtx, cancel = context.WithTimeout(context.Background(), 1*time.Hour)
+	}
+	defer cancel()
+	err = runContainer(timeCtx, id)
+	if err != nil {
+		return fmt.Sprintf("Failed to run container"), 1, errors.Wrap(err, "DOCKER RUN")
+	}
 	stopLogs := make(chan bool)
 	go func(srt time.Time, exit chan bool) {
 		req := func(sr string) {
@@ -60,12 +78,11 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 				startAt := strconv.FormatInt(srt.Unix(), 10)
 				srt = srt.Add(time.Millisecond * 500)
 				req(startAt)
-				time.Sleep(time.Millisecond * 500)
 			}
 		}
 	}(startedAt, stopLogs)
 
-	status, err := waitContainer(ctx, id, stopLogs)
+	status, err := waitContainer(timeCtx, id, stopLogs)
 	if err != nil {
 		rerr := removeContainer(ctx, id)
 		if rerr != nil {
@@ -78,9 +95,24 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 		return fmt.Sprintf("Failed to remove container of action"), status, errors.Wrap(rerr, "DOCKER_REMOVE")
 	}
 	if status != 0 {
-		id, err = createContainer(ctx, action, action.OnFailure)
-		if err != nil {
-			fmt.Println("Failed to run on-failure command: ", err)
+		if status == ActionFailed && action.OnFailure != "" {
+			id, err = createContainer(ctx, action, action.OnFailure)
+			if err != nil {
+				fmt.Println("Failed to create on-failure command: ", err)
+			}
+			err = runContainer(ctx, id)
+			if err != nil {
+				fmt.Println("Failed to run on-failure command: ", err)
+			}
+		} else if status == ActionTimeout && action.OnTimeout != "" {
+			id, err = createContainer(ctx, action, action.OnTimeout)
+			if err != nil {
+				fmt.Println("Failed to create on-timeout command: ", err)
+			}
+			err = runContainer(ctx, id)
+			if err != nil {
+				fmt.Println("Failed to run on-timeout command: ", err)
+			}
 		}
 		_, err = waitContainer(ctx, id, stopLogs)
 		if err != nil {
@@ -88,7 +120,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 			if rerr != nil {
 				fmt.Println("Failed to remove container as ", rerr)
 			}
-			fmt.Println("Failed to wait for on-failure command: ", err)
+			fmt.Println("Failed to wait for container : ", err)
 		}
 		rerr := removeContainer(ctx, id)
 		if rerr != nil {
@@ -141,12 +173,15 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string)
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
 	}
-
-	err = cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{})
-	if err != nil {
-		return "", errors.Wrap(err, "DOCKER START")
-	}
 	return resp.ID, nil
+}
+
+func runContainer(ctx context.Context, id string) error {
+	err := cli.ContainerStart(ctx, id, types.ContainerStartOptions{})
+	if err != nil {
+		return errors.Wrap(err, "DOCKER START")
+	}
+	return nil
 }
 
 func getLogs(ctx context.Context, cli *client.Client, id string, srt string) (io.ReadCloser, error) {
@@ -178,7 +213,10 @@ func waitContainer(ctx context.Context, id string, stopLogs chan bool) (int, err
 		return int(status.StatusCode), nil
 	case err := <-errC:
 		stopLogs <- true
-		return 1, err
+		return ActionFailed, err
+	case <-ctx.Done():
+		stopLogs <- true
+		return ActionTimeout, ctx.Err()
 	}
 }
 
