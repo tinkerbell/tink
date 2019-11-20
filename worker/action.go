@@ -22,12 +22,7 @@ var (
 	cli      *client.Client
 )
 
-var (
-	ActionFailed  = 1
-	ActionTimeout = 2
-)
-
-func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int, error) {
+func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, pb.ActionState, error) {
 	err := pullActionImage(ctx, action)
 	if err != nil {
 		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
@@ -94,7 +89,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 		return fmt.Sprintf("Failed to remove container of action"), status, errors.Wrap(rerr, "DOCKER_REMOVE")
 	}
 	if status != 0 {
-		if status == ActionFailed && action.OnFailure != "" {
+		if status == pb.ActionState_ACTION_FAILED && action.OnFailure != "" {
 			id, err = createContainer(ctx, action, action.OnFailure)
 			if err != nil {
 				fmt.Println("Failed to create on-failure command: ", err)
@@ -103,7 +98,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, int,
 			if err != nil {
 				fmt.Println("Failed to run on-failure command: ", err)
 			}
-		} else if status == ActionTimeout && action.OnTimeout != "" {
+		} else if status == pb.ActionState_ACTION_TIMEOUT && action.OnTimeout != "" {
 			id, err = createContainer(ctx, action, action.OnTimeout)
 			if err != nil {
 				fmt.Println("Failed to create on-timeout command: ", err)
@@ -203,19 +198,19 @@ func getLogs(ctx context.Context, cli *client.Client, id string, srt string) (io
 	return logs, nil
 }
 
-func waitContainer(ctx context.Context, id string, stopLogs chan bool) (int, error) {
+func waitContainer(ctx context.Context, id string, stopLogs chan bool) (pb.ActionState, error) {
 	// send API call to wait for the container completion
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 	select {
 	case status := <-wait:
 		stopLogs <- true
-		return int(status.StatusCode), nil
+		return pb.ActionState(status.StatusCode), nil
 	case err := <-errC:
 		stopLogs <- true
-		return ActionFailed, err
+		return pb.ActionState_ACTION_FAILED, err
 	case <-ctx.Done():
 		stopLogs <- true
-		return ActionTimeout, ctx.Err()
+		return pb.ActionState_ACTION_TIMEOUT, ctx.Err()
 	}
 }
 
