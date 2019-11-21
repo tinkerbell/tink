@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/packethost/rover/protos/hardware"
 	"github.com/packethost/rover/protos/target"
 	"github.com/packethost/rover/protos/template"
 	"github.com/packethost/rover/protos/workflow"
@@ -20,6 +21,7 @@ var (
 	TemplateClient template.TemplateClient
 	TargetClient   target.TargetClient
 	WorkflowClient workflow.WorkflowSvcClient
+	HardwareClient hardware.HardwareServiceClient
 )
 
 // GetConnection returns a gRPC client connection
@@ -65,4 +67,5 @@ func init() {
 	TemplateClient = template.NewTemplateClient(conn)
 	TargetClient = target.NewTargetClient(conn)
 	WorkflowClient = workflow.NewWorkflowSvcClient(conn)
+	HardwareClient = hardware.NewHardwareServiceClient(conn)
 }
