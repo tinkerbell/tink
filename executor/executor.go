@@ -9,6 +9,7 @@ import (
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/packethost/rover/db"
 	pb "github.com/packethost/rover/protos/rover"
+	workflowpb "github.com/packethost/rover/protos/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -23,7 +24,7 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 		return nil, status.Errorf(codes.InvalidArgument, "Worker not found for any workflows")
 	}
 
-	wfContexts := []*pb.WorkflowContext{}
+	wfContexts := []*workflowpb.WorkflowContext{}
 
 	for _, wf := range wfs {
 		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
@@ -52,7 +53,7 @@ func GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest,
 }
 
 // ReportActionStatus implements rover.ReportActionStatus
-func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, sdb *sql.DB) (*empty.Empty, error) {
+func ReportActionStatus(context context.Context, req *workflowpb.WorkflowActionStatus, sdb *sql.DB) (*empty.Empty, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
@@ -76,7 +77,7 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, s
 	// We need bunch of checks here considering
 	// Considering concurrency and network latencies & accuracy for proceeding of WF
 	actionIndex := wfContext.GetCurrentActionIndex()
-	if req.GetActionStatus() == pb.ActionState_ACTION_IN_PROGRESS {
+	if req.GetActionStatus() == workflowpb.ActionState_ACTION_IN_PROGRESS {
 		if wfContext.GetCurrentAction() != "" {
 			actionIndex = actionIndex + 1
 		}

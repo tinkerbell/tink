@@ -1,5 +1,8 @@
 syntax = "proto3";
-package target;
+
+option go_package = "github.com/packethost/rover/protos/target";
+
+package github.com.packethost.rover.protos.target;
 
 service Target {
 	rpc CreateTargets(PushRequest) returns (UUID);

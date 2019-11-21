@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	exec "github.com/packethost/rover/executor"
 	pb "github.com/packethost/rover/protos/rover"
+	workflowpb "github.com/packethost/rover/protos/workflow"
 )
 
 // GetWorkflowContexts implements rover.GetWorkflowContexts
@@ -19,6 +20,6 @@ func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowAct
 }
 
 // ReportActionStatus implements rover.ReportActionStatus
-func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*empty.Empty, error) {
+func (s *server) ReportActionStatus(context context.Context, req *workflowpb.WorkflowActionStatus) (*empty.Empty, error) {
 	return exec.ReportActionStatus(context, req, s.db)
 }

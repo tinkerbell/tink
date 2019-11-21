@@ -8,11 +8,13 @@ import (
 	"time"
 
 	pb "github.com/packethost/rover/protos/rover"
+	workflowpb "github.com/packethost/rover/protos/workflow"
+
 	"google.golang.org/grpc/status"
 )
 
 var (
-	workflowcontexts = map[string]*pb.WorkflowContext{}
+	workflowcontexts = map[string]*workflowpb.WorkflowContext{}
 	workflowactions  = map[string]*pb.WorkflowActionList{}
 )
 
@@ -55,17 +57,17 @@ func initializeWorker(client pb.RoverClient) error {
 				}
 			} else {
 				switch wfContext.GetCurrentActionState() {
-				case pb.ActionState_ACTION_SUCCESS:
+				case workflowpb.ActionState_ACTION_SUCCESS:
 					if isLastAction(wfContext, actions) {
 						fmt.Printf("Workflow %s completed successfully\n", wfID)
 						continue
 					}
 					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()+1]
 					actionIndex = int(wfContext.GetCurrentActionIndex()) + 1
-				case pb.ActionState_ACTION_FAILED:
+				case workflowpb.ActionState_ACTION_FAILED:
 					fmt.Printf("Workflow %s Failed\n", wfID)
 					continue
-				case pb.ActionState_ACTION_TIMEOUT:
+				case workflowpb.ActionState_ACTION_TIMEOUT:
 					fmt.Printf("Workflow %s Timeout\n", wfID)
 					continue
 				default:
@@ -87,12 +89,12 @@ func initializeWorker(client pb.RoverClient) error {
 
 			for turn {
 				action := actions.GetActionList()[actionIndex]
-				if wfContext.GetCurrentActionState() != pb.ActionState_ACTION_IN_PROGRESS {
-					actionStatus := &pb.WorkflowActionStatus{
+				if wfContext.GetCurrentActionState() != workflowpb.ActionState_ACTION_IN_PROGRESS {
+					actionStatus := &workflowpb.WorkflowActionStatus{
 						WorkflowId:   wfID,
 						TaskName:     action.GetTaskName(),
 						ActionName:   action.GetName(),
-						ActionStatus: pb.ActionState_ACTION_IN_PROGRESS,
+						ActionStatus: workflowpb.ActionState_ACTION_IN_PROGRESS,
 						Seconds:      0,
 						Message:      "Started execution",
 						WorkerId:     action.GetWorkerId(),
@@ -109,7 +111,7 @@ func initializeWorker(client pb.RoverClient) error {
 				message, status, err := executeAction(ctx, actions.GetActionList()[actionIndex])
 				elapsed := time.Since(start)
 
-				actionStatus := &pb.WorkflowActionStatus{
+				actionStatus := &workflowpb.WorkflowActionStatus{
 					WorkflowId: wfID,
 					TaskName:   action.GetTaskName(),
 					ActionName: action.GetName(),
@@ -118,12 +120,12 @@ func initializeWorker(client pb.RoverClient) error {
 				}
 
 				if err != nil || status != 0 {
-					if status == pb.ActionState_ACTION_TIMEOUT {
+					if status == workflowpb.ActionState_ACTION_TIMEOUT {
 						fmt.Printf("Action \"%s\" from task \"%s\" timeout\n", action.GetName(), action.GetTaskName())
-						actionStatus.ActionStatus = pb.ActionState_ACTION_TIMEOUT
+						actionStatus.ActionStatus = workflowpb.ActionState_ACTION_TIMEOUT
 					} else {
 						fmt.Printf("Action \"%s\" from task \"%s\" failed\n", action.GetName(), action.GetTaskName())
-						actionStatus.ActionStatus = pb.ActionState_ACTION_FAILED
+						actionStatus.ActionStatus = workflowpb.ActionState_ACTION_FAILED
 					}
 					actionStatus.Message = message
 					rerr := reportActionStatus(ctx, client, actionStatus)
@@ -133,7 +135,7 @@ func initializeWorker(client pb.RoverClient) error {
 					return err
 				}
 
-				actionStatus.ActionStatus = pb.ActionState_ACTION_SUCCESS
+				actionStatus.ActionStatus = workflowpb.ActionState_ACTION_SUCCESS
 				actionStatus.Message = "Finished Execution Successfully"
 
 				err = reportActionStatus(ctx, client, actionStatus)
@@ -181,10 +183,10 @@ func fetchLatestContext(ctx context.Context, client pb.RoverClient, workerID str
 func allWorkflowsFinished() bool {
 	for wfID, wfContext := range workflowcontexts {
 		actions := workflowactions[wfID]
-		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_FAILED || wfContext.GetCurrentActionState() == pb.ActionState_ACTION_TIMEOUT {
+		if wfContext.GetCurrentActionState() == workflowpb.ActionState_ACTION_FAILED || wfContext.GetCurrentActionState() == workflowpb.ActionState_ACTION_TIMEOUT {
 			continue
 		}
-		if !(wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions)) {
+		if !(wfContext.GetCurrentActionState() == workflowpb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions)) {
 			return false
 		}
 	}
@@ -200,11 +202,11 @@ func exitWithGrpcError(err error) {
 	}
 }
 
-func isLastAction(wfContext *pb.WorkflowContext, actions *pb.WorkflowActionList) bool {
+func isLastAction(wfContext *workflowpb.WorkflowContext, actions *pb.WorkflowActionList) bool {
 	return int(wfContext.GetCurrentActionIndex()) == len(actions.GetActionList())-1
 }
 
-func reportActionStatus(ctx context.Context, client pb.RoverClient, actionStatus *pb.WorkflowActionStatus) error {
+func reportActionStatus(ctx context.Context, client pb.RoverClient, actionStatus *workflowpb.WorkflowActionStatus) error {
 	var err error
 	for r := 1; r <= retries; r++ {
 		_, err = client.ReportActionStatus(ctx, actionStatus)

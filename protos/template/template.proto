@@ -1,5 +1,8 @@
 syntax = "proto3";
-package template;
+
+option go_package = "github.com/packethost/rover/protos/template";
+
+package github.com.packethost.rover.protos.template;
 
 import "google/protobuf/timestamp.proto";
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/packethost/rover/db"
 	"github.com/packethost/rover/metrics"
-	"github.com/packethost/rover/protos/rover"
 	"github.com/packethost/rover/protos/workflow"
+	workflowpb "github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	uuid "github.com/satori/go.uuid"
@@ -165,7 +165,7 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowSvc_Li
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 	err := db.ListWorkflows(s.db, func(w db.Workflow) error {
-		wf := &workflow.Workflow{
+		wf := &workflowpb.Workflow{
 			Id:        w.ID,
 			Template:  w.Template,
 			Target:    w.Target,
@@ -194,7 +194,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	labels["op"] = "get"
 	msg = "getting a workflow"
 
-	fn := func() (*rover.WorkflowContext, error) { return db.GetWorkflowContexts(ctx, s.db, in.Id) }
+	fn := func() (*workflowpb.WorkflowContext, error) { return db.GetWorkflowContexts(ctx, s.db, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
@@ -240,7 +240,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.ShowWorkflowEvents(s.db, req.Id, func(w rover.WorkflowActionStatus) error {
+	err := db.ShowWorkflowEvents(s.db, req.Id, func(w workflowpb.WorkflowActionStatus) error {
 		wfs := &workflow.WorkflowActionStatus{
 			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,
