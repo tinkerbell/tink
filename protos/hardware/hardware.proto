@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "github.com/packethost/rover/protos/hardware";
+
+package github.com.packethost.rover.protos.hardware;
+
+service HardwareService {
+	rpc Push (PushRequest) returns (Empty);
+	rpc ByMAC(GetRequest) returns (Hardware);
+	rpc ByIP(GetRequest) returns (Hardware);
+	rpc ByID(GetRequest) returns (Hardware);
+	rpc All(Empty) returns (stream Hardware);
+	rpc Ingest(Empty) returns (Empty);
+	rpc Watch(GetRequest) returns (stream Hardware);
+}
+
+message PushRequest {
+	string data = 1;
+}
+
+message Empty {
+}
+
+message GetRequest {
+	string MAC = 1;
+	string IP = 2;
+	string ID = 3;
+}
+
+message Hardware {
+	string JSON = 1;
+}
