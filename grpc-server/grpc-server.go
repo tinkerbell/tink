@@ -15,6 +15,7 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/packethost/rover/db"
 	"github.com/packethost/rover/metrics"
+	"github.com/packethost/rover/protos/hardware"
 	"github.com/packethost/rover/protos/rover"
 	"github.com/packethost/rover/protos/target"
 	"github.com/packethost/rover/protos/template"
@@ -39,6 +40,9 @@ type server struct {
 
 	dbLock  sync.RWMutex
 	dbReady bool
+
+	watchLock sync.RWMutex
+	watch     map[string]chan string
 }
 
 // SetupGRPC setup and return a gRPC server
@@ -69,6 +73,7 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 	template.RegisterTemplateServer(s, server)
 	target.RegisterTargetServer(s, server)
 	workflow.RegisterWorkflowSvcServer(s, server)
+	hardware.RegisterHardwareServiceServer(s, server)
 	rover.RegisterRoverServer(s, server)
 
 	grpc_prometheus.Register(s)
