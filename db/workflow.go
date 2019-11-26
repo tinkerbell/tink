@@ -526,7 +526,7 @@ func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs workflowpb.Workflow
 
 func parseYaml(ymlContent []byte) (*WfYamlstruct, error) {
 	var workflow = WfYamlstruct{}
-	err := yaml.Unmarshal(ymlContent, &workflow)
+	err := yaml.UnmarshalStrict(ymlContent, &workflow)
 	if err != nil {
 		return &WfYamlstruct{}, err
 	}
