@@ -13,6 +13,9 @@ service WorkflowSvc {
     rpc ListWorkflows(Empty) returns (stream Workflow);
     rpc GetWorkflowContext(GetRequest) returns (WorkflowContext);
     rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus);
+    rpc GetWorkflowContexts(WorkflowContextRequest) returns (WorkflowContextList) {}
+    rpc GetWorkflowActions(WorkflowActionsRequest) returns (WorkflowActionList) {}
+    rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}
 }
 
 message Empty {
@@ -78,3 +81,31 @@ message WorkflowActionStatus {
     google.protobuf.Timestamp createdAt = 7;
     string worker_id = 8;
 }
+
+message WorkflowContextRequest {
+    string worker_id = 1;
+}
+
+message WorkflowContextList {
+    repeated WorkflowContext workflow_contexts = 1;
+}
+
+message WorkflowActionsRequest {
+    string workflow_id = 1;
+}
+
+message WorkflowAction {
+    string task_name = 1;
+    string name = 2;
+    string image = 3;
+    int64 timeout = 4;
+    string command = 5;
+    string on_timeout = 6;
+    string on_failure = 7;
+    string worker_id = 8;
+}
+
+message WorkflowActionList {
+    repeated WorkflowAction action_list = 1;
+}
+

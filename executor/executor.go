@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/packethost/rover/db"
-	pb "github.com/packethost/rover/protos/rover"
-	workflowpb "github.com/packethost/rover/protos/workflow"
+	pb "github.com/packethost/rover/protos/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -24,7 +22,7 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 		return nil, status.Errorf(codes.InvalidArgument, "Worker not found for any workflows")
 	}
 
-	wfContexts := []*workflowpb.WorkflowContext{}
+	wfContexts := []*pb.WorkflowContext{}
 
 	for _, wf := range wfs {
 		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
@@ -53,7 +51,7 @@ func GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest,
 }
 
 // ReportActionStatus implements rover.ReportActionStatus
-func ReportActionStatus(context context.Context, req *workflowpb.WorkflowActionStatus, sdb *sql.DB) (*empty.Empty, error) {
+func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, sdb *sql.DB) (*pb.Empty, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
@@ -77,7 +75,7 @@ func ReportActionStatus(context context.Context, req *workflowpb.WorkflowActionS
 	// We need bunch of checks here considering
 	// Considering concurrency and network latencies & accuracy for proceeding of WF
 	actionIndex := wfContext.GetCurrentActionIndex()
-	if req.GetActionStatus() == workflowpb.ActionState_ACTION_IN_PROGRESS {
+	if req.GetActionStatus() == pb.ActionState_ACTION_IN_PROGRESS {
 		if wfContext.GetCurrentAction() != "" {
 			actionIndex = actionIndex + 1
 		}
@@ -96,14 +94,14 @@ func ReportActionStatus(context context.Context, req *workflowpb.WorkflowActionS
 	wfContext.CurrentActionIndex = actionIndex
 	err = db.UpdateWorkflowState(context, sdb, wfContext)
 	if err != nil {
-		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_state table. Error : %s", err)
+		return &pb.Empty{}, fmt.Errorf("Failed to update the workflow_state table. Error : %s", err)
 	}
 	// TODO the below "time" would be a part of the request which is coming form worker.
 	time := time.Now()
 	err = db.InsertIntoWorkflowEventTable(context, sdb, req, time)
 	if err != nil {
-		return &empty.Empty{}, fmt.Errorf("Failed to update the workflow_event table. Error : %s", err)
+		return &pb.Empty{}, fmt.Errorf("Failed to update the workflow_event table. Error : %s", err)
 	}
 	fmt.Printf("Current context %s\n", wfContext)
-	return &empty.Empty{}, nil
+	return &pb.Empty{}, nil
 }

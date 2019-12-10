@@ -24,7 +24,6 @@ proto-gen:
 	protoc protos/target/target.proto --go_out=plugins=grpc:$(GOPATH)/src
 	protoc protos/workflow/workflow.proto --go_out=plugins=grpc:$(GOPATH)/src
 	protoc protos/hardware/hardware.proto --go_out=plugins=grpc:$(GOPATH)/src
-	protoc -I$(GOPATH)/src --go_out=plugins=grpc:$(GOPATH)/src $(GOPATH)/src/github.com/packethost/rover/protos/rover/rover.proto
 
 run: ${binaries}
 	docker-compose up -d --build db

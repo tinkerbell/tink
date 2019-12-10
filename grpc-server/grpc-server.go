@@ -16,7 +16,6 @@ import (
 	"github.com/packethost/rover/db"
 	"github.com/packethost/rover/metrics"
 	"github.com/packethost/rover/protos/hardware"
-	"github.com/packethost/rover/protos/rover"
 	"github.com/packethost/rover/protos/target"
 	"github.com/packethost/rover/protos/template"
 	"github.com/packethost/rover/protos/workflow"
@@ -74,7 +73,6 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 	target.RegisterTargetServer(s, server)
 	workflow.RegisterWorkflowSvcServer(s, server)
 	hardware.RegisterHardwareServiceServer(s, server)
-	rover.RegisterRoverServer(s, server)
 
 	grpc_prometheus.Register(s)
 

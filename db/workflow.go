@@ -11,8 +11,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	pb "github.com/packethost/rover/protos/rover"
-	workflowpb "github.com/packethost/rover/protos/workflow"
+	pb "github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/yaml.v2"
@@ -367,7 +366,7 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 	return nil
 }
 
-func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *workflowpb.WorkflowContext) error {
+func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.WorkflowContext) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -393,7 +392,7 @@ func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *workflowpb.
 	return nil
 }
 
-func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*workflowpb.WorkflowContext, error) {
+func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*pb.WorkflowContext, error) {
 	query := `
 	SELECT current_worker, current_task_name, current_action_name, current_action_index, current_action_state, total_number_of_actions
 	FROM workflow_state
@@ -403,10 +402,10 @@ func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*workflo
 	row := db.QueryRowContext(ctx, query, wfId)
 	var cw, ct, ca string
 	var cai, tact int64
-	var cas workflowpb.ActionState
+	var cas pb.ActionState
 	err := row.Scan(&cw, &ct, &ca, &cai, &cas, &tact)
 	if err == nil {
-		return &workflowpb.WorkflowContext{
+		return &pb.WorkflowContext{
 			WorkflowId:           wfId,
 			CurrentWorker:        cw,
 			CurrentTask:          ct,
@@ -421,7 +420,7 @@ func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*workflo
 	} else {
 		err = nil
 	}
-	return &workflowpb.WorkflowContext{}, nil
+	return &pb.WorkflowContext{}, nil
 }
 
 func GetWorkflowActions(ctx context.Context, db *sql.DB, wfId string) (*pb.WorkflowActionList, error) {
@@ -449,7 +448,7 @@ func GetWorkflowActions(ctx context.Context, db *sql.DB, wfId string) (*pb.Workf
 	return &pb.WorkflowActionList{}, nil
 }
 
-func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *workflowpb.WorkflowActionStatus, time time.Time) error {
+func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -473,7 +472,7 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *work
 }
 
 // ShowWorkflowEvents returns all workflows
-func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs workflowpb.WorkflowActionStatus) error) error {
+func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionStatus) error) error {
 	rows, err := db.Query(`
        SELECT worker_id, task_name, action_name, execution_time, message, status, created_at
 	   FROM workflow_event
@@ -503,13 +502,13 @@ func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs workflowpb.Workflow
 			return err
 		}
 		createdAt, _ := ptypes.TimestampProto(evTime)
-		wfs := workflowpb.WorkflowActionStatus{
+		wfs := pb.WorkflowActionStatus{
 			WorkerId:     id,
 			TaskName:     tName,
 			ActionName:   aName,
 			Seconds:      secs,
 			Message:      msg,
-			ActionStatus: workflowpb.ActionState(status),
+			ActionStatus: pb.ActionState(status),
 			CreatedAt:    createdAt,
 		}
 		err = fn(wfs)

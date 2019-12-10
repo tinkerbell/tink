@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/packethost/rover/client"
-	pb "github.com/packethost/rover/protos/rover"
+	pb "github.com/packethost/rover/protos/workflow"
 	"google.golang.org/grpc"
 )
 
@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	rClient       pb.RoverClient
+	rClient       pb.WorkflowSvcClient
 	retryInterval time.Duration
 	retries       int
 )
@@ -28,7 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	rClient = pb.NewRoverClient(conn)
+	rClient = pb.NewWorkflowSvcClient(conn)
 	err = initializeWorker(rClient)
 	if err != nil {
 		log.Fatalln(err)
