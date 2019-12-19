@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 	}
 	status := m.Run()
 	fmt.Println("removing setup")
-	err = tearDown()
+	//err = tearDown()
 	if err != nil {
 		os.Exit(2)
 	}
