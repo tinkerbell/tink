@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/packethost/rover/client"
 )
 
 var cfgFile string
@@ -28,6 +29,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "facility", "f", "", "used to build grcp and http urls")
+	client.Setup()
 }
 
 // initConfig reads in config file and ENV variables if set.
