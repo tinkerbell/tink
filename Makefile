@@ -2,8 +2,7 @@ server := rover-linux-x86_64
 cli := cmd/rover/rover-linux-x86_64
 worker := worker/rover-worker-linux-x86_64
 binaries := ${server} ${cli} ${worker}
-GOPATH := $(shell go env GOPATH)
-all: proto-gen ${binaries}
+all: ${binaries}
 
 .PHONY: server ${binaries} cli worker test
 server: ${server}
@@ -18,12 +17,6 @@ ${cli}:
 
 ${worker}:
 	CGO_ENABLED=0 GOOS=linux go build -o $@ ./$(@D)
-
-proto-gen:
-	protoc protos/template/template.proto --go_out=plugins=grpc:$(GOPATH)/src
-	protoc protos/target/target.proto --go_out=plugins=grpc:$(GOPATH)/src
-	protoc protos/workflow/workflow.proto --go_out=plugins=grpc:$(GOPATH)/src
-	protoc protos/hardware/hardware.proto --go_out=plugins=grpc:$(GOPATH)/src
 
 run: ${binaries}
 	docker-compose up -d --build db
