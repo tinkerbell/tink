@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 	"testing"
 	"time"
 
@@ -41,7 +42,7 @@ func startStack() error {
 	}
 
 	// Wait for some time so thath the above containers to be in running condition
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	// Start other containers
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d")
@@ -61,7 +62,7 @@ func TestMain(m *testing.M) {
 	}
 	status := m.Run()
 	fmt.Println("removing setup")
-	//err = tearDown()
+	err = tearDown()
 	if err != nil {
 		os.Exit(2)
 	}
@@ -110,7 +111,7 @@ func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string)
 		AttachStdout: true,
 		AttachStderr: true,
 		Volumes:      volume,
-		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=f9f56dff-098a-4c5f-a51c-19ad35de85d1", "DOCKER_REGISTRY=127.0.0.1:5000", "DOCKER_API_VERSION=v1.40"},
+		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=127.0.0.1:5000", "DOCKER_API_VERSION=v1.40"},
 	}
 	hostConfig := &container.HostConfig{
 		NetworkMode: "host",
@@ -131,18 +132,40 @@ func runContainer(ctx context.Context, cli *dc.Client, id string) error {
 	return nil
 }
 
-func waitContainer(ctx context.Context, cli *dc.Client, id string) (int64, error) {
+func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string) {
 	// send API call to wait for the container completion
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 	select {
 	case status := <-wait:
-		return status.StatusCode, nil
+		fmt.Println("Worker with id ", id, "finished sucessfully with status code ", status.StatusCode)
 	case err := <-errC:
-		return 1, err
+		fmt.Println("Worker with id ", id, "failed : ", err)
+		failedWorkers <- id
 	}
+	wg.Done()
+}
+
+func removeContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup) error {
+	wg.Wait()
+	// create options for removing container
+	opts := types.ContainerRemoveOptions{
+		Force:         true,
+		RemoveLinks:   false,
+		RemoveVolumes: true,
+	}
+	// send API call to remove the container
+	err := cli.ContainerRemove(ctx, id, opts)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Worker Container removed : ", id)
+	return nil
 }
 
 func startWorkers(workers int64) error {
+
+	var wg sync.WaitGroup
+	failedWorkers := make(chan string, workers)
 	cli, err := initializeDockerClient()
 	if err != nil {
 		return err
@@ -153,14 +176,50 @@ func startWorkers(workers int64) error {
 	for i = 0; i < workers; i++ {
 		ctx := context.Background()
 		cID, err := createWorkerContainer(ctx, cli, workerID[i])
-		fmt.Println("Container Created with ID : ", cID)
-		// Run container
-		err = runContainer(ctx, cli, cID)
 		if err != nil {
-			return err
+			fmt.Println("Contianer with failed to create: ", err)
+			// TODO Should be remove all the containers which previously created?
+		} else {
+			fmt.Println("Container Created with ID : ", cID)
+			// Run container
+			err = runContainer(ctx, cli, cID)
+		}
+
+		if err != nil {
+			fmt.Println("Contianer with id ", cID, " failed to start: ", err)
+			// TODO Should be remove the containers which started previously
+		} else {
+			fmt.Println("Container started with ID : ", cID)
+			wg.Add(1)
+			go waitContainer(ctx, cli, cID, &wg, failedWorkers)
+			go removeContainer(ctx, cli, cID, &wg)
 		}
 	}
-	//err = waitContainer(ctx, )
+	if err != nil {
+		return err
+	}
+
+	wg.Wait()
+
+	if len(failedWorkers) > 0 {
+		for i = 0; i < workers; i++ {
+			failedContainer, ok := <-failedWorkers
+			if ok {
+				fmt.Println("Worker Failed : ", failedContainer)
+				err = errors.New("Test Failed")
+			}
+
+			if len(failedContainer) > 0 {
+				continue
+			} else {
+				break
+			}
+		}
+	}
+	if err != nil {
+		return err
+	}
+	fmt.Println("TestRover Passed")
 	return nil
 }
 func TestRover(t *testing.T) {
