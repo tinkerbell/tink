@@ -25,7 +25,7 @@ var createTargets = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("Target Created :", uuid)
+			fmt.Println("Created Target:", uuid.Uuid)
 		}
 	},
 }

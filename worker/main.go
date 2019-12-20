@@ -24,6 +24,7 @@ var (
 
 func main() {
 	setupRetry()
+	client.Setup()
 	conn, err := tryClientConnection()
 	if err != nil {
 		log.Fatalln(err)
