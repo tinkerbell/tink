@@ -59,7 +59,7 @@ func GetConnection() (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-func init() {
+func Setup() {
 	conn, err := GetConnection()
 	if err != nil {
 		log.Fatal(err)
