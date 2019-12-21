@@ -4,15 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"sync"
 	"testing"
 	"time"
 
 	//"github.com/moby/api/types/container"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	dc "github.com/docker/docker/client"
 
 	//"github.com/moby/api/types"
 	"github.com/packethost/rover/client"
@@ -23,67 +19,51 @@ import (
 	"github.com/pkg/errors"
 )
 
-func startDb(filepath string) error {
-	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d db")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	return err
-}
-
-func startStack() error {
-	// Docker compose file for starting the containers
-	filepath := os.Getenv("GOPATH") + "src/github.com/packethost/rover/docker-compose.yml "
-
-	// Start Db and logging components
-	err := startDb(filepath)
-	if err != nil {
-		return err
-	}
-
-	// Wait for some time so thath the above containers to be in running condition
-	time.Sleep(6 * time.Second)
-
-	// Start other containers
-	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	return err
-}
+var workerID []string
 
 func TestMain(m *testing.M) {
-	fmt.Println("Inside Main")
+	fmt.Println("########Creating Setup########")
 	err := startStack()
-	time.Sleep(3 * time.Second)
-	client.Setup()
+	time.Sleep(10 * time.Second)
 	if err != nil {
 		os.Exit(1)
 	}
-	status := m.Run()
-	fmt.Println("removing setup")
-	err = tearDown()
+	client.Setup()
+	fmt.Println("########Setup Created########")
+
+	fmt.Println("Creating hardware inventory")
+	//push hardware data into hardware table
+	hwData := []string{"hardware_1.json", "hardware_2.json"}
+	err = hardware.PushHardwareData(hwData)
 	if err != nil {
 		os.Exit(2)
 	}
+	fmt.Println("Hardware inventory created")
+
+	workerID = []string{"f9f56dff-098a-4c5f-a51c-19ad35de85d1", "f9f56dff-098a-4c5f-a51c-19ad35de85d2"}
+
+	fmt.Println("########Starting Tests########")
+	status := m.Run()
+	fmt.Println("########Finished Tests########")
+	fmt.Println("########Removing setup########")
+	err = tearDown()
+	if err != nil {
+		os.Exit(3)
+	}
+	fmt.Println("########Setup removed########")
 	os.Exit(status)
 }
 
-func createWorkflow() error {
-	//push hardware data into hardware table
-	err := hardware.PushHardwareData()
-	if err != nil {
-		return err
-	}
-	fmt.Println("Hardware Data pushed for ID : f9f56dff-098a-4c5f-a51c-19ad35de85d1")
+func createWorkflow(tar string, tmpl string) error {
+
 	//Add target machine mac/ip addr into targets table
-	targetID, err := target.CreateTargets()
+	targetID, err := target.CreateTargets(tar)
 	if err != nil {
 		return err
 	}
 	fmt.Println("Target Created : ", targetID)
 	//Add template in template table
-	templateID, err := template.CreateTemplate()
+	templateID, err := template.CreateTemplate(tmpl)
 	if err != nil {
 		return err
 	}
@@ -96,72 +76,6 @@ func createWorkflow() error {
 	return nil
 }
 
-func initializeDockerClient() (*dc.Client, error) {
-	c, err := dc.NewClientWithOpts(dc.FromEnv, dc.WithAPIVersionNegotiation())
-	if err != nil {
-		return nil, errors.Wrap(err, "DOCKER CLIENT")
-	}
-	return c, nil
-}
-
-func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string) (string, error) {
-	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}}
-	config := &container.Config{
-		Image:        "worker",
-		AttachStdout: true,
-		AttachStderr: true,
-		Volumes:      volume,
-		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=127.0.0.1:5000", "DOCKER_API_VERSION=v1.40"},
-	}
-	hostConfig := &container.HostConfig{
-		NetworkMode: "host",
-		Binds:       []string{"/var/run/docker.sock:/var/run/docker.sock:rw"},
-	}
-	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, workerID)
-	if err != nil {
-		return "", errors.Wrap(err, "DOCKER CREATE")
-	}
-	return resp.ID, nil
-}
-
-func runContainer(ctx context.Context, cli *dc.Client, id string) error {
-	err := cli.ContainerStart(ctx, id, types.ContainerStartOptions{})
-	if err != nil {
-		return errors.Wrap(err, "DOCKER START")
-	}
-	return nil
-}
-
-func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string) {
-	// send API call to wait for the container completion
-	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
-	select {
-	case status := <-wait:
-		fmt.Println("Worker with id ", id, "finished sucessfully with status code ", status.StatusCode)
-	case err := <-errC:
-		fmt.Println("Worker with id ", id, "failed : ", err)
-		failedWorkers <- id
-	}
-	wg.Done()
-}
-
-func removeContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup) error {
-	wg.Wait()
-	// create options for removing container
-	opts := types.ContainerRemoveOptions{
-		Force:         true,
-		RemoveLinks:   false,
-		RemoveVolumes: true,
-	}
-	// send API call to remove the container
-	err := cli.ContainerRemove(ctx, id, opts)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Worker Container removed : ", id)
-	return nil
-}
-
 func startWorkers(workers int64) error {
 
 	var wg sync.WaitGroup
@@ -170,29 +84,30 @@ func startWorkers(workers int64) error {
 	if err != nil {
 		return err
 	}
-
-	workerID := []string{"f9f56dff-098a-4c5f-a51c-19ad35de85d1"}
+	workerContainer := make([]string, workers)
 	var i int64
 	for i = 0; i < workers; i++ {
 		ctx := context.Background()
 		cID, err := createWorkerContainer(ctx, cli, workerID[i])
 		if err != nil {
-			fmt.Println("Contianer with failed to create: ", err)
+			fmt.Println("Worker with failed to create: ", err)
 			// TODO Should be remove all the containers which previously created?
 		} else {
-			fmt.Println("Container Created with ID : ", cID)
+			workerContainer[i] = cID
+			fmt.Println("Worker Created with ID : ", cID)
 			// Run container
+
 			err = runContainer(ctx, cli, cID)
 		}
 
 		if err != nil {
-			fmt.Println("Contianer with id ", cID, " failed to start: ", err)
+			fmt.Println("Worker with id ", cID, " failed to start: ", err)
 			// TODO Should be remove the containers which started previously
 		} else {
-			fmt.Println("Container started with ID : ", cID)
+			fmt.Println("Worker started with ID : ", cID)
 			wg.Add(1)
 			go waitContainer(ctx, cli, cID, &wg, failedWorkers)
-			go removeContainer(ctx, cli, cID, &wg)
+			//go removeContainer(ctx, cli, cID, &wg)
 		}
 	}
 	if err != nil {
@@ -200,6 +115,13 @@ func startWorkers(workers int64) error {
 	}
 
 	wg.Wait()
+	ctx := context.Background()
+	for _, cID := range workerContainer {
+		err := removeContainer(ctx, cli, cID)
+		if err != nil {
+			fmt.Println("Failed to remove worker container with ID : ", cID)
+		}
+	}
 
 	if len(failedWorkers) > 0 {
 		for i = 0; i < workers; i++ {
@@ -219,20 +141,35 @@ func startWorkers(workers int64) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("TestRover Passed")
+	fmt.Println("Test Passed")
 	return nil
 }
+
+var testCases = []struct {
+	target   string
+	template string
+	workers  int64
+}{
+	{"target_1.json", "sample_1", 1},
+	{"target_1.json", "sample_2", 2},
+}
+
 func TestRover(t *testing.T) {
 
-	// Create Workflow for first case
-	err := createWorkflow()
-	if err != nil {
-		t.Error(err)
-	}
+	// Start test
+	for i, test := range testCases {
+		fmt.Printf("Starting Test_%d with values : %v\n", (i + 1), test)
+		err := createWorkflow(test.target, test.template)
 
-	// Start the Worker
-	err = startWorkers(1)
-	if err != nil {
-		t.Error(err)
+		if err != nil {
+			t.Error(err)
+		}
+		// Start the Worker
+		err = startWorkers(test.workers)
+		if err != nil {
+			fmt.Printf("Test_%d with values : %v Failed\n", i, test)
+			t.Error(err)
+		}
+		fmt.Printf("Test_%d with values : %v Passed\n", (i + 1), test)
 	}
 }
