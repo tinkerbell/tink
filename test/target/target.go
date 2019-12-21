@@ -4,7 +4,6 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
-	"strconv"
 
 	"github.com/packethost/rover/client"
 	"github.com/packethost/rover/protos/target"
@@ -26,9 +25,8 @@ func getTargets(file string) (string, error) {
 	return string(data), nil
 }
 
-func CreateTargets() (string, error) {
-	i := int64(1)
-	filepath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/target/data/target_" + strconv.FormatInt(i, 10) + ".json"
+func CreateTargets(tar string) (string, error) {
+	filepath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/target/data/" + tar
 	data, err := getTargets(filepath)
 	uuid, err := client.TargetClient.CreateTargets(context.Background(), &target.PushRequest{Data: data})
 	if err != nil {
