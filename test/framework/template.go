@@ -1,4 +1,4 @@
-package template
+package framework
 
 import (
 	"context"
@@ -24,8 +24,17 @@ func readTemplateData(file string) ([]byte, error) {
 }
 
 func CreateTemplate(tmpl string) (string, error) {
-	filepath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/template/data/" + tmpl
-	data, err := readTemplateData(filepath)
+	//matches, err := filepath.Glob("*/" + tmpl + "*")
+	//var filePath string
+	filePath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/data/template/" + tmpl
+	/*if err != nil {
+		filePath = matches[0]
+	} else {
+		fmt.Println("Match not found ", matches, " for pattern ", tmpl)
+		return "", err
+	}*/
+	//fmt.Println("Reading template : ", filePath)
+	data, err := readTemplateData(filePath)
 	req := template.WorkflowTemplate{Name: ("test_" + tmpl), Data: data}
 	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
 	if err != nil {

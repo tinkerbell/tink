@@ -1,4 +1,4 @@
-package e2e
+package framework
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	dc "github.com/docker/docker/client"
 	"github.com/pkg/errors"
 )
+
+var workerID = []string{"f9f56dff-098a-4c5f-a51c-19ad35de85d1", "f9f56dff-098a-4c5f-a51c-19ad35de85d2"}
 
 func initializeDockerClient() (*dc.Client, error) {
 	c, err := dc.NewClientWithOpts(dc.FromEnv, dc.WithAPIVersionNegotiation())
@@ -47,11 +49,12 @@ func runContainer(ctx context.Context, cli *dc.Client, id string) error {
 	return nil
 }
 
-func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string) {
+func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string, statusChannel chan<- int64) {
 	// send API call to wait for the container completion
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 	select {
 	case status := <-wait:
+		statusChannel <- status.StatusCode
 		fmt.Println("Worker with id ", id, "finished sucessfully with status code ", status.StatusCode)
 	case err := <-errC:
 		fmt.Println("Worker with id ", id, "failed : ", err)
@@ -73,5 +76,74 @@ func removeContainer(ctx context.Context, cli *dc.Client, id string) error {
 		return err
 	}
 	fmt.Println("Worker Container removed : ", id)
+	return nil
+}
+
+func StartWorkers(workers int64, workerStatus chan<- int64) error {
+
+	var wg sync.WaitGroup
+	failedWorkers := make(chan string, workers)
+	//workerStatus := make(chan int64, workers)
+	cli, err := initializeDockerClient()
+	if err != nil {
+		return err
+	}
+	workerContainer := make([]string, workers)
+	var i int64
+	for i = 0; i < workers; i++ {
+		ctx := context.Background()
+		cID, err := createWorkerContainer(ctx, cli, workerID[i])
+		if err != nil {
+			fmt.Println("Worker with failed to create: ", err)
+			// TODO Should be remove all the containers which previously created?
+		} else {
+			workerContainer[i] = cID
+			fmt.Println("Worker Created with ID : ", cID)
+			// Run container
+
+			err = runContainer(ctx, cli, cID)
+		}
+
+		if err != nil {
+			fmt.Println("Worker with id ", cID, " failed to start: ", err)
+			// TODO Should be remove the containers which started previously
+		} else {
+			fmt.Println("Worker started with ID : ", cID)
+			wg.Add(1)
+			go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus)
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	wg.Wait()
+	ctx := context.Background()
+	for _, cID := range workerContainer {
+		err := removeContainer(ctx, cli, cID)
+		if err != nil {
+			fmt.Println("Failed to remove worker container with ID : ", cID)
+		}
+	}
+
+	if len(failedWorkers) > 0 {
+		for i = 0; i < workers; i++ {
+			failedContainer, ok := <-failedWorkers
+			if ok {
+				fmt.Println("Worker Failed : ", failedContainer)
+				err = errors.New("Test Failed")
+			}
+
+			if len(failedContainer) > 0 {
+				continue
+			} else {
+				break
+			}
+		}
+	}
+	if err != nil {
+		return err
+	}
+	fmt.Println("Test Passed")
 	return nil
 }
