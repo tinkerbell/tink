@@ -1,4 +1,4 @@
-package e2e
+package framework
 
 import (
 	"os"
@@ -14,7 +14,8 @@ func startDb(filepath string) error {
 	return err
 }
 
-func startStack() error {
+// StartStack : Starting stack
+func StartStack() error {
 	// Docker compose file for starting the containers
 	filepath := os.Getenv("GOPATH") + "src/github.com/packethost/rover/docker-compose.yml "
 
@@ -25,7 +26,7 @@ func startStack() error {
 	}
 
 	// Wait for some time so thath the above containers to be in running condition
-	time.Sleep(6 * time.Second)
+	time.Sleep(8 * time.Second)
 
 	// Start other containers
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d")

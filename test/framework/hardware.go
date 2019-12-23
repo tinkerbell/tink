@@ -1,4 +1,4 @@
-package hardware
+package framework
 
 import (
 	"context"
@@ -25,7 +25,7 @@ func readHwData(file string) (string, error) {
 
 func PushHardwareData(hwDataFiles []string) error {
 	for _, hwFile := range hwDataFiles {
-		filepath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/hardware/data/" + hwFile
+		filepath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/data/hardware/" + hwFile
 		data, err := readHwData(filepath)
 		if err != nil {
 			return err

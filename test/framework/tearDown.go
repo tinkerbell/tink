@@ -1,11 +1,11 @@
-package e2e
+package framework
 
 import (
 	"os"
 	"os/exec"
 )
 
-func tearDown() error {
+func TearDown() error {
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose rm -svf")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

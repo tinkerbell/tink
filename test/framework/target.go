@@ -1,4 +1,4 @@
-package target
+package framework
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func getTargets(file string) (string, error) {
 }
 
 func CreateTargets(tar string) (string, error) {
-	filepath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/target/data/" + tar
+	filepath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/data/target/" + tar
 	data, err := getTargets(filepath)
 	uuid, err := client.TargetClient.CreateTargets(context.Background(), &target.PushRequest{Data: data})
 	if err != nil {
