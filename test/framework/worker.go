@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dc "github.com/docker/docker/client"
+	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
 )
 
@@ -78,15 +79,20 @@ func removeContainer(ctx context.Context, cli *dc.Client, id string) error {
 	fmt.Println("Worker Container removed : ", id)
 	return nil
 }
+func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan workflow.ActionState) {
+	for len(workflowStatus) == 0 {
+		GetCurrentStatus(ctx, wfID, workflowStatus)
+	}
+}
 
-func StartWorkers(workers int64, workerStatus chan<- int64) error {
+func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.ActionState, error) {
 
 	var wg sync.WaitGroup
 	failedWorkers := make(chan string, workers)
-	//workerStatus := make(chan int64, workers)
+	workflowStatus := make(chan workflow.ActionState, 1)
 	cli, err := initializeDockerClient()
 	if err != nil {
-		return err
+		return workflow.ActionState_ACTION_FAILED, err
 	}
 	workerContainer := make([]string, workers)
 	var i int64
@@ -111,12 +117,16 @@ func StartWorkers(workers int64, workerStatus chan<- int64) error {
 			fmt.Println("Worker started with ID : ", cID)
 			wg.Add(1)
 			go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus)
+			go checkCurrentStatus(ctx, wfID, workflowStatus)
 		}
 	}
+
 	if err != nil {
-		return err
+		return workflow.ActionState_ACTION_FAILED, err
 	}
 
+	status := <-workflowStatus
+	fmt.Println("Status of Workflow : ", status)
 	wg.Wait()
 	ctx := context.Background()
 	for _, cID := range workerContainer {
@@ -142,8 +152,8 @@ func StartWorkers(workers int64, workerStatus chan<- int64) error {
 		}
 	}
 	if err != nil {
-		return err
+		return status, err
 	}
 	fmt.Println("Test Passed")
-	return nil
+	return status, nil
 }

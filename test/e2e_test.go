@@ -10,6 +10,7 @@ import (
 
 	//"github.com/moby/api/types"
 	"github.com/packethost/rover/client"
+	"github.com/packethost/rover/protos/workflow"
 	"github.com/packethost/rover/test/framework"
 
 	//"github.com/packethost/rover/test/target"
@@ -40,8 +41,6 @@ func TestMain(m *testing.M) {
 	}
 	fmt.Println("Hardware inventory created")
 
-	//framework.workerID = []string{"f9f56dff-098a-4c5f-a51c-19ad35de85d1", "f9f56dff-098a-4c5f-a51c-19ad35de85d2"}
-
 	fmt.Println("########Starting Tests########")
 	status := m.Run()
 	fmt.Println("########Finished Tests########")
@@ -54,43 +53,46 @@ func TestMain(m *testing.M) {
 	os.Exit(status)
 }
 
-func createWorkflow(tar string, tmpl string) error {
+func createWorkflow(tar string, tmpl string) (string, error) {
 
 	//Add target machine mac/ip addr into targets table
 	targetID, err := framework.CreateTargets(tar)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Println("Target Created : ", targetID)
 	//Add template in template table
 	templateID, err := framework.CreateTemplate(tmpl)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Println("Template Created : ", templateID)
 	workflowID, err := framework.CreateWorkflow(templateID, targetID)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Println("Workflow Created : ", workflowID)
-	return nil
+	return workflowID, nil
 }
 
 var testCases = []struct {
+	name     string
 	target   string
 	template string
 	workers  int64
+	expected workflow.ActionState
 }{
-	{"target_1.json", "sample_1", 1},
-	{"target_1.json", "sample_2", 2},
+	{"OneWorkerTest", "target_1.json", "sample_1", 1, workflow.ActionState_ACTION_SUCCESS},
+	{"TwoWorkerTest", "target_1.json", "sample_2", 2, workflow.ActionState_ACTION_SUCCESS},
+	{"TimeoutTest", "target_1.json", "sample_3", 1, workflow.ActionState_ACTION_TIMEOUT},
 }
 
 func TestRover(t *testing.T) {
 
 	// Start test
-	for i, test := range testCases {
-		fmt.Printf("Starting Test_%d with values : %v\n", (i + 1), test)
-		err := createWorkflow(test.target, test.template)
+	for _, test := range testCases {
+		fmt.Printf("Starting %s\n", test.name)
+		wfID, err := createWorkflow(test.target, test.template)
 
 		if err != nil {
 			t.Error(err)
@@ -99,11 +101,12 @@ func TestRover(t *testing.T) {
 
 		// Start the Worker
 		workerStatus := make(chan int64, test.workers)
-		err = framework.StartWorkers(test.workers, workerStatus)
+		wfStatus, err := framework.StartWorkers(test.workers, workerStatus, wfID)
 		if err != nil {
-			fmt.Printf("Test_%d with values : %v Failed\n", i, test)
+			fmt.Printf("Test : %s : Failed\n", test.name)
 			t.Error(err)
 		}
+		assert.Equal(t, test.expected, wfStatus)
 		assert.NoError(t, err, "Workers Failed")
 
 		for i := int64(0); i < test.workers; i++ {
@@ -111,9 +114,13 @@ func TestRover(t *testing.T) {
 			if len(workerStatus) > 0 {
 				fmt.Println("Check for worker exit status")
 				status := <-workerStatus
-				assert.Equal(t, int64(0), status)
+				expected := 0
+				if test.expected != workflow.ActionState_ACTION_SUCCESS {
+					expected = 1
+				}
+				assert.Equal(t, int64(expected), status)
 			}
 		}
-		fmt.Printf("Test_%d with values : %v Passed\n", (i + 1), test)
+		fmt.Printf("Test : %s : Passed\n", test.name)
 	}
 }
