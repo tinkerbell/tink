@@ -25,7 +25,7 @@ func StartStack() error {
 		return err
 	}
 
-	// Wait for some time so thath the above containers to be in running condition
+	// Wait for some time so that the above containers to be in running condition
 	time.Sleep(8 * time.Second)
 
 	// Start other containers
