@@ -6,20 +6,11 @@ import (
 	"testing"
 	"time"
 
-	//"github.com/moby/api/types/container"
-
-	//"github.com/moby/api/types"
 	"github.com/packethost/rover/client"
 	"github.com/packethost/rover/protos/workflow"
 	"github.com/packethost/rover/test/framework"
-
-	//"github.com/packethost/rover/test/target"
-	//"github.com/packethost/rover/test/template"
-	//	"github.com/packethost/rover/test/workflow"
 	"github.com/stretchr/testify/assert"
 )
-
-//var workerID []string
 
 func TestMain(m *testing.M) {
 	fmt.Println("########Creating Setup########")
