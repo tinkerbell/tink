@@ -24,16 +24,8 @@ func readTemplateData(file string) ([]byte, error) {
 }
 
 func CreateTemplate(tmpl string) (string, error) {
-	//matches, err := filepath.Glob("*/" + tmpl + "*")
-	//var filePath string
-	filePath := os.Getenv("GOPATH") + "/src/github.com/packethost/rover/test/data/template/" + tmpl
-	/*if err != nil {
-		filePath = matches[0]
-	} else {
-		fmt.Println("Match not found ", matches, " for pattern ", tmpl)
-		return "", err
-	}*/
-	//fmt.Println("Reading template : ", filePath)
+	filePath := "data/template/" + tmpl
+	// Read Content of template
 	data, err := readTemplateData(filePath)
 	req := template.WorkflowTemplate{Name: ("test_" + tmpl), Data: data}
 	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
