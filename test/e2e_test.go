@@ -19,6 +19,8 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		os.Exit(1)
 	}
+	os.Setenv("ROVER_GRPC_AUTHORITY", "127.0.0.1:42113")
+	os.Setenv("ROVER_CERT_URL", "http://127.0.0.1:42114/cert")
 	client.Setup()
 	fmt.Println("########Setup Created########")
 
@@ -44,28 +46,6 @@ func TestMain(m *testing.M) {
 	os.Exit(status)
 }
 
-func createWorkflow(tar string, tmpl string) (string, error) {
-
-	//Add target machine mac/ip addr into targets table
-	targetID, err := framework.CreateTargets(tar)
-	if err != nil {
-		return "", err
-	}
-	fmt.Println("Target Created : ", targetID)
-	//Add template in template table
-	templateID, err := framework.CreateTemplate(tmpl)
-	if err != nil {
-		return "", err
-	}
-	fmt.Println("Template Created : ", templateID)
-	workflowID, err := framework.CreateWorkflow(templateID, targetID)
-	if err != nil {
-		return "", err
-	}
-	fmt.Println("Workflow Created : ", workflowID)
-	return workflowID, nil
-}
-
 var testCases = []struct {
 	name     string
 	target   string
@@ -83,7 +63,7 @@ func TestRover(t *testing.T) {
 	// Start test
 	for _, test := range testCases {
 		fmt.Printf("Starting %s\n", test.name)
-		wfID, err := createWorkflow(test.target, test.template)
+		wfID, err := framework.SetupWorkflow(test.target, test.template)
 
 		if err != nil {
 			t.Error(err)
