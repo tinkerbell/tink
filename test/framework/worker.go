@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+var cli *dc.Client
 var workerID = []string{"f9f56dff-098a-4c5f-a51c-19ad35de85d1", "f9f56dff-098a-4c5f-a51c-19ad35de85d2"}
 
 func initializeDockerClient() (*dc.Client, error) {
