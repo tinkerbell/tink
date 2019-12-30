@@ -16,6 +16,8 @@ service WorkflowSvc {
     rpc GetWorkflowContexts(WorkflowContextRequest) returns (WorkflowContextList) {}
     rpc GetWorkflowActions(WorkflowActionsRequest) returns (WorkflowActionList) {}
     rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}
+    rpc GetWorkflowData(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
+    rpc UpdateWorkflowData(UpdateWorkflowDataRequest) returns (Empty) {}
 }
 
 message Empty {
@@ -109,3 +111,15 @@ message WorkflowActionList {
     repeated WorkflowAction action_list = 1;
 }
 
+message GetWorkflowDataRequest {
+    string workflow_iD = 1;
+}
+
+message GetWorkflowDataResponse {
+    bytes data = 1;
+}
+
+message UpdateWorkflowDataRequest {
+    string workflow_iD = 1;
+    bytes data = 2;
+}
