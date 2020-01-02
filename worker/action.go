@@ -17,6 +17,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const workflowData = `/workflow/data:/workflow/data`
+
 var (
 	registry string
 	cli      *client.Client
@@ -163,7 +165,11 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string)
 		config.Cmd = []string{cmd}
 	}
 
-	resp, err := cli.ContainerCreate(ctx, config, nil, nil, action.GetName())
+	hostConfig := &container.HostConfig{
+		Binds: []string{workflowData},
+	}
+
+	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
 	}

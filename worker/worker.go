@@ -2,9 +2,15 @@ package main
 
 import (
 	"context"
+	sha "crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	pb "github.com/packethost/rover/protos/workflow"
@@ -12,9 +18,16 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	dataFile                 = "/workflow/data"
+	maxFileSize              = "MAX_FILE_SIZE" // in bytes
+	defaultMaxFileSize int64 = 10485760        //10MB ~= 10485760Bytes
+)
+
 var (
 	workflowcontexts = map[string]*pb.WorkflowContext{}
 	workflowactions  = map[string]*pb.WorkflowActionList{}
+	workflowDataSHA  = map[string]string{}
 )
 
 func initializeWorker(client pb.WorkflowSvcClient) error {
@@ -57,6 +70,9 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 			} else {
 				switch wfContext.GetCurrentActionState() {
 				case pb.ActionState_ACTION_SUCCESS:
+					// send updated workflow data
+					updateWorkflowData(ctx, client, wfID)
+
 					if isLastAction(wfContext, actions) {
 						fmt.Printf("Workflow %s completed successfully\n", wfID)
 						continue
@@ -104,6 +120,9 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 					}
 					fmt.Printf("Sent action status %s\n", actionStatus)
 				}
+
+				// get workflow data
+				getWorkflowData(ctx, client, wfID)
 
 				// start executing the action
 				start := time.Now()
@@ -218,4 +237,75 @@ func reportActionStatus(ctx context.Context, client pb.WorkflowSvcClient, action
 		return nil
 	}
 	return err
+}
+
+func getWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowID string) {
+	res, err := client.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowID: workflowID})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	f := openDataFile()
+	defer f.Close()
+	if len(res.Data) == 0 {
+		f.Write([]byte("{}"))
+	} else {
+		h := sha.New()
+		workflowDataSHA[workflowID] = base64.StdEncoding.EncodeToString(h.Sum(res.Data))
+		f.Write(res.Data)
+	}
+}
+
+func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowID string) {
+	f := openDataFile()
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if isValidDataFile(f, data) {
+		h := sha.New()
+		newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
+		if !strings.EqualFold(workflowDataSHA[workflowID], newSHA) {
+			_, err := client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{WorkflowID: workflowID, Data: data})
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+}
+
+func openDataFile() *os.File {
+	f, err := os.OpenFile(dataFile, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return f
+}
+
+func isValidDataFile(f *os.File, data []byte) bool {
+	var dataMap map[string]interface{}
+	err := json.Unmarshal(data, &dataMap)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+
+	stat, err := f.Stat()
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+
+	val := os.Getenv(maxFileSize)
+	if val != "" {
+		maxSize, err := strconv.ParseInt(val, 10, 64)
+		if err == nil {
+			log.Print(err)
+		}
+		return stat.Size() <= maxSize
+	}
+	return stat.Size() <= defaultMaxFileSize
 }
