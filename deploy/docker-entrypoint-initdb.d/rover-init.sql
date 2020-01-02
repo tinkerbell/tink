@@ -78,3 +78,8 @@ CREATE TABLE IF NOT EXISTS workflow_worker_map (
         workflow_id UUID NOT NULL
         , worker_id UUID NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS workflow_data (
+        workflow_id UUID UNIQUE NOT NULL
+        , data BYTEA
+);

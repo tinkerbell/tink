@@ -176,6 +176,57 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	return nil
 }
 
+func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, data []byte, id string) error {
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return errors.Wrap(err, "BEGIN transaction")
+	}
+
+	_, err = tx.Exec(`
+	INSERT INTO
+		workflow_data (data, id)
+	VALUES
+		($1, $2)
+	ON CONFLICT (id)
+	DO
+	UPDATE SET
+		(data) = ($1);
+	`, data, id)
+	if err != nil {
+		return errors.Wrap(err, "INSERT Into workflow_data")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrap(err, "COMMIT")
+	}
+	return nil
+}
+
+func GetfromWfDataTable(ctx context.Context, db *sql.DB, id string) ([]byte, error) {
+	query := `
+	SELECT data
+	FROM workflow_data
+	WHERE
+		id = $1
+	`
+	row := db.QueryRowContext(ctx, query, id)
+	buf := []byte{}
+	err := row.Scan(&buf)
+	if err == nil {
+		return buf, nil
+	}
+
+	if err != sql.ErrNoRows {
+		err = errors.Wrap(err, "SELECT")
+		logger.Error(err)
+	} else {
+		err = nil
+	}
+
+	return []byte{}, nil
+}
+
 func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]string, error) {
 	rows, err := db.Query(`
 	SELECT workflow_id

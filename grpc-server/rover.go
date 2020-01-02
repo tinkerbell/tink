@@ -21,3 +21,13 @@ func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowAct
 func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*pb.Empty, error) {
 	return exec.ReportActionStatus(context, req, s.db)
 }
+
+// Update Workflow Ephemeral Data
+func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataRequest) (*pb.Empty, error) {
+	return exec.UpdateWorkflowData(context, req, s.db)
+}
+
+// Get Workflow Ephemeral Data
+func (s *server) GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
+	return exec.GetWorkflowData(context, req, s.db)
+}

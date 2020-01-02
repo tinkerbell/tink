@@ -105,3 +105,29 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, s
 	fmt.Printf("Current context %s\n", wfContext)
 	return &pb.Empty{}, nil
 }
+
+// UpdateWorkflowData update workflow ephemeral data
+func UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataRequest, sdb *sql.DB) (*pb.Empty, error) {
+	wfID := req.GetWorkflowID()
+	if len(wfID) == 0 {
+		return &pb.Empty{}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
+	}
+	err := db.InsertIntoWfDataTable(context, sdb, req.GetData(), wfID)
+	if err != nil {
+		return &pb.Empty{}, status.Errorf(codes.Unknown, err.Error())
+	}
+	return &pb.Empty{}, nil
+}
+
+// GetWorkflowData get ephemeral data for a particualar workflow
+func GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest, sdb *sql.DB) (*pb.GetWorkflowDataResponse, error) {
+	wfID := req.GetWorkflowID()
+	if len(wfID) == 0 {
+		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
+	}
+	data, err := db.GetfromWfDataTable(context, sdb, wfID)
+	if err != nil {
+		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Unknown, err.Error())
+	}
+	return &pb.GetWorkflowDataResponse{Data: data}, nil
+}
