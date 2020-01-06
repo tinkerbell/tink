@@ -55,6 +55,8 @@ services:
       driver: fluentd
       options:
         tag: db
+    depends_on:
+      - fluentbit
 
   cli:
     build:

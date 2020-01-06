@@ -176,7 +176,13 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	return nil
 }
 
-func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, data []byte, id string) error {
+// InsertIntoWfDataTable : Insert ephemeral data in workflow_data table
+func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkflowDataRequest, index int) error {
+	version, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
+	if err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -184,14 +190,10 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, data []byte, id stri
 
 	_, err = tx.Exec(`
 	INSERT INTO
-		workflow_data (data, id)
+		workflow_data (workflow_id, version, worker_id, action_name, data)
 	VALUES
-		($1, $2)
-	ON CONFLICT (id)
-	DO
-	UPDATE SET
-		(data) = ($1);
-	`, data, id)
+		($1, $2, $3, $4, $5);
+	`, req.GetWorkflowID(), version, req.GetWorkerID(), req.GetActionName(), req.GetData())
 	if err != nil {
 		return errors.Wrap(err, "INSERT Into workflow_data")
 	}
@@ -203,16 +205,21 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, data []byte, id stri
 	return nil
 }
 
-func GetfromWfDataTable(ctx context.Context, db *sql.DB, id string) ([]byte, error) {
+func GetfromWfDataTable(ctx context.Context, db *sql.DB, id string, changeIndex int) ([]byte, error) {
+
+	version, err := getLatestVersionWfData(ctx, db, id)
+	if err != nil {
+		return []byte(""), err
+	}
 	query := `
 	SELECT data
 	FROM workflow_data
 	WHERE
-		id = $1
+		workflow_id = $1 AND version = $2
 	`
-	row := db.QueryRowContext(ctx, query, id)
+	row := db.QueryRowContext(ctx, query, id, version)
 	buf := []byte{}
-	err := row.Scan(&buf)
+	err = row.Scan(&buf)
 	if err == nil {
 		return buf, nil
 	}
@@ -572,6 +579,22 @@ func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionSt
 		err = nil
 	}
 	return err
+}
+
+func getLatestVersionWfData(ctx context.Context, db *sql.DB, wfID string) (int, error) {
+	query := `
+	SELECT COUNT(*)
+	FROM workflow_data
+	WHERE
+		workflow_id = $1;
+	`
+	row := db.QueryRowContext(ctx, query, wfID)
+	var version int
+	err := row.Scan(&version)
+	if err != nil {
+		return -1, err
+	}
+	return version, nil
 }
 
 func parseYaml(ymlContent []byte) (*WfYamlstruct, error) {
