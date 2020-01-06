@@ -121,5 +121,7 @@ message GetWorkflowDataResponse {
 
 message UpdateWorkflowDataRequest {
     string workflow_iD = 1;
-    bytes data = 2;
+    string worker_iD = 2;
+    string action_name = 3;
+    bytes data = 4;
 }
