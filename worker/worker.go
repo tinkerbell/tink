@@ -71,7 +71,7 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 				switch wfContext.GetCurrentActionState() {
 				case pb.ActionState_ACTION_SUCCESS:
 					// send updated workflow data
-					updateWorkflowData(ctx, client, wfID)
+					updateWorkflowData(ctx, client, wfContext)
 
 					if isLastAction(wfContext, actions) {
 						fmt.Printf("Workflow %s completed successfully\n", wfID)
@@ -256,7 +256,7 @@ func getWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowI
 	}
 }
 
-func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowID string) {
+func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowCtx *pb.WorkflowContext) {
 	f := openDataFile()
 	defer f.Close()
 
@@ -268,8 +268,13 @@ func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workfl
 	if isValidDataFile(f, data) {
 		h := sha.New()
 		newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
-		if !strings.EqualFold(workflowDataSHA[workflowID], newSHA) {
-			_, err := client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{WorkflowID: workflowID, Data: data})
+		if !strings.EqualFold(workflowDataSHA[workflowCtx.GetWorkflowId()], newSHA) {
+			_, err := client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
+				WorkflowID: workflowCtx.GetWorkflowId(),
+				Data:       data,
+				ActionName: workflowCtx.GetCurrentAction(),
+				WorkerID:   workflowCtx.GetCurrentWorker(),
+			})
 			if err != nil {
 				log.Fatal(err)
 			}
