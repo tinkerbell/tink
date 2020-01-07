@@ -123,7 +123,7 @@ func UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataReque
 		index = 1
 		workflowData[wfID] = index
 	}
-	err := db.InsertIntoWfDataTable(context, sdb, req, index)
+	err := db.InsertIntoWfDataTable(context, sdb, req)
 	if err != nil {
 		return &pb.Empty{}, status.Errorf(codes.Unknown, err.Error())
 	}
@@ -136,8 +136,7 @@ func GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest, sd
 	if len(wfID) == 0 {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
 	}
-	var version int
-	data, err := db.GetfromWfDataTable(context, sdb, wfID, version)
+	data, err := db.GetfromWfDataTable(context, sdb, wfID)
 	if err != nil {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Unknown, err.Error())
 	}
