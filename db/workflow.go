@@ -177,13 +177,12 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 }
 
 // InsertIntoWfDataTable : Insert ephemeral data in workflow_data table
-func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkflowDataRequest) error {
+func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkflowDataRequest, index int) error {
 	version, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
 	if err != nil {
 		return err
 	}
-	//increment the version
-	version = version + 1
+
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -206,7 +205,7 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkfl
 	return nil
 }
 
-func GetfromWfDataTable(ctx context.Context, db *sql.DB, id string) ([]byte, error) {
+func GetfromWfDataTable(ctx context.Context, db *sql.DB, id string, changeIndex int) ([]byte, error) {
 
 	version, err := getLatestVersionWfData(ctx, db, id)
 	if err != nil {
