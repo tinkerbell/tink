@@ -123,6 +123,7 @@ func UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataReque
 		index = 1
 		workflowData[wfID] = index
 	}
+	fmt.Println("Data received from worker : ", string(req.GetData()))
 	err := db.InsertIntoWfDataTable(context, sdb, req)
 	if err != nil {
 		return &pb.Empty{}, status.Errorf(codes.Unknown, err.Error())
@@ -140,5 +141,6 @@ func GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest, sd
 	if err != nil {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Unknown, err.Error())
 	}
+	fmt.Println("Data Sent to worker : ", string(data))
 	return &pb.GetWorkflowDataResponse{Data: data}, nil
 }

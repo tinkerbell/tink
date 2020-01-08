@@ -25,10 +25,10 @@ var (
 )
 
 func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, pb.ActionState, error) {
-	err := pullActionImage(ctx, action)
+	/*err := pullActionImage(ctx, action)
 	if err != nil {
 		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
-	}
+	}*/
 
 	id, err := createContainer(ctx, action, action.Command)
 	if err != nil {
@@ -156,7 +156,8 @@ func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 
 func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string) (string, error) {
 	config := &container.Config{
-		Image:        registry + "/" + action.GetImage(),
+		//Image:        registry + "/" + action.GetImage(),
+		Image:        action.GetImage(),
 		AttachStdout: true,
 		AttachStderr: true,
 	}

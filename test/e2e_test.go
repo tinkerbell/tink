@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 	status := m.Run()
 	fmt.Println("########Finished Tests########")
 	fmt.Println("########Removing setup########")
-	err = framework.TearDown()
+	//err = framework.TearDown()
 	if err != nil {
 		os.Exit(3)
 	}
@@ -54,8 +54,8 @@ var testCases = []struct {
 	expected workflow.ActionState
 }{
 	{"OneWorkerTest", "target_1.json", "sample_1", 1, workflow.ActionState_ACTION_SUCCESS},
-	{"TwoWorkerTest", "target_1.json", "sample_2", 2, workflow.ActionState_ACTION_SUCCESS},
-	{"TimeoutTest", "target_1.json", "sample_3", 1, workflow.ActionState_ACTION_TIMEOUT},
+//	{"TwoWorkerTest", "target_1.json", "sample_2", 2, workflow.ActionState_ACTION_SUCCESS},
+//	{"TimeoutTest", "target_1.json", "sample_3", 1, workflow.ActionState_ACTION_TIMEOUT},
 }
 
 func TestRover(t *testing.T) {

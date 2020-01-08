@@ -33,10 +33,10 @@ services:
       retries: 30
     volumes: 
       - ./certs:/certs/${FACILITY}
-    logging:
-      driver: fluentd
-      options:
-        tag: tinkerbell
+        #logging:
+        #driver: fluentd
+        #options:
+        #tag: tinkerbell
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp

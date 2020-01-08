@@ -240,6 +240,7 @@ func reportActionStatus(ctx context.Context, client pb.WorkflowSvcClient, action
 }
 
 func getWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowID string) {
+	log.Println("Start Getting ephemeral data")
 	res, err := client.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowID: workflowID})
 	if err != nil {
 		log.Fatal(err)
@@ -257,6 +258,7 @@ func getWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowI
 }
 
 func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowCtx *pb.WorkflowContext) {
+	log.Println("Starting  updateWorkflowData")
 	f := openDataFile()
 	defer f.Close()
 
@@ -269,6 +271,7 @@ func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workfl
 		h := sha.New()
 		newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
 		if !strings.EqualFold(workflowDataSHA[workflowCtx.GetWorkflowId()], newSHA) {
+			log.Println("Start sending ephemeral data to rover server")
 			_, err := client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
 				WorkflowID: workflowCtx.GetWorkflowId(),
 				Data:       data,

@@ -24,7 +24,7 @@ func initializeDockerClient() (*dc.Client, error) {
 }
 
 func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string) (string, error) {
-	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}}
+	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}, "/workflow": struct{}{}}
 	config := &container.Config{
 		Image:        "worker",
 		AttachStdout: true,
@@ -129,9 +129,9 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	status := <-workflowStatus
 	fmt.Println("Status of Workflow : ", status)
 	wg.Wait()
-	ctx := context.Background()
+	//ctx := context.Background()
 	for _, cID := range workerContainer {
-		err := removeContainer(ctx, cli, cID)
+		//err := removeContainer(ctx, cli, cID)
 		if err != nil {
 			fmt.Println("Failed to remove worker container with ID : ", cID)
 		}
