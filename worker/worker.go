@@ -31,6 +31,15 @@ var (
 	workflowDataSHA  = map[string]string{}
 )
 
+// WorkflowMetadata is the metadata related to workflow data
+type WorkflowMetadata struct {
+	WorkerID  string
+	Action    string
+	Task      string
+	UpdatedAt time.Time
+	SHA       string
+}
+
 func initializeWorker(client pb.WorkflowSvcClient) error {
 	workerID := os.Getenv("WORKER_ID")
 	if workerID == "" {
@@ -292,25 +301,36 @@ func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, action
 	if isValidDataFile(f, data) {
 		h := sha.New()
 		if _, ok := workflowDataSHA[actionStatus.GetWorkflowId()]; !ok {
-			workflowDataSHA[actionStatus.GetWorkflowId()] = base64.StdEncoding.EncodeToString(h.Sum(data))
-			log.Printf("Sending updated data: %v\n", string(data))
-			sendUpdate(ctx, client, actionStatus, data)
+			checksum := base64.StdEncoding.EncodeToString(h.Sum(data))
+			workflowDataSHA[actionStatus.GetWorkflowId()] = checksum
+			sendUpdate(ctx, client, actionStatus, data, checksum)
 		} else {
 			newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
 			if !strings.EqualFold(workflowDataSHA[actionStatus.GetWorkflowId()], newSHA) {
-				log.Printf("Sending updated data: %v\n", string(data))
-				sendUpdate(ctx, client, actionStatus, data)
+				sendUpdate(ctx, client, actionStatus, data, newSHA)
 			}
 		}
 	}
 }
 
-func sendUpdate(ctx context.Context, client pb.WorkflowSvcClient, actionStatus *pb.WorkflowActionStatus, data []byte) {
-	_, err := client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
-		WorkflowID: actionStatus.GetWorkflowId(),
+func sendUpdate(ctx context.Context, client pb.WorkflowSvcClient, st *pb.WorkflowActionStatus, data []byte, checksum string) {
+	meta := WorkflowMetadata{
+		WorkerID:  st.GetWorkerId(),
+		Action:    st.GetActionName(),
+		Task:      st.GetTaskName(),
+		UpdatedAt: time.Now(),
+		SHA:       checksum,
+	}
+	metadata, err := json.Marshal(meta)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Sending updated data: %v\n", string(data))
+	_, err = client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
+		WorkflowID: st.GetWorkflowId(),
 		Data:       data,
-		ActionName: actionStatus.GetActionName(),
-		WorkerID:   actionStatus.GetWorkerId(),
+		Metadata:   metadata,
 	})
 	if err != nil {
 		log.Fatal(err)

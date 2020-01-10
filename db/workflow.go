@@ -192,10 +192,10 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkfl
 
 	_, err = tx.Exec(`
 	INSERT INTO
-		workflow_data (workflow_id, version, worker_id, action_name, data)
+		workflow_data (workflow_id, version, metadata, data)
 	VALUES
-		($1, $2, $3, $4, $5);
-	`, req.GetWorkflowID(), version, req.GetWorkerID(), req.GetActionName(), string(req.GetData()))
+		($1, $2, $3, $4);
+	`, req.GetWorkflowID(), version, string(req.GetMetadata()), string(req.GetData()))
 	if err != nil {
 		return errors.Wrap(err, "INSERT Into workflow_data")
 	}
