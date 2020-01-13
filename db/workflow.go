@@ -208,7 +208,7 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkfl
 }
 
 func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDataRequest) ([]byte, error) {
-	version := int(req.GetVersion())
+	version := req.GetVersion()
 	if req.Version == 0 {
 		v, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
 		if err != nil {
@@ -218,6 +218,39 @@ func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowData
 	}
 	query := `
 	SELECT data
+	FROM workflow_data
+	WHERE
+		workflow_id = $1 AND version = $2
+	`
+	row := db.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
+	buf := []byte{}
+	err := row.Scan(&buf)
+	if err == nil {
+		return []byte(buf), nil
+	}
+
+	if err != sql.ErrNoRows {
+		err = errors.Wrap(err, "SELECT")
+		logger.Error(err)
+	} else {
+		err = nil
+	}
+
+	return []byte{}, nil
+}
+
+// GetWorkflowMetadata returns metadata wrt to the ephemeral data of a workflow
+func GetWorkflowMetadata(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+	version := req.GetVersion()
+	if req.Version == 0 {
+		v, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
+		if err != nil {
+			return []byte(""), err
+		}
+		version = v
+	}
+	query := `
+	SELECT metadata
 	FROM workflow_data
 	WHERE
 		workflow_id = $1 AND version = $2
@@ -586,7 +619,7 @@ func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionSt
 	return err
 }
 
-func getLatestVersionWfData(ctx context.Context, db *sql.DB, wfID string) (int, error) {
+func getLatestVersionWfData(ctx context.Context, db *sql.DB, wfID string) (int32, error) {
 	query := `
 	SELECT COUNT(*)
 	FROM workflow_data
@@ -594,7 +627,7 @@ func getLatestVersionWfData(ctx context.Context, db *sql.DB, wfID string) (int, 
 		workflow_id = $1;
 	`
 	row := db.QueryRowContext(ctx, query, wfID)
-	var version int
+	var version int32
 	err := row.Scan(&version)
 	if err != nil {
 		return -1, err

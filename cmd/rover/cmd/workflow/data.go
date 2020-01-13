@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/packethost/rover/client"
 	"github.com/packethost/rover/protos/workflow"
@@ -13,8 +12,8 @@ import (
 )
 
 var (
-	version  string
-	fVersion = "version"
+	version       int32
+	needsMetadata bool
 )
 
 // dataCmd represents the data subcommand for workflow command
@@ -35,16 +34,15 @@ var dataCmd = &cobra.Command{
 	},
 	Run: func(c *cobra.Command, args []string) {
 		for _, arg := range args {
-			req := &workflow.GetWorkflowDataRequest{WorkflowID: arg}
-			if version != "" {
-				v, err := strconv.ParseInt(version, 10, 64)
-				if err != nil {
-					log.Fatal(fmt.Errorf("invalid version: %v", version))
-					return
-				}
-				req.Version = v
+			req := &workflow.GetWorkflowDataRequest{WorkflowID: arg, Version: version}
+			var res *workflow.GetWorkflowDataResponse
+			var err error
+			if needsMetadata {
+				res, err = client.WorkflowClient.GetWorkflowMetadata(context.Background(), req)
+			} else {
+				res, err = client.WorkflowClient.GetWorkflowData(context.Background(), req)
 			}
-			res, err := client.WorkflowClient.GetWorkflowData(context.Background(), req)
+
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -55,7 +53,8 @@ var dataCmd = &cobra.Command{
 
 func init() {
 	flags := dataCmd.PersistentFlags()
-	flags.StringVarP(&version, fVersion, "v", "", "data version")
+	flags.Int32VarP(&version, "version", "v", 0, "data version")
+	flags.BoolVarP(&needsMetadata, "metadata", "m", false, "metadata only")
 
 	SubCommands = append(SubCommands, dataCmd)
 }
