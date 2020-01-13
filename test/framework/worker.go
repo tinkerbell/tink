@@ -23,14 +23,14 @@ func initializeDockerClient() (*dc.Client, error) {
 	return c, nil
 }
 
-func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string) (string, error) {
-	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}, "/workflow": struct{}{}}
+func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string, wfID string) (string, error) {
+	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}, "/worker/" + wfID + "/": struct{}{}}
 	config := &container.Config{
 		Image:        "worker",
 		AttachStdout: true,
 		AttachStderr: true,
 		Volumes:      volume,
-		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=127.0.0.1:5000", "DOCKER_API_VERSION=v1.40"},
+		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=localhost:443", "DOCKER_API_VERSION=v1.40", "REGISTRY_USERNAME=username", "REGISTRY_PASSWORD=password"},
 	}
 	hostConfig := &container.HostConfig{
 		NetworkMode: "host",
@@ -99,7 +99,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	var i int64
 	for i = 0; i < workers; i++ {
 		ctx := context.Background()
-		cID, err := createWorkerContainer(ctx, cli, workerID[i])
+		cID, err := createWorkerContainer(ctx, cli, workerID[i], wfID)
 		if err != nil {
 			fmt.Println("Worker with failed to create: ", err)
 			// TODO Should be remove all the containers which previously created?

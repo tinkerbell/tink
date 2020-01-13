@@ -117,7 +117,7 @@ services:
         REGISTRY_USERNAME: username
         REGISTRY_PASSWORD: password
     environment: 
-      REGISTRY_HTTP_ADDR: 0.0.0.0:443
+      REGISTRY_HTTP_ADDR: localhost:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
       REGISTRY_HTTP_TLS_KEY: /certs/server-key.pem
       REGISTRY_AUTH: htpasswd
