@@ -207,11 +207,14 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkfl
 	return nil
 }
 
-func GetfromWfDataTable(ctx context.Context, db *sql.DB, id string) ([]byte, error) {
-
-	version, err := getLatestVersionWfData(ctx, db, id)
-	if err != nil {
-		return []byte(""), err
+func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+	version := int(req.GetVersion())
+	if req.Version == 0 {
+		v, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
+		if err != nil {
+			return []byte(""), err
+		}
+		version = v
 	}
 	query := `
 	SELECT data
@@ -219,9 +222,9 @@ func GetfromWfDataTable(ctx context.Context, db *sql.DB, id string) ([]byte, err
 	WHERE
 		workflow_id = $1 AND version = $2
 	`
-	row := db.QueryRowContext(ctx, query, id, version)
+	row := db.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
 	var buf string
-	err = row.Scan(&buf)
+	err := row.Scan(&buf)
 	if err == nil {
 		return []byte(buf), nil
 	}

@@ -113,6 +113,7 @@ message WorkflowActionList {
 
 message GetWorkflowDataRequest {
     string workflow_iD = 1;
+    int64 version = 2;
 }
 
 message GetWorkflowDataResponse {
