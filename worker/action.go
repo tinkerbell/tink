@@ -24,13 +24,13 @@ var (
 	cli      *client.Client
 )
 
-func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, pb.ActionState, error) {
+func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) (string, pb.ActionState, error) {
 	err := pullActionImage(ctx, action)
 	if err != nil {
 		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
 	}
 
-	id, err := createContainer(ctx, action, action.Command)
+	id, err := createContainer(ctx, action, action.Command, wfID)
 	if err != nil {
 		return fmt.Sprintf("Failed to create container"), 1, errors.Wrap(err, "DOCKER CREATE")
 	}
@@ -92,7 +92,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, pb.A
 	}
 	if status != 0 {
 		if status == pb.ActionState_ACTION_FAILED && action.OnFailure != "" {
-			id, err = createContainer(ctx, action, action.OnFailure)
+			id, err = createContainer(ctx, action, action.OnFailure, wfID)
 			if err != nil {
 				fmt.Println("Failed to create on-failure command: ", err)
 			}
@@ -101,7 +101,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction) (string, pb.A
 				fmt.Println("Failed to run on-failure command: ", err)
 			}
 		} else if status == pb.ActionState_ACTION_TIMEOUT && action.OnTimeout != "" {
-			id, err = createContainer(ctx, action, action.OnTimeout)
+			id, err = createContainer(ctx, action, action.OnTimeout, wfID)
 			if err != nil {
 				fmt.Println("Failed to create on-timeout command: ", err)
 			}
@@ -154,7 +154,7 @@ func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 	return nil
 }
 
-func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string) (string, error) {
+func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string, wfID string) (string, error) {
 	config := &container.Config{
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
@@ -165,8 +165,9 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string)
 		config.Cmd = []string{cmd}
 	}
 
+	wfDir := dataDir + string(os.PathSeparator) + wfID
 	hostConfig := &container.HostConfig{
-		Binds: []string{workflowData},
+		Binds: []string{wfDir + ":/workflow"},
 	}
 
 	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())

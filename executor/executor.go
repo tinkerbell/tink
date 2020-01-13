@@ -136,7 +136,7 @@ func GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest, sd
 	if len(wfID) == 0 {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
 	}
-	data, err := db.GetfromWfDataTable(context, sdb, wfID)
+	data, err := db.GetfromWfDataTable(context, sdb, req)
 	if err != nil {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Unknown, err.Error())
 	}

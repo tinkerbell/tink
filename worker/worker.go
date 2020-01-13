@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	dataFile                 = "/workflow/data"
+	dataFile                 = "data"
+	dataDir                  = "/worker"
 	maxFileSize              = "MAX_FILE_SIZE" // in bytes
 	defaultMaxFileSize int64 = 10485760        //10MB ~= 10485760Bytes
 )
@@ -29,6 +30,15 @@ var (
 	workflowactions  = map[string]*pb.WorkflowActionList{}
 	workflowDataSHA  = map[string]string{}
 )
+
+// WorkflowMetadata is the metadata related to workflow data
+type WorkflowMetadata struct {
+	WorkerID  string
+	Action    string
+	Task      string
+	UpdatedAt time.Time
+	SHA       string
+}
 
 func initializeWorker(client pb.WorkflowSvcClient) error {
 	workerID := os.Getenv("WORKER_ID")
@@ -70,9 +80,6 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 			} else {
 				switch wfContext.GetCurrentActionState() {
 				case pb.ActionState_ACTION_SUCCESS:
-					// send updated workflow data
-					updateWorkflowData(ctx, client, wfContext)
-
 					if isLastAction(wfContext, actions) {
 						fmt.Printf("Workflow %s completed successfully\n", wfID)
 						continue
@@ -96,7 +103,25 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 			}
 
 			if turn {
-				fmt.Printf("Starting with action %s\n", actions.GetActionList()[actionIndex])
+				wfDir := dataDir + string(os.PathSeparator) + wfID
+				if _, err := os.Stat(wfDir); !os.IsNotExist(err) {
+					err := os.Mkdir(wfDir, os.FileMode(0755))
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					f := openDataFile(wfDir)
+					_, err = f.Write([]byte("{}"))
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					f.Close()
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+				log.Printf("Starting with action %s\n", actions.GetActionList()[actionIndex])
 			} else {
 				fmt.Printf("Sleep for %d seconds\n", retryInterval)
 				time.Sleep(retryInterval)
@@ -126,7 +151,7 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 
 				// start executing the action
 				start := time.Now()
-				message, status, err := executeAction(ctx, actions.GetActionList()[actionIndex])
+				message, status, err := executeAction(ctx, actions.GetActionList()[actionIndex], wfID)
 				elapsed := time.Since(start)
 
 				actionStatus := &pb.WorkflowActionStatus{
@@ -161,6 +186,9 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 					exitWithGrpcError(err)
 				}
 				fmt.Printf("Sent action status %s\n", actionStatus)
+
+				// send workflow data, if updated
+				updateWorkflowData(ctx, client, actionStatus)
 
 				if len(actions.GetActionList()) == actionIndex+1 {
 					fmt.Printf("Reached to end of workflow\n")
@@ -245,19 +273,24 @@ func getWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowI
 		log.Fatal(err)
 	}
 
-	f := openDataFile()
-	defer f.Close()
-	if len(res.Data) == 0 {
-		f.Write([]byte("{}"))
-	} else {
+	if len(res.GetData()) != 0 {
+		log.Printf("Data received: %x", res.GetData())
+		wfDir := dataDir + string(os.PathSeparator) + workflowID
+		f := openDataFile(wfDir)
+		defer f.Close()
+
+		_, err := f.Write(res.GetData())
+		if err != nil {
+			log.Fatal(err)
+		}
 		h := sha.New()
 		workflowDataSHA[workflowID] = base64.StdEncoding.EncodeToString(h.Sum(res.Data))
-		f.Write(res.Data)
 	}
 }
 
-func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowCtx *pb.WorkflowContext) {
-	f := openDataFile()
+func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, actionStatus *pb.WorkflowActionStatus) {
+	wfDir := dataDir + string(os.PathSeparator) + actionStatus.GetWorkflowId()
+	f := openDataFile(wfDir)
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
@@ -267,23 +300,45 @@ func updateWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workfl
 
 	if isValidDataFile(f, data) {
 		h := sha.New()
-		newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
-		if !strings.EqualFold(workflowDataSHA[workflowCtx.GetWorkflowId()], newSHA) {
-			_, err := client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
-				WorkflowID: workflowCtx.GetWorkflowId(),
-				Data:       data,
-				ActionName: workflowCtx.GetCurrentAction(),
-				WorkerID:   workflowCtx.GetCurrentWorker(),
-			})
-			if err != nil {
-				log.Fatal(err)
+		if _, ok := workflowDataSHA[actionStatus.GetWorkflowId()]; !ok {
+			checksum := base64.StdEncoding.EncodeToString(h.Sum(data))
+			workflowDataSHA[actionStatus.GetWorkflowId()] = checksum
+			sendUpdate(ctx, client, actionStatus, data, checksum)
+		} else {
+			newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
+			if !strings.EqualFold(workflowDataSHA[actionStatus.GetWorkflowId()], newSHA) {
+				sendUpdate(ctx, client, actionStatus, data, newSHA)
 			}
 		}
 	}
 }
 
-func openDataFile() *os.File {
-	f, err := os.OpenFile(dataFile, os.O_RDWR|os.O_CREATE, 0644)
+func sendUpdate(ctx context.Context, client pb.WorkflowSvcClient, st *pb.WorkflowActionStatus, data []byte, checksum string) {
+	meta := WorkflowMetadata{
+		WorkerID:  st.GetWorkerId(),
+		Action:    st.GetActionName(),
+		Task:      st.GetTaskName(),
+		UpdatedAt: time.Now(),
+		SHA:       checksum,
+	}
+	metadata, err := json.Marshal(meta)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Sending updated data: %v\n", string(data))
+	_, err = client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
+		WorkflowID: st.GetWorkflowId(),
+		Data:       data,
+		Metadata:   metadata,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func openDataFile(wfDir string) *os.File {
+	f, err := os.OpenFile(wfDir+string(os.PathSeparator)+dataFile, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
