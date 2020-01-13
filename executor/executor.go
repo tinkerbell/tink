@@ -12,10 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var (
-	workflowData = make(map[string]int)
-)
-
 // GetWorkflowContexts implements rover.GetWorkflowContexts
 func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest, sdb *sql.DB) (*pb.WorkflowContextList, error) {
 	if len(req.WorkerId) == 0 {
@@ -116,13 +112,7 @@ func UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataReque
 	if len(wfID) == 0 {
 		return &pb.Empty{}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
 	}
-	index, ok := workflowData[wfID]
-	if ok {
-		index = index + 1
-	} else {
-		index = 1
-		workflowData[wfID] = index
-	}
+	fmt.Println("Data received from worker : ", string(req.GetData()))
 	err := db.InsertIntoWfDataTable(context, sdb, req)
 	if err != nil {
 		return &pb.Empty{}, status.Errorf(codes.Unknown, err.Error())

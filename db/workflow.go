@@ -284,16 +284,16 @@ func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]strin
 	}
 	var wfID []string
 	defer rows.Close()
-	var workerId string
+	var workerID string
 
 	for rows.Next() {
-		err = rows.Scan(&workerId)
+		err = rows.Scan(&workerID)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT from worflow_worker_map")
 			logger.Error(err)
 			return nil, err
 		}
-		wfID = append(wfID, workerId)
+		wfID = append(wfID, workerID)
 	}
 	err = rows.Err()
 	if err == sql.ErrNoRows {
@@ -568,7 +568,7 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 }
 
 // ShowWorkflowEvents returns all workflows
-func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionStatus) error) error {
+func ShowWorkflowEvents(db *sql.DB, wfID string, fn func(wfs pb.WorkflowActionStatus) error) error {
 	rows, err := db.Query(`
        SELECT worker_id, task_name, action_name, execution_time, message, status, created_at
 	   FROM workflow_event
@@ -576,7 +576,7 @@ func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionSt
 			   workflow_id = $1
 		ORDER BY 
 				created_at ASC;
-	   `, wfId)
+	   `, wfID)
 
 	if err != nil {
 		return err

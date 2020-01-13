@@ -17,8 +17,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const workflowData = `/workflow/data:/workflow/data`
-
 var (
 	registry string
 	cli      *client.Client
