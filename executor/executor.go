@@ -139,5 +139,6 @@ func GetWorkflowMetadata(context context.Context, req *pb.GetWorkflowDataRequest
 	if err != nil {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Unknown, err.Error())
 	}
+	fmt.Println("Data Sent to worker : ", string(data))
 	return &pb.GetWorkflowDataResponse{Data: data}, nil
 }

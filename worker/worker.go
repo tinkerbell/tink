@@ -268,6 +268,7 @@ func reportActionStatus(ctx context.Context, client pb.WorkflowSvcClient, action
 }
 
 func getWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowID string) {
+	log.Println("Start Getting ephemeral data")
 	res, err := client.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowID: workflowID})
 	if err != nil {
 		log.Fatal(err)
