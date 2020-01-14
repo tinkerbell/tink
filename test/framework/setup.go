@@ -13,7 +13,7 @@ func buildCerts(filepath string) error {
 	return err
 }
 
-func buildRegistry(filepath string) error {
+func buildLocalDockerRegistry(filepath string) error {
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d registry")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -21,7 +21,7 @@ func buildRegistry(filepath string) error {
 	return err
 }
 
-func buildDefaultImages() error {
+func buildActionImages() error {
 	cmd := exec.Command("/bin/sh", "-c", "./build_images.sh")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -57,13 +57,13 @@ func StartStack() error {
 	}
 
 	// Building registry
-	err = buildRegistry(filepath)
+	err = buildLocalDockerRegistry(filepath)
 	if err != nil {
 		return err
 	}
 
 	//Build default images
-	err = buildDefaultImages()
+	err = buildActionImages()
 	if err != nil {
 		return err
 	}
