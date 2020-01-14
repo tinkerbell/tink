@@ -1,0 +1,17 @@
+version: '0.1'
+name: packet_osie_provision
+global_timeout: 600
+tasks:
+- name: "OS Installation"
+  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  actions:
+  - name: "server_partitioning"
+    image: hello-world
+    timeout: 3
+    on-timeout: "echo Timeout"
+    on-failure: "echo Failed"
+  - name: os_install
+    image: hello-world
+    timeout: 3
+    on-timeout: "echo Timeout"
+    on-failure: "echo Failed"

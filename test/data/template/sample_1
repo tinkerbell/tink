@@ -1,0 +1,17 @@
+version: '0.1'
+name: packet_osie_provision
+global_timeout: 600
+tasks:
+- name: "OS Installation"
+  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  actions:
+  - name: "server_partitioning"
+    image: action1
+    timeout: 60
+    on-timeout: do_partion recover -timeout
+    on-failure: do_partion recover -failure
+  - name: "update_db"
+    image: action2
+    timeout: 50
+    on-timeout: "rover_client update-timeout"
+    on-failure: "rover_client update-failed"
