@@ -3,6 +3,8 @@ package framework
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -21,6 +23,18 @@ func initializeDockerClient() (*dc.Client, error) {
 		return nil, errors.Wrap(err, "DOCKER CLIENT")
 	}
 	return c, nil
+}
+
+func createWorkerImage() error {
+	cmd := exec.Command("/bin/sh", "-c", "docker build -t worker ../worker/")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Faield to create worker image", err)
+	}
+	fmt.Println("Worker Image created")
+	return err
 }
 
 func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string, wfID string) (string, error) {
@@ -96,6 +110,12 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 		return workflow.ActionState_ACTION_FAILED, err
 	}
 	workerContainer := make([]string, workers)
+	//create worker image locally:
+	err = createWorkerImage()
+	if err != nil {
+		fmt.Println("failed to create worker Image")
+		return workflow.ActionState_ACTION_FAILED, errors.Wrap(err, "worker image creation failed")
+	}
 	var i int64
 	for i = 0; i < workers; i++ {
 		ctx := context.Background()
