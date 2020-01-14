@@ -24,7 +24,7 @@ func initializeDockerClient() (*dc.Client, error) {
 }
 
 func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string, wfID string) (string, error) {
-	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}, "/worker/" + wfID + "/": struct{}{}}
+	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}}
 	config := &container.Config{
 		Image:        "worker",
 		AttachStdout: true,
@@ -34,7 +34,7 @@ func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string,
 	}
 	hostConfig := &container.HostConfig{
 		NetworkMode: "host",
-		Binds:       []string{"/var/run/docker.sock:/var/run/docker.sock:rw"},
+		Binds:       []string{"/var/run/docker.sock:/var/run/docker.sock:rw", "/worker:/worker:rw"},
 	}
 	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, workerID)
 	if err != nil {
