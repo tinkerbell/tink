@@ -22,4 +22,5 @@ run: ${binaries}
 	docker-compose up -d --build db
 	docker-compose up --build server cli
 test:
-	go test -race -coverprofile=coverage.txt -covermode=atomic ${TEST_ARGS} ./...
+	go clean -testcache
+	go test ./test -v

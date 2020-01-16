@@ -1,8 +1,11 @@
 package framework
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/pkg/errors"
 )
 
 func buildCerts(filepath string) error {
@@ -78,6 +81,13 @@ func StartStack() error {
 	err = startDb(filepath)
 	if err != nil {
 		return err
+	}
+
+	//Create Worker image locally
+	err = createWorkerImage()
+	if err != nil {
+		fmt.Println("failed to create worker Image")
+		return errors.Wrap(err, "worker image creation failed")
 	}
 
 	// Start other containers

@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -47,20 +48,22 @@ func TestMain(m *testing.M) {
 }
 
 var testCases = []struct {
-	name     string
+	//name     string
 	target   string
 	template string
 	workers  int64
 	expected workflow.ActionState
+	ephData  string
 }{
-	{"OneWorkerTest", "target_1.json", "sample_1", 1, workflow.ActionState_ACTION_SUCCESS},
+	{"target_1.json", "sample_1", 1, workflow.ActionState_ACTION_SUCCESS, `{"action_02": "data_02}`},
+	{"target_1.json", "sample_2", 2, workflow.ActionState_ACTION_SUCCESS, ""},
 }
 
-func TestRover(t *testing.T) {
+func TestOneWorker(t *testing.T) {
 
 	// Start test
-	for _, test := range testCases {
-		fmt.Printf("Starting %s\n", test.name)
+	if len(testCases) > 0 {
+		test := testCases[0]
 		wfID, err := framework.SetupWorkflow(test.target, test.template)
 
 		if err != nil {
@@ -72,7 +75,49 @@ func TestRover(t *testing.T) {
 		workerStatus := make(chan int64, test.workers)
 		wfStatus, err := framework.StartWorkers(test.workers, workerStatus, wfID)
 		if err != nil {
-			fmt.Printf("Test : %s : Failed\n", test.name)
+			fmt.Printf("Test Failed\n")
+			t.Error(err)
+		}
+		assert.Equal(t, test.expected, wfStatus)
+		assert.NoError(t, err, "Workers Failed")
+
+		for i := int64(0); i < test.workers; i++ {
+			if len(workerStatus) > 0 {
+				//Check for worker exit status
+				status := <-workerStatus
+				expected := 0
+				if test.expected != workflow.ActionState_ACTION_SUCCESS {
+					expected = 1
+				}
+				assert.Equal(t, int64(expected), status)
+				//checking for ephemeral data validation
+				resp, err := client.WorkflowClient.GetWorkflowData(context.Background(), &workflow.GetWorkflowDataRequest{WorkflowID: wfID, Version: 0})
+				if err != nil {
+					assert.Equal(t, test.ephData, string(resp.GetData()))
+				}
+			}
+		}
+	}
+}
+
+/*
+func TestTwoWorker(t *testing.T) {
+	// Start test
+	if len(testCases) > 1 {
+		test := testCases[1]
+		fmt.Printf("Starting Test")
+		wfID, err := framework.SetupWorkflow(test.target, test.template)
+
+		if err != nil {
+			t.Error(err)
+		}
+		assert.NoError(t, err, "Create Workflow")
+
+		// Start the Worker
+		workerStatus := make(chan int64, test.workers)
+		wfStatus, err := framework.StartWorkers(test.workers, workerStatus, wfID)
+		if err != nil {
+			fmt.Printf("Test Failed\n")
 			t.Error(err)
 		}
 		assert.Equal(t, test.expected, wfStatus)
@@ -90,6 +135,7 @@ func TestRover(t *testing.T) {
 				assert.Equal(t, int64(expected), status)
 			}
 		}
-		fmt.Printf("Test : %s : Passed\n", test.name)
+		fmt.Printf("Test Passed\n")
 	}
-}
+
+}*/

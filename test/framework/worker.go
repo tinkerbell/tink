@@ -110,12 +110,6 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 		return workflow.ActionState_ACTION_FAILED, err
 	}
 	workerContainer := make([]string, workers)
-	//create worker image locally:
-	err = createWorkerImage()
-	if err != nil {
-		fmt.Println("failed to create worker Image")
-		return workflow.ActionState_ACTION_FAILED, errors.Wrap(err, "worker image creation failed")
-	}
 	var i int64
 	for i = 0; i < workers; i++ {
 		ctx := context.Background()
@@ -133,7 +127,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 
 		if err != nil {
 			fmt.Println("Worker with id ", cID, " failed to start: ", err)
-			// TODO Should be remove the containers which started previously
+			// TODO Should be remove the containers which started previously?
 		} else {
 			fmt.Println("Worker started with ID : ", cID)
 			wg.Add(1)
@@ -149,9 +143,9 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	status := <-workflowStatus
 	fmt.Println("Status of Workflow : ", status)
 	wg.Wait()
-	//ctx := context.Background()
+	ctx := context.Background()
 	for _, cID := range workerContainer {
-		//err := removeContainer(ctx, cli, cID)
+		err := removeContainer(ctx, cli, cID)
 		if err != nil {
 			fmt.Println("Failed to remove worker container with ID : ", cID)
 		}
@@ -175,6 +169,5 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	if err != nil {
 		return status, err
 	}
-	fmt.Println("Test Passed")
 	return status, nil
 }
