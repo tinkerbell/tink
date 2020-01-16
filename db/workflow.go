@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/docker/distribution/reference"
@@ -51,6 +53,11 @@ type Workflow struct {
 	ID, Target, Template string
 	CreatedAt, UpdatedAt *timestamp.Timestamp
 }
+
+var (
+	defaultMaxVersions = 3
+	maxVersions        = defaultMaxVersions // maximum number of workflow data versions to be kept in database
+)
 
 // CreateWorkflow creates a new workflow
 func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, data string, id uuid.UUID) error {
@@ -198,6 +205,20 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkfl
 	`, req.GetWorkflowID(), version, string(req.GetMetadata()), string(req.GetData()))
 	if err != nil {
 		return errors.Wrap(err, "INSERT Into workflow_data")
+	}
+
+	if version > int32(maxVersions) {
+		cleanVersion := version - int32(maxVersions)
+		_, err = tx.Exec(`
+		UPDATE workflow_data
+		SET
+			data = NULL
+		WHERE
+			workflow_id = $1 AND version = $2;
+		`, req.GetWorkflowID(), cleanVersion)
+		if err != nil {
+			return errors.Wrap(err, "UPDATE")
+		}
 	}
 
 	err = tx.Commit()
@@ -770,4 +791,11 @@ func validateTemplateValues(tasks []Task) error {
 		}
 	}
 	return nil
+}
+
+func init() {
+	val := os.Getenv("MAX_WORKFLOW_DATA_VERSIONS")
+	if v, err := strconv.Atoi(val); err == nil {
+		maxVersions = v
+	}
 }
