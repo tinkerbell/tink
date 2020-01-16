@@ -14,6 +14,7 @@ import (
 var (
 	version       int32
 	needsMetadata bool
+	versionOnly   bool
 )
 
 // dataCmd represents the data subcommand for workflow command
@@ -39,6 +40,8 @@ var dataCmd = &cobra.Command{
 			var err error
 			if needsMetadata {
 				res, err = client.WorkflowClient.GetWorkflowMetadata(context.Background(), req)
+			} else if versionOnly {
+				res, err = client.WorkflowClient.GetWorkflowDataVersion(context.Background(), req)
 			} else {
 				res, err = client.WorkflowClient.GetWorkflowData(context.Background(), req)
 			}
@@ -46,7 +49,12 @@ var dataCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(string(res.Data))
+
+			if versionOnly {
+				fmt.Printf("Latest workflow data version: %v", res.Version)
+			} else {
+				fmt.Println(string(res.Data))
+			}
 		}
 	},
 }
@@ -55,6 +63,7 @@ func init() {
 	flags := dataCmd.PersistentFlags()
 	flags.Int32VarP(&version, "version", "v", 0, "data version")
 	flags.BoolVarP(&needsMetadata, "metadata", "m", false, "metadata only")
+	flags.BoolVarP(&versionOnly, "latest version", "l", false, "latest version")
 
 	SubCommands = append(SubCommands, dataCmd)
 }

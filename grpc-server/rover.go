@@ -32,7 +32,12 @@ func (s *server) GetWorkflowData(context context.Context, req *pb.GetWorkflowDat
 	return exec.GetWorkflowData(context, req, s.db)
 }
 
-// GetWorkflowData Workflow returns metadata wrt to the ephemeral data of a workflow
+// GetWorkflowMetadata returns metadata wrt to the ephemeral data of a workflow
 func (s *server) GetWorkflowMetadata(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
 	return exec.GetWorkflowMetadata(context, req, s.db)
+}
+
+// GetWorkflowDataVersion returns the latest version of data for a workflow
+func (s *server) GetWorkflowDataVersion(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
+	return exec.GetWorkflowDataVersion(context, req.WorkflowID, s.db)
 }
