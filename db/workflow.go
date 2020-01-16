@@ -293,6 +293,11 @@ func GetWorkflowMetadata(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDat
 	return []byte{}, nil
 }
 
+// GetWorkflowDataVersion returns the latest version of data for a workflow
+func GetWorkflowDataVersion(ctx context.Context, db *sql.DB, workflowID string) (int32, error) {
+	return getLatestVersionWfData(ctx, db, workflowID)
+}
+
 func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]string, error) {
 	rows, err := db.Query(`
 	SELECT workflow_id

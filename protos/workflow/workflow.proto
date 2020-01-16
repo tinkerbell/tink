@@ -18,6 +18,7 @@ service WorkflowSvc {
     rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}
     rpc GetWorkflowData(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
     rpc GetWorkflowMetadata(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
+    rpc GetWorkflowDataVersion(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
     rpc UpdateWorkflowData(UpdateWorkflowDataRequest) returns (Empty) {}
 }
 
@@ -119,6 +120,7 @@ message GetWorkflowDataRequest {
 
 message GetWorkflowDataResponse {
     bytes data = 1;
+    int32 version = 2;
 }
 
 message UpdateWorkflowDataRequest {

@@ -151,3 +151,12 @@ func GetWorkflowMetadata(context context.Context, req *pb.GetWorkflowDataRequest
 	}
 	return &pb.GetWorkflowDataResponse{Data: data}, nil
 }
+
+// GetWorkflowDataVersion returns the latest version of data for a workflow
+func GetWorkflowDataVersion(context context.Context, workflowID string, sdb *sql.DB) (*pb.GetWorkflowDataResponse, error) {
+	version, err := db.GetWorkflowDataVersion(context, sdb, workflowID)
+	if err != nil {
+		return &pb.GetWorkflowDataResponse{Version: version}, status.Errorf(codes.Unknown, err.Error())
+	}
+	return &pb.GetWorkflowDataResponse{Version: version}, nil
+}
