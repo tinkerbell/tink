@@ -33,11 +33,11 @@ var (
 
 // WorkflowMetadata is the metadata related to workflow data
 type WorkflowMetadata struct {
-	WorkerID  string
-	Action    string
-	Task      string
-	UpdatedAt time.Time
-	SHA       string
+	WorkerID  string    `json:"worker-id"`
+	Action    string    `json:"action-name"`
+	Task      string    `json:"task-name"`
+	UpdatedAt time.Time `json:"updated-at"`
+	SHA       string    `json:"sha256"`
 }
 
 func initializeWorker(client pb.WorkflowSvcClient) error {
