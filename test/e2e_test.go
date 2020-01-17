@@ -56,7 +56,7 @@ var testCases = []struct {
 	ephData  string
 }{
 	{"target_1.json", "sample_1", 1, workflow.ActionState_ACTION_SUCCESS, `{"action_02": "data_02}`},
-	{"target_1.json", "sample_2", 2, workflow.ActionState_ACTION_SUCCESS, ""},
+	{"target_1.json", "sample_2", 1, workflow.ActionState_ACTION_TIMEOUT, `{"action_01": "data_01}`},
 }
 
 func TestOneWorker(t *testing.T) {
@@ -100,12 +100,10 @@ func TestOneWorker(t *testing.T) {
 	}
 }
 
-/*
-func TestTwoWorker(t *testing.T) {
+func TestTimeout(t *testing.T) {
 	// Start test
 	if len(testCases) > 1 {
 		test := testCases[1]
-		fmt.Printf("Starting Test")
 		wfID, err := framework.SetupWorkflow(test.target, test.template)
 
 		if err != nil {
@@ -124,18 +122,21 @@ func TestTwoWorker(t *testing.T) {
 		assert.NoError(t, err, "Workers Failed")
 
 		for i := int64(0); i < test.workers; i++ {
-			fmt.Println("lenght of channel is : ", len(workerStatus))
 			if len(workerStatus) > 0 {
-				fmt.Println("Check for worker exit status")
+				// Check for worker exit status
 				status := <-workerStatus
 				expected := 0
 				if test.expected != workflow.ActionState_ACTION_SUCCESS {
 					expected = 1
 				}
 				assert.Equal(t, int64(expected), status)
+
+				//checking for ephemeral data validation
+				resp, err := client.WorkflowClient.GetWorkflowData(context.Background(), &workflow.GetWorkflowDataRequest{WorkflowID: wfID, Version: 0})
+				if err != nil {
+					assert.Equal(t, test.ephData, string(resp.GetData()))
+				}
 			}
 		}
-		fmt.Printf("Test Passed\n")
 	}
-
-}*/
+}

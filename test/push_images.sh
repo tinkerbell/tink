@@ -10,3 +10,4 @@ do
 done
 docker push localhost/action1
 docker push localhost/action2
+docker push localhost/action3
