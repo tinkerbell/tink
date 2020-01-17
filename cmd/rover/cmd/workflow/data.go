@@ -51,7 +51,7 @@ var dataCmd = &cobra.Command{
 			}
 
 			if versionOnly {
-				fmt.Printf("Latest workflow data version: %v", res.Version)
+				fmt.Printf("Latest workflow data version: %v\n", res.Version)
 			} else {
 				fmt.Println(string(res.Data))
 			}
