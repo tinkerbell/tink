@@ -44,6 +44,8 @@ type (
 		Command   []string `yaml:"command"`
 		OnTimeout []string `yaml:"on-timeout"`
 		OnFailure []string `yaml:"on-failure"`
+		Volumes     []string          `yaml:"volumes,omitempty"`
+		Environment map[string]string `yaml:"environment,omitempty"`
 	}
 )
 
@@ -148,15 +150,21 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			uniqueWorkerID = workerUID
 		}
 		for _, ac := range task.Actions {
+			envs := []string{}
+			for key, val := range ac.Environment {
+				envs = append(envs, key+"="+val)
+			}
 			action := pb.WorkflowAction{
-				TaskName:  task.Name,
-				WorkerId:  workerUID.String(),
-				Name:      ac.Name,
-				Image:     ac.Image,
-				Timeout:   ac.Timeout,
-				Command:   ac.Command,
-				OnTimeout: ac.OnTimeout,
-				OnFailure: ac.OnFailure,
+				TaskName:    task.Name,
+				WorkerId:    workerUID.String(),
+				Name:        ac.Name,
+				Image:       ac.Image,
+				Timeout:     ac.Timeout,
+				Command:     ac.Command,
+				OnTimeout:   ac.OnTimeout,
+				OnFailure:   ac.OnFailure,
+				Environment: envs,
+				Volumes:     ac.Volumes,
 			}
 			actionList = append(actionList, action)
 		}
