@@ -107,6 +107,8 @@ message WorkflowAction {
     repeated string on_timeout = 6;
     repeated string on_failure = 7;
     string worker_id = 8;
+    repeated string volumes = 9;
+    repeated string environment = 10;
 }
 
 message WorkflowActionList {

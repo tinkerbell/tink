@@ -183,6 +183,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
 		AttachStderr: true,
+		Env:          action.GetEnvironment(),
 	}
 
 	if cmd != nil {
@@ -193,6 +194,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 	hostConfig := &container.HostConfig{
 		Binds: []string{wfDir + ":/workflow"},
 	}
+	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 
 	log.Infoln("Starting the container with cmd", cmd)
 	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())
