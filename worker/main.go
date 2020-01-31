@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/packethost/rover/client"
 	pb "github.com/packethost/rover/protos/workflow"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -22,17 +22,19 @@ var (
 	retries       int
 )
 
+var logger = logrus.New()
+
 func main() {
 	setupRetry()
 	client.Setup()
 	conn, err := tryClientConnection()
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatalln(err)
 	}
 	rClient = pb.NewWorkflowSvcClient(conn)
-	err = initializeWorker(rClient)
+	err = processWorkflowActions(rClient)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Errorln("Worker Finished with error", err)
 	}
 }
 
@@ -42,8 +44,8 @@ func tryClientConnection() (*grpc.ClientConn, error) {
 		c, e := client.GetConnection()
 		if e != nil {
 			err = e
-			log.Println(err)
-			log.Printf("Retrying after %v seconds", retryInterval)
+			logger.Errorln(err)
+			logger.Errorf("Retrying after %v seconds", retryInterval)
 			<-time.After(retryInterval * time.Second)
 			continue
 		}
@@ -55,12 +57,12 @@ func tryClientConnection() (*grpc.ClientConn, error) {
 func setupRetry() {
 	interval := os.Getenv("RETRY_INTERVAL")
 	if interval == "" {
-		log.Printf("RETRY_INTERVAL not set. Using default, %d seconds\n", retryIntervalDefault)
+		logger.Infof("RETRY_INTERVAL not set. Using default, %d seconds\n", retryIntervalDefault)
 		retryInterval = retryIntervalDefault
 	} else {
 		interval, err := time.ParseDuration(interval)
 		if err != nil {
-			log.Printf("Invalid RETRY_INTERVAL set. Using default, %d seconds.\n", retryIntervalDefault)
+			logger.Warningf("Invalid RETRY_INTERVAL set. Using default, %d seconds.\n", retryIntervalDefault)
 			retryInterval = retryIntervalDefault
 		} else {
 			retryInterval = interval
@@ -69,12 +71,12 @@ func setupRetry() {
 
 	maxRetry := os.Getenv("MAX_RETRY")
 	if maxRetry == "" {
-		log.Printf("MAX_RETRY not set. Using default, %d retries.\n", retryCountDefault)
+		logger.Infof("MAX_RETRY not set. Using default, %d retries.\n", retryCountDefault)
 		retries = retryCountDefault
 	} else {
 		max, err := strconv.Atoi(maxRetry)
 		if err != nil {
-			log.Printf("Invalid MAX_RETRY set. Using default, %d retries.\n", retryCountDefault)
+			logger.Warningf("Invalid MAX_RETRY set. Using default, %d retries.\n", retryCountDefault)
 			retries = retryCountDefault
 		} else {
 			retries = max

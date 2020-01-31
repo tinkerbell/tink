@@ -59,6 +59,7 @@ func GetConnection() (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
+// Setup : create a connection to server
 func Setup() {
 	conn, err := GetConnection()
 	if err != nil {

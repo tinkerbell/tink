@@ -103,9 +103,9 @@ message WorkflowAction {
     string name = 2;
     string image = 3;
     int64 timeout = 4;
-    string command = 5;
-    string on_timeout = 6;
-    string on_failure = 7;
+    repeated string command = 5;
+    repeated string on_timeout = 6;
+    repeated string on_failure = 7;
     string worker_id = 8;
 }
 

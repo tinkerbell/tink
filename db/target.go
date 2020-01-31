@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Push targets data in target table
+// InsertIntoTargetDB : Push targets data in target table
 func InsertIntoTargetDB(ctx context.Context, db *sql.DB, data string, uuid string) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -36,7 +36,7 @@ func InsertIntoTargetDB(ctx context.Context, db *sql.DB, data string, uuid strin
 	return nil
 }
 
-// Get the targets data which belongs to the input id
+// TargetsByID : Get the targets data which belongs to the input id
 func TargetsByID(ctx context.Context, db *sql.DB, id string) (string, error) {
 	arg := id
 
@@ -51,7 +51,7 @@ func TargetsByID(ctx context.Context, db *sql.DB, id string) (string, error) {
 	return get(ctx, db, query, arg)
 }
 
-// Delete the targets which belong to the input id
+// DeleteFromTargetDB : Delete the targets which belong to the input id
 func DeleteFromTargetDB(ctx context.Context, db *sql.DB, id string) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
