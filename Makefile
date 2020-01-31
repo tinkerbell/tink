@@ -1,7 +1,8 @@
-server := rover-linux-x86_64
-cli := cmd/rover/rover-linux-x86_64
-worker := worker/rover-worker-linux-x86_64
-binaries := ${server} ${cli} ${worker}
+bindir := bin
+server := ${bindir}/rover-server
+cli := ${bindir}/rover-cli
+worker := ${bindir}/rover-worker
+binaries := ${bindir} ${server} ${cli} ${worker}
 all: ${binaries}
 
 .PHONY: server ${binaries} cli worker test
@@ -9,14 +10,17 @@ server: ${server}
 cli: ${cli}
 worker : ${worker}
 
+${bindir}:
+	mkdir -p $@/
+
 ${server}:
-	CGO_ENABLED=0 GOOS=linux go build -o $@ ./$(@D)
+	CGO_ENABLED=0 go build -o $@ .
 
 ${cli}:
-	CGO_ENABLED=0 GOOS=linux go build -o $@ ./$(@D)
+	CGO_ENABLED=0 go build -o $@ ./cmd/rover
 
 ${worker}:
-	CGO_ENABLED=0 GOOS=linux go build -o $@ ./$(@D)
+	CGO_ENABLED=0 go build -o $@ ./worker/
 
 run: ${binaries}
 	docker-compose up -d --build db
