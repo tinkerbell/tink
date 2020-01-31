@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -15,6 +16,7 @@ import (
 	"github.com/docker/docker/client"
 	pb "github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const workflowData = `/workflow/data:/workflow/data`
@@ -22,9 +24,11 @@ const workflowData = `/workflow/data:/workflow/data`
 var (
 	registry string
 	cli      *client.Client
+	log      *logrus.Entry
 )
 
 func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) (string, pb.ActionState, error) {
+	log = logger.WithFields(logrus.Fields{"workflow_id": wfID, "worker_id": action.GetWorkerId()})
 	err := pullActionImage(ctx, action)
 	if err != nil {
 		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
@@ -48,41 +52,18 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	if err != nil {
 		return fmt.Sprintf("Failed to run container"), 1, errors.Wrap(err, "DOCKER RUN")
 	}
-	stopLogs := make(chan bool)
-	go func(srt time.Time, exit chan bool) {
-		req := func(sr string) {
-			// get logs the runtime container
-			rc, err := getLogs(ctx, cli, id, strconv.FormatInt(srt.Unix(), 10))
-			if err != nil {
-				stopLogs <- true
-			}
-			defer rc.Close()
-			io.Copy(os.Stdout, rc)
-		}
-	Loop:
-		for {
-			select {
-			case <-exit:
-				// Last call to be sure to get the end of the logs content
-				now := time.Now()
-				now = now.Add(time.Second * -1)
-				startAt := strconv.FormatInt(now.Unix(), 10)
-				req(startAt)
-				break Loop
-			default:
-				// Running call to trace the container logs every 500ms
-				startAt := strconv.FormatInt(srt.Unix(), 10)
-				srt = srt.Add(time.Millisecond * 500)
-				req(startAt)
-			}
-		}
-	}(startedAt, stopLogs)
 
-	status, err := waitContainer(timeCtx, id, stopLogs)
-	if err != nil {
+	failedActionStatus := make(chan pb.ActionState)
+
+	//capturing logs of action container in a go-routine
+	stopLogs := make(chan bool)
+	go captureLogs(ctx, startedAt, id, stopLogs)
+
+	status, err, werr := waitContainer(timeCtx, id, stopLogs)
+	if werr != nil {
 		rerr := removeContainer(ctx, id)
 		if rerr != nil {
-			fmt.Println("Failed to remove container as ", rerr)
+			log.WithField("container_id", id).Errorln("Failed to remove container as ", rerr)
 		}
 		return fmt.Sprintf("Failed to wait for completion of action"), status, errors.Wrap(err, "DOCKER_WAIT")
 	}
@@ -90,43 +71,86 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	if rerr != nil {
 		return fmt.Sprintf("Failed to remove container of action"), status, errors.Wrap(rerr, "DOCKER_REMOVE")
 	}
-	if status != 0 {
-		if status == pb.ActionState_ACTION_FAILED && action.OnFailure != "" {
-			id, err = createContainer(ctx, action, action.OnFailure, wfID)
-			if err != nil {
-				fmt.Println("Failed to create on-failure command: ", err)
-			}
-			err = runContainer(ctx, id)
-			if err != nil {
-				fmt.Println("Failed to run on-failure command: ", err)
-			}
-		} else if status == pb.ActionState_ACTION_TIMEOUT && action.OnTimeout != "" {
+	log.Infoln("Container removed with Status ", pb.ActionState(status))
+	if status != pb.ActionState_ACTION_SUCCESS {
+		if status == pb.ActionState_ACTION_TIMEOUT && action.OnTimeout != nil {
 			id, err = createContainer(ctx, action, action.OnTimeout, wfID)
 			if err != nil {
-				fmt.Println("Failed to create on-timeout command: ", err)
+				log.Errorln("Failed to create container for on-timeout command: ", err)
 			}
+			log.Infoln("Container created with on-timeout command : ", action.OnTimeout)
+			startedAt = time.Now()
+			failedActionStatus := make(chan pb.ActionState)
+			go captureLogs(ctx, startedAt, id, stopLogs)
+			go waitFailedContainer(ctx, id, stopLogs, failedActionStatus)
 			err = runContainer(ctx, id)
 			if err != nil {
-				fmt.Println("Failed to run on-timeout command: ", err)
+				log.Errorln("Failed to run on-timeout command: ", err)
+			}
+			onTimeoutStatus := <-failedActionStatus
+			log.Infoln("On-Timeout Container status : ", onTimeoutStatus)
+		} else {
+			if action.OnFailure != nil {
+				id, err = createContainer(ctx, action, action.OnFailure, wfID)
+				if err != nil {
+					log.Errorln("Failed to create on-failure command: ", err)
+				}
+				log.Infoln("Container created with on-failure command : ", action.OnFailure)
+				go captureLogs(ctx, startedAt, id, stopLogs)
+				go waitFailedContainer(ctx, id, stopLogs, failedActionStatus)
+				err = runContainer(ctx, id)
+				if err != nil {
+					log.Errorln("Failed to run on-failure command: ", err)
+				}
+				onFailureStatus := <-failedActionStatus
+				log.Infoln("on-failure Container status : ", onFailureStatus)
 			}
 		}
-		_, err = waitContainer(ctx, id, stopLogs)
+		log.Infoln("Wait finished for failed or timeout container")
 		if err != nil {
 			rerr := removeContainer(ctx, id)
 			if rerr != nil {
-				fmt.Println("Failed to remove container as ", rerr)
+				log.Errorln("Failed to remove container as ", rerr)
 			}
-			fmt.Println("Failed to wait for container : ", err)
+			log.Infoln("Failed to wait for container : ", err)
 		}
-		rerr := removeContainer(ctx, id)
+		rerr = removeContainer(ctx, id)
 		if rerr != nil {
-			fmt.Println("Failed to remove container as ", rerr)
+			log.Errorln("Failed to remove container as ", rerr)
 		}
 	}
-	fmt.Println("Action container exits with status code ", status)
+	log.Infoln("Action container exits with status code ", status)
 	return fmt.Sprintf("Successfull Execution"), status, nil
 }
 
+func captureLogs(ctx context.Context, srt time.Time, id string, stop chan bool) {
+	req := func(sr string) {
+		// get logs the runtime container
+		rc, err := getLogs(ctx, cli, id, strconv.FormatInt(srt.Unix(), 10))
+		if err != nil {
+			stop <- true
+		}
+		defer rc.Close()
+		io.Copy(os.Stdout, rc)
+	}
+Loop:
+	for {
+		select {
+		case <-stop:
+			// Last call to be sure to get the end of the logs content
+			now := time.Now()
+			now = now.Add(time.Second * -1)
+			startAt := strconv.FormatInt(now.Unix(), 10)
+			req(startAt)
+			break Loop
+		default:
+			// Running call to trace the container logs every 500ms
+			startAt := strconv.FormatInt(srt.Unix(), 10)
+			srt = srt.Add(time.Millisecond * 500)
+			req(startAt)
+		}
+	}
+}
 func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 	user := os.Getenv("REGISTRY_USERNAME")
 	pwd := os.Getenv("REGISTRY_PASSWORD")
@@ -154,15 +178,15 @@ func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 	return nil
 }
 
-func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string, wfID string) (string, error) {
+func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []string, wfID string) (string, error) {
 	config := &container.Config{
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
 		AttachStderr: true,
 	}
 
-	if cmd != "" {
-		config.Cmd = []string{cmd}
+	if cmd != nil {
+		config.Cmd = cmd
 	}
 
 	wfDir := dataDir + string(os.PathSeparator) + wfID
@@ -170,6 +194,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string,
 		Binds: []string{wfDir + ":/workflow"},
 	}
 
+	log.Infoln("Starting the container with cmd", cmd)
 	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
@@ -178,6 +203,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd string,
 }
 
 func runContainer(ctx context.Context, id string) error {
+	log.Debugln("run Container with ID : ", id)
 	err := cli.ContainerStart(ctx, id, types.ContainerStartOptions{})
 	if err != nil {
 		return errors.Wrap(err, "DOCKER START")
@@ -187,7 +213,7 @@ func runContainer(ctx context.Context, id string) error {
 
 func getLogs(ctx context.Context, cli *client.Client, id string, srt string) (io.ReadCloser, error) {
 
-	fmt.Println("Capturing logs for container : ", id)
+	log.Debugln("Capturing logs for container : ", id)
 	// create options for capturing container logs
 	opts := types.ContainerLogsOptions{
 		Follow:     true,
@@ -205,19 +231,57 @@ func getLogs(ctx context.Context, cli *client.Client, id string, srt string) (io
 	return logs, nil
 }
 
-func waitContainer(ctx context.Context, id string, stopLogs chan bool) (pb.ActionState, error) {
+func waitContainer(ctx context.Context, id string, stopLogs chan bool) (pb.ActionState, error, error) {
+	// Inspect whether the container is in running state
+	inspect, err := cli.ContainerInspect(ctx, id)
+	if err != nil {
+		log.Debugln("Container does not exists")
+		return pb.ActionState_ACTION_FAILED, nil, nil
+	}
+	if inspect.ContainerJSONBase.State.Running {
+		log.Debugln("Container with id : ", id, " is in running state")
+		//return pb.ActionState_ACTION_FAILED, nil, nil
+	}
 	// send API call to wait for the container completion
+	log.Debugln("Starting Container wait for id : ", id)
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
+
 	select {
 	case status := <-wait:
+		log.Infoln("Container with id ", id, "finished with status code : ", status.StatusCode)
 		stopLogs <- true
-		return pb.ActionState(status.StatusCode), nil
+		if status.StatusCode == 0 {
+			return pb.ActionState_ACTION_SUCCESS, nil, nil
+		}
+		return pb.ActionState_ACTION_FAILED, nil, nil
 	case err := <-errC:
+		log.Errorln("Container wait failed for id : ", id, " Error : ", err)
 		stopLogs <- true
-		return pb.ActionState_ACTION_FAILED, err
+		return pb.ActionState_ACTION_FAILED, nil, err
 	case <-ctx.Done():
+		log.Errorln("Container wait for id : ", id, " is timedout Error : ", err)
 		stopLogs <- true
-		return pb.ActionState_ACTION_TIMEOUT, ctx.Err()
+		return pb.ActionState_ACTION_TIMEOUT, ctx.Err(), nil
+	}
+}
+
+func waitFailedContainer(ctx context.Context, id string, stopLogs chan bool, failedActionStatus chan pb.ActionState) {
+	// send API call to wait for the container completion
+	log.Debugln("Starting Container wait for id : ", id)
+	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
+
+	select {
+	case status := <-wait:
+		log.Infoln("Container with id ", id, "finished with status code : ", status.StatusCode)
+		stopLogs <- true
+		if status.StatusCode == 0 {
+			failedActionStatus <- pb.ActionState_ACTION_SUCCESS
+		}
+		failedActionStatus <- pb.ActionState_ACTION_FAILED
+	case err := <-errC:
+		log.Errorln("Container wait failed for id : ", id, " Error : ", err)
+		stopLogs <- true
+		failedActionStatus <- pb.ActionState_ACTION_FAILED
 	}
 }
 
@@ -228,7 +292,7 @@ func removeContainer(ctx context.Context, id string) error {
 		RemoveLinks:   false,
 		RemoveVolumes: true,
 	}
-	fmt.Println("Start removing container ", id)
+	log.Debugln("Start removing container ", id)
 	// send API call to remove the container
 	err := cli.ContainerRemove(ctx, id, opts)
 	if err != nil {
@@ -246,5 +310,31 @@ func initializeDockerClient() (*client.Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "DOCKER CLIENT")
 	}
+	level := os.Getenv("WORKER_LOG_LEVEL")
+	if level != "" {
+		switch strings.ToLower(level) {
+		case "panic":
+			logger.SetLevel(logrus.PanicLevel)
+		case "fatal":
+			logger.SetLevel(logrus.FatalLevel)
+		case "error":
+			logger.SetLevel(logrus.ErrorLevel)
+		case "warn", "warning":
+			logger.SetLevel(logrus.WarnLevel)
+		case "info":
+			logger.SetLevel(logrus.InfoLevel)
+		case "debug":
+			logger.SetLevel(logrus.DebugLevel)
+		case "trace":
+			logger.SetLevel(logrus.TraceLevel)
+		default:
+			logger.SetLevel(logrus.InfoLevel)
+			logger.Errorln("Invalid value for WORKER_LOG_LEVEL", level, " .Setting it to default(Info)")
+		}
+	} else {
+		logger.SetLevel(logrus.InfoLevel)
+		logger.Errorln("Variable WORKER_LOG_LEVEL is not set. Default is Info")
+	}
+	logger.SetFormatter(&logrus.JSONFormatter{})
 	return c, nil
 }

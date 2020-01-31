@@ -7,13 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	pb "github.com/packethost/rover/protos/workflow"
+	"github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/status"
 )
@@ -40,12 +40,12 @@ type WorkflowMetadata struct {
 	SHA       string    `json:"sha256"`
 }
 
-func initializeWorker(client pb.WorkflowSvcClient) error {
+func processWorkflowActions(client pb.WorkflowSvcClient) error {
 	workerID := os.Getenv("WORKER_ID")
 	if workerID == "" {
 		return fmt.Errorf("requried WORKER_NAME")
 	}
-
+	log = logger.WithField("worker_id", workerID)
 	ctx := context.Background()
 	for {
 		err := fetchLatestContext(ctx, client, workerID)
@@ -54,7 +54,7 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 		}
 
 		if allWorkflowsFinished() {
-			fmt.Println("All workflows finished")
+			log.Infoln("All workflows finished")
 			return nil
 		}
 
@@ -81,19 +81,19 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 				switch wfContext.GetCurrentActionState() {
 				case pb.ActionState_ACTION_SUCCESS:
 					if isLastAction(wfContext, actions) {
-						fmt.Printf("Workflow %s completed successfully\n", wfID)
+						log.Infof("Workflow %s completed successfully\n", wfID)
 						continue
 					}
 					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()+1]
 					actionIndex = int(wfContext.GetCurrentActionIndex()) + 1
 				case pb.ActionState_ACTION_FAILED:
-					fmt.Printf("Workflow %s Failed\n", wfID)
+					log.Infof("Workflow %s Failed\n", wfID)
 					continue
 				case pb.ActionState_ACTION_TIMEOUT:
-					fmt.Printf("Workflow %s Timeout\n", wfID)
+					log.Infof("Workflow %s Timeout\n", wfID)
 					continue
 				default:
-					fmt.Printf("Current context %s\n", wfContext)
+					log.Infof("Current context %s\n", wfContext)
 					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()]
 					actionIndex = int(wfContext.GetCurrentActionIndex())
 				}
@@ -104,7 +104,7 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 
 			if turn {
 				wfDir := dataDir + string(os.PathSeparator) + wfID
-				if _, err := os.Stat(wfDir); !os.IsNotExist(err) {
+				if _, err := os.Stat(wfDir); os.IsNotExist(err) {
 					err := os.Mkdir(wfDir, os.FileMode(0755))
 					if err != nil {
 						log.Fatal(err)
@@ -123,7 +123,7 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 				}
 				log.Printf("Starting with action %s\n", actions.GetActionList()[actionIndex])
 			} else {
-				fmt.Printf("Sleep for %d seconds\n", retryInterval)
+				log.Infof("Sleep for %d seconds\n", retryInterval)
 				time.Sleep(retryInterval)
 			}
 
@@ -143,7 +143,8 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 					if err != nil {
 						exitWithGrpcError(err)
 					}
-					fmt.Printf("Sent action status %s\n", actionStatus)
+					log.WithField("action_name", actionStatus.ActionName).Infoln("Sent action status ", actionStatus.ActionStatus)
+					log.Debugf("Sent action status %s\n", actionStatus)
 				}
 
 				// get workflow data
@@ -151,7 +152,7 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 
 				// start executing the action
 				start := time.Now()
-				message, status, err := executeAction(ctx, actions.GetActionList()[actionIndex], wfID)
+				_, status, err := executeAction(ctx, actions.GetActionList()[actionIndex], wfID)
 				elapsed := time.Since(start)
 
 				actionStatus := &pb.WorkflowActionStatus{
@@ -162,15 +163,16 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 					WorkerId:   action.GetWorkerId(),
 				}
 
-				if err != nil || status != 0 {
+				if err != nil || status != pb.ActionState_ACTION_SUCCESS {
 					if status == pb.ActionState_ACTION_TIMEOUT {
-						fmt.Printf("Action \"%s\" from task \"%s\" timeout\n", action.GetName(), action.GetTaskName())
+						log.WithFields(logrus.Fields{"action": action.GetName(), "Task": action.GetTaskName()}).Errorln("Action timed out")
 						actionStatus.ActionStatus = pb.ActionState_ACTION_TIMEOUT
+						actionStatus.Message = "Action Timed out"
 					} else {
-						fmt.Printf("Action \"%s\" from task \"%s\" failed\n", action.GetName(), action.GetTaskName())
+						log.WithFields(logrus.Fields{"action": action.GetName(), "Task": action.GetTaskName()}).Errorln("Action Failed")
 						actionStatus.ActionStatus = pb.ActionState_ACTION_FAILED
+						actionStatus.Message = "Action Failed"
 					}
-					actionStatus.Message = message
 					rerr := reportActionStatus(ctx, client, actionStatus)
 					if rerr != nil {
 						exitWithGrpcError(rerr)
@@ -185,19 +187,19 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 				if err != nil {
 					exitWithGrpcError(err)
 				}
-				fmt.Printf("Sent action status %s\n", actionStatus)
+				log.Infof("Sent action status %s\n", actionStatus)
 
 				// send workflow data, if updated
 				updateWorkflowData(ctx, client, actionStatus)
 
 				if len(actions.GetActionList()) == actionIndex+1 {
-					fmt.Printf("Reached to end of workflow\n")
+					log.Infoln("Reached to end of workflow")
 					turn = false
 					break
 				}
 				nextAction := actions.GetActionList()[actionIndex+1]
 				if nextAction.GetWorkerId() != workerID {
-					fmt.Printf("Different worker has turn %s\n", nextAction.GetWorkerId())
+					log.Debugf("Different worker has turn %s\n", nextAction.GetWorkerId())
 					turn = false
 				} else {
 					actionIndex = actionIndex + 1
@@ -208,7 +210,7 @@ func initializeWorker(client pb.WorkflowSvcClient) error {
 }
 
 func fetchLatestContext(ctx context.Context, client pb.WorkflowSvcClient, workerID string) error {
-	fmt.Printf("Fetching latest context for worker %s\n", workerID)
+	log.Infof("Fetching latest context for worker %s\n", workerID)
 	res, err := client.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
 	if err != nil {
 		return err
@@ -242,8 +244,7 @@ func allWorkflowsFinished() bool {
 func exitWithGrpcError(err error) {
 	if err != nil {
 		errStatus, _ := status.FromError(err)
-		fmt.Println(errStatus.Message())
-		fmt.Println(errStatus.Code())
+		log.WithField("Error code : ", errStatus.Code()).Errorln(errStatus.Message())
 		os.Exit(1)
 	}
 }
@@ -257,7 +258,7 @@ func reportActionStatus(ctx context.Context, client pb.WorkflowSvcClient, action
 	for r := 1; r <= retries; r++ {
 		_, err = client.ReportActionStatus(ctx, actionStatus)
 		if err != nil {
-			log.Println(err)
+			log.Println("Report action status to server failed as : ", err)
 			log.Printf("Retrying after %v seconds", retryInterval)
 			<-time.After(retryInterval * time.Second)
 			continue
@@ -274,7 +275,7 @@ func getWorkflowData(ctx context.Context, client pb.WorkflowSvcClient, workflowI
 	}
 
 	if len(res.GetData()) != 0 {
-		log.Printf("Data received: %x", res.GetData())
+		log.Debugf("Data received: %x", res.GetData())
 		wfDir := dataDir + string(os.PathSeparator) + workflowID
 		f := openDataFile(wfDir)
 		defer f.Close()
@@ -326,7 +327,7 @@ func sendUpdate(ctx context.Context, client pb.WorkflowSvcClient, st *pb.Workflo
 		log.Fatal(err)
 	}
 
-	log.Printf("Sending updated data: %v\n", string(data))
+	log.Debugf("Sending updated data: %v\n", string(data))
 	_, err = client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
 		WorkflowID: st.GetWorkflowId(),
 		Data:       data,

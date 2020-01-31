@@ -21,29 +21,29 @@ import (
 
 type (
 	// Workflow holds details about the workflow to be executed
-	WfYamlstruct struct {
+	wfYamlstruct struct {
 		Version       string `yaml:"version"`
 		Name          string `yaml:"name"`
 		ID            string `yaml:"id"`
 		GlobalTimeout int    `yaml:"global_timeout"`
-		Tasks         []Task `yaml:"tasks"`
+		Tasks         []task `yaml:"tasks"`
 	}
 
 	// Task represents a task to be performed in a worflow
-	Task struct {
+	task struct {
 		Name       string   `yaml:"name"`
 		WorkerAddr string   `yaml:"worker"`
-		Actions    []Action `yaml:"actions"`
+		Actions    []action `yaml:"actions"`
 	}
 
 	// Action is the basic executional unit for a workflow
-	Action struct {
-		Name      string `yaml:"name"`
-		Image     string `yaml:"image"`
-		Timeout   int64  `yaml:"timeout"`
-		Command   string `yaml:"command"`
-		OnTimeout string `yaml:"on-timeout"`
-		OnFailure string `yaml:"on-failure"`
+	action struct {
+		Name      string   `yaml:"name"`
+		Image     string   `yaml:"image"`
+		Timeout   int64    `yaml:"timeout"`
+		Command   []string `yaml:"command"`
+		OnTimeout []string `yaml:"on-timeout"`
+		OnFailure []string `yaml:"on-failure"`
 	}
 )
 
@@ -228,6 +228,7 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkfl
 	return nil
 }
 
+// GetfromWfDataTable : Give you the ephemeral data from workflow_data table
 func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 	version := req.GetVersion()
 	if req.Version == 0 {
@@ -298,6 +299,7 @@ func GetWorkflowDataVersion(ctx context.Context, db *sql.DB, workflowID string) 
 	return getLatestVersionWfData(ctx, db, workflowID)
 }
 
+// GetfromWfWorkflowTable : gives you the current workflow
 func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]string, error) {
 	rows, err := db.Query(`
 	SELECT workflow_id
@@ -310,16 +312,16 @@ func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]strin
 	}
 	var wfID []string
 	defer rows.Close()
-	var workerId string
+	var workerID string
 
 	for rows.Next() {
-		err = rows.Scan(&workerId)
+		err = rows.Scan(&workerID)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT from worflow_worker_map")
 			logger.Error(err)
 			return nil, err
 		}
-		wfID = append(wfID, workerId)
+		wfID = append(wfID, workerID)
 	}
 	err = rows.Err()
 	if err == sql.ErrNoRows {
@@ -488,6 +490,7 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 	return nil
 }
 
+// UpdateWorkflowState : update the current workflow state
 func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.WorkflowContext) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -514,21 +517,22 @@ func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.Workflow
 	return nil
 }
 
-func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*pb.WorkflowContext, error) {
+// GetWorkflowContexts : gives you the current workflow context
+func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfID string) (*pb.WorkflowContext, error) {
 	query := `
 	SELECT current_worker, current_task_name, current_action_name, current_action_index, current_action_state, total_number_of_actions
 	FROM workflow_state
 	WHERE
 		workflow_id = $1;
 	`
-	row := db.QueryRowContext(ctx, query, wfId)
+	row := db.QueryRowContext(ctx, query, wfID)
 	var cw, ct, ca string
 	var cai, tact int64
 	var cas pb.ActionState
 	err := row.Scan(&cw, &ct, &ca, &cai, &cas, &tact)
 	if err == nil {
 		return &pb.WorkflowContext{
-			WorkflowId:           wfId,
+			WorkflowId:           wfID,
 			CurrentWorker:        cw,
 			CurrentTask:          ct,
 			CurrentAction:        ca,
@@ -545,14 +549,15 @@ func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfId string) (*pb.Work
 	return &pb.WorkflowContext{}, nil
 }
 
-func GetWorkflowActions(ctx context.Context, db *sql.DB, wfId string) (*pb.WorkflowActionList, error) {
+// GetWorkflowActions : gives you the action list of workflow
+func GetWorkflowActions(ctx context.Context, db *sql.DB, wfID string) (*pb.WorkflowActionList, error) {
 	query := `
 	SELECT action_list
 	FROM workflow_state
 	WHERE
 		workflow_id = $1;
 	`
-	row := db.QueryRowContext(ctx, query, wfId)
+	row := db.QueryRowContext(ctx, query, wfID)
 	var actionList string
 	err := row.Scan(&actionList)
 	if err == nil {
@@ -570,6 +575,7 @@ func GetWorkflowActions(ctx context.Context, db *sql.DB, wfId string) (*pb.Workf
 	return &pb.WorkflowActionList{}, nil
 }
 
+// InsertIntoWorkflowEventTable : insert workflow event table
 func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -594,7 +600,7 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 }
 
 // ShowWorkflowEvents returns all workflows
-func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionStatus) error) error {
+func ShowWorkflowEvents(db *sql.DB, wfID string, fn func(wfs pb.WorkflowActionStatus) error) error {
 	rows, err := db.Query(`
        SELECT worker_id, task_name, action_name, execution_time, message, status, created_at
 	   FROM workflow_event
@@ -602,7 +608,7 @@ func ShowWorkflowEvents(db *sql.DB, wfId string, fn func(wfs pb.WorkflowActionSt
 			   workflow_id = $1
 		ORDER BY 
 				created_at ASC;
-	   `, wfId)
+	   `, wfID)
 
 	if err != nil {
 		return err
@@ -661,11 +667,11 @@ func getLatestVersionWfData(ctx context.Context, db *sql.DB, wfID string) (int32
 	return version, nil
 }
 
-func parseYaml(ymlContent []byte) (*WfYamlstruct, error) {
-	var workflow = WfYamlstruct{}
+func parseYaml(ymlContent []byte) (*wfYamlstruct, error) {
+	var workflow = wfYamlstruct{}
 	err := yaml.UnmarshalStrict(ymlContent, &workflow)
 	if err != nil {
-		return &WfYamlstruct{}, err
+		return &wfYamlstruct{}, err
 	}
 	return &workflow, nil
 }
@@ -737,13 +743,11 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 		ip := net.ParseIP(addr)
 		if ip == nil || ip.To4() == nil {
 			return "", fmt.Errorf("invalid worker address: %s", addr)
-		} else {
-			return getWorkerIDbyIP(ctx, db, addr)
-
 		}
-	} else {
-		return getWorkerIDbyMac(ctx, db, addr)
+		return getWorkerIDbyIP(ctx, db, addr)
+
 	}
+	return getWorkerIDbyMac(ctx, db, addr)
 }
 
 func isValidLength(name string) error {
@@ -762,7 +766,7 @@ func isValidImageName(name string) error {
 	return nil
 }
 
-func validateTemplateValues(tasks []Task) error {
+func validateTemplateValues(tasks []task) error {
 	taskNameMap := make(map[string]struct{})
 	for _, task := range tasks {
 		err := isValidLength(task.Name)
@@ -772,27 +776,24 @@ func validateTemplateValues(tasks []Task) error {
 		_, ok := taskNameMap[task.Name]
 		if ok {
 			return fmt.Errorf("Provided template has duplicate task name \"%s\"", task.Name)
-		} else {
-			taskNameMap[task.Name] = struct{}{}
-			actionNameMap := make(map[string]struct{})
-			for _, action := range task.Actions {
-				err := isValidLength(action.Name)
-				if err != nil {
-					return err
-				}
-				err = isValidImageName(action.Image)
-				if err != nil {
-					return fmt.Errorf("Invalid Image name %s", action.Image)
-				}
-
-				_, ok := actionNameMap[action.Name]
-				if ok {
-					return fmt.Errorf("Provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
-				} else {
-					actionNameMap[action.Name] = struct{}{}
-				}
+		}
+		taskNameMap[task.Name] = struct{}{}
+		actionNameMap := make(map[string]struct{})
+		for _, action := range task.Actions {
+			err := isValidLength(action.Name)
+			if err != nil {
+				return err
+			}
+			err = isValidImageName(action.Image)
+			if err != nil {
+				return fmt.Errorf("Invalid Image name %s", action.Image)
 			}
 
+			_, ok := actionNameMap[action.Name]
+			if ok {
+				return fmt.Errorf("Provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
+			}
+			actionNameMap[action.Name] = struct{}{}
 		}
 	}
 	return nil

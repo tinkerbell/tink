@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DeleteFromDB : delete data from hardware table
 func DeleteFromDB(ctx context.Context, db *sql.DB, id string) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -33,6 +34,7 @@ func DeleteFromDB(ctx context.Context, db *sql.DB, id string) error {
 	return nil
 }
 
+// InsertIntoDB : insert data into hardware table
 func InsertIntoDB(ctx context.Context, db *sql.DB, data string) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -60,6 +62,7 @@ func InsertIntoDB(ctx context.Context, db *sql.DB, data string) error {
 	return nil
 }
 
+// GetByMAC : get data by machine mac
 func GetByMAC(ctx context.Context, db *sql.DB, mac string) (string, error) {
 	arg := `
 	{
@@ -84,6 +87,7 @@ func GetByMAC(ctx context.Context, db *sql.DB, mac string) (string, error) {
 	return get(ctx, db, query, arg)
 }
 
+// GetByIP : get data by machine ip
 func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	instance := `
 	{
@@ -121,6 +125,7 @@ func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	return get(ctx, db, query, instance, hardwareOrManagement)
 }
 
+// GetByID : get data by machine id
 func GetByID(ctx context.Context, db *sql.DB, id string) (string, error) {
 	arg := id
 
@@ -135,8 +140,7 @@ func GetByID(ctx context.Context, db *sql.DB, id string) (string, error) {
 	return get(ctx, db, query, arg)
 }
 
-
-
+// GetAll : get data for all machine
 func GetAll(db *sql.DB, fn func(string) error) error {
 	rows, err := db.Query(`
 	SELECT data
