@@ -23,6 +23,7 @@ func getTargets(file string) (string, error) {
 	return string(data), nil
 }
 
+// CreateTargets : create target in the database
 func CreateTargets(tar string) (string, error) {
 	filepath := "data/target/" + tar
 	data, err := getTargets(filepath)

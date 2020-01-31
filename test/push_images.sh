@@ -8,6 +8,6 @@ do
     fi
     sleep 1
 done
-docker push localhost/action1
-docker push localhost/action2
-docker push localhost/action3
+docker push localhost/update-data
+docker push localhost/overwrite-data
+docker push localhost/bash

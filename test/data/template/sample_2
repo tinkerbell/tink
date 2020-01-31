@@ -2,16 +2,17 @@ version: '0.1'
 name: packet_osie_provision
 global_timeout: 600
 tasks:
-- name: "OS Installation"
+- name: "timeout-task"
   worker: "{{index .Targets "machine1" "mac_addr"}}"
   actions:
-  - name: "server_partitioning"
-    image: action1
-    timeout: 60
-    on-timeout: "echo Timeout"
-    on-failure: "echo Failure"
-  - name: os_instaddll
-    image: action3
+  - name: "update-data"
+    image: update-data
+    timeout: 10
+    on-timeout: ["echo", "Timeout"]
+    on-failure: ["echo", "Failure"]
+  - name: "sleep-till-timeout"
+    image: bash
+    command: ["sleep", "20"]
     timeout: 6
-    on-timeout: "echo os_install -timeout"
-    on-failure: "echo os_install -failure"
+    on-timeout: ["echo", "Timeout"]
+    on-failure: ["echo", "Failure"]

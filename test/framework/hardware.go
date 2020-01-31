@@ -23,6 +23,7 @@ func readHwData(file string) (string, error) {
 	return string(data), nil
 }
 
+// PushHardwareData : push hardware data
 func PushHardwareData(hwDataFiles []string) error {
 	for _, hwFile := range hwDataFiles {
 		filepath := "data/hardware/" + hwFile

@@ -1,11 +1,12 @@
 package framework
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func buildCerts(filepath string) error {
@@ -48,13 +49,72 @@ func startDb(filepath string) error {
 	return err
 }
 
+func removeWorkerImage() error {
+	cmd := exec.Command("/bin/sh", "-c", "docker image rm worker")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	return err
+
+}
+
+func createWorkerImage() error {
+	cmd := exec.Command("/bin/sh", "-c", "docker build -t worker ../worker/")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		logger.Errorln("Faield to create worker image", err)
+	}
+	logger.Infoln("Worker Image created")
+	return err
+}
+
+func initializeLogger() {
+	level := os.Getenv("TEST_LOG_LEVEL")
+	if level != "" {
+		switch strings.ToLower(level) {
+		case "panic":
+			logger.SetLevel(logrus.PanicLevel)
+		case "fatal":
+			logger.SetLevel(logrus.FatalLevel)
+		case "error":
+			logger.SetLevel(logrus.ErrorLevel)
+		case "warn", "warning":
+			logger.SetLevel(logrus.WarnLevel)
+		case "info":
+			logger.SetLevel(logrus.InfoLevel)
+		case "debug":
+			logger.SetLevel(logrus.DebugLevel)
+		case "trace":
+			logger.SetLevel(logrus.TraceLevel)
+		default:
+			logger.SetLevel(logrus.InfoLevel)
+			logger.Errorln("Invalid value for TEST_LOG_LEVEL ", level, " .Setting it to default(Info)")
+		}
+	} else {
+		logger.SetLevel(logrus.InfoLevel)
+		logger.Errorln("Variable TEST_LOG_LEVEL is not set. Default is Info.")
+	}
+	logger.SetFormatter(&logrus.JSONFormatter{})
+}
+
 // StartStack : Starting stack
 func StartStack() error {
 	// Docker compose file for starting the containers
 	filepath := "../test-docker-compose.yml"
 
+	// Intialize logger
+	initializeLogger()
+
+	// Start Db and logging components
+	err := startDb(filepath)
+	if err != nil {
+		return err
+	}
+
 	// Building certs
-	err := buildCerts(filepath)
+	err = buildCerts(filepath)
 	if err != nil {
 		return err
 	}
@@ -77,18 +137,20 @@ func StartStack() error {
 		return err
 	}
 
-	// Start Db and logging components
-	err = startDb(filepath)
+	//Remove older worker image
+	err = removeWorkerImage()
 	if err != nil {
 		return err
 	}
 
-	//Create Worker image locally
+	//Create new Worker image locally
 	err = createWorkerImage()
 	if err != nil {
-		fmt.Println("failed to create worker Image")
+		logger.Errorln("failed to create worker Image")
 		return errors.Wrap(err, "worker image creation failed")
 	}
+
+	initializeLogger()
 
 	// Start other containers
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d")

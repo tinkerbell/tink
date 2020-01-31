@@ -53,8 +53,8 @@ services:
     depends_on:
       - "fluentbit"
     healthcheck:
-            #test: ["CMD-SHELL", "pg_isready -U rover"]
-      test: ["CMD-SHELL","psql -U rover -c \"select COUNT(*) from hardware;\""]
+      test: ["CMD-SHELL", "pg_isready -U rover"]
+      #test: ["CMD-SHELL","psql -U rover -c \"select COUNT(*) from hardware;\""]
       interval: 1s
       timeout: 1s
       retries: 30
@@ -99,16 +99,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-  ccli:
-    build:
-      context: ../cacher/cmd/cacherc
-    environment:
-      CACHER_CERT_URL: http://cacher.${FACILITY:-lab1}.packet.net:42112/cert
-      CACHER_GRPC_AUTHORITY: cacher.${FACILITY:-lab1}.packet.net:42111
-    depends_on:
-      - "fluentbit"
-    links:
-      - cserver:cacher.${FACILITY:-lab1}.packet.net
 
   registry:
     build:
@@ -133,50 +123,6 @@ services:
         tag: registry
     network_mode: host
 
-  boots:
-    build:
-      context: ../boots
-    network_mode: host
-    command: -dhcp-addr 0.0.0.0:67 -tftp-addr 127.0.0.1:69 -http-addr 127.0.0.1:8080 -log-level DEBUG
-    environment:
-      API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-PcyR6MvHb7wMmyYf9p8dJ2Dvnb9HxX8E}
-      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
-      FACILITY_CODE: ${FACILITY:-lab1}
-      PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
-      MIRROR_HOST: ${MIRROR_HOST:-127.0.0.1}
-      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
-      CACHER_CERT_URL: http://127.0.0.1:42114/cert
-      DNS_SERVERS: 8.8.8.8
-      PUBLIC_IP: 127.0.0.1
-      BOOTP_BIND: 127.0.0.1:67
-      HTTP_BIND: 127.0.0.1:80
-      SYSLOG_BIND: 127.0.0.1:514
-      TFTP_BIND: 127.0.0.1:69
-      DOCKER_REGISTRY: 127.0.0.1
-      REGISTRY_USERNAME: username
-      REGISTRY_PASSWORD: password
-      ROVER_GRPC_AUTHORITY: 127.0.0.1:42113
-      ROVER_CERT_URL: http://127.0.0.1:42114/cert
-      ELASTIC_SEARCH_URL: 127.0.0.1:9200
-    depends_on:
-      db:
-        condition: service_healthy
-      rover:
-        condition: service_healthy
-      fluentbit:
-        condition: service_started
-    logging:
-      driver: fluentd
-      options:
-        tag: boots
-    ports:
-      - 127.0.0.1:80:80/tcp
-      - 67:67/udp
-      - 69:69/udp
- 
   elasticsearch:
     image: elasticsearch:7.3.0
     ports:
