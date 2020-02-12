@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/docker/distribution/reference"
@@ -34,16 +35,17 @@ type (
 		Name       string   `yaml:"name"`
 		WorkerAddr string   `yaml:"worker"`
 		Actions    []action `yaml:"actions"`
+		Volumes    []string `yaml:"volumes"`
 	}
 
 	// Action is the basic executional unit for a workflow
 	action struct {
-		Name      string   `yaml:"name"`
-		Image     string   `yaml:"image"`
-		Timeout   int64    `yaml:"timeout"`
-		Command   []string `yaml:"command"`
-		OnTimeout []string `yaml:"on-timeout"`
-		OnFailure []string `yaml:"on-failure"`
+		Name        string            `yaml:"name"`
+		Image       string            `yaml:"image"`
+		Timeout     int64             `yaml:"timeout"`
+		Command     []string          `yaml:"command"`
+		OnTimeout   []string          `yaml:"on-timeout"`
+		OnFailure   []string          `yaml:"on-failure"`
 		Volumes     []string          `yaml:"volumes,omitempty"`
 		Environment map[string]string `yaml:"environment,omitempty"`
 	}
@@ -132,6 +134,12 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	var actionList []pb.WorkflowAction
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
+		taskVolumes := map[string]string{}
+		for _, vol := range task.Volumes {
+			v := strings.Split(vol, ":")
+			taskVolumes[v[0]] = strings.Join(v[1:], ":")
+		}
+
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
 		if err != nil {
 			return err
@@ -154,6 +162,22 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			for key, val := range ac.Environment {
 				envs = append(envs, key+"="+val)
 			}
+
+			var volumes map[string]string
+			for _, vol := range ac.Volumes {
+				v := strings.Split(vol, ":")
+				if _, ok := volumes[v[0]]; ok {
+					volumes[v[0]] = strings.Join(v[1:], ":")
+				} else {
+					volumes[v[0]] = strings.Join(v[1:], ":")
+				}
+			}
+
+			ac.Volumes = []string{}
+			for k, v := range volumes {
+				ac.Volumes = append(ac.Volumes, k+":"+v)
+			}
+
 			action := pb.WorkflowAction{
 				TaskName:    task.Name,
 				WorkerId:    workerUID.String(),
