@@ -33,7 +33,11 @@ resource "packet_device" "tf-provisioner" {
   
   provisioner "file" {
     source      = "../cmd/rover/rover-linux-x86_64"
+<<<<<<< HEAD
     destination = "/usr/local/bin/rover"
+=======
+    destination = "/usr/local/bin/rover-cli"
+>>>>>>> Terraform scripts to create setup for workflow
   }
 
   provisioner "file" {
@@ -93,7 +97,10 @@ resource "packet_port_vlan_attachment" "worker" {
 output "provisioner_ip" {
   value = "${packet_device.tf-provisioner.network[0].address}"
 }
+<<<<<<< HEAD
 
 output "worker_mac_addr" {
   value = "${packet_device.tf-worker.ports[1].mac}"
 }
+=======
+>>>>>>> Terraform scripts to create setup for workflow

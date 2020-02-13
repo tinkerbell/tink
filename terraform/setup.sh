@@ -10,6 +10,12 @@ ifup  $network_interface
 
 declare host=$HOST_IP
 echo "This is network host" $host
+#sed -i -e "s/$network_interface inet manual/$network_interface inet static\n    address $HOST_IP\n    netmask 255.255.255.240/g" /etc/network/interfaces
+#ifdown  $network_interface
+#ifup  $network_interface
+
+declare host=$HOST_IP
+echo "This is network host" $host
 
 declare ip=$(($(echo $host | cut -d "." -f 4 | xargs) + 1))
 declare nginx_ip="$(echo $host | cut -d "." -f 1).$(echo $host | cut -d "." -f 2).$(echo $host | cut -d "." -f 3).$ip"
