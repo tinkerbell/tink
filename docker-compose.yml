@@ -21,14 +21,13 @@ services:
       PGSSLMODE: disable
       PGUSER: tinkerbell
     depends_on:
-      - "certs"
       - "db"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
       timeout: 2s
       retries: 30
-    volumes: 
+    volumes:
       - ./certs:/certs/${FACILITY}
     logging:
       driver: fluentd
@@ -52,51 +51,28 @@ services:
       interval: 1s
       timeout: 1s
       retries: 30
-    logging:
-      driver: fluentd
-      options:
-        tag: db
-    depends_on:
-      - fluentbit
 
-  cli:
-    build:
-      context: cmd/tinkerbell
-    environment:
-      TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
-      TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
-    logging:
-      driver: fluentd
-      options:
-        tag: tinkerbell-cli
-    network_mode: host
-  
   registry:
     build:
       context: registry
-      args: 
-        REGISTRY_USERNAME: username
-        REGISTRY_PASSWORD: password
-    environment: 
+      args:
+        REGISTRY_USERNAME: $ROVER_REGISTRY_USER
+        REGISTRY_PASSWORD: $ROVER_REGISTRY_PASS
+    environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
       REGISTRY_HTTP_TLS_KEY: /certs/server-key.pem
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-    volumes: 
+    volumes:
       - ./certs:/certs
-    logging:
-      driver: fluentd
-      options:
-        tag: registry
     network_mode: host
 
   boots:
-    build:
-      context: ../boots
+    image: quay.io/packet/boots:workflow
     network_mode: host
-    command: -dhcp-addr 0.0.0.0:67 -tftp-addr 127.0.0.1:69 -http-addr 127.0.0.1:80 -log-level DEBUG
+    command: -dhcp-addr 0.0.0.0:67 -tftp-addr $HOST_IP:69 -http-addr $HOST_IP:80 -log-level DEBUG
     environment:
       API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-PcyR6MvHb7wMmyYf9p8dJ2Dvnb9HxX8E}
       API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
@@ -106,55 +82,32 @@ services:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
       MIRROR_HOST: ${MIRROR_HOST:-127.0.0.1}
-      DNS_SERVERS: 8.8.8.8
-      PUBLIC_IP: 127.0.0.1
-      BOOTP_BIND: 127.0.0.1:67
-      HTTP_BIND: 127.0.0.1:80
-      SYSLOG_BIND: 127.0.0.1:514
-      TFTP_BIND: 127.0.0.1:69
-      DOCKER_REGISTRY: 127.0.0.1
-      REGISTRY_USERNAME: username
-      REGISTRY_PASSWORD: password
-      TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
-      TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
-      ELASTIC_SEARCH_URL: 127.0.0.1:9200
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
+      DNS_SERVERS: "147.75.207.207,147.75.207.208"
+      PUBLIC_IP: $HOST_IP
+      BOOTP_BIND: $HOST_IP:67
+      HTTP_BIND: $HOST_IP:80
+      SYSLOG_BIND: $HOST_IP:514
+      TFTP_BIND: $HOST_IP:69
+      DOCKER_REGISTRY: $HOST_IP
+      REGISTRY_USERNAME: $ROVER_REGISTRY_USER
+      REGISTRY_PASSWORD: $ROVER_REGISTRY_PASS
+      ROVER_GRPC_AUTHORITY: $HOST_IP:42113
+      ROVER_CERT_URL: http://$HOST_IP:42114/cert
+      ELASTIC_SEARCH_URL: $HOST_IP:9200
     depends_on:
-      - tinkerbell
-    logging:
-      driver: fluentd
-      options:
-        tag: tinkerbell
+      - server
     ports:
-      - 127.0.0.1:80:80/tcp
+      - $HOST_IP:80:80/tcp
       - 67:67/udp
       - 69:69/udp
- 
-  elasticsearch:
-    image: elasticsearch:7.3.0
+    
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
     ports:
-      - 9200:9200
-      - 9300:9300
-    environment:
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - discovery.type=single-node
-
-  kibana:
-    image: kibana:7.3.0
-    depends_on:
-      - elasticsearch
-    restart: always
-    environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
-    ports:
-      - 5601:5601
-
-  fluentbit:
-    image: fluent/fluent-bit:1.3
-    ports:
-      - 24224:24224
-      - 24224:24224/udp
-    depends_on:
-      - elasticsearch
+      - $NGINX_IP:80:80/tcp
     volumes:
-      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
-
+      - /tmp/workflow/:/var/www/html/
