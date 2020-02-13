@@ -192,7 +192,8 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 
 	wfDir := dataDir + string(os.PathSeparator) + wfID
 	hostConfig := &container.HostConfig{
-		Binds: []string{wfDir + ":/workflow"},
+		Privileged: true,
+		Binds:      []string{wfDir + ":/workflow"},
 	}
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 
