@@ -47,12 +47,12 @@ variable "git_pass" {
     default = "github_password"
 }
 
-variable "rover_registry_user" {
+variable "private_registry_user" {
     type = string
-    default = "roveradmin"
+    default = "admin"
 }
 
-variable "rover_registry_pass" {
+variable "private_registry_pass" {
     type = string
-    default = "rover123"
+    default = "admin123"
 }
