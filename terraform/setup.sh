@@ -71,7 +71,7 @@ pushd /tmp/workflow/ ; tar xvzf boot-files.gz ; popd
 # get the rover repo
 mkdir -p ~/go/src/github.com/packethost
 cd ~/go/src/github.com/packethost
-git clone --single-branch --branch test_terraform_setup https://$DOCKER_USER:613f0706ad7bfa0538616bc05dd3ce4349176c9b@github.com/packethost/rover.git
+git clone --single-branch --branch setup_provisioner_and_worker https://$DOCKER_USER:613f0706ad7bfa0538616bc05dd3ce4349176c9b@github.com/packethost/rover.git
 cd ~/go/src/github.com/packethost/rover
 sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$host\"\,/g" tls/server-csr.in.json
 make
