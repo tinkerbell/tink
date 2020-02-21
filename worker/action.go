@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -47,7 +47,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	}
 	defer cancel()
 	//run container with timeout context
-	startedAt := time.Now()
+	//startedAt := time.Now()
 	err = runContainer(timeCtx, id)
 	if err != nil {
 		return fmt.Sprintf("Failed to run container"), 1, errors.Wrap(err, "DOCKER RUN")
@@ -56,10 +56,9 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	failedActionStatus := make(chan pb.ActionState)
 
 	//capturing logs of action container in a go-routine
-	stopLogs := make(chan bool)
-	go captureLogs(ctx, startedAt, id, stopLogs)
+	go captureLogs(ctx, id)
 
-	status, err, werr := waitContainer(timeCtx, id, stopLogs)
+	status, err, werr := waitContainer(timeCtx, id)
 	if werr != nil {
 		rerr := removeContainer(ctx, id)
 		if rerr != nil {
@@ -79,10 +78,9 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 				log.Errorln("Failed to create container for on-timeout command: ", err)
 			}
 			log.Infoln("Container created with on-timeout command : ", action.OnTimeout)
-			startedAt = time.Now()
 			failedActionStatus := make(chan pb.ActionState)
-			go captureLogs(ctx, startedAt, id, stopLogs)
-			go waitFailedContainer(ctx, id, stopLogs, failedActionStatus)
+		        go captureLogs(ctx, id)
+			go waitFailedContainer(ctx, id, failedActionStatus)
 			err = runContainer(ctx, id)
 			if err != nil {
 				log.Errorln("Failed to run on-timeout command: ", err)
@@ -96,8 +94,8 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 					log.Errorln("Failed to create on-failure command: ", err)
 				}
 				log.Infoln("Container created with on-failure command : ", action.OnFailure)
-				go captureLogs(ctx, startedAt, id, stopLogs)
-				go waitFailedContainer(ctx, id, stopLogs, failedActionStatus)
+				go captureLogs(ctx, id)
+				go waitFailedContainer(ctx, id, failedActionStatus)
 				err = runContainer(ctx, id)
 				if err != nil {
 					log.Errorln("Failed to run on-failure command: ", err)
@@ -123,34 +121,24 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	return fmt.Sprintf("Successfull Execution"), status, nil
 }
 
-func captureLogs(ctx context.Context, srt time.Time, id string, stop chan bool) {
-	req := func(sr string) {
-		// get logs the runtime container
-		rc, err := getLogs(ctx, cli, id, strconv.FormatInt(srt.Unix(), 10))
-		if err != nil {
-			stop <- true
-		}
-		defer rc.Close()
-		io.Copy(os.Stdout, rc)
+func captureLogs(ctx context.Context, id string) {
+	reader, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Timestamps: false,
+	})
+	if err != nil {
+		panic(err)
 	}
-Loop:
-	for {
-		select {
-		case <-stop:
-			// Last call to be sure to get the end of the logs content
-			now := time.Now()
-			now = now.Add(time.Second * -1)
-			startAt := strconv.FormatInt(now.Unix(), 10)
-			req(startAt)
-			break Loop
-		default:
-			// Running call to trace the container logs every 500ms
-			startAt := strconv.FormatInt(srt.Unix(), 10)
-			srt = srt.Add(time.Millisecond * 500)
-			req(startAt)
-		}
+	defer reader.Close()
+
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
 	}
 }
+
 func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 	user := os.Getenv("REGISTRY_USERNAME")
 	pwd := os.Getenv("REGISTRY_PASSWORD")
@@ -183,6 +171,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
 		AttachStderr: true,
+		Tty:	      true,
 		Env:          action.GetEnvironment(),
 	}
 
@@ -214,27 +203,7 @@ func runContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-func getLogs(ctx context.Context, cli *client.Client, id string, srt string) (io.ReadCloser, error) {
-
-	log.Debugln("Capturing logs for container : ", id)
-	// create options for capturing container logs
-	opts := types.ContainerLogsOptions{
-		Follow:     true,
-		ShowStdout: true,
-		ShowStderr: true,
-		Details:    false,
-		Since:      srt,
-	}
-
-	// send API call to capture the container logs
-	logs, err := cli.ContainerLogs(ctx, id, opts)
-	if err != nil {
-		return nil, err
-	}
-	return logs, nil
-}
-
-func waitContainer(ctx context.Context, id string, stopLogs chan bool) (pb.ActionState, error, error) {
+func waitContainer(ctx context.Context, id string) (pb.ActionState, error, error) {
 	// Inspect whether the container is in running state
 	inspect, err := cli.ContainerInspect(ctx, id)
 	if err != nil {
@@ -252,23 +221,20 @@ func waitContainer(ctx context.Context, id string, stopLogs chan bool) (pb.Actio
 	select {
 	case status := <-wait:
 		log.Infoln("Container with id ", id, "finished with status code : ", status.StatusCode)
-		stopLogs <- true
 		if status.StatusCode == 0 {
 			return pb.ActionState_ACTION_SUCCESS, nil, nil
 		}
 		return pb.ActionState_ACTION_FAILED, nil, nil
 	case err := <-errC:
 		log.Errorln("Container wait failed for id : ", id, " Error : ", err)
-		stopLogs <- true
 		return pb.ActionState_ACTION_FAILED, nil, err
 	case <-ctx.Done():
 		log.Errorln("Container wait for id : ", id, " is timedout Error : ", err)
-		stopLogs <- true
 		return pb.ActionState_ACTION_TIMEOUT, ctx.Err(), nil
 	}
 }
 
-func waitFailedContainer(ctx context.Context, id string, stopLogs chan bool, failedActionStatus chan pb.ActionState) {
+func waitFailedContainer(ctx context.Context, id string, failedActionStatus chan pb.ActionState) {
 	// send API call to wait for the container completion
 	log.Debugln("Starting Container wait for id : ", id)
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
@@ -276,14 +242,12 @@ func waitFailedContainer(ctx context.Context, id string, stopLogs chan bool, fai
 	select {
 	case status := <-wait:
 		log.Infoln("Container with id ", id, "finished with status code : ", status.StatusCode)
-		stopLogs <- true
 		if status.StatusCode == 0 {
 			failedActionStatus <- pb.ActionState_ACTION_SUCCESS
 		}
 		failedActionStatus <- pb.ActionState_ACTION_FAILED
 	case err := <-errC:
 		log.Errorln("Container wait failed for id : ", id, " Error : ", err)
-		stopLogs <- true
 		failedActionStatus <- pb.ActionState_ACTION_FAILED
 	}
 }
