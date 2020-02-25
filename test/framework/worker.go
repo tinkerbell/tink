@@ -1,7 +1,9 @@
 package framework
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -29,6 +31,7 @@ func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string,
 		Image:        "worker",
 		AttachStdout: true,
 		AttachStderr: true,
+		Tty:          true,
 		Volumes:      volume,
 		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=localhost:443", "DOCKER_API_VERSION=v1.40", "REGISTRY_USERNAME=username", "REGISTRY_PASSWORD=password"},
 	}
@@ -51,16 +54,18 @@ func runContainer(ctx context.Context, cli *dc.Client, id string) error {
 	return nil
 }
 
-func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string, statusChannel chan<- int64) {
+func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string, statusChannel chan<- int64, stopLogs chan<- bool) {
 	// send API call to wait for the container completion
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 	select {
 	case status := <-wait:
 		statusChannel <- status.StatusCode
-		log.Infoln("Worker with id ", id, "finished sucessfully with status code ", status.StatusCode)
+		fmt.Println("Worker with id ", id, "finished sucessfully with status code ", status.StatusCode)
+		//stopLogs <- true
 	case err := <-errC:
-		log.Infoln("Worker with id ", id, "failed : ", err)
+		log.Println("Worker with id ", id, "failed : ", err)
 		failedWorkers <- id
+		//stopLogs <- true
 	}
 	wg.Done()
 }
@@ -77,7 +82,7 @@ func removeContainer(ctx context.Context, cli *dc.Client, id string) error {
 	if err != nil {
 		return err
 	}
-	log.Infoln("Worker Container removed : ", id)
+	log.Println("Worker Container removed : ", id)
 	return nil
 }
 func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan workflow.ActionState) {
@@ -86,7 +91,25 @@ func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan wo
 	}
 }
 
-// StartWorkers : start the workers
+func captureLogs(ctx context.Context, cli *dc.Client, id string) {
+	reader, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Timestamps: false,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer reader.Close()
+
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+	fmt.Println("Logging Finished for container ", id)
+}
+
 func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.ActionState, error) {
 	log = logger.WithField("workflow_id", wfID)
 	var wg sync.WaitGroup
@@ -108,13 +131,20 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 			workerContainer[i] = cID
 			log.Debugln("Worker container created with ID : ", cID)
 			// Run container
+			//startedAt := time.Now()
 			err = runContainer(ctx, cli, cID)
+
 			if err != nil {
-				log.Errorln("Worker container with id ", cID, " failed to start: ", err)
+				fmt.Println("Worker with id ", cID, " failed to start: ", err)
+				// TODO Should be remove the containers which started previously?
 			} else {
-				log.Infoln("Worker container started with ID : ", cID)
+				fmt.Println("Worker started with ID : ", cID)
 				wg.Add(1)
-				go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus)
+				//capturing logs of action container in a go-routine
+				stopLogs := make(chan bool)
+				go captureLogs(ctx, cli, cID)
+
+				go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus, stopLogs)
 				go checkCurrentStatus(ctx, wfID, workflowStatus)
 			}
 		}

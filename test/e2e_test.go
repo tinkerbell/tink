@@ -54,9 +54,9 @@ var testCases = map[string]struct {
 	expected workflow.ActionState
 	ephData  string
 }{
-	"testWfWithWorker":       {"target_1.json", "sample_1", 1, workflow.ActionState_ACTION_SUCCESS, `{"action_02": "data_02"}`},
-	"testWfTimeout":          {"target_1.json", "sample_2", 1, workflow.ActionState_ACTION_TIMEOUT, `{"action_01": "data_01"}`},
-	"testWfWithMultiWorkers": {"target_1.json", "sample_3", 2, workflow.ActionState_ACTION_SUCCESS, `{"action_01": "data_01"}`},
+	"testWfWithWorker": {"target_1.json", "sample_1", 1, workflow.ActionState_ACTION_SUCCESS, `{"action_02": "data_02"}`},
+	//"testWfTimeout":          {"target_1.json", "sample_2", 1, workflow.ActionState_ACTION_TIMEOUT, `{"action_01": "data_01"}`},
+	//"testWfWithMultiWorkers": {"target_1.json", "sample_3", 2, workflow.ActionState_ACTION_SUCCESS, `{"action_01": "data_01"}`},
 }
 
 var runTestMap = map[string]func(t *testing.T){

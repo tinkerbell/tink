@@ -8,10 +8,6 @@ tasks:
   - name: "update-data"
     image: update-data
     timeout: 60
-    on-timeout: ["echo", "Timeout"]
-    on-failure: ["echo", "Failure"]
-  - name: "overwrite-data"
-    image: overwrite-data
+  - name: "update_db"
+    image: action2
     timeout: 50
-    on-timeout: ["echo", "Timeout"]
-    on-failure: ["echo", "Failure"]
