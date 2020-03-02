@@ -83,7 +83,7 @@ services:
       PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
-      MIRROR_HOST: ${MIRROR_HOST:-127.0.0.1}
+      MIRROR_HOST: ${NGINX_IP:-127.0.0.1}
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
       DNS_SERVERS: "147.75.207.207,147.75.207.208"
@@ -112,7 +112,7 @@ services:
     ports:
       - $NGINX_IP:80:80/tcp
     volumes:
-      - /packet/nginx/:/var/www/html/
+      - /packet/nginx/:/usr/share/nginx/html/
 
   elasticsearch:
     image: elasticsearch:7.3.0
