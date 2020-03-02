@@ -41,8 +41,8 @@ services:
       POSTGRES_USER: rover
     ports:
       - 5432:5432
-    depends_on:
-      - "fluentbit"
+    #depends_on:
+    #- "fluentbit"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U rover"]
       interval: 1s
@@ -137,3 +137,39 @@ services:
       - kibana
     volumes:
       - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+
+  cserver:
+    image: quay.io/packet/cacher:workflow
+    environment:
+      FACILITY: ${FACILITY:-lab1}
+      PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
+      PACKET_API_URL: ${PACKET_API_URL}
+      PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
+      PACKET_ENV: testing
+      PACKET_VERSION: 5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d
+      PGDATABASE: rover
+      PGHOST: db
+      PGPASSWORD: rover
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: rover
+      ROLLBAR_TOKEN: 9b78d0ad01d1467aa92c49c3a349b79d
+    volumes:
+      - ./certs:/certs/${FACILITY}
+    ports:
+      - 42111:42111/tcp
+      - 42112:42112/tcp
+
+  hegel:
+    image: quay.io/packet/hegel:workflow
+    network_mode: host
+    environment:
+      ROLLBAR_TOKEN: 9b78d0ad01d1467aa92c49c3a349b79d
+      ROLLBAR_DISABLE: 1
+      PACKET_ENV: testing
+      PACKET_VERSION: 5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d
+      GRPC_PORT: 42115
+      HEGEL_FACILITY: ${FACILITY:-lab1}
+      HEGEL_USE_TLS: 0
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
