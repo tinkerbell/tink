@@ -7,12 +7,15 @@ sed -i -e "s/$bond//g" /etc/network/interfaces
 sed -i -e "s/$network_interface inet manual/$network_interface inet static\n    address $HOST_IP\n    netmask $NETMASK\n    broadcast $BROAD_IP/g" /etc/network/interfaces
 ifdown  $network_interface
 ifup  $network_interface
+<<<<<<< HEAD
 
 declare host=$HOST_IP
 echo "This is network host" $host
 #sed -i -e "s/$network_interface inet manual/$network_interface inet static\n    address $HOST_IP\n    netmask 255.255.255.240/g" /etc/network/interfaces
 #ifdown  $network_interface
 #ifup  $network_interface
+=======
+>>>>>>> complete setup with provisioner and worker machine
 
 declare host=$HOST_IP
 echo "This is network host" $host
@@ -71,15 +74,25 @@ echo 'export PATH=$PATH:$GOPATH' >> ~/.bashrc
 source ~/.bashrc
 
 mkdir -p /packet/nginx
+<<<<<<< HEAD
 cp -r /tmp/workflow/* /packet/nginx
 #extract boot files
+=======
+cp /tmp/workflow/* /packet/nginx
+#extract boot files 
+>>>>>>> complete setup with provisioner and worker machine
 pushd /packet/nginx ; tar xvzf boot-files.gz ; popd
 
 # get the tinkerbell repo
 mkdir -p ~/go/src/github.com/packethost
 cd ~/go/src/github.com/packethost
+<<<<<<< HEAD
 git clone --branch setup_provisioner_and_worker https://$GIT_USER:$GIT_PASS@github.com/packethost/tinkerbell.git
 cd ~/go/src/github.com/packethost/tinkerbell
+=======
+git clone --branch setup_provisioner_and_worker https://$GIT_USER:$GIT_PASS@github.com/packethost/rover.git
+cd ~/go/src/github.com/packethost/rover
+>>>>>>> complete setup with provisioner and worker machine
 sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$host\"\,/g" tls/server-csr.in.json
 make
 
@@ -118,6 +131,11 @@ docker-compose up --build -d tinkerbell
 sleep 20
 docker-compose up --build -d boots
 sleep 20
+<<<<<<< HEAD
+=======
+docker-compose up --build -d tink
+sleep 20
+>>>>>>> complete setup with provisioner and worker machine
 docker-compose up --build -d nginx
 sleep 5
 docker-compose up --build -d cserver

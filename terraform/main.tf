@@ -32,8 +32,13 @@ resource "packet_device" "tf-provisioner" {
   }
   
   provisioner "file" {
+<<<<<<< HEAD
     source      = "../cmd/tinkerbell/tinkerbell-cli"
     destination = "/usr/local/bin/tinkerbell"
+=======
+    source      = "../cmd/rover/rover-linux-x86_64"
+    destination = "/usr/local/bin/rover"
+>>>>>>> complete setup with provisioner and worker machine
   }
 
   provisioner "file" {
@@ -51,10 +56,17 @@ resource "packet_device" "tf-provisioner" {
         "echo \"DOCKER_PASS=${var.quay_pass}\" >> /etc/environment",
         "echo \"GIT_USER=${var.git_user}\" >> /etc/environment",
         "echo \"GIT_PASS=${var.git_pass}\" >> /etc/environment",
+<<<<<<< HEAD
         "echo \"TINKERBELL_REGISTRY_USER=${var.private_registry_user}\" >> /etc/environment",
         "echo \"TINKERBELL_REGISTRY_PASS=${var.private_registry_pass}\" >> /etc/environment",
         "echo \"TINKERBELL_GRPC_AUTHORITY=\"127.0.0.1:42113\"\" >> /etc/environment",
         "echo \"TINKERBELL_CERT_URL=\"http://127.0.0.1:42114/cert\"\" >> /etc/environment",
+=======
+        "echo \"ROVER_REGISTRY_USER=${var.rover_registry_user}\" >> /etc/environment",
+        "echo \"ROVER_REGISTRY_PASS=${var.rover_registry_pass}\" >> /etc/environment",
+        "echo \"ROVER_GRPC_AUTHORITY=\"127.0.0.1:42113\"\" >> /etc/environment",
+        "echo \"ROVER_CERT_URL=\"http://127.0.0.1:42114/cert\"\" >> /etc/environment",
+>>>>>>> complete setup with provisioner and worker machine
         "cat /etc/environment"
         ]
   }
@@ -94,9 +106,15 @@ output "provisioner_ip" {
   value = "${packet_device.tf-provisioner.network[0].address}"
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> complete setup with provisioner and worker machine
 
 output "worker_mac_addr" {
   value = "${packet_device.tf-worker.ports[1].mac}"
 }
+<<<<<<< HEAD
 =======
 >>>>>>> Terraform scripts to create setup for workflow
+=======
+>>>>>>> complete setup with provisioner and worker machine
