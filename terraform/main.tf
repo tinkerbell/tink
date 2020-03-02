@@ -33,7 +33,7 @@ resource "packet_device" "tf-provisioner" {
   
   provisioner "file" {
     source      = "../cmd/rover/rover-linux-x86_64"
-    destination = "/usr/local/bin/rover-cli"
+    destination = "/usr/local/bin/rover"
   }
 
   provisioner "file" {
@@ -45,8 +45,12 @@ resource "packet_device" "tf-provisioner" {
     inline = [
         "echo \"HOST_IP=${var.provisioner_ip}\" >> /etc/environment",
         "echo \"IP_CIDR=${var.cidr}\" >> /etc/environment",
+        "echo \"BROAD_IP=${var.last_ip}\" >> /etc/environment",
+        "echo \"NETMASK=${var.netmask}\" >> /etc/environment",
         "echo \"DOCKER_USER=${var.quay_user}\" >> /etc/environment",
         "echo \"DOCKER_PASS=${var.quay_pass}\" >> /etc/environment",
+        "echo \"GIT_USER=${var.git_user}\" >> /etc/environment",
+        "echo \"GIT_PASS=${var.git_pass}\" >> /etc/environment",
         "echo \"ROVER_REGISTRY_USER=${var.rover_registry_user}\" >> /etc/environment",
         "echo \"ROVER_REGISTRY_PASS=${var.rover_registry_pass}\" >> /etc/environment",
         "echo \"ROVER_GRPC_AUTHORITY=\"127.0.0.1:42113\"\" >> /etc/environment",
@@ -88,4 +92,8 @@ resource "packet_port_vlan_attachment" "worker" {
 
 output "provisioner_ip" {
   value = "${packet_device.tf-provisioner.network[0].address}"
+}
+
+output "worker_mac_addr" {
+  value = "${packet_device.tf-worker.ports[1].mac}"
 }
