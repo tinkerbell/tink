@@ -112,7 +112,7 @@ services:
     ports:
       - $NGINX_IP:80:80/tcp
     volumes:
-      - /tmp/workflow/:/var/www/html/
+      - /packet/nginx/:/var/www/html/
 
   elasticsearch:
     image: elasticsearch:7.3.0
