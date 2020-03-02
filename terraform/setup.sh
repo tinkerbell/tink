@@ -2,13 +2,14 @@
 
 declare network_interface=$(grep auto /etc/network/interfaces | tail -1 | cut -d ' ' -f 2)
 echo "This is network interface" $network_interface
-#sed -i -e "s/$network_interface inet manual/$network_interface inet static\n    address $HOST_IP\n    netmask 255.255.255.240/g" /etc/network/interfaces
-#ifdown  $network_interface
-#ifup  $network_interface
+declare bond=$(cat /etc/network/interfaces | tail -1)
+sed -i -e "s/$bond//g" /etc/network/interfaces
+sed -i -e "s/$network_interface inet manual/$network_interface inet static\n    address $HOST_IP\n    netmask $NETMASK\n    broadcast $BROAD_IP/g" /etc/network/interfaces
+ifdown  $network_interface
+ifup  $network_interface
 
 declare host=$HOST_IP
 echo "This is network host" $host
-sudo ip addr add $host/$IP_CIDR dev $network_interface
 
 declare ip=$(($(echo $host | cut -d "." -f 4 | xargs) + 1))
 declare nginx_ip="$(echo $host | cut -d "." -f 1).$(echo $host | cut -d "." -f 2).$(echo $host | cut -d "." -f 3).$ip"
@@ -19,7 +20,6 @@ export NGINX_IP=$nginx_ip
 
 # Update ip tables 
 iptables -t nat -A POSTROUTING -s $host/$IP_CIDR  -j MASQUERADE
-iptables -t nat -A POSTROUTING -s $nginx_ip/$IP_CIDR  -j MASQUERADE
 
 sudo apt update -y
 sudo apt-get install -y wget ca-certificates
@@ -39,8 +39,7 @@ export ROVER_GRPC_AUTHORITY=127.0.0.1:42113
 export ROVER_CERT_URL=http://127.0.0.1:42114/cert
 
 # Give permission to binaries
-chmod +x /usr/local/bin/rover-cli
-chmod +x /usr/local/bin/worker
+chmod +x /usr/local/bin/rover
 
 #setup git and git lfs
 sudo apt install -y git
@@ -65,21 +64,18 @@ echo 'export GOPATH=$GOPATH:$HOME/go' >> ~/.bashrc
 echo 'export PATH=$PATH:$GOPATH' >> ~/.bashrc
 source ~/.bashrc
 
+mkdir -p /packet/nginx
+cp /tmp/workflow/* /packet/nginx
 #extract boot files 
-pushd /tmp/workflow/ ; tar xvzf boot-files.gz ; popd
+pushd /packet/nginx ; tar xvzf boot-files.gz ; popd
 
 # get the rover repo
 mkdir -p ~/go/src/github.com/packethost
 cd ~/go/src/github.com/packethost
-git clone --single-branch --branch setup_provisioner_and_worker https://$DOCKER_USER:613f0706ad7bfa0538616bc05dd3ce4349176c9b@github.com/packethost/rover.git
+git clone --branch setup_provisioner_and_worker https://$GIT_USER:$GIT_PASS@github.com/packethost/rover.git
 cd ~/go/src/github.com/packethost/rover
 sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$host\"\,/g" tls/server-csr.in.json
 make
-
-# Create and tag worker image
-#cd ~/go/src/github.com/packethost/rover/worker
-#cp /tmp/worker ./
-#docker build -t $host/worker .
 
 # build the certidicates
 docker-compose up --build -d certs
@@ -103,6 +99,9 @@ sleep 5
 cd ~/go/src/github.com/packethost/rover
 cp certs/ca.pem /etc/docker/certs.d/$host/ca.crt
 
+#copy certificate in tinkerbell
+cp certs/ca.pem /packet/nginx/misc/tinkerbell/workflow/ca.pem
+
 #push worker image into it
 docker login -u=$ROVER_REGISTRY_USER -p=$ROVER_REGISTRY_PASS $host
 docker push $host/worker:latest
@@ -112,5 +111,9 @@ sleep 20
 docker-compose up --build -d server
 sleep 20
 docker-compose up --build -d tink
-sleep 30
+sleep 20
 docker-compose up --build -d nginx
+sleep 5
+docker-compose up --build -d cserver
+sleep 10
+docker-compose up --build -d hegel
