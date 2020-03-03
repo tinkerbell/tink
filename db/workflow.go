@@ -32,10 +32,11 @@ type (
 
 	// Task represents a task to be performed in a worflow
 	task struct {
-		Name       string   `yaml:"name"`
-		WorkerAddr string   `yaml:"worker"`
-		Actions    []action `yaml:"actions"`
-		Volumes    []string `yaml:"volumes"`
+		Name        string            `yaml:"name"`
+		WorkerAddr  string            `yaml:"worker"`
+		Actions     []action          `yaml:"actions"`
+		Volumes     []string          `yaml:"volumes"`
+		Environment map[string]string `yaml:"environment"`
 	}
 
 	// Action is the basic executional unit for a workflow
@@ -134,10 +135,14 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	var actionList []pb.WorkflowAction
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
+		taskEnvs := []string{}
 		taskVolumes := map[string]string{}
 		for _, vol := range task.Volumes {
 			v := strings.Split(vol, ":")
 			taskVolumes[v[0]] = strings.Join(v[1:], ":")
+		}
+		for key, val := range task.Environment {
+			taskEnvs = append(taskEnvs, key+"="+val)
 		}
 
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
@@ -158,7 +163,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			uniqueWorkerID = workerUID
 		}
 		for _, ac := range task.Actions {
-			envs := []string{}
+			envs := taskEnvs
 			for key, val := range ac.Environment {
 				envs = append(envs, key+"="+val)
 			}
