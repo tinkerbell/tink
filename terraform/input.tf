@@ -1,3 +1,8 @@
+variable "auth_token" {
+  description = "Packet api token."
+  default     = "<Authentication token for packet>"
+}
+
 variable "provisioner_ip" {
   type = string
   default     = "192.168.1.1"
