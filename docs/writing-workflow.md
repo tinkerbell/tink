@@ -1,27 +1,42 @@
-# Writing a Workflow
+# Writing a [Workflow](concepts.md#workflow)
+
+Any workflow comprises two building blocks: target and template. 
+
+### Creating a [target](concepts.md#target)
+
+A target is referred with MAC or IP address. Here is a sample target definition using the MAC address:
+
+```json
+{
+    "machine1" :  {
+        "mac_addr": "98:03:9b:4b:c5:34"
+    }
+}
+```
+
+The command below creates a workflow target and returns its UUID:
+```shell
+ $ rover target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
+```
 
 
-## Creating a template
+### Creating a [template](concepts.md#template)
 
 Consider a sample template like the following saved as `/tmp/sample.tmpl`.
 
 ```yaml
 version: '0.1'
 name: ubuntu_provisioning
-global_timeout: 6000
+global_timeout: 2500
 tasks:
 - name: "os-installation"
   worker: "{{index .Targets "machine1" "mac_addr"}}"
   volumes:
     - /dev:/dev
-    - /dev/console:/dev/console
     - /lib/firmware:/lib/firmware:ro
   environment:
     MIRROR_HOST: 192.168.1.2
   actions:
-  - name: "disk-wipe"
-    image: disk-wipe
-    timeout: 90
   - name: "disk-partition"
     image: disk-partition
     timeout: 600
@@ -39,86 +54,68 @@ tasks:
       - /statedir:/statedir
 ```
 
-It is important to note that an action can also have its own volumes and environment variables. Therefore, any entry at an action will overwrite the value defined at the task level. For example, in the above template the `MIRROR_HOST` environment variable defined at action `disk-partition` will overwrite the value defined at task level. However, the other actions will receive the original value defined at the task level.
-
-
-### Creating a target
-
-Targets are mapping between the virtual worker name and the actual host. Currently we are refer targets with MAC or IP address. Here is a sample target definition:
-
-```json
-{
-    "machine1":  {
-        "ip_addr": "192.168.1.2"
-    },
-    "machine2" :  {
-        "mac_addr": "ca:00:64:b8:2d:00"
-    }
-}
-```
-
-A target can be accessed in template like (refer above template):
+Key points:
+ - `global_timeout` is in seconds.
+ - Any worflow that exceeds the global timeout will be terminated and marked as failed.
+ - Each action has its own timeout. If an action reaches its timeout, it is marked as failed and so is the workflow.
+ - An action cannot have space (` `) in its name.
+ - Environment variables and volumes at action level overwrites the values for duplicate keys defined at task level.
+ 
+A target can be accessed in a template like:
 
 ```
 {{ index .Targets "machine1" "ip_addr"}}
 {{ index .Targets "machine2" "mac_addr"}}
 ```
 
-### Worker
-
-A node that has its data being pushed into Cacher can become a part of a workflow. A worker can be a part of multiple workflows. 
-
-When the node boots, a worker container starts and connects with provisioner to check if there is any task (may be from different workflows) that it can execute. After the completion of an action, the worker sends action status to provisioner. When all workflows which are related to a worker are complete, a worker can terminate. 
-
-
-### The Ephemeral Data
-
-The workers that are part of a workflow might require to share some data. This can take the form of a light JSON like below, or some binary files that other workers might require to complete their action. For instance, a worker may add the following data:
-
-```json
- {"operating_system": "ubuntu_18_04", "mac_addr": "F5:C9:E2:99:BD:9B", "instance_id": "123e4567-e89b-12d3-a456-426655440000"}
-```
-
-The other worker may retrieve and use this data and eventually add some more:
-
-```json
-{"operating_system": "ubuntu_18_04", "mac_addr": "F5:C9:E2:99:BD:9B", "instance_id": "123e4567-e89b-12d3-a456-426655440000", "ip_addresses": [{"address_family": 4, "address": "172.27.0.23", "cidr": 31, "private": true}]}
-```
-![](img/ephemeral-data.png)
-
-
-## Useful CLI Commands
-
- - The following command creates a workflow template using the `sample.tmpl` file and save it as `sample`. It returns a UUID for the newly created template.
- ```shell
- $ rover template create -n <template-name> -p <path-to-template>
+The following command creates a workflow template and returns a UUID:
+```shell
  $ rover template create -n sample -p /tmp/sample.tmpl
- ``` 
+``` 
 
- - The command below creates a workflow target and returns its UUID.
- ```shell
- $ rover target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
- ```
 
- - Create a worklfow using the above created (or existing) template and target.
- ```shell
+### Creating a [workflow](concepts.md#workflow)
+
+We can create a worklfow using the above created (or existing) template and target. 
+```shell
  $ rover worklfow create -t <template-uuid> -r <target-uuid>
  $ rover workflow create -t edb80a56-b1f2-4502-abf9-17326324192b -r 9356ae1d-6165-4890-908d-7860ed04b421
- ```
-    
- - It is possible to update the name and content of a template at any point. 
- ```shell
- // list all the templates 
- $ rover template list
+```
 
- // update template name
- $ rover template update <template-uuid> -n <new-name>
- $ rover template update edb80a56-b1f2-4502-abf9-17326324192b -n new-sample-template
+The above command returns a UUID for the workflow thus created. The workflow ID can be used for getting further details about a workflow. Please refer the [Rover CLI reference](cli.md) for the same.
 
- // update template 
- $ rover template update <template-uuid> -p <path-to-new-template-file>
- $ rover template update edb80a56-b1f2-4502-abf9-17326324192b -p /tmp/new-sample-template.tmpl
- ```
+It's a good practice to verify that the targets have been well substituted in the template. In order to do so, use the following command:
+```yaml
+ $ rover workflow get edb80a56-b1f2-4502-abf9-17326324192b
 
+version: '0.1'
+name: ubuntu_provisioning
+global_timeout: 2500
+tasks:
+- name: "os-installation"
+  worker: ""
+  volumes:
+    - /dev:/dev
+    - /lib/firmware:/lib/firmware:ro
+  environment:
+    MIRROR_HOST: 192.168.1.2
+  actions:
+  - name: "disk-partition"
+    image: disk-partition
+    timeout: 600
+    environment:
+       MIRROR_HOST: 192.168.1.3
+    volumes:
+      - /statedir:/statedir
+  - name: "install-root-fs"
+    image: install-root-fs
+    timeout: 600
+  - name: "install-grub"
+    image: install-grub
+    timeout: 600
+    volumes:
+      - /statedir:/statedir
+```
 
+Notice how `worker` is set to the MAC address we had defined in the target.
 
