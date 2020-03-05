@@ -9,6 +9,9 @@ server: ${server}
 cli: ${cli}
 worker : ${worker}
 
+${bindir}:
+	mkdir -p $@/
+
 ${server}:
 	CGO_ENABLED=0 go build -o $@ .
 
