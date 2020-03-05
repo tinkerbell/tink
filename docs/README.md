@@ -11,14 +11,18 @@ provisioning workflows, that is...
 
 ## Content
  
- - Setup & Get started
+ - [Setup](setup.md)
  - [Architecture](architecture.md)
-  - [Components](architecture.md#components)
-  - [10,000ft View](architecture.md#10000ft-view)
- - Example: First Good Workflow 
+   - [Components](architecture.md#components)
+   - [10,000ft View](architecture.md#10000ft-view)
+ - [Example: First Good Workflow](first-good-workflow.md)
  - Writing a Workflow
-  - Concepts 
-  - Useful CLI commands
+   - [Concepts](workflow-writing.md#concepts)
+     - [Template](workflow-writing.md#template)
+     - [Target](workflow-writing.md#target)
+     - [Worker](workflow-writing.md#worker)
+     - [Ephemeral Data](workflow-writing.md#the-ephemeral-data)
+   - [Useful CLI commands](workflow-writing.md#useful-cli-commands)
  - [Common Errors](errors.md)
 
 
