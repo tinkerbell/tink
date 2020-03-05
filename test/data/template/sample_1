@@ -2,7 +2,7 @@ version: '0.1'
 name: packet_osie_provision
 global_timeout: 600
 tasks:
-- name: "OS Installation"
+- name: "run_one_worker"
   worker: "{{index .Targets "machine1" "mac_addr"}}"
   environment:
        MIRROR_HOST: 192.168.1.2

@@ -53,8 +53,8 @@ services:
     depends_on:
       - "fluentbit"
     healthcheck:
-            #test: ["CMD-SHELL", "pg_isready -U rover"]
-      test: ["CMD-SHELL","psql -U rover -c \"select COUNT(*) from hardware;\""]
+      test: ["CMD-SHELL", "pg_isready -U rover"]
+      #test: ["CMD-SHELL","psql -U rover -c \"select COUNT(*) from hardware;\""]
       interval: 1s
       timeout: 1s
       retries: 30
