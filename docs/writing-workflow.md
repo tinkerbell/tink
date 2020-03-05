@@ -1,12 +1,9 @@
 # Writing a Workflow
 
-## Concepts
 
-### Template
+## Creating a template
 
-A template is a Go template based definition that defines the overall flow of a workflow. A user must write a template based on a valid template format. Template can consist of custom variable which can be substituted before execution. For example, a target is defined separately and is substituted in a template at the time of creating a workflow.
-
-A template is stored as a blob in the database and is parsed later during the creation of a worflow. A user can CRUD a template using the CLI (`rover template`). Here is a sample worklfow template: 
+Consider a sample template like the following saved as `/tmp/sample.tmpl`.
 
 ```yaml
 version: '0.1'
@@ -42,12 +39,10 @@ tasks:
       - /statedir:/statedir
 ```
 
-A template comprises Tasks, which are executed in a sequential manner. A task can consits multiple Actions. As can be in the above example, a task supports volumes and environment variables. The volumes and environment variables defined for a particular task level are inherited by each action in that particular task. 
-
 It is important to note that an action can also have its own volumes and environment variables. Therefore, any entry at an action will overwrite the value defined at the task level. For example, in the above template the `MIRROR_HOST` environment variable defined at action `disk-partition` will overwrite the value defined at task level. However, the other actions will receive the original value defined at the task level.
 
 
-### Targets
+### Creating a target
 
 Targets are mapping between the virtual worker name and the actual host. Currently we are refer targets with MAC or IP address. Here is a sample target definition:
 

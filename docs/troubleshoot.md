@@ -1,4 +1,4 @@
-# Common Errors & Mitigations
+# Troubleshooting
 
 
 ### Not setting the worker to always PXE

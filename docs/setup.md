@@ -1,6 +1,4 @@
-# Setup the Packet Workflow Environment
-
-## With Terraform 
+# Setup the Packet Workflow Environment with Terraform
 
  - Clone the `rover` repository for latest code:
 ```shell
