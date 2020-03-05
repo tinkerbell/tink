@@ -15,6 +15,7 @@ require (
 	github.com/go-openapi/errors v0.19.2
 	github.com/go-openapi/strfmt v0.19.3
 	github.com/go-stack/stack v1.8.0
+	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/golang/protobuf v1.3.2-0.20190318194812-d3c38a4eb497
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20160910222444-6b7015e65d36
@@ -48,6 +49,7 @@ require (
 	github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec
 	github.com/spf13/pflag v1.0.1
 	github.com/spf13/viper v1.0.2
+	github.com/stretchr/testify v1.3.0
 	go.mongodb.org/mongo-driver v1.1.2
 	go.uber.org/atomic v1.2.0
 	go.uber.org/multierr v1.1.0

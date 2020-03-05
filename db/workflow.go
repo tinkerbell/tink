@@ -135,14 +135,14 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	var actionList []pb.WorkflowAction
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
-		taskEnvs := []string{}
+		taskEnvs := map[string]string{}
 		taskVolumes := map[string]string{}
 		for _, vol := range task.Volumes {
 			v := strings.Split(vol, ":")
 			taskVolumes[v[0]] = strings.Join(v[1:], ":")
 		}
 		for key, val := range task.Environment {
-			taskEnvs = append(taskEnvs, key+"="+val)
+			taskEnvs[key] = val
 		}
 
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
@@ -163,8 +163,16 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			uniqueWorkerID = workerUID
 		}
 		for _, ac := range task.Actions {
-			envs := taskEnvs
+			acenvs := map[string]string{}
+			for key, val := range taskEnvs{
+				acenvs[key] = val
+			}
 			for key, val := range ac.Environment {
+				acenvs[key] = val
+			}
+
+			envs := []string{}
+			for key, val := range acenvs {
 				envs = append(envs, key+"="+val)
 			}
 
