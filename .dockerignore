@@ -1,6 +1,6 @@
 *
 !/tls/
-!rover-linux-x86_64
+!rover-server
 !entrypoint.sh
 !deploy/migrate
 !deploy/docker-entrypoint-initdb.d/rover-init.sql
