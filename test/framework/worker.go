@@ -1,10 +1,9 @@
 package framework
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -12,6 +11,7 @@ import (
 	dc "github.com/docker/docker/client"
 	"github.com/packethost/rover/protos/workflow"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 var cli *dc.Client
@@ -25,24 +25,13 @@ func initializeDockerClient() (*dc.Client, error) {
 	return c, nil
 }
 
-func createWorkerImage() error {
-	cmd := exec.Command("/bin/sh", "-c", "docker build -t worker ../worker/")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("Faield to create worker image", err)
-	}
-	fmt.Println("Worker Image created")
-	return err
-}
-
 func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string, wfID string) (string, error) {
-	volume := map[string]struct{}{"/var/run/docker.sock": struct{}{}}
+	volume := map[string]struct{}{"/var/run/docker.sock": {}}
 	config := &container.Config{
 		Image:        "worker",
 		AttachStdout: true,
 		AttachStderr: true,
+		Tty:          true,
 		Volumes:      volume,
 		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=localhost:443", "DOCKER_API_VERSION=v1.40", "REGISTRY_USERNAME=username", "REGISTRY_PASSWORD=password"},
 	}
@@ -65,16 +54,18 @@ func runContainer(ctx context.Context, cli *dc.Client, id string) error {
 	return nil
 }
 
-func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string, statusChannel chan<- int64) {
+func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string, statusChannel chan<- int64, stopLogs chan<- bool) {
 	// send API call to wait for the container completion
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 	select {
 	case status := <-wait:
 		statusChannel <- status.StatusCode
 		fmt.Println("Worker with id ", id, "finished sucessfully with status code ", status.StatusCode)
+		//stopLogs <- true
 	case err := <-errC:
-		fmt.Println("Worker with id ", id, "failed : ", err)
+		log.Println("Worker with id ", id, "failed : ", err)
 		failedWorkers <- id
+		//stopLogs <- true
 	}
 	wg.Done()
 }
@@ -91,7 +82,7 @@ func removeContainer(ctx context.Context, cli *dc.Client, id string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Worker Container removed : ", id)
+	log.Println("Worker Container removed : ", id)
 	return nil
 }
 func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan workflow.ActionState) {
@@ -100,8 +91,27 @@ func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan wo
 	}
 }
 
-func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.ActionState, error) {
+func captureLogs(ctx context.Context, cli *dc.Client, id string) {
+	reader, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Timestamps: false,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer reader.Close()
 
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+	fmt.Println("Logging Finished for container ", id)
+}
+
+func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.ActionState, error) {
+	log = logger.WithField("workflow_id", wfID)
 	var wg sync.WaitGroup
 	failedWorkers := make(chan string, workers)
 	workflowStatus := make(chan workflow.ActionState, 1)
@@ -114,25 +124,29 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	for i = 0; i < workers; i++ {
 		ctx := context.Background()
 		cID, err := createWorkerContainer(ctx, cli, workerID[i], wfID)
+		log = logger.WithFields(logrus.Fields{"workflow_id": wfID, "worker_id": workerID[i]})
 		if err != nil {
-			fmt.Println("Worker with failed to create: ", err)
-			// TODO Should be remove all the containers which previously created?
+			log.Errorln("Failed to create worker container : ", err)
 		} else {
 			workerContainer[i] = cID
-			fmt.Println("Worker Created with ID : ", cID)
+			log.Debugln("Worker container created with ID : ", cID)
 			// Run container
-
+			//startedAt := time.Now()
 			err = runContainer(ctx, cli, cID)
-		}
 
-		if err != nil {
-			fmt.Println("Worker with id ", cID, " failed to start: ", err)
-			// TODO Should be remove the containers which started previously?
-		} else {
-			fmt.Println("Worker started with ID : ", cID)
-			wg.Add(1)
-			go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus)
-			go checkCurrentStatus(ctx, wfID, workflowStatus)
+			if err != nil {
+				fmt.Println("Worker with id ", cID, " failed to start: ", err)
+				// TODO Should be remove the containers which started previously?
+			} else {
+				fmt.Println("Worker started with ID : ", cID)
+				wg.Add(1)
+				//capturing logs of action container in a go-routine
+				stopLogs := make(chan bool)
+				go captureLogs(ctx, cli, cID)
+
+				go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus, stopLogs)
+				go checkCurrentStatus(ctx, wfID, workflowStatus)
+			}
 		}
 	}
 
@@ -141,13 +155,13 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	}
 
 	status := <-workflowStatus
-	fmt.Println("Status of Workflow : ", status)
+	log.Infoln("Status of Workflow : ", status)
 	wg.Wait()
 	ctx := context.Background()
 	for _, cID := range workerContainer {
 		err := removeContainer(ctx, cli, cID)
 		if err != nil {
-			fmt.Println("Failed to remove worker container with ID : ", cID)
+			log.Errorln("Failed to remove worker container with ID : ", cID)
 		}
 	}
 
@@ -155,7 +169,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 		for i = 0; i < workers; i++ {
 			failedContainer, ok := <-failedWorkers
 			if ok {
-				fmt.Println("Worker Failed : ", failedContainer)
+				log.Errorln("Worker Failed : ", failedContainer)
 				err = errors.New("Test Failed")
 			}
 

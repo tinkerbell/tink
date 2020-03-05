@@ -2,16 +2,18 @@ version: '0.1'
 name: packet_osie_provision
 global_timeout: 600
 tasks:
-- name: "OS Installation"
+- name: "run_one_worker"
   worker: "{{index .Targets "machine1" "mac_addr"}}"
+  environment:
+       MIRROR_HOST: 192.168.1.2
   actions:
   - name: "server_partitioning"
-    image: action1
+    image: update-data
     timeout: 60
-    on-timeout: do_partion recover -timeout
-    on-failure: do_partion recover -failure
+    environment:
+       NGINX_HOST: 192.168.1.2
   - name: "update_db"
-    image: action2
+    image: update-data
     timeout: 50
-    on-timeout: "rover_client update-timeout"
-    on-failure: "rover_client update-failed"
+    environment:
+       MIRROR_HOST: 192.168.1.3

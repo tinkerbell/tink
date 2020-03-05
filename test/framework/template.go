@@ -23,6 +23,7 @@ func readTemplateData(file string) ([]byte, error) {
 	return data, nil
 }
 
+// CreateTemplate : create template in the database
 func CreateTemplate(tmpl string) (string, error) {
 	filePath := "data/template/" + tmpl
 	// Read Content of template

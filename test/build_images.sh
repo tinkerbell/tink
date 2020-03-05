@@ -1,6 +1,7 @@
 #!/bin/bash
 
-docker build -t localhost/action1 actions/action1/
-docker build -t localhost/action2 actions/action2/
-docker build -t localhost/action3 actions/action3/
+docker pull bash
+docker tag bash:latest localhost/bash
+docker build -t localhost/update-data actions/update_data/
+docker build -t localhost/overwrite-data actions/overwrite_data/
 

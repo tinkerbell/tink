@@ -2,12 +2,12 @@ package framework
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/packethost/rover/client"
 	"github.com/packethost/rover/protos/workflow"
 )
 
+// CreateWorkflow : create workflow
 func CreateWorkflow(template string, target string) (string, error) {
 	req := workflow.CreateRequest{Template: template, Target: target}
 	res, err := client.WorkflowClient.CreateWorkflow(context.Background(), &req)
@@ -17,12 +17,12 @@ func CreateWorkflow(template string, target string) (string, error) {
 	return res.Id, nil
 }
 
+// GetCurrentStatus : get the current status of workflow from server
 func GetCurrentStatus(ctx context.Context, wfID string, status chan workflow.ActionState) {
 	req := workflow.GetRequest{Id: wfID}
 	wf, err := client.WorkflowClient.GetWorkflowContext(ctx, &req)
-	//fmt.Println("This is in Getting status : ", wf.CurrentActionState)
 	if err != nil {
-		fmt.Println("This is in Getting status ERROR: ", err)
+		log.Errorln("This is in Getting status ERROR: ", err)
 		status <- workflow.ActionState_ACTION_FAILED
 	}
 	if wf.CurrentActionState == workflow.ActionState_ACTION_FAILED {
