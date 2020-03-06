@@ -164,7 +164,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		}
 		for _, ac := range task.Actions {
 			acenvs := map[string]string{}
-			for key, val := range taskEnvs{
+			for key, val := range taskEnvs {
 				acenvs[key] = val
 			}
 			for key, val := range ac.Environment {
@@ -176,14 +176,14 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 				envs = append(envs, key+"="+val)
 			}
 
-			var volumes map[string]string
+			volumes := map[string]string{}
+			for k, v := range taskVolumes {
+				volumes[k] = v
+			}
+
 			for _, vol := range ac.Volumes {
 				v := strings.Split(vol, ":")
-				if _, ok := volumes[v[0]]; ok {
-					volumes[v[0]] = strings.Join(v[1:], ":")
-				} else {
-					volumes[v[0]] = strings.Join(v[1:], ":")
-				}
+				volumes[v[0]] = strings.Join(v[1:], ":")
 			}
 
 			ac.Volumes = []string{}
