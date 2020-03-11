@@ -16,7 +16,7 @@ import (
 // getCmd represents the get subcommand for workflow command
 var stateCmd = &cobra.Command{
 	Use:     "state [id]",
-	Short:   "get the current workflow context",
+	Short:   "get the current workflow state",
 	Example: "rover workflow state [id]",
 	Args: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 {

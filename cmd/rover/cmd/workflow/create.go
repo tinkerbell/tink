@@ -20,7 +20,7 @@ var (
 // createCmd represents the create subcommand for worflow command
 var createCmd = &cobra.Command{
 	Use:     "create",
-	Short:   "Create a workflow",
+	Short:   "create a workflow",
 	Example: "rover workflow create [flags]",
 	PreRunE: func(c *cobra.Command, args []string) error {
 		tmp, _ := c.Flags().GetString(fTemplate)

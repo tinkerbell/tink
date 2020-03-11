@@ -25,7 +25,7 @@ var (
 // showCmd represents the events subcommand for workflow command
 var showCmd = &cobra.Command{
 	Use:     "events [id]",
-	Short:   "showe all events for a workflow",
+	Short:   "show all events for a workflow",
 	Example: "rover workflow events [id]",
 	Args: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 {
