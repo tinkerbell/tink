@@ -69,6 +69,19 @@ A target can be accessed in template like (refer above template):
 
 ### Provisioner
 
+The provisioner machine is the main driver for executing a workflow. A provisioner houses the following components:
+ - Database (Postgres)
+ - Cacher (CLI and server)
+ - Tinkerbell
+ - Rover (CLI and server)
+ - Hegel
+ - Image Registry (optional)
+ - Elasticsearch
+ - Fluent Bit
+ - Kibana
+ - NGINX
+
+It is upto you if you would like to divide these components into multiple servers.
 
 ### Worker
 
