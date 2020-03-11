@@ -76,9 +76,9 @@ The following command creates a workflow template and returns a UUID:
 
 ### Creating a [workflow](concepts.md#workflow)
 
-We can create a worklfow using the above created (or existing) template and target. 
+We can create a workflow using the above created (or existing) template and target. 
 ```shell
- $ rover worklfow create -t <template-uuid> -r <target-uuid>
+ $ rover workflow create -t <template-uuid> -r <target-uuid>
  $ rover workflow create -t edb80a56-b1f2-4502-abf9-17326324192b -r 9356ae1d-6165-4890-908d-7860ed04b421
 ```
 
