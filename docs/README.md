@@ -32,7 +32,7 @@ provisioning workflows, that is...
    - [Worker](concepts.md#worker)
    - [Ephemeral Data](concepts.md#ephemeral-data)
  - [Writing a Workflow](writing-workflow.md)
- - [CLI Reference](cli.md)
+ - [Rover CLI Reference](cli/README.md)
  - [Troubleshooting](troubleshoot.md)
 
 
