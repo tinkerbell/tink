@@ -6,14 +6,13 @@ services:
       - ./certs:/certs
 
   tinkerbell:
-    build: .
-    environment: 
+    image: quay.io/packet/tinkerbell:workflow
+    environment:
       FACILITY: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
       PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
-      MAX_WORKFLOW_DATA_VERSIONS: 5
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-##########################}
+      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       PGDATABASE: tinkerbell
       PGHOST: db
       PGPASSWORD: tinkerbell
@@ -91,13 +90,13 @@ services:
     network_mode: host
     command: -dhcp-addr 0.0.0.0:67 -tftp-addr $HOST_IP:69 -http-addr $HOST_IP:80 -log-level DEBUG
     environment:
-      API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-PcyR6MvHb7wMmyYf9p8dJ2Dvnb9HxX8E}
-      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
+      API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-########################}
+      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-####################}
       FACILITY_CODE: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
       PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-#################################}
+      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       MIRROR_HOST: ${NGINX_IP:-127.0.0.1}
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
@@ -114,11 +113,11 @@ services:
       ROVER_CERT_URL: http://$HOST_IP:42114/cert
       ELASTIC_SEARCH_URL: $HOST_IP:9200
     depends_on:
-      - server
+      - tinkerbell
     logging:
       driver: fluentd
       options:
-        tag: tink
+        tag: boots
     ports:
       - $HOST_IP:80:80/tcp
       - 67:67/udp
@@ -171,13 +170,13 @@ services:
       PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
       PACKET_ENV: testing
       PACKET_VERSION: 5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d
-      PGDATABASE: rover
+      PGDATABASE: tinkerbell
       PGHOST: db
-      PGPASSWORD: rover
+      PGPASSWORD: tinkerbell
       PGPORT: 5432
       PGSSLMODE: disable
-      PGUSER: rover
-      ROLLBAR_TOKEN: 9b78d0ad01d1467aa92c49c3a349b79d
+      PGUSER: tinkerbell
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-9b78d0ad01d1467aa92c49c3a349b79d}
     volumes:
       - ./certs:/certs/${FACILITY}
     depends_on:
@@ -191,7 +190,7 @@ services:
     image: quay.io/packet/hegel:workflow
     network_mode: host
     environment:
-      ROLLBAR_TOKEN: 9b78d0ad01d1467aa92c49c3a349b79d
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-9b78d0ad01d1467aa92c49c3a349b79d}
       ROLLBAR_DISABLE: 1
       PACKET_ENV: testing
       PACKET_VERSION: 5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d
