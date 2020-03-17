@@ -118,7 +118,7 @@ services:
     logging:
       driver: fluentd
       options:
-        tag: tink
+        tag: tinkerbell
     ports:
       - $HOST_IP:80:80/tcp
       - 67:67/udp
