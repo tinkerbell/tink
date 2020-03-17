@@ -118,11 +118,6 @@ docker-compose up --build -d tinkerbell
 sleep 20
 docker-compose up --build -d boots
 sleep 20
-<<<<<<< HEAD
-=======
-docker-compose up --build -d tink
-sleep 20
->>>>>>> complete setup with provisioner and worker machine
 docker-compose up --build -d nginx
 sleep 5
 docker-compose up --build -d cserver
