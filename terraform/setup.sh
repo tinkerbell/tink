@@ -110,7 +110,7 @@ docker-compose up --build -d db
 sleep 20
 docker-compose up --build -d server
 sleep 20
-docker-compose up --build -d tink
+docker-compose up --build -d tinkerbell
 sleep 20
 docker-compose up --build -d nginx
 sleep 5
