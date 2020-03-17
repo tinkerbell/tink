@@ -85,7 +85,7 @@ services:
         tag: registry
     network_mode: host
 
-  tink:
+  tinkerbell:
     image: quay.io/packet/tinkerbell:workflow
     network_mode: host
     command: -dhcp-addr 0.0.0.0:67 -tftp-addr $HOST_IP:69 -http-addr $HOST_IP:80 -log-level DEBUG
@@ -117,7 +117,7 @@ services:
     logging:
       driver: fluentd
       options:
-        tag: tink
+        tag: tinkerbell
     ports:
       - $HOST_IP:80:80/tcp
       - 67:67/udp
