@@ -35,15 +35,9 @@ services:
     volumes:
       - ./certs:/certs/${FACILITY}
     logging:
-<<<<<<< HEAD
       driver: fluentd
       options:
         tag: tinkerbell-server
-=======
-        driver: fluentd
-        options:
-          tag: rover
->>>>>>> changes in compose file to add logging changes
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
