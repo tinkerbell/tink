@@ -20,7 +20,12 @@ services:
       PGSSLMODE: disable
       PGUSER: rover
     depends_on:
-      - "db"
+      certs:
+        condition: service_started
+      fluentbit:
+        condition: service_started
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
@@ -28,6 +33,10 @@ services:
       retries: 30
     volumes:
       - ./certs:/certs/${FACILITY}
+    logging:
+        driver: fluentd
+        options:
+          tag: rover
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
@@ -41,13 +50,17 @@ services:
       POSTGRES_USER: rover
     ports:
       - 5432:5432
-    #depends_on:
-    #- "fluentbit"
+    depends_on:
+    - "fluentbit"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U rover"]
       interval: 1s
       timeout: 1s
       retries: 30
+    logging:
+      driver: fluentd
+      options:
+        tag: db
 
   registry:
     build:
@@ -64,6 +77,12 @@ services:
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
     volumes:
       - ./certs:/certs
+    depends_on:
+      - fluentbit
+    logging:
+      driver: fluentd
+      options:
+        tag: registry
     network_mode: host
 
   tink:
@@ -95,6 +114,10 @@ services:
       ELASTIC_SEARCH_URL: $HOST_IP:9200
     depends_on:
       - server
+    logging:
+      driver: fluentd
+      options:
+        tag: tink
     ports:
       - $HOST_IP:80:80/tcp
       - 67:67/udp
@@ -156,6 +179,9 @@ services:
       ROLLBAR_TOKEN: 9b78d0ad01d1467aa92c49c3a349b79d
     volumes:
       - ./certs:/certs/${FACILITY}
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - 42111:42111/tcp
       - 42112:42112/tcp
