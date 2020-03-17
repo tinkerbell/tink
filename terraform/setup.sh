@@ -72,7 +72,7 @@ pushd /packet/nginx ; tar xvzf boot-files.gz ; popd
 # get the rover repo
 mkdir -p ~/go/src/github.com/packethost
 cd ~/go/src/github.com/packethost
-git clone --branch setup_provisioner_and_worker https://$GIT_USER:$GIT_PASS@github.com/packethost/rover.git
+git clone --branch setup_provisioner_and_worker https://$GIT_USER:$GIT_PASS@github.com/packethost/tinkerbell.git
 cd ~/go/src/github.com/packethost/rover
 sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$host\"\,/g" tls/server-csr.in.json
 make
