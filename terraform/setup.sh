@@ -108,9 +108,9 @@ docker push $host/worker:latest
 
 docker-compose up --build -d db
 sleep 20
-docker-compose up --build -d server
-sleep 20
 docker-compose up --build -d tinkerbell
+sleep 20
+docker-compose up --build -d boots
 sleep 20
 docker-compose up --build -d nginx
 sleep 5
