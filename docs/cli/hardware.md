@@ -1,4 +1,4 @@
-## rover hardware
+## tinkerbell hardware
 
 Hardware (worker) data operations.
 
@@ -8,10 +8,10 @@ Hardware operations:
 ```shell
   all         Get all known hardware for facility
   id          Get hardware by id
-  ingest      Trigger rover to ingest
+  ingest      Trigger tinkerbell to ingest
   ip          Get hardware by any associated ip
   mac         Get hardware by any associated mac
-  push        Push new hardware to rover
+  push        Push new hardware to tinkerbell
   watch       Register to watch an id for any changes
 ```
 
@@ -23,7 +23,7 @@ Hardware operations:
 
 ### See Also
 
- - [rover target](target.md) - Target operations
- - [rover template](template.md) - Template operations
- - [rover workflow](workflow.md) - Workflow operations
+ - [tinkerbell target](target.md) - Target operations
+ - [tinkerbell template](template.md) - Template operations
+ - [tinkerbell workflow](workflow.md) - Workflow operations
 

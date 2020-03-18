@@ -16,7 +16,7 @@ A target is referred with MAC or IP address. Here is a sample target definition 
 
 The command below creates a workflow target and returns its UUID:
 ```shell
- $ rover target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
+ $ tinkerbell target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
 ```
 
 
@@ -70,7 +70,7 @@ A target can be accessed in a template like:
 
 The following command creates a workflow template and returns a UUID:
 ```shell
- $ rover template create -n sample -p /tmp/sample.tmpl
+ $ tinkerbell template create -n sample -p /tmp/sample.tmpl
 ``` 
 
 
@@ -78,15 +78,15 @@ The following command creates a workflow template and returns a UUID:
 
 We can create a workflow using the above created (or existing) template and target. 
 ```shell
- $ rover workflow create -t <template-uuid> -r <target-uuid>
- $ rover workflow create -t edb80a56-b1f2-4502-abf9-17326324192b -r 9356ae1d-6165-4890-908d-7860ed04b421
+ $ tinkerbell workflow create -t <template-uuid> -r <target-uuid>
+ $ tinkerbell workflow create -t edb80a56-b1f2-4502-abf9-17326324192b -r 9356ae1d-6165-4890-908d-7860ed04b421
 ```
 
 The above command returns a UUID for the workflow thus created. The workflow ID can be used for getting further details about a workflow. Please refer the [Rover CLI reference](cli.md) for the same.
 
 It's a good practice to verify that the targets have been well substituted in the template. In order to do so, use the following command:
 ```yaml
- $ rover workflow get edb80a56-b1f2-4502-abf9-17326324192b
+ $ tinkerbell workflow get edb80a56-b1f2-4502-abf9-17326324192b
 
 version: '0.1'
 name: ubuntu_provisioning

@@ -1,4 +1,4 @@
-## rover workflow
+## tinkerbell workflow
 
 Workflow operations.
 
@@ -25,13 +25,13 @@ Workflow operations:
 
  - Create a workflow using a template and a target
  ```shell
-  $ rover workflow create -t <template-uuid> -r <target-uuid>
-  $ rover workflow create -t edb80a56-b1f2-4502-abf9-17326324192b -r 9356ae1d-6165-4890-908d-7860ed04b421
+  $ tinkerbell workflow create -t <template-uuid> -r <target-uuid>
+  $ tinkerbell workflow create -t edb80a56-b1f2-4502-abf9-17326324192b -r 9356ae1d-6165-4890-908d-7860ed04b421
  ```
 
 ### See Also
 
- - [rover hardware](hardware.md) - Hardware (worker) data operations 
- - [rover target](target.md) - Target operations
- - [rover template](template.md) - Template operations
+ - [tinkerbell hardware](hardware.md) - Hardware (worker) data operations 
+ - [tinkerbell target](target.md) - Target operations
+ - [tinkerbell template](template.md) - Template operations
  

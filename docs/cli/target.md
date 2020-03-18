@@ -1,4 +1,4 @@
-## rover target
+## tinkerbell target
 
 Target operations.
 
@@ -23,12 +23,12 @@ Target operations:
 
  - The command below creates a workflow target and returns its UUID.
  ```shell
-  $ rover target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
+  $ tinkerbell target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
  ```
 
 ### See Also
 
- - [rover hardware](hardware.md) - Hardware (worker) data operations 
- - [rover template](template.md) - Template operations
- - [rover workflow](workflow.md) - Workflow operations
+ - [tinkerbell hardware](hardware.md) - Hardware (worker) data operations 
+ - [tinkerbell template](template.md) - Template operations
+ - [tinkerbell workflow](workflow.md) - Workflow operations
 

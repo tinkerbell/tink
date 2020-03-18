@@ -1,9 +1,9 @@
 # Setup the Packet Workflow Environment with Terraform
 
- - Clone the `rover` repository for latest code:
+ - Clone the `tinkerbell` repository for latest code:
 ```shell
-$ git clone https://github.com/packethost/rover.git
-$ cd rover/terraform
+$ git clone https://github.com/packethost/tinkerbell.git
+$ cd tinkerbell/terraform
 ```
 
  - Update the `input.tf` file with actual username and password of GitHub and quay.io 

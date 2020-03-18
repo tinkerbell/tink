@@ -1,4 +1,4 @@
-## rover template
+## tinkerbell template
 
 Template operations.
 
@@ -23,30 +23,30 @@ Template operations:
 
  - The following command creates a workflow template using the `sample.tmpl` file and save it as `sample`. It returns a UUID for the newly created template.
  ```shell
-  $ rover template create -n <template-name> -p <path-to-template>
-  $ rover template create -n sample -p /tmp/sample.tmpl
+  $ tinkerbell template create -n <template-name> -p <path-to-template>
+  $ tinkerbell template create -n sample -p /tmp/sample.tmpl
  ``` 
 
  - List all the templates 
  ```shell
-  $ rover template list
+  $ tinkerbell template list
  ```
 
  - Update the name of an existing template
  ```shell
-  $ rover template update <template-uuid> -n <new-name>
-  $ rover template update edb80a56-b1f2-4502-abf9-17326324192b -n new-sample-template
+  $ tinkerbell template update <template-uuid> -n <new-name>
+  $ tinkerbell template update edb80a56-b1f2-4502-abf9-17326324192b -n new-sample-template
  ```
 
  - Update an existing template and keep the same name
  ```shell
-  $ rover template update <template-uuid> -p <path-to-new-template-file>
-  $ rover template update edb80a56-b1f2-4502-abf9-17326324192b -p /tmp/new-sample-template.tmpl
+  $ tinkerbell template update <template-uuid> -p <path-to-new-template-file>
+  $ tinkerbell template update edb80a56-b1f2-4502-abf9-17326324192b -p /tmp/new-sample-template.tmpl
  ```
 
 ### See Also
 
- - [rover hardware](hardware.md) - Hardware (worker) data operations 
- - [rover target](target.md) - Target operations
- - [rover workflow](workflow.md) - Workflow operations
+ - [tinkerbell hardware](hardware.md) - Hardware (worker) data operations 
+ - [tinkerbell target](target.md) - Target operations
+ - [tinkerbell workflow](workflow.md) - Workflow operations
 

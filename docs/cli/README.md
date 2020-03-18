@@ -1,6 +1,6 @@
-# Rover CLI Reference
+# Tinkerbell CLI Reference
 
-## rover
+## tinkerbell
 
 Command line interface for Packet Workflow.
 
@@ -11,24 +11,24 @@ Command line interface for Packet Workflow. The CLI allows you to update the har
 ### Operations
 
 ```shell
-  hardware    rover hardware client
+  hardware    tinkerbell hardware client
   help        Help about any command
-  target      rover target client
-  template    rover template client
-  workflow    rover workflow client
+  target      tinkerbell target client
+  template    tinkerbell template client
+  workflow    tinkerbell workflow client
 ```
 
 ### Options
 
 ```
-  -h, --help   help for rover
+  -h, --help   help for tinkerbell
 ```
 
 ### See Also
 
- - [rover hardware](hardware.md) - Hardware (worker) data operations 
- - [rover target](target.md) - Target operations
- - [rover template](template.md) - Template operations
- - [rover workflow](workflow.md) - Workflow operations
+ - [tinkerbell hardware](hardware.md) - Hardware (worker) data operations 
+ - [tinkerbell target](target.md) - Target operations
+ - [tinkerbell template](template.md) - Template operations
+ - [tinkerbell workflow](workflow.md) - Workflow operations
 
 

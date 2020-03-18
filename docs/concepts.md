@@ -4,7 +4,7 @@
 
 A template is a Go template based definition that defines the overall flow of a workflow. A user must write a template based on a valid template format. Template can consist of custom variable which can be substituted before execution. For example, a target is defined separately and is substituted in a template at the time of creating a workflow.
 
-A template is stored as a blob in the database and is parsed later during the creation of a worflow. A user can CRUD a template using the CLI (`rover template`). Here is a sample workflow template: 
+A template is stored as a blob in the database and is parsed later during the creation of a worflow. A user can CRUD a template using the CLI (`tinkerbell template`). Here is a sample workflow template: 
 
 ```yaml
 version: '0.1'

@@ -15,9 +15,9 @@ You have a setup ready with a Provisioner and a Worker node. If not, please foll
   /var/www/html/misc/osie/current/ubuntu_18_04 
   /var/www/html/misc/osie/current/modloop-x86_64
  ```
- - Change directory to `rover`:
+ - Change directory to `tinkerbell`:
  ```shell
- $ cd ~/go/src/github.com/packethost/rover/
+ $ cd ~/go/src/github.com/packethost/tinkerbell/
  ```
  - switch to `first-good-workflow` branch
  ```shell
@@ -30,20 +30,20 @@ You have a setup ready with a Provisioner and a Worker node. If not, please foll
  ```
  - Create action images and push them in to the private registry:
  ```shell
-  $ cd ~/go/src/github.com/packethost/rover/workflow-samples/ubuntu/v3/
+  $ cd ~/go/src/github.com/packethost/tinkerbell/workflow-samples/ubuntu/v3/
   $ ./create_image.sh
  ```
  - Create a target:
  ```shell
-  $ rover target create '{"targets": {"machine1": {"mac_addr": "<mac address of tf-worker>"}}}'
+  $ tinkerbell target create '{"targets": {"machine1": {"mac_addr": "<mac address of tf-worker>"}}}'
  ```
  - Create a template:
  ```shell
-  $ rover template create -n ubuntu-sample -p /root/go/src/github.com/packethost/rover/workflow-samples/ubuntu/ubuntu.tmpl
+  $ tinkerbell template create -n ubuntu-sample -p /root/go/src/github.com/packethost/tinkerbell/workflow-samples/ubuntu/ubuntu.tmpl
  ```
  - Create a workflow:
  ```shell
-  $ rover workflow create -t <template Id> -r <target_id>
+  $ tinkerbell workflow create -t <template Id> -r <target_id>
  ```
  - Reboot the worker machine
 
