@@ -32,13 +32,8 @@ resource "packet_device" "tf-provisioner" {
   }
   
   provisioner "file" {
-<<<<<<< HEAD
     source      = "../cmd/tinkerbell/tinkerbell-cli"
     destination = "/usr/local/bin/tinkerbell"
-=======
-    source      = "../cmd/rover/rover-linux-x86_64"
-    destination = "/usr/local/bin/rover"
->>>>>>> complete setup with provisioner and worker machine
   }
 
   provisioner "file" {
@@ -98,16 +93,7 @@ resource "packet_port_vlan_attachment" "worker" {
 output "provisioner_ip" {
   value = "${packet_device.tf-provisioner.network[0].address}"
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> complete setup with provisioner and worker machine
 
 output "worker_mac_addr" {
   value = "${packet_device.tf-worker.ports[1].mac}"
 }
-<<<<<<< HEAD
-=======
->>>>>>> Terraform scripts to create setup for workflow
-=======
->>>>>>> complete setup with provisioner and worker machine
