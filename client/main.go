@@ -26,9 +26,9 @@ var (
 
 // GetConnection returns a gRPC client connection
 func GetConnection() (*grpc.ClientConn, error) {
-	certURL := os.Getenv("ROVER_CERT_URL")
+	certURL := os.Getenv("TINKERBELL_CERT_URL")
 	if certURL == "" {
-		return nil, errors.New("undefined ROVER_CERT_URL")
+		return nil, errors.New("undefined TINKERBELL_CERT_URL")
 	}
 	resp, err := http.Get(certURL)
 	if err != nil {
@@ -47,9 +47,9 @@ func GetConnection() (*grpc.ClientConn, error) {
 		return nil, errors.Wrap(err, "parse cert")
 	}
 
-	grpcAuthority := os.Getenv("ROVER_GRPC_AUTHORITY")
+	grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 	if grpcAuthority == "" {
-		return nil, errors.New("undefined ROVER_GRPC_AUTHORITY")
+		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 	creds := credentials.NewClientTLSFromCert(cp, "")
 	conn, err := grpc.Dial(grpcAuthority, grpc.WithTransportCredentials(creds))

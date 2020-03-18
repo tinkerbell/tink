@@ -20,8 +20,8 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		os.Exit(1)
 	}
-	os.Setenv("ROVER_GRPC_AUTHORITY", "127.0.0.1:42113")
-	os.Setenv("ROVER_CERT_URL", "http://127.0.0.1:42114/cert")
+	os.Setenv("TINKERBELL_GRPC_AUTHORITY", "127.0.0.1:42113")
+	os.Setenv("TINKERBELL_CERT_URL", "http://127.0.0.1:42114/cert")
 	client.Setup()
 	log.Infoln("########Setup Created########")
 

@@ -68,8 +68,8 @@ services:
  #    context: .
  #    dockerfile: cmd/tinkerbell/Dockerfile
  #  environment:
- #    ROVER_GRPC_AUTHORITY: 127.0.0.1:42113
- #    ROVER_CERT_URL: http://127.0.0.1:42114/cert
+ #    TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
+ #    TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
  #  depends_on:
  #    - "fluentbit"
  #  logging:
@@ -159,8 +159,8 @@ services:
  #    DOCKER_REGISTRY: 127.0.0.1
  #    REGISTRY_USERNAME: username
  #    REGISTRY_PASSWORD: password
- #    ROVER_GRPC_AUTHORITY: 127.0.0.1:42113
- #    ROVER_CERT_URL: http://127.0.0.1:42114/cert
+ #    TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
+ #    TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
  #    ELASTIC_SEARCH_URL: 127.0.0.1:9200
  #  depends_on:
  #    db:

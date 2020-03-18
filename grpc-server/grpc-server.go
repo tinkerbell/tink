@@ -57,7 +57,7 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 		db:      db,
 		dbReady: true,
 	}
-	if cert := os.Getenv("ROVER_TLS_CERT"); cert != "" {
+	if cert := os.Getenv("TINKERBELL_TLS_CERT"); cert != "" {
 		server.cert = []byte(cert)
 		server.modT = time.Now()
 	} else {
@@ -101,7 +101,7 @@ func getCerts(facility string, logger log.Logger) (tls.Certificate, []byte, time
 		modT    time.Time
 	)
 
-	certsDir := os.Getenv("ROVER_CERTS_DIR")
+	certsDir := os.Getenv("TINKERBELL_CERTS_DIR")
 	if certsDir == "" {
 		certsDir = "/certs/" + facility
 	}
