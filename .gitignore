@@ -1,4 +1,6 @@
-/rover
+tinkerbell-server
+**/tinkerbell-cli
+**/tinkerbell-worker
 bin/
 certs/
 
