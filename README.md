@@ -1,7 +1,6 @@
-# Tinkerbell
+# Tinkerbell [https://tinkerbell.org](https://tinkerbell.org)
 
 At the highest level `tinkerbell` is the service responsible for handling the workflows. It comprises of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, i.e., template and target.
-
 
 # Packet Workflow 
 
@@ -12,7 +11,6 @@ provisioning workflows, that is...
  - can bootstrap any remote worker using `Boots + Osie`
  - can run any set of actions as Docker container runtimes
  - receive, manipulate, and save runtime data
-
 
 ## Content
  
@@ -38,5 +36,3 @@ provisioning workflows, that is...
  - [Writing a Workflow](docs/writing-workflow.md)
  - [Tinkerbell CLI Reference](docs/cli/README.md)
  - [Troubleshooting](docs/troubleshoot.md)
-
-

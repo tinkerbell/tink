@@ -1,0 +1,20 @@
+---
+
+workspace:
+  base: /go
+  path: src/github.com/packethost/rover
+
+pipeline:
+  test:
+    group: ci
+    image: golang:1.10-alpine
+    commands:
+      - go test -v ./...
+
+  build:
+    group: ci
+    image: golang:1.10-alpine
+    commands:
+      - CGO_ENABLED=0 go build
+
+
