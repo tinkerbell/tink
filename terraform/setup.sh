@@ -37,12 +37,12 @@ export PACKET_API_URL=""
 export PACKET_CONSUMER_TOKEN="dummy_token"
 export PACKET_ENV="onprem"
 export PACKET_VERSION="onprem"
-export ROLLBAR_TOKEN="9b78d0ad01d1467aa92c49c3a349b79d"
+export ROLLBAR_TOKEN="###################"
 export ROLLBAR_DISABLE=1
 
 # ENVs for CLI
-export ROVER_GRPC_AUTHORITY=127.0.0.1:42113
-export ROVER_CERT_URL=http://127.0.0.1:42114/cert
+#export TINKERBELL_GRPC_AUTHORITY=127.0.0.1:42113
+#export TINKERBELL_CERT_URL=http://127.0.0.1:42114/cert
 
 # Give permission to binaries
 chmod +x /usr/local/bin/rover
@@ -95,7 +95,7 @@ docker login -u=$DOCKER_USER -p=$DOCKER_PASS quay.io
 #pull the worker image and push into private registry
 docker pull quay.io/packet/tinkerbell-worker:workflow
 docker tag quay.io/packet/tinkerbell-worker:workflow $host/worker:latest
-docker login -u=$ROVER_REGISTRY_USER -p=$ROVER_REGISTRY_PASS $host
+docker login -u=$TINKERBELL_REGISTRY_USER -p=$TINKERBELL_REGISTRY_PASS $host
 docker push $host/worker:latest
 
 # Start the stack
@@ -109,7 +109,7 @@ cp certs/ca.pem /etc/docker/certs.d/$host/ca.crt
 cp certs/ca.pem /packet/nginx/misc/tinkerbell/workflow/ca.pem
 
 #push worker image into it
-docker login -u=$ROVER_REGISTRY_USER -p=$ROVER_REGISTRY_PASS $host
+docker login -u=$TINKERBELL_REGISTRY_USER -p=$TINKERBELL_REGISTRY_PASS $host
 docker push $host/worker:latest
 
 docker-compose up --build -d db
