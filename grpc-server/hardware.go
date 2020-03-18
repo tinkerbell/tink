@@ -140,14 +140,14 @@ func (s *server) ByIP(ctx context.Context, in *hardware.GetRequest) (*hardware.H
 	})
 }
 
-// ByID implements cacher.CacherServer
+// ByID implements hardware.ByID
 func (s *server) ByID(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByID", func() (string, error) {
 		return db.GetByID(ctx, s.db, in.ID)
 	})
 }
 
-// ALL implements cacher.CacherServer
+// ALL implements hardware.All
 func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServer) error {
 	labels := prometheus.Labels{"method": "All", "op": "get"}
 
