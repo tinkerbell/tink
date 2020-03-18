@@ -10,7 +10,9 @@ require (
 	github.com/docker/docker v1.4.2-0.20191212201129-5f9f41018e9d
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-openapi/strfmt v0.19.3 // indirect
+	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/golang/protobuf v1.3.2-0.20190318194812-d3c38a4eb497
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20160910222444-6b7015e65d36
