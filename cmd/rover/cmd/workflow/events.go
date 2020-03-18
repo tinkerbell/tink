@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/jedib0t/go-pretty/table"
-	"github.com/packethost/rover/client"
-	"github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/tinkerbell/client"
+	"github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/spf13/cobra"
 )
 

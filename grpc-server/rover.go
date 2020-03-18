@@ -3,8 +3,8 @@ package grpcserver
 import (
 	"context"
 
-	exec "github.com/packethost/rover/executor"
-	pb "github.com/packethost/rover/protos/workflow"
+	exec "github.com/packethost/tinkerbell/executor"
+	pb "github.com/packethost/tinkerbell/protos/workflow"
 )
 
 // GetWorkflowContexts implements rover.GetWorkflowContexts

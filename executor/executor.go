@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/packethost/rover/db"
-	pb "github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/tinkerbell/db"
+	pb "github.com/packethost/tinkerbell/protos/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

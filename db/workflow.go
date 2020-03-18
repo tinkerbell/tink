@@ -13,7 +13,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	pb "github.com/packethost/rover/protos/workflow"
+	pb "github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/yaml.v2"

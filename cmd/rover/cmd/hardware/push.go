@@ -9,8 +9,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/packethost/rover/client"
-	"github.com/packethost/rover/protos/hardware"
+	"github.com/packethost/tinkerbell/client"
+	"github.com/packethost/tinkerbell/protos/hardware"
 	"github.com/spf13/cobra"
 )
 
