@@ -1,12 +1,8 @@
 # Components
 
-### Cacher
-
-Cacher is the data store that Rover pulls from. It uses Postgres as its data store. The data stored is structured in a way such that the information is split into two groups: information directly required by Rover to operate and anything else that will be relevant to other parts of the system, called metadata. 
-
 ### Boots
 
-Handles DHCP requests, hands out IPs, serves up iPXE. It also uses Cacher to pull and push the data. 
+Handles DHCP requests, hands out IPs, serves up iPXE. It also uses Tinkerbell client to pull and push the hardware data. 
 
 ### Osie
 
@@ -18,7 +14,7 @@ It is the service responsible for handling the workflows. It comprises of a serv
 
 ### Hegel
 
-It is the metadata service used by Rover and Osie during provisioning. It collects the data from Cacher and transforms it into a different structure that is used as the metadata. The data thus received is in JSON format. 
+It is the metadata service used by Tinkerbell and Osie during provisioning. It collects the data from Tinkerbell and transforms it into a different structure that is used as the metadata. The data thus received is in JSON format. 
 
 ### Database
 

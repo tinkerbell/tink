@@ -71,9 +71,8 @@ A target can be accessed in template like (refer above template):
 
 The provisioner machine is the main driver for executing a workflow. A provisioner houses the following components:
  - Database (Postgres)
- - Cacher (CLI and server)
- - Tinkerbell
- - Rover (CLI and server)
+ - Tinkerbell (CLI and server)
+ - Boots 
  - Hegel
  - Image Registry (optional)
  - Elasticsearch
@@ -85,7 +84,7 @@ It is upto you if you would like to divide these components into multiple server
 
 ### Worker
 
-A node that has its data being pushed into Cacher can become a part of a workflow. A worker can be a part of multiple workflows. 
+Any node that has its data being pushed into Tinkerbell can become a part of a workflow. A worker can be a part of multiple workflows. 
 
 When the node boots, a worker container starts and connects with provisioner to check if there is any task (may be from different workflows) that it can execute. After the completion of an action, the worker sends action status to provisioner. When all workflows which are related to a worker are complete, a worker can terminate. 
 

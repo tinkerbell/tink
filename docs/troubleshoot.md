@@ -26,7 +26,7 @@ No boot device available or Operating System detected.
 Please ensure a compatible bootable media is available.
 ```
 
-Ensure that you have pushed the hardware data to `Cacher` having the correct MAC address. You can push the data with either `cacherc push <data-json>`.
+Ensure that you have pushed the hardware data to Tinkerbell having the correct MAC address. You can push the data with `tinkerbell push <data-json>`.
 
 ### Can't login to private registry 
 
