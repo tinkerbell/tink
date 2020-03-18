@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+option go_package = "github.com/packethost/tinkerbell/protos/workflow";
+
+package github.com.packethost.tinkerbell.protos.workflow;
+
+import "google/protobuf/timestamp.proto";
+
+service WorkflowSvc {
+    rpc CreateWorkflow(CreateRequest) returns (CreateResponse);
+    rpc GetWorkflow(GetRequest) returns (Workflow);
+    rpc DeleteWorkflow(GetRequest) returns (Empty);
+    rpc ListWorkflows(Empty) returns (stream Workflow);
+    rpc GetWorkflowContext(GetRequest) returns (WorkflowContext);
+    rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus);
+    rpc GetWorkflowContexts(WorkflowContextRequest) returns (WorkflowContextList) {}
+    rpc GetWorkflowActions(WorkflowActionsRequest) returns (WorkflowActionList) {}
+    rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}
+    rpc GetWorkflowData(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
+    rpc GetWorkflowMetadata(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
+    rpc GetWorkflowDataVersion(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
+    rpc UpdateWorkflowData(UpdateWorkflowDataRequest) returns (Empty) {}
+}
+
+message Empty {
+}
+
+message Workflow {
+    string id = 1;
+    string template = 2;
+    string target = 3;
+    State state = 4;
+    google.protobuf.Timestamp createdAt = 5;
+    google.protobuf.Timestamp updatedAt = 6;
+    google.protobuf.Timestamp deletedAt = 7;  
+    string data = 8; 
+}
+
+enum State {
+    PENDING = 0;
+    RUNNING = 1; 
+    FAILED = 2;
+    TIMEOUT = 3;
+    SUCCESS = 4;
+} 
+
+message CreateRequest {
+    string template = 1;
+    string target = 2;
+}
+
+message CreateResponse {
+	string id = 1;
+}
+
+message GetRequest {
+    string id = 1;
+}
+
+enum ActionState {
+    ACTION_PENDING = 0;
+    ACTION_IN_PROGRESS = 1;
+    ACTION_SUCCESS = 2;
+    ACTION_FAILED = 3;
+    ACTION_TIMEOUT = 4;
+}
+
+message WorkflowContext {
+    string workflow_id = 1;
+    string current_worker = 2;
+    string current_task = 3;
+    string current_action = 4;
+    int64 current_action_index = 5;
+    ActionState current_action_state = 6;
+    int64 total_number_of_actions = 7;
+}
+
+message WorkflowActionStatus {
+    string workflow_id = 1;
+    string task_name = 2;
+    string action_name = 3;
+    ActionState action_status = 4;
+    int64 seconds = 5;
+    string message = 6;
+    google.protobuf.Timestamp createdAt = 7;
+    string worker_id = 8;
+}
+
+message WorkflowContextRequest {
+    string worker_id = 1;
+}
+
+message WorkflowContextList {
+    repeated WorkflowContext workflow_contexts = 1;
+}
+
+message WorkflowActionsRequest {
+    string workflow_id = 1;
+}
+
+message WorkflowAction {
+    string task_name = 1;
+    string name = 2;
+    string image = 3;
+    int64 timeout = 4;
+    repeated string command = 5;
+    repeated string on_timeout = 6;
+    repeated string on_failure = 7;
+    string worker_id = 8;
+    repeated string volumes = 9;
+    repeated string environment = 10;
+}
+
+message WorkflowActionList {
+    repeated WorkflowAction action_list = 1;
+}
+
+message GetWorkflowDataRequest {
+    string workflow_iD = 1;
+    int32 version = 2;
+}
+
+message GetWorkflowDataResponse {
+    bytes data = 1;
+    int32 version = 2;
+}
+
+message UpdateWorkflowDataRequest {
+    string workflow_iD = 1;
+    bytes metadata = 2;
+    bytes data = 3;
+}
