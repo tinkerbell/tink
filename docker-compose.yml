@@ -121,7 +121,7 @@ services:
       ROVER_CERT_URL: http://127.0.0.1:42114/cert
       ELASTIC_SEARCH_URL: 127.0.0.1:9200
     depends_on:
-      - server
+      - tinkerbell
     logging:
       driver: fluentd
       options:
