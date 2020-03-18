@@ -1,6 +1,6 @@
-# Tinkerbell [https://tinkerbell.org](https://tinkerbell.org)
+# Tinkerbell 
 
-At the highest level `tinkerbell` is the service responsible for handling the workflows. It comprises of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, i.e., template and target.
+Tinkerbell is a bare metal provisioning and workflow engine comprised of three major components: a DHCP server ([boots](https://github.com/packethost/boots)), a workflow engine (tinkerbell, this repository), and a metadata service ([hegel](https://github.com/packethost/hegel)). The workflow engine is comprised of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, templates and targets.
 
 # Packet Workflow 
 
@@ -23,7 +23,7 @@ provisioning workflows, that is...
    - [Database](docs/components.md#database)
    - [Image Registry](docs/components.md#registry)
    - [Elasticsearch](docs/components.md#elastic)
-   - [Fluent Bit](docs/components.md#cacher)
+   - [Fluent Bit](docs/components.md#fluent-bit)
    - [Kibana](docs/components.md#kibana)
  - [Architecture](docs/architecture.md)
  - [Example: First Good Workflow](docs/first-good-workflow.md)
@@ -36,3 +36,7 @@ provisioning workflows, that is...
  - [Writing a Workflow](docs/writing-workflow.md)
  - [Tinkerbell CLI Reference](docs/cli/README.md)
  - [Troubleshooting](docs/troubleshoot.md)
+
+## Website
+
+The Tinkerbell project is hosted at [tinkerbell.org](https://tinkerbell.org).
