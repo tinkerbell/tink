@@ -128,7 +128,7 @@ type Workflow struct {
 	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Template             string               `protobuf:"bytes,2,opt,name=template,proto3" json:"template,omitempty"`
 	Target               string               `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
-	State                State                `protobuf:"varint,4,opt,name=state,proto3,enum=github.com.packethost.rover.protos.workflow.State" json:"state,omitempty"`
+	State                State                `protobuf:"varint,4,opt,name=state,proto3,enum=github.com.packethost.tinkerbell.protos.workflow.State" json:"state,omitempty"`
 	CreatedAt            *timestamp.Timestamp `protobuf:"bytes,5,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
 	UpdatedAt            *timestamp.Timestamp `protobuf:"bytes,6,opt,name=updatedAt,proto3" json:"updatedAt,omitempty"`
 	DeletedAt            *timestamp.Timestamp `protobuf:"bytes,7,opt,name=deletedAt,proto3" json:"deletedAt,omitempty"`
@@ -350,7 +350,7 @@ type WorkflowContext struct {
 	CurrentTask          string      `protobuf:"bytes,3,opt,name=current_task,json=currentTask,proto3" json:"current_task,omitempty"`
 	CurrentAction        string      `protobuf:"bytes,4,opt,name=current_action,json=currentAction,proto3" json:"current_action,omitempty"`
 	CurrentActionIndex   int64       `protobuf:"varint,5,opt,name=current_action_index,json=currentActionIndex,proto3" json:"current_action_index,omitempty"`
-	CurrentActionState   ActionState `protobuf:"varint,6,opt,name=current_action_state,json=currentActionState,proto3,enum=github.com.packethost.rover.protos.workflow.ActionState" json:"current_action_state,omitempty"`
+	CurrentActionState   ActionState `protobuf:"varint,6,opt,name=current_action_state,json=currentActionState,proto3,enum=github.com.packethost.tinkerbell.protos.workflow.ActionState" json:"current_action_state,omitempty"`
 	TotalNumberOfActions int64       `protobuf:"varint,7,opt,name=total_number_of_actions,json=totalNumberOfActions,proto3" json:"total_number_of_actions,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
 	XXX_unrecognized     []byte      `json:"-"`
@@ -435,7 +435,7 @@ type WorkflowActionStatus struct {
 	WorkflowId           string               `protobuf:"bytes,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
 	TaskName             string               `protobuf:"bytes,2,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
 	ActionName           string               `protobuf:"bytes,3,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
-	ActionStatus         ActionState          `protobuf:"varint,4,opt,name=action_status,json=actionStatus,proto3,enum=github.com.packethost.rover.protos.workflow.ActionState" json:"action_status,omitempty"`
+	ActionStatus         ActionState          `protobuf:"varint,4,opt,name=action_status,json=actionStatus,proto3,enum=github.com.packethost.tinkerbell.protos.workflow.ActionState" json:"action_status,omitempty"`
 	Seconds              int64                `protobuf:"varint,5,opt,name=seconds,proto3" json:"seconds,omitempty"`
 	Message              string               `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
 	CreatedAt            *timestamp.Timestamp `protobuf:"bytes,7,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
@@ -943,23 +943,23 @@ func (m *UpdateWorkflowDataRequest) GetData() []byte {
 }
 
 func init() {
-	proto.RegisterEnum("github.com.packethost.rover.protos.workflow.State", State_name, State_value)
-	proto.RegisterEnum("github.com.packethost.rover.protos.workflow.ActionState", ActionState_name, ActionState_value)
-	proto.RegisterType((*Empty)(nil), "github.com.packethost.rover.protos.workflow.Empty")
-	proto.RegisterType((*Workflow)(nil), "github.com.packethost.rover.protos.workflow.Workflow")
-	proto.RegisterType((*CreateRequest)(nil), "github.com.packethost.rover.protos.workflow.CreateRequest")
-	proto.RegisterType((*CreateResponse)(nil), "github.com.packethost.rover.protos.workflow.CreateResponse")
-	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.rover.protos.workflow.GetRequest")
-	proto.RegisterType((*WorkflowContext)(nil), "github.com.packethost.rover.protos.workflow.WorkflowContext")
-	proto.RegisterType((*WorkflowActionStatus)(nil), "github.com.packethost.rover.protos.workflow.WorkflowActionStatus")
-	proto.RegisterType((*WorkflowContextRequest)(nil), "github.com.packethost.rover.protos.workflow.WorkflowContextRequest")
-	proto.RegisterType((*WorkflowContextList)(nil), "github.com.packethost.rover.protos.workflow.WorkflowContextList")
-	proto.RegisterType((*WorkflowActionsRequest)(nil), "github.com.packethost.rover.protos.workflow.WorkflowActionsRequest")
-	proto.RegisterType((*WorkflowAction)(nil), "github.com.packethost.rover.protos.workflow.WorkflowAction")
-	proto.RegisterType((*WorkflowActionList)(nil), "github.com.packethost.rover.protos.workflow.WorkflowActionList")
-	proto.RegisterType((*GetWorkflowDataRequest)(nil), "github.com.packethost.rover.protos.workflow.GetWorkflowDataRequest")
-	proto.RegisterType((*GetWorkflowDataResponse)(nil), "github.com.packethost.rover.protos.workflow.GetWorkflowDataResponse")
-	proto.RegisterType((*UpdateWorkflowDataRequest)(nil), "github.com.packethost.rover.protos.workflow.UpdateWorkflowDataRequest")
+	proto.RegisterEnum("github.com.packethost.tinkerbell.protos.workflow.State", State_name, State_value)
+	proto.RegisterEnum("github.com.packethost.tinkerbell.protos.workflow.ActionState", ActionState_name, ActionState_value)
+	proto.RegisterType((*Empty)(nil), "github.com.packethost.tinkerbell.protos.workflow.Empty")
+	proto.RegisterType((*Workflow)(nil), "github.com.packethost.tinkerbell.protos.workflow.Workflow")
+	proto.RegisterType((*CreateRequest)(nil), "github.com.packethost.tinkerbell.protos.workflow.CreateRequest")
+	proto.RegisterType((*CreateResponse)(nil), "github.com.packethost.tinkerbell.protos.workflow.CreateResponse")
+	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.tinkerbell.protos.workflow.GetRequest")
+	proto.RegisterType((*WorkflowContext)(nil), "github.com.packethost.tinkerbell.protos.workflow.WorkflowContext")
+	proto.RegisterType((*WorkflowActionStatus)(nil), "github.com.packethost.tinkerbell.protos.workflow.WorkflowActionStatus")
+	proto.RegisterType((*WorkflowContextRequest)(nil), "github.com.packethost.tinkerbell.protos.workflow.WorkflowContextRequest")
+	proto.RegisterType((*WorkflowContextList)(nil), "github.com.packethost.tinkerbell.protos.workflow.WorkflowContextList")
+	proto.RegisterType((*WorkflowActionsRequest)(nil), "github.com.packethost.tinkerbell.protos.workflow.WorkflowActionsRequest")
+	proto.RegisterType((*WorkflowAction)(nil), "github.com.packethost.tinkerbell.protos.workflow.WorkflowAction")
+	proto.RegisterType((*WorkflowActionList)(nil), "github.com.packethost.tinkerbell.protos.workflow.WorkflowActionList")
+	proto.RegisterType((*GetWorkflowDataRequest)(nil), "github.com.packethost.tinkerbell.protos.workflow.GetWorkflowDataRequest")
+	proto.RegisterType((*GetWorkflowDataResponse)(nil), "github.com.packethost.tinkerbell.protos.workflow.GetWorkflowDataResponse")
+	proto.RegisterType((*UpdateWorkflowDataRequest)(nil), "github.com.packethost.tinkerbell.protos.workflow.UpdateWorkflowDataRequest")
 }
 
 func init() { proto.RegisterFile("workflow.proto", fileDescriptor_892c7f566756b0be) }
@@ -1079,7 +1079,7 @@ func NewWorkflowSvcClient(cc *grpc.ClientConn) WorkflowSvcClient {
 
 func (c *workflowSvcClient) CreateWorkflow(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
 	out := new(CreateResponse)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/CreateWorkflow", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/CreateWorkflow", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1088,7 +1088,7 @@ func (c *workflowSvcClient) CreateWorkflow(ctx context.Context, in *CreateReques
 
 func (c *workflowSvcClient) GetWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error) {
 	out := new(Workflow)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflow", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflow", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1097,7 +1097,7 @@ func (c *workflowSvcClient) GetWorkflow(ctx context.Context, in *GetRequest, opt
 
 func (c *workflowSvcClient) DeleteWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/DeleteWorkflow", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/DeleteWorkflow", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1105,7 +1105,7 @@ func (c *workflowSvcClient) DeleteWorkflow(ctx context.Context, in *GetRequest, 
 }
 
 func (c *workflowSvcClient) ListWorkflows(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowSvc_ListWorkflowsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_WorkflowSvc_serviceDesc.Streams[0], "/github.com.packethost.rover.protos.workflow.WorkflowSvc/ListWorkflows", opts...)
+	stream, err := c.cc.NewStream(ctx, &_WorkflowSvc_serviceDesc.Streams[0], "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/ListWorkflows", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1138,7 +1138,7 @@ func (x *workflowSvcListWorkflowsClient) Recv() (*Workflow, error) {
 
 func (c *workflowSvcClient) GetWorkflowContext(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowContext, error) {
 	out := new(WorkflowContext)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowContext", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowContext", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1146,7 +1146,7 @@ func (c *workflowSvcClient) GetWorkflowContext(ctx context.Context, in *GetReque
 }
 
 func (c *workflowSvcClient) ShowWorkflowEvents(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (WorkflowSvc_ShowWorkflowEventsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_WorkflowSvc_serviceDesc.Streams[1], "/github.com.packethost.rover.protos.workflow.WorkflowSvc/ShowWorkflowEvents", opts...)
+	stream, err := c.cc.NewStream(ctx, &_WorkflowSvc_serviceDesc.Streams[1], "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/ShowWorkflowEvents", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1179,7 +1179,7 @@ func (x *workflowSvcShowWorkflowEventsClient) Recv() (*WorkflowActionStatus, err
 
 func (c *workflowSvcClient) GetWorkflowContexts(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (*WorkflowContextList, error) {
 	out := new(WorkflowContextList)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowContexts", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowContexts", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1188,7 +1188,7 @@ func (c *workflowSvcClient) GetWorkflowContexts(ctx context.Context, in *Workflo
 
 func (c *workflowSvcClient) GetWorkflowActions(ctx context.Context, in *WorkflowActionsRequest, opts ...grpc.CallOption) (*WorkflowActionList, error) {
 	out := new(WorkflowActionList)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowActions", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowActions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1197,7 +1197,7 @@ func (c *workflowSvcClient) GetWorkflowActions(ctx context.Context, in *Workflow
 
 func (c *workflowSvcClient) ReportActionStatus(ctx context.Context, in *WorkflowActionStatus, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/ReportActionStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/ReportActionStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1206,7 +1206,7 @@ func (c *workflowSvcClient) ReportActionStatus(ctx context.Context, in *Workflow
 
 func (c *workflowSvcClient) GetWorkflowData(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
 	out := new(GetWorkflowDataResponse)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1215,7 +1215,7 @@ func (c *workflowSvcClient) GetWorkflowData(ctx context.Context, in *GetWorkflow
 
 func (c *workflowSvcClient) GetWorkflowMetadata(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
 	out := new(GetWorkflowDataResponse)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowMetadata", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowMetadata", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1224,7 +1224,7 @@ func (c *workflowSvcClient) GetWorkflowMetadata(ctx context.Context, in *GetWork
 
 func (c *workflowSvcClient) GetWorkflowDataVersion(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
 	out := new(GetWorkflowDataResponse)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowDataVersion", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowDataVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1233,7 +1233,7 @@ func (c *workflowSvcClient) GetWorkflowDataVersion(ctx context.Context, in *GetW
 
 func (c *workflowSvcClient) UpdateWorkflowData(ctx context.Context, in *UpdateWorkflowDataRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.workflow.WorkflowSvc/UpdateWorkflowData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/UpdateWorkflowData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1315,7 +1315,7 @@ func _WorkflowSvc_CreateWorkflow_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/CreateWorkflow",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/CreateWorkflow",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).CreateWorkflow(ctx, req.(*CreateRequest))
@@ -1333,7 +1333,7 @@ func _WorkflowSvc_GetWorkflow_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflow",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflow",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).GetWorkflow(ctx, req.(*GetRequest))
@@ -1351,7 +1351,7 @@ func _WorkflowSvc_DeleteWorkflow_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/DeleteWorkflow",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/DeleteWorkflow",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).DeleteWorkflow(ctx, req.(*GetRequest))
@@ -1390,7 +1390,7 @@ func _WorkflowSvc_GetWorkflowContext_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowContext",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowContext",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).GetWorkflowContext(ctx, req.(*GetRequest))
@@ -1429,7 +1429,7 @@ func _WorkflowSvc_GetWorkflowContexts_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowContexts",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowContexts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).GetWorkflowContexts(ctx, req.(*WorkflowContextRequest))
@@ -1447,7 +1447,7 @@ func _WorkflowSvc_GetWorkflowActions_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowActions",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowActions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).GetWorkflowActions(ctx, req.(*WorkflowActionsRequest))
@@ -1465,7 +1465,7 @@ func _WorkflowSvc_ReportActionStatus_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/ReportActionStatus",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/ReportActionStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).ReportActionStatus(ctx, req.(*WorkflowActionStatus))
@@ -1483,7 +1483,7 @@ func _WorkflowSvc_GetWorkflowData_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowData",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).GetWorkflowData(ctx, req.(*GetWorkflowDataRequest))
@@ -1501,7 +1501,7 @@ func _WorkflowSvc_GetWorkflowMetadata_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowMetadata",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowMetadata",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).GetWorkflowMetadata(ctx, req.(*GetWorkflowDataRequest))
@@ -1519,7 +1519,7 @@ func _WorkflowSvc_GetWorkflowDataVersion_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/GetWorkflowDataVersion",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/GetWorkflowDataVersion",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).GetWorkflowDataVersion(ctx, req.(*GetWorkflowDataRequest))
@@ -1537,7 +1537,7 @@ func _WorkflowSvc_UpdateWorkflowData_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.workflow.WorkflowSvc/UpdateWorkflowData",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc/UpdateWorkflowData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowSvcServer).UpdateWorkflowData(ctx, req.(*UpdateWorkflowDataRequest))
@@ -1546,7 +1546,7 @@ func _WorkflowSvc_UpdateWorkflowData_Handler(srv interface{}, ctx context.Contex
 }
 
 var _WorkflowSvc_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "github.com.packethost.rover.protos.workflow.WorkflowSvc",
+	ServiceName: "github.com.packethost.tinkerbell.protos.workflow.WorkflowSvc",
 	HandlerType: (*WorkflowSvcServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

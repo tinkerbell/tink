@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/packethost/rover/client"
-	pb "github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/tinkerbell/client"
+	pb "github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )

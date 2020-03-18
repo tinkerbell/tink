@@ -1,10 +1,10 @@
 {
-  "CN": "rover",
+  "CN": "tinkerbell",
   "hosts": [
-    "rover.@FACILITY@.packet.net",
-    "rover.registry",
-    "rover.rover",
-    "rover",
+    "tinkerbell.@FACILITY@.packet.net",
+    "tinkerbell.registry",
+    "tinkerbell.tinkerbell",
+    "tinkerbell",
     "localhost",
     "127.0.0.1"
   ],

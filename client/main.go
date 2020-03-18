@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/packethost/rover/protos/hardware"
-	"github.com/packethost/rover/protos/target"
-	"github.com/packethost/rover/protos/template"
-	"github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/tinkerbell/protos/hardware"
+	"github.com/packethost/tinkerbell/protos/target"
+	"github.com/packethost/tinkerbell/protos/template"
+	"github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -54,7 +54,7 @@ func GetConnection() (*grpc.ClientConn, error) {
 	creds := credentials.NewClientTLSFromCert(cp, "")
 	conn, err := grpc.Dial(grpcAuthority, grpc.WithTransportCredentials(creds))
 	if err != nil {
-		return nil, errors.Wrap(err, "connect to rover server")
+		return nil, errors.Wrap(err, "connect to tinkerbell server")
 	}
 	return conn, nil
 }
@@ -69,4 +69,12 @@ func Setup() {
 	TargetClient = target.NewTargetClient(conn)
 	WorkflowClient = workflow.NewWorkflowSvcClient(conn)
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
+}
+
+func NewTinkerbellClient() (hardware.HardwareServiceClient, error) {
+	conn, err := GetConnection()
+        if err != nil {
+                log.Fatal(err)
+        }
+	return hardware.NewHardwareServiceClient(conn), nil
 }

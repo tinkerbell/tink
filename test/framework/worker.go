@@ -9,7 +9,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dc "github.com/docker/docker/client"
-	"github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )

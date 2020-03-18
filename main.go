@@ -7,14 +7,14 @@ import (
 	"syscall"
 
 	"github.com/packethost/pkg/log"
-	rpcServer "github.com/packethost/rover/grpc-server"
-	httpServer "github.com/packethost/rover/http-server"
+	rpcServer "github.com/packethost/tinkerbell/grpc-server"
+	httpServer "github.com/packethost/tinkerbell/http-server"
 )
 
 var logger log.Logger
 
 func main() {
-	log, cleanup, err := log.Init("github.com/packethost/rover")
+	log, cleanup, err := log.Init("github.com/packethost/tinkerbell")
 	if err != nil {
 		panic(err)
 	}

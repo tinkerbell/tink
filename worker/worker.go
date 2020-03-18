@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/packethost/rover/protos/workflow"
+	pb "github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/status"

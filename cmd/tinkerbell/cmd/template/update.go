@@ -1,0 +1,70 @@
+package template
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/packethost/tinkerbell/client"
+	"github.com/packethost/tinkerbell/protos/template"
+	uuid "github.com/satori/go.uuid"
+	"github.com/spf13/cobra"
+)
+
+// updateCmd represents the get subcommand for template command
+var updateCmd = &cobra.Command{
+	Use:     "update [id] [flags]",
+	Short:   "update a template",
+	Example: "tinkerbell template update [id] [flags]",
+	PreRunE: func(c *cobra.Command, args []string) error {
+		name, _ := c.Flags().GetString(fName)
+		path, _ := c.Flags().GetString(fPath)
+		if name == "" && path == "" {
+			return fmt.Errorf("%v requires at least one flag", c.UseLine())
+		}
+		return nil
+	},
+	Args: func(c *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return fmt.Errorf("%v requires argument", c.UseLine())
+		}
+		for _, arg := range args {
+			if _, err := uuid.FromString(arg); err != nil {
+				return fmt.Errorf("invalid uuid: %s", arg)
+			}
+		}
+		return nil
+	},
+	Run: func(c *cobra.Command, args []string) {
+		for _, arg := range args {
+			updateTemplate(arg)
+		}
+	},
+}
+
+func updateTemplate(id string) {
+	req := template.WorkflowTemplate{Id: id}
+	if filePath == "" && templateName != "" {
+		req.Name = templateName
+	} else if filePath != "" && templateName == "" {
+		validateTemplate()
+		req.Data = readTemplateData()
+	} else {
+		req.Name = templateName
+		req.Data = readTemplateData()
+	}
+
+	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Updated Template: ", id)
+}
+
+func init() {
+	flags := updateCmd.PersistentFlags()
+	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
+	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric)")
+
+	SubCommands = append(SubCommands, updateCmd)
+}

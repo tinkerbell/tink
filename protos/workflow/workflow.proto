@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "github.com/packethost/rover/protos/workflow";
+option go_package = "github.com/packethost/tinkerbell/protos/workflow";
 
-package github.com.packethost.rover.protos.workflow;
+package github.com.packethost.tinkerbell.protos.workflow;
 
 import "google/protobuf/timestamp.proto";
 
