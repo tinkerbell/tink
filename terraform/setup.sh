@@ -65,15 +65,15 @@ echo 'export PATH=$PATH:$GOPATH' >> ~/.bashrc
 source ~/.bashrc
 
 mkdir -p /packet/nginx
-cp /tmp/workflow/* /packet/nginx
-#extract boot files 
+cp -r /tmp/workflow/* /packet/nginx
+#extract boot files
 pushd /packet/nginx ; tar xvzf boot-files.gz ; popd
 
-# get the rover repo
+# get the tinkerbell repo
 mkdir -p ~/go/src/github.com/packethost
 cd ~/go/src/github.com/packethost
 git clone --branch setup_provisioner_and_worker https://$GIT_USER:$GIT_PASS@github.com/packethost/tinkerbell.git
-cd ~/go/src/github.com/packethost/rover
+cd ~/go/src/github.com/packethost/tinkerbell
 sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$host\"\,/g" tls/server-csr.in.json
 make
 
@@ -96,7 +96,7 @@ docker push $host/worker:latest
 docker-compose up --build -d registry
 sleep 5
 
-cd ~/go/src/github.com/packethost/rover
+cd ~/go/src/github.com/packethost/tinkerbell
 cp certs/ca.pem /etc/docker/certs.d/$host/ca.crt
 
 #copy certificate in tinkerbell
