@@ -1,4 +1,4 @@
-module github.com/packethost/rover
+module github.com/packethost/tinkerbell
 
 go 1.13
 
@@ -15,6 +15,7 @@ require (
 	github.com/go-openapi/errors v0.19.2
 	github.com/go-openapi/strfmt v0.19.3
 	github.com/go-stack/stack v1.8.0
+	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/golang/protobuf v1.3.2-0.20190318194812-d3c38a4eb497
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20160910222444-6b7015e65d36

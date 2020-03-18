@@ -214,10 +214,10 @@ func (m *GetRequest) GetId() string {
 }
 
 func init() {
-	proto.RegisterType((*Empty)(nil), "github.com.packethost.rover.protos.template.Empty")
-	proto.RegisterType((*WorkflowTemplate)(nil), "github.com.packethost.rover.protos.template.WorkflowTemplate")
-	proto.RegisterType((*CreateResponse)(nil), "github.com.packethost.rover.protos.template.CreateResponse")
-	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.rover.protos.template.GetRequest")
+	proto.RegisterType((*Empty)(nil), "github.com.packethost.tinkerbell.protos.template.Empty")
+	proto.RegisterType((*WorkflowTemplate)(nil), "github.com.packethost.tinkerbell.protos.template.WorkflowTemplate")
+	proto.RegisterType((*CreateResponse)(nil), "github.com.packethost.tinkerbell.protos.template.CreateResponse")
+	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.tinkerbell.protos.template.GetRequest")
 }
 
 func init() { proto.RegisterFile("protos/template/template.proto", fileDescriptor_4fad5d825b213b31) }
@@ -279,7 +279,7 @@ func NewTemplateClient(cc *grpc.ClientConn) TemplateClient {
 
 func (c *templateClient) CreateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
 	out := new(CreateResponse)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.template.Template/CreateTemplate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.template.Template/CreateTemplate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func (c *templateClient) CreateTemplate(ctx context.Context, in *WorkflowTemplat
 
 func (c *templateClient) GetTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
 	out := new(WorkflowTemplate)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.template.Template/GetTemplate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.template.Template/GetTemplate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (c *templateClient) GetTemplate(ctx context.Context, in *GetRequest, opts .
 
 func (c *templateClient) DeleteTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.template.Template/DeleteTemplate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.template.Template/DeleteTemplate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +305,7 @@ func (c *templateClient) DeleteTemplate(ctx context.Context, in *GetRequest, opt
 }
 
 func (c *templateClient) ListTemplates(ctx context.Context, in *Empty, opts ...grpc.CallOption) (Template_ListTemplatesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Template_serviceDesc.Streams[0], "/github.com.packethost.rover.protos.template.Template/ListTemplates", opts...)
+	stream, err := c.cc.NewStream(ctx, &_Template_serviceDesc.Streams[0], "/github.com.packethost.tinkerbell.protos.template.Template/ListTemplates", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func (x *templateListTemplatesClient) Recv() (*WorkflowTemplate, error) {
 
 func (c *templateClient) UpdateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.template.Template/UpdateTemplate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.template.Template/UpdateTemplate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +388,7 @@ func _Template_CreateTemplate_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.template.Template/CreateTemplate",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.template.Template/CreateTemplate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TemplateServer).CreateTemplate(ctx, req.(*WorkflowTemplate))
@@ -406,7 +406,7 @@ func _Template_GetTemplate_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.template.Template/GetTemplate",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.template.Template/GetTemplate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TemplateServer).GetTemplate(ctx, req.(*GetRequest))
@@ -424,7 +424,7 @@ func _Template_DeleteTemplate_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.template.Template/DeleteTemplate",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.template.Template/DeleteTemplate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TemplateServer).DeleteTemplate(ctx, req.(*GetRequest))
@@ -463,7 +463,7 @@ func _Template_UpdateTemplate_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.template.Template/UpdateTemplate",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.template.Template/UpdateTemplate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TemplateServer).UpdateTemplate(ctx, req.(*WorkflowTemplate))
@@ -472,7 +472,7 @@ func _Template_UpdateTemplate_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 var _Template_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "github.com.packethost.rover.protos.template.Template",
+	ServiceName: "github.com.packethost.tinkerbell.protos.template.Template",
 	HandlerType: (*TemplateServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

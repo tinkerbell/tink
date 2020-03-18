@@ -122,6 +122,7 @@ github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFSt
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/packethost/pkg v0.0.0-20190410153520-e8e15f4ce770 h1:M/ErkHz96yXYNdcu0G7kX5Qa1HUliL5QczNdA9/0k40=
 github.com/packethost/pkg v0.0.0-20190410153520-e8e15f4ce770/go.mod h1:cbOkI4WbX7B68Nj552pbadMrjVy2oMIVazIEo7z+qWQ=
+github.com/packethost/tinkerbell v0.0.0-20200317144505-786c34a48f92 h1:QKdq4bjSOOmE02tNbmcj4LdLr0xNtHKyWSpEVfoZFHc=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=

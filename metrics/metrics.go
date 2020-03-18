@@ -25,7 +25,7 @@ var (
 // SetupMetrics sets the defaults for metrics
 func SetupMetrics(facility string, logger log.Logger) {
 	curryLabels := prometheus.Labels{
-		"service":  "rover",
+		"service":  "tinkerbell",
 		"facility": facility,
 	}
 

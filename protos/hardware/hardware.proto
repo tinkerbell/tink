@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "github.com/packethost/rover/protos/hardware";
+option go_package = "github.com/packethost/tinkerbell/protos/hardware";
 
-package github.com.packethost.rover.protos.hardware;
+package github.com.packethost.tinkerbell.protos.hardware;
 
 service HardwareService {
 	rpc Push (PushRequest) returns (Empty);

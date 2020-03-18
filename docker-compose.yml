@@ -5,7 +5,7 @@ services:
     volumes:
       - ./certs:/certs
 
-  server:
+  tinkerbell:
     build: .
     environment: 
       FACILITY: ${FACILITY:-lab1}
@@ -14,12 +14,12 @@ services:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
       MAX_WORKFLOW_DATA_VERSIONS: 5
-      PGDATABASE: rover
+      PGDATABASE: tinkerbell
       PGHOST: db
-      PGPASSWORD: rover
+      PGPASSWORD: tinkerbell
       PGPORT: 5432
       PGSSLMODE: disable
-      PGUSER: rover
+      PGUSER: tinkerbell
     depends_on:
       - "certs"
       - "db"
@@ -33,7 +33,7 @@ services:
     logging:
       driver: fluentd
       options:
-        tag: rover-server
+        tag: tinkerbell-server
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
@@ -42,13 +42,13 @@ services:
     build:
       context: deploy
     environment:
-      POSTGRES_DB: rover
-      POSTGRES_PASSWORD: rover
-      POSTGRES_USER: rover
+      POSTGRES_DB: tinkerbell
+      POSTGRES_PASSWORD: tinkerbell
+      POSTGRES_USER: tinkerbell
     ports:
       - 5432:5432
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rover"]
+      test: ["CMD-SHELL", "pg_isready -U tinkerbell"]
       interval: 1s
       timeout: 1s
       retries: 30
@@ -61,14 +61,14 @@ services:
 
   cli:
     build:
-      context: cmd/rover
+      context: cmd/tinkerbell
     environment:
       ROVER_GRPC_AUTHORITY: 127.0.0.1:42113
       ROVER_CERT_URL: http://127.0.0.1:42114/cert
     logging:
       driver: fluentd
       options:
-        tag: rover-cli
+        tag: tinkerbell-cli
     network_mode: host
   
   registry:
@@ -92,9 +92,9 @@ services:
         tag: registry
     network_mode: host
 
-  tinkerbell:
+  boots:
     build:
-      context: ../tinkerbell
+      context: ../boots
     network_mode: host
     command: -dhcp-addr 0.0.0.0:67 -tftp-addr 127.0.0.1:69 -http-addr 127.0.0.1:80 -log-level DEBUG
     environment:

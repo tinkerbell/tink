@@ -80,7 +80,7 @@ func setupGitRevJSON() {
 		Service string `json:"service_name"`
 	}{
 		GitRev:  gitRev,
-		Service: "rover",
+		Service: "tinkerbell",
 	}
 	b, err := json.Marshal(&res)
 	if err != nil {

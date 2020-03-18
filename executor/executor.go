@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/packethost/rover/db"
-	pb "github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/tinkerbell/db"
+	pb "github.com/packethost/tinkerbell/protos/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,7 +16,7 @@ var (
 	workflowData = make(map[string]int)
 )
 
-// GetWorkflowContexts implements rover.GetWorkflowContexts
+// GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
 func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest, sdb *sql.DB) (*pb.WorkflowContextList, error) {
 	if len(req.WorkerId) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "worker_id is invalid")
@@ -41,7 +41,7 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 	}, nil
 }
 
-// GetWorkflowActions implements rover.GetWorkflowActions
+// GetWorkflowActions implements tinkerbell.GetWorkflowActions
 func GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest, sdb *sql.DB) (*pb.WorkflowActionList, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
@@ -54,7 +54,7 @@ func GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest,
 	return actions, nil
 }
 
-// ReportActionStatus implements rover.ReportActionStatus
+// ReportActionStatus implements tinkerbell.ReportActionStatus
 func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, sdb *sql.DB) (*pb.Empty, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {

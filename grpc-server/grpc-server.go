@@ -13,12 +13,12 @@ import (
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/packethost/pkg/log"
-	"github.com/packethost/rover/db"
-	"github.com/packethost/rover/metrics"
-	"github.com/packethost/rover/protos/hardware"
-	"github.com/packethost/rover/protos/target"
-	"github.com/packethost/rover/protos/template"
-	"github.com/packethost/rover/protos/workflow"
+	"github.com/packethost/tinkerbell/db"
+	"github.com/packethost/tinkerbell/metrics"
+	"github.com/packethost/tinkerbell/protos/hardware"
+	"github.com/packethost/tinkerbell/protos/target"
+	"github.com/packethost/tinkerbell/protos/template"
+	"github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -29,7 +29,7 @@ var (
 	grpcListenAddr = ":42113"
 )
 
-// Server is the gRPC server for rover
+// Server is the gRPC server for tinkerbell
 type server struct {
 	cert []byte
 	modT time.Time

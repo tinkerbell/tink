@@ -189,10 +189,10 @@ func (m *Hardware) GetJSON() string {
 }
 
 func init() {
-	proto.RegisterType((*PushRequest)(nil), "github.com.packethost.rover.protos.hardware.PushRequest")
-	proto.RegisterType((*Empty)(nil), "github.com.packethost.rover.protos.hardware.Empty")
-	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.rover.protos.hardware.GetRequest")
-	proto.RegisterType((*Hardware)(nil), "github.com.packethost.rover.protos.hardware.Hardware")
+	proto.RegisterType((*PushRequest)(nil), "github.com.packethost.tinkerbell.protos.hardware.PushRequest")
+	proto.RegisterType((*Empty)(nil), "github.com.packethost.tinkerbell.protos.hardware.Empty")
+	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.tinkerbell.protos.hardware.GetRequest")
+	proto.RegisterType((*Hardware)(nil), "github.com.packethost.tinkerbell.protos.hardware.Hardware")
 }
 
 func init() { proto.RegisterFile("protos/hardware/hardware.proto", fileDescriptor_ad4df2c422b77a34) }
@@ -252,7 +252,7 @@ func NewHardwareServiceClient(cc *grpc.ClientConn) HardwareServiceClient {
 
 func (c *hardwareServiceClient) Push(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.hardware.HardwareService/Push", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/Push", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (c *hardwareServiceClient) Push(ctx context.Context, in *PushRequest, opts 
 
 func (c *hardwareServiceClient) ByMAC(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
 	out := new(Hardware)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.hardware.HardwareService/ByMAC", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/ByMAC", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +270,7 @@ func (c *hardwareServiceClient) ByMAC(ctx context.Context, in *GetRequest, opts 
 
 func (c *hardwareServiceClient) ByIP(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
 	out := new(Hardware)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.hardware.HardwareService/ByIP", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/ByIP", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +279,7 @@ func (c *hardwareServiceClient) ByIP(ctx context.Context, in *GetRequest, opts .
 
 func (c *hardwareServiceClient) ByID(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
 	out := new(Hardware)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.hardware.HardwareService/ByID", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/ByID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +287,7 @@ func (c *hardwareServiceClient) ByID(ctx context.Context, in *GetRequest, opts .
 }
 
 func (c *hardwareServiceClient) All(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_HardwareService_serviceDesc.Streams[0], "/github.com.packethost.rover.protos.hardware.HardwareService/All", opts...)
+	stream, err := c.cc.NewStream(ctx, &_HardwareService_serviceDesc.Streams[0], "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/All", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (x *hardwareServiceAllClient) Recv() (*Hardware, error) {
 
 func (c *hardwareServiceClient) Ingest(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.hardware.HardwareService/Ingest", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/Ingest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +328,7 @@ func (c *hardwareServiceClient) Ingest(ctx context.Context, in *Empty, opts ...g
 }
 
 func (c *hardwareServiceClient) Watch(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_WatchClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_HardwareService_serviceDesc.Streams[1], "/github.com.packethost.rover.protos.hardware.HardwareService/Watch", opts...)
+	stream, err := c.cc.NewStream(ctx, &_HardwareService_serviceDesc.Streams[1], "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/Watch", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +410,7 @@ func _HardwareService_Push_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.hardware.HardwareService/Push",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/Push",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HardwareServiceServer).Push(ctx, req.(*PushRequest))
@@ -428,7 +428,7 @@ func _HardwareService_ByMAC_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.hardware.HardwareService/ByMAC",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/ByMAC",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HardwareServiceServer).ByMAC(ctx, req.(*GetRequest))
@@ -446,7 +446,7 @@ func _HardwareService_ByIP_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.hardware.HardwareService/ByIP",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/ByIP",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HardwareServiceServer).ByIP(ctx, req.(*GetRequest))
@@ -464,7 +464,7 @@ func _HardwareService_ByID_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.hardware.HardwareService/ByID",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/ByID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HardwareServiceServer).ByID(ctx, req.(*GetRequest))
@@ -503,7 +503,7 @@ func _HardwareService_Ingest_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.hardware.HardwareService/Ingest",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.hardware.HardwareService/Ingest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HardwareServiceServer).Ingest(ctx, req.(*Empty))
@@ -533,7 +533,7 @@ func (x *hardwareServiceWatchServer) Send(m *Hardware) error {
 }
 
 var _HardwareService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "github.com.packethost.rover.protos.hardware.HardwareService",
+	ServiceName: "github.com.packethost.tinkerbell.protos.hardware.HardwareService",
 	HandlerType: (*HardwareServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

@@ -306,13 +306,13 @@ func (m *TargetList) GetData() string {
 }
 
 func init() {
-	proto.RegisterType((*PushRequest)(nil), "github.com.packethost.rover.protos.target.PushRequest")
-	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.rover.protos.target.GetRequest")
-	proto.RegisterType((*UpdateRequest)(nil), "github.com.packethost.rover.protos.target.UpdateRequest")
-	proto.RegisterType((*UUID)(nil), "github.com.packethost.rover.protos.target.UUID")
-	proto.RegisterType((*Empty)(nil), "github.com.packethost.rover.protos.target.Empty")
-	proto.RegisterType((*Targets)(nil), "github.com.packethost.rover.protos.target.Targets")
-	proto.RegisterType((*TargetList)(nil), "github.com.packethost.rover.protos.target.TargetList")
+	proto.RegisterType((*PushRequest)(nil), "github.com.packethost.tinkerbell.protos.target.PushRequest")
+	proto.RegisterType((*GetRequest)(nil), "github.com.packethost.tinkerbell.protos.target.GetRequest")
+	proto.RegisterType((*UpdateRequest)(nil), "github.com.packethost.tinkerbell.protos.target.UpdateRequest")
+	proto.RegisterType((*UUID)(nil), "github.com.packethost.tinkerbell.protos.target.UUID")
+	proto.RegisterType((*Empty)(nil), "github.com.packethost.tinkerbell.protos.target.Empty")
+	proto.RegisterType((*Targets)(nil), "github.com.packethost.tinkerbell.protos.target.Targets")
+	proto.RegisterType((*TargetList)(nil), "github.com.packethost.tinkerbell.protos.target.TargetList")
 }
 
 func init() { proto.RegisterFile("protos/target/target.proto", fileDescriptor_1c9a68d06d9471ac) }
@@ -371,7 +371,7 @@ func NewTargetClient(cc *grpc.ClientConn) TargetClient {
 
 func (c *targetClient) CreateTargets(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*UUID, error) {
 	out := new(UUID)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.target.Target/CreateTargets", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.target.Target/CreateTargets", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +380,7 @@ func (c *targetClient) CreateTargets(ctx context.Context, in *PushRequest, opts 
 
 func (c *targetClient) TargetByID(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Targets, error) {
 	out := new(Targets)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.target.Target/TargetByID", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.target.Target/TargetByID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +389,7 @@ func (c *targetClient) TargetByID(ctx context.Context, in *GetRequest, opts ...g
 
 func (c *targetClient) UpdateTargetByID(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.target.Target/UpdateTargetByID", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.target.Target/UpdateTargetByID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +398,7 @@ func (c *targetClient) UpdateTargetByID(ctx context.Context, in *UpdateRequest, 
 
 func (c *targetClient) DeleteTargetByID(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.packethost.rover.protos.target.Target/DeleteTargetByID", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.packethost.tinkerbell.protos.target.Target/DeleteTargetByID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +406,7 @@ func (c *targetClient) DeleteTargetByID(ctx context.Context, in *GetRequest, opt
 }
 
 func (c *targetClient) ListTargets(ctx context.Context, in *Empty, opts ...grpc.CallOption) (Target_ListTargetsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Target_serviceDesc.Streams[0], "/github.com.packethost.rover.protos.target.Target/ListTargets", opts...)
+	stream, err := c.cc.NewStream(ctx, &_Target_serviceDesc.Streams[0], "/github.com.packethost.tinkerbell.protos.target.Target/ListTargets", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -480,7 +480,7 @@ func _Target_CreateTargets_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.target.Target/CreateTargets",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.target.Target/CreateTargets",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TargetServer).CreateTargets(ctx, req.(*PushRequest))
@@ -498,7 +498,7 @@ func _Target_TargetByID_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.target.Target/TargetByID",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.target.Target/TargetByID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TargetServer).TargetByID(ctx, req.(*GetRequest))
@@ -516,7 +516,7 @@ func _Target_UpdateTargetByID_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.target.Target/UpdateTargetByID",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.target.Target/UpdateTargetByID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TargetServer).UpdateTargetByID(ctx, req.(*UpdateRequest))
@@ -534,7 +534,7 @@ func _Target_DeleteTargetByID_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.packethost.rover.protos.target.Target/DeleteTargetByID",
+		FullMethod: "/github.com.packethost.tinkerbell.protos.target.Target/DeleteTargetByID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TargetServer).DeleteTargetByID(ctx, req.(*GetRequest))
@@ -564,7 +564,7 @@ func (x *targetListTargetsServer) Send(m *TargetList) error {
 }
 
 var _Target_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "github.com.packethost.rover.protos.target.Target",
+	ServiceName: "github.com.packethost.tinkerbell.protos.target.Target",
 	HandlerType: (*TargetServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "github.com/packethost/rover/protos/template";
+option go_package = "github.com/packethost/tinkerbell/protos/template";
 
-package github.com.packethost.rover.protos.template;
+package github.com.packethost.tinkerbell.protos.template;
 
 import "google/protobuf/timestamp.proto";
 

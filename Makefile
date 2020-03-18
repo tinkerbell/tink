@@ -1,6 +1,6 @@
-server := rover-server
-cli := rover-cli
-worker := rover-worker
+server := tinkerbell-server
+cli := tinkerbell-cli
+worker := tinkerbell-worker
 binaries := ${server} ${cli} ${worker}
 all: ${binaries}
 
@@ -16,14 +16,14 @@ ${server}:
 	CGO_ENABLED=0 go build -o $@ .
 
 ${cli}:
-	CGO_ENABLED=0 go build -o ./cmd/rover/$@ ./cmd/rover
+	CGO_ENABLED=0 go build -o ./cmd/tinkerbell/$@ ./cmd/tinkerbell
 
 ${worker}:
 	CGO_ENABLED=0 go build -o ./worker/$@ ./worker/
 
 run: ${binaries}
 	docker-compose up -d --build db
-	docker-compose up --build server cli
+	docker-compose up --build tinkerbell boots
 test:
 	go clean -testcache
 	go test ./test -v

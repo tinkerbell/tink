@@ -14,7 +14,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	pb "github.com/packethost/rover/protos/workflow"
+	pb "github.com/packethost/tinkerbell/protos/workflow"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
