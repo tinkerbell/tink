@@ -2,7 +2,7 @@
 
 workspace:
   base: /go
-  path: src/github.com/packethost/rover
+  path: src/github.com/packethost/tinkerbell
 
 pipeline:
   test:
