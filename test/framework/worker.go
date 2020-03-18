@@ -33,7 +33,7 @@ func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string,
 		AttachStderr: true,
 		Tty:          true,
 		Volumes:      volume,
-		Env:          []string{"ROVER_GRPC_AUTHORITY=127.0.0.1:42113", "ROVER_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=localhost:443", "DOCKER_API_VERSION=v1.40", "REGISTRY_USERNAME=username", "REGISTRY_PASSWORD=password"},
+		Env:          []string{"TINKERBELL_GRPC_AUTHORITY=127.0.0.1:42113", "TINKERBELL_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=localhost:443", "DOCKER_API_VERSION=v1.40", "REGISTRY_USERNAME=username", "REGISTRY_PASSWORD=password"},
 	}
 	hostConfig := &container.HostConfig{
 		NetworkMode: "host",
