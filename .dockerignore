@@ -1,0 +1,6 @@
+*
+!/tls/
+!tinkerbell-server
+!entrypoint.sh
+!deploy/migrate
+!deploy/docker-entrypoint-initdb.d/tinkerbell-init.sql

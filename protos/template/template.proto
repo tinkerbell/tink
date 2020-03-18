@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "github.com/packethost/tinkerbell/protos/template";
+
+package github.com.packethost.tinkerbell.protos.template;
+
+import "google/protobuf/timestamp.proto";
+
+service Template {
+	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse);
+	rpc GetTemplate(GetRequest) returns (WorkflowTemplate);
+	rpc DeleteTemplate(GetRequest) returns (Empty);
+	rpc ListTemplates(Empty) returns (stream WorkflowTemplate);
+	rpc UpdateTemplate(WorkflowTemplate) returns (Empty);
+}
+
+message Empty {
+}
+
+message WorkflowTemplate {
+	string id = 1;
+	string name = 2;
+	bytes data = 3;
+	google.protobuf.Timestamp createdAt = 4;
+	google.protobuf.Timestamp updatedAt = 5;
+	google.protobuf.Timestamp deletedAt = 6;
+}
+
+message CreateResponse {
+	string id = 1;
+}
+
+message GetRequest {
+	string id = 1;
+}
