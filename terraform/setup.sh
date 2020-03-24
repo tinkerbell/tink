@@ -45,7 +45,7 @@ export ROLLBAR_DISABLE=1
 #export TINKERBELL_CERT_URL=http://127.0.0.1:42114/cert
 
 # Give permission to binaries
-chmod +x /usr/local/bin/rover
+chmod +x /usr/local/bin/tinkerbell
 
 #setup git and git lfs
 sudo apt install -y git
@@ -114,12 +114,12 @@ docker push $host/worker:latest
 
 docker-compose up --build -d db
 sleep 20
+docker-compose up --build -d cserver
+sleep 10
 docker-compose up --build -d tinkerbell
 sleep 20
 docker-compose up --build -d boots
 sleep 20
 docker-compose up --build -d nginx
 sleep 5
-docker-compose up --build -d cserver
-sleep 10
 docker-compose up --build -d hegel

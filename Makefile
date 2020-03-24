@@ -13,13 +13,13 @@ ${bindir}:
 	mkdir -p $@/
 
 ${server}:
-	CGO_ENABLED=0 go build -o $@ .
+	CGO_ENABLED=0 GOOS=linux go build -o $@ .
 
 ${cli}:
-	CGO_ENABLED=0 go build -o ./cmd/tinkerbell/$@ ./cmd/tinkerbell
+	CGO_ENABLED=0 GOOS=linux go build -o ./cmd/tinkerbell/$@ ./cmd/tinkerbell
 
 ${worker}:
-	CGO_ENABLED=0 go build -o ./worker/$@ ./worker/
+	CGO_ENABLED=0 GOOS=linux go build -o ./worker/$@ ./worker/
 
 run: ${binaries}
 	docker-compose up -d --build db
