@@ -21,8 +21,7 @@ services:
       PGSSLMODE: disable
       PGUSER: tinkerbell
     depends_on:
-      - "certs"
-      - "db"
+      - db
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
@@ -69,6 +68,9 @@ services:
       driver: fluentd
       options:
         tag: tinkerbell-cli
+    depends_on: 
+      - db
+      - tinkerbell
     network_mode: host
   
   registry:
@@ -86,11 +88,41 @@ services:
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
     volumes: 
       - ./certs:/certs
+    depends_on: 
+      - fluentbit
     logging:
       driver: fluentd
       options:
         tag: registry
     network_mode: host
+
+  cacher:
+    build: ../cacher
+    environment:
+      FACILITY: ${FACILITY:-lab1}
+      PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
+      PACKET_API_URL: ${PACKET_API_URL}
+      PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
+      PACKET_ENV: testing
+      PACKET_VERSION: 5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d
+      PGDATABASE: tinkerbell
+      PGHOST: db
+      PGPASSWORD: tinkerbell
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: tinkerbell
+      ROLLBAR_TOKEN: 9b78d0ad01d1467aa92c49c3a349b79d
+    depends_on: 
+      - db
+    logging:
+      driver: fluentd
+      options:
+        tag: cacher
+    volumes:
+      - ./certs:/certs/${FACILITY}
+    ports:
+      - 42111:42111/tcp
+      - 42112:42112/tcp
 
   boots:
     build:
@@ -115,15 +147,18 @@ services:
       DOCKER_REGISTRY: 127.0.0.1
       REGISTRY_USERNAME: username
       REGISTRY_PASSWORD: password
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
       TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
       ELASTIC_SEARCH_URL: 127.0.0.1:9200
     depends_on:
-      - tinkerbell
+      - cacher
+      - fluentbit
     logging:
       driver: fluentd
       options:
-        tag: tinkerbell
+        tag: boots
     ports:
       - 127.0.0.1:80:80/tcp
       - 67:67/udp
@@ -144,7 +179,7 @@ services:
       - elasticsearch
     restart: always
     environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - 5601:5601
 
