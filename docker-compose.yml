@@ -124,6 +124,27 @@ services:
       - 42111:42111/tcp
       - 42112:42112/tcp
 
+  hegel:
+    build: ../hegel
+    network_mode: host
+    environment:
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
+      ROLLBAR_DISABLE: 1
+      PACKET_ENV: testing
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      GRPC_PORT: 42115
+      HEGEL_FACILITY: ${FACILITY:-lab1}
+      HEGEL_USE_TLS: 0
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+    depends_on: 
+      - cacher
+      - fluentbit
+    logging:
+      driver: fluentd
+      options:
+        tag: hegel
+
   boots:
     build:
       context: ../boots
@@ -192,4 +213,17 @@ services:
       - elasticsearch
     volumes:
       - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - $NGINX_IP:80:80/tcp
+    volumes:
+      - /packet/nginx/:/usr/share/nginx/html/
+    logging:
+      driver: fluentd
+      options:
+        tag: nginx
 
