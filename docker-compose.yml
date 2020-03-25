@@ -10,8 +10,8 @@ services:
     environment: 
       FACILITY: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
       MAX_WORKFLOW_DATA_VERSIONS: 5
       PGDATABASE: tinkerbell
@@ -102,16 +102,16 @@ services:
       FACILITY: ${FACILITY:-lab1}
       PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
       PACKET_API_URL: ${PACKET_API_URL}
-      PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
+      PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
       PACKET_ENV: testing
-      PACKET_VERSION: 5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
       PGDATABASE: tinkerbell
       PGHOST: db
       PGPASSWORD: tinkerbell
       PGPORT: 5432
       PGSSLMODE: disable
       PGUSER: tinkerbell
-      ROLLBAR_TOKEN: 9b78d0ad01d1467aa92c49c3a349b79d
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
     depends_on: 
       - db
     logging:
@@ -152,11 +152,11 @@ services:
     command: -dhcp-addr 0.0.0.0:67 -tftp-addr 127.0.0.1:69 -http-addr 127.0.0.1:80 -log-level DEBUG
     environment:
       API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-PcyR6MvHb7wMmyYf9p8dJ2Dvnb9HxX8E}
-      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
+      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
       FACILITY_CODE: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
       MIRROR_HOST: ${MIRROR_HOST:-127.0.0.1}
       DNS_SERVERS: 8.8.8.8
