@@ -75,6 +75,13 @@ cp -r /tmp/workflow/* /packet/nginx
 #extract boot files
 pushd /packet/nginx ; tar xvzf boot-files.gz ; popd
 
+cd /tmp
+curl 'https://packet-osie-uploads.s3.amazonaws.com/osie-v19.10.23.00-n=55,c=be58d67,b=master.tar.gz' -o osie.tar.gz
+tar -zxvf osie.tar.gz
+cd /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master'
+cp -r grub /packet/nginx/misc/osie/current
+cp modloop-x86_64 /packet/nginx/misc/osie/current
+
 # get the tinkerbell repo
 mkdir -p ~/go/src/github.com/packethost
 cd ~/go/src/github.com/packethost
