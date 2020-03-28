@@ -24,9 +24,6 @@ sudo ip addr add $nginx_ip/$IP_CIDR dev $network_interface
 
 export NGINX_IP=$nginx_ip
 
-# Update ip tables 
-iptables -t nat -A POSTROUTING -s $host/$IP_CIDR  -j MASQUERADE
-
 sudo apt update -y
 sudo apt-get install -y wget ca-certificates
 
@@ -130,3 +127,8 @@ sleep 20
 docker-compose up --build -d nginx
 sleep 5
 docker-compose up --build -d hegel
+
+# Update ip tables
+iptables -t nat -I POSTROUTING -s $host/$IP_CIDR  -j MASQUERADE
+iptables -t nat -I FORWARD -d $host/$IP_CIDR  -j ACCEPT
+iptables -t nat -I FORWARD -s $host/$IP_CIDR  -j ACCEPT
