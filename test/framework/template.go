@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/packethost/tinkerbell/client"
-	"github.com/packethost/tinkerbell/protos/template"
+	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/protos/template"
 )
 
 func readTemplateData(file string) ([]byte, error) {

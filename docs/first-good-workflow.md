@@ -17,7 +17,7 @@ You have a setup ready with a Provisioner and a Worker node. If not, please foll
  ```
  - Change directory to `tinkerbell`:
  ```shell
- $ cd ~/go/src/github.com/packethost/tinkerbell/
+ $ cd ~/go/src/github.com/tinkerbell/tink/
  ```
  - switch to `first-good-workflow` branch
  ```shell
@@ -30,7 +30,7 @@ You have a setup ready with a Provisioner and a Worker node. If not, please foll
  ```
  - Create action images and push them in to the private registry:
  ```shell
-  $ cd ~/go/src/github.com/packethost/tinkerbell/workflow-samples/ubuntu/v3/
+  $ cd ~/go/src/github.com/tinkerbell/tink/workflow-samples/ubuntu/v3/
   $ ./create_image.sh
  ```
  - Create a target:
@@ -39,7 +39,7 @@ You have a setup ready with a Provisioner and a Worker node. If not, please foll
  ```
  - Create a template:
  ```shell
-  $ tinkerbell template create -n ubuntu-sample -p /root/go/src/github.com/packethost/tinkerbell/workflow-samples/ubuntu/ubuntu.tmpl
+  $ tinkerbell template create -n ubuntu-sample -p /root/go/src/github.com/tinkerbell/tink/workflow-samples/ubuntu/ubuntu.tmpl
  ```
  - Create a workflow:
  ```shell

@@ -1,4 +1,4 @@
-module github.com/packethost/tinkerbell
+module github.com/tinkerbell/tink
 
 go 1.13
 

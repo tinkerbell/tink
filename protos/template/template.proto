@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/packethost/tinkerbell/protos/template";
+option go_package = "github.com/tinkerbell/tink/protos/template";
 
 package github.com.packethost.tinkerbell.protos.template;
 

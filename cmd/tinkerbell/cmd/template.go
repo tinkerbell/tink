@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/packethost/tinkerbell/cmd/tinkerbell/cmd/template"
+	"github.com/tinkerbell/tink/cmd/tinkerbell/cmd/template"
 	"github.com/spf13/cobra"
 )
 

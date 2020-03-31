@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/packethost/tinkerbell/db"
-	"github.com/packethost/tinkerbell/metrics"
-	"github.com/packethost/tinkerbell/protos/template"
+	"github.com/tinkerbell/tink/db"
+	"github.com/tinkerbell/tink/metrics"
+	"github.com/tinkerbell/tink/protos/template"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	uuid "github.com/satori/go.uuid"

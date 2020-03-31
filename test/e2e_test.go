@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/packethost/tinkerbell/client"
-	"github.com/packethost/tinkerbell/protos/workflow"
-	"github.com/packethost/tinkerbell/test/framework"
+	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/protos/workflow"
+	"github.com/tinkerbell/tink/test/framework"
 	"github.com/sirupsen/logrus"
 )
 
