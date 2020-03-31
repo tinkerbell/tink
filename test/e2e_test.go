@@ -1,9 +1,9 @@
 package e2e
 
 import (
-	"os"
-	"testing"
-	"time"
+//	"os"
+//	"testing"
+//	"time"
 
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -14,7 +14,7 @@ import (
 var log *logrus.Logger = framework.Log
 
 func TestMain(m *testing.M) {
-//	log.Infoln("########Creating Setup########")
+	log.Infoln("########Creating Setup########")
 //	err := framework.StartStack()
 //	time.Sleep(10 * time.Second)
 //	if err != nil {
