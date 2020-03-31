@@ -14,37 +14,37 @@ import (
 var log *logrus.Logger = framework.Log
 
 func TestMain(m *testing.M) {
-#	log.Infoln("########Creating Setup########")
-#	err := framework.StartStack()
-#	time.Sleep(10 * time.Second)
-#	if err != nil {
-#		os.Exit(1)
-#	}
-#	os.Setenv("TINKERBELL_GRPC_AUTHORITY", "127.0.0.1:42113")
-#	os.Setenv("TINKERBELL_CERT_URL", "http://127.0.0.1:42114/cert")
-#	client.Setup()
-#	log.Infoln("########Setup Created########")
-#
-#	log.Infoln("Creating hardware inventory")
-#	//push hardware data into hardware table
-#	hwData := []string{"hardware_1.json", "hardware_2.json"}
-#	err = framework.PushHardwareData(hwData)
-#	if err != nil {
-#		log.Errorln("Failed to push hardware inventory : ", err)
-#		os.Exit(2)
-#	}
-#	log.Infoln("Hardware inventory created")
-#
-#	log.Infoln("########Starting Tests########")
-#	status := m.Run()
-#	log.Infoln("########Finished Tests########")
-#	log.Infoln("########Removing setup########")
-#	//err = framework.TearDown()
-#	if err != nil {
-#		os.Exit(3)
-#	}
-#	log.Infoln("########Setup removed########")
-#	os.Exit(status)
+//	log.Infoln("########Creating Setup########")
+//	err := framework.StartStack()
+//	time.Sleep(10 * time.Second)
+//	if err != nil {
+//		os.Exit(1)
+//	}
+//	os.Setenv("TINKERBELL_GRPC_AUTHORITY", "127.0.0.1:42113")
+//	os.Setenv("TINKERBELL_CERT_URL", "http://127.0.0.1:42114/cert")
+//	client.Setup()
+//	log.Infoln("########Setup Created########")
+//
+//	log.Infoln("Creating hardware inventory")
+//	//push hardware data into hardware table
+//	hwData := []string{"hardware_1.json", "hardware_2.json"}
+//	err = framework.PushHardwareData(hwData)
+//	if err != nil {
+//		log.Errorln("Failed to push hardware inventory : ", err)
+//		os.Exit(2)
+//	}
+//	log.Infoln("Hardware inventory created")
+//
+//	log.Infoln("########Starting Tests########")
+//	status := m.Run()
+//	log.Infoln("########Finished Tests########")
+//	log.Infoln("########Removing setup########")
+//	//err = framework.TearDown()
+//	if err != nil {
+//		os.Exit(3)
+//	}
+//	log.Infoln("########Setup removed########")
+//	os.Exit(status)
 }
 
 var testCases = map[string]struct {
