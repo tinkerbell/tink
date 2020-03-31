@@ -13,7 +13,7 @@ pipeline:
 
   test:
     group: ci
-    image: ubuntu:latest
+    image: golang:1.13-alpine
     commands:
       - CGO_ENABLED=0 go test -v ./test/
 
