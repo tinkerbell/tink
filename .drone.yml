@@ -15,5 +15,5 @@ pipeline:
     group: ci
     image: golang:1.13-alpine
     commands:
-      - go test -v ./test/
+      - CGO_ENABLED=0 go test -v ./test/
 
