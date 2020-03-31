@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/tinkerbell/tink/protos/target";
 
-package github.com.tinkerbell.tink.protos.target;
+package github.com.packethost.tinkerbell.protos.target;
 
 service Target {
 	rpc CreateTargets(PushRequest) returns (UUID);
