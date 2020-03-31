@@ -71,10 +71,11 @@ func Setup() {
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
 }
 
+// NewTinkerbellClient : create a new tinkerbell client
 func NewTinkerbellClient() (hardware.HardwareServiceClient, error) {
 	conn, err := GetConnection()
-        if err != nil {
-                log.Fatal(err)
-        }
+	if err != nil {
+		log.Fatal(err)
+	}
 	return hardware.NewHardwareServiceClient(conn), nil
 }

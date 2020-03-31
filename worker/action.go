@@ -79,7 +79,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 			}
 			log.Infoln("Container created with on-timeout command : ", action.OnTimeout)
 			failedActionStatus := make(chan pb.ActionState)
-		        go captureLogs(ctx, id)
+			go captureLogs(ctx, id)
 			go waitFailedContainer(ctx, id, failedActionStatus)
 			err = runContainer(ctx, id)
 			if err != nil {
@@ -171,7 +171,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
 		AttachStderr: true,
-		Tty:	      true,
+		Tty:          true,
 		Env:          action.GetEnvironment(),
 	}
 

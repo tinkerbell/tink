@@ -33,6 +33,14 @@ func buildActionImages() error {
 	return err
 }
 
+func installDocker() error {
+        cmd := exec.Command("/bin/sh", "-c", "./install_docker.sh")
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        err := cmd.Run()
+        return err
+}
+
 func pushImages() error {
 	cmd := exec.Command("/bin/sh", "-c", "./push_images.sh")
 	cmd.Stdout = os.Stdout
@@ -107,8 +115,14 @@ func StartStack() error {
 	// Intialize logger
 	initializeLogger()
 
+	// Install docker-compsoe
+	err := installDocker()
+	if err != nil {
+                return err
+        }
+
 	// Start Db and logging components
-	err := startDb(filepath)
+	err = startDb(filepath)
 	if err != nil {
 		return err
 	}
