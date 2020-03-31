@@ -6,8 +6,8 @@ import (
 	"io"
 	"log"
 
-	"github.com/packethost/tinkerbell/client"
-	"github.com/packethost/tinkerbell/protos/hardware"
+	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/spf13/cobra"
 )
 

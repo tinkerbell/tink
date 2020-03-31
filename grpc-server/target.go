@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/packethost/tinkerbell/db"
-	"github.com/packethost/tinkerbell/protos/target"
+	"github.com/tinkerbell/tink/db"
+	"github.com/tinkerbell/tink/protos/target"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )

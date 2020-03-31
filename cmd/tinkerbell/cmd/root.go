@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/packethost/tinkerbell/client"
+	"github.com/tinkerbell/tink/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

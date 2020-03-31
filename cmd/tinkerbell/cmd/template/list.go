@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/jedib0t/go-pretty/table"
-	"github.com/packethost/tinkerbell/client"
-	"github.com/packethost/tinkerbell/protos/template"
+	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/protos/template"
 	"github.com/spf13/cobra"
 )
 
