@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-option go_package = "github.com/tinkerbell/tink/protos/hardware";
-
 package github.com.tinkerbell.tink.protos.hardware;
 
 service HardwareService {

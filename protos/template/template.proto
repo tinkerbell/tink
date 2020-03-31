@@ -1,10 +1,8 @@
 syntax = "proto3";
 
-option go_package = "github.com/tinkerbell/tink/protos/template";
-
 package github.com.tinkerbell.tink.protos.template;
 
-import "google/protobuf/timestamp.proto";
+import "timestamp.proto";
 
 service Template {
 	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse);

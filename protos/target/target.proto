@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-option go_package = "github.com/tinkerbell/tink/protos/target";
-
 package github.com.tinkerbell.tink.protos.target;
 
 service Target {
