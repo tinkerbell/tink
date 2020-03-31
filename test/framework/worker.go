@@ -110,6 +110,7 @@ func captureLogs(ctx context.Context, cli *dc.Client, id string) {
 	fmt.Println("Logging Finished for container ", id)
 }
 
+// StartWorkers : starting worker containers
 func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.ActionState, error) {
 	log = logger.WithField("workflow_id", wfID)
 	var wg sync.WaitGroup

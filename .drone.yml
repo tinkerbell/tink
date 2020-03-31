@@ -5,16 +5,15 @@ workspace:
   path: src/github.com/packethost/tinkerbell
 
 pipeline:
-  test:
-    group: ci
-    image: golang:1.10-alpine
-    commands:
-      - go test -v ./...
-
   build:
     group: ci
-    image: golang:1.10-alpine
+    image: golang:1.13-alpine
     commands:
       - CGO_ENABLED=0 go build
 
+  test:
+    group: ci
+    image: golang:1.13-alpine
+    commands:
+      - go test -v ./test/
 
