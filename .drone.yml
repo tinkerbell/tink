@@ -21,13 +21,17 @@ pipeline:
     group: publish
     image: plugins/docker
     registry: quay.io
-    repo: quay.io/tinkerbell/tink
+    repo: quay.io/tinkerbell/tink-pr
     tags:
       - ${DRONE_BRANCH/\//-}
       - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
     when:
       event: [push]
-    secrets: [docker_username, docker_password]
+    secrets:
+      - source: public_docker_username
+        target: docker_username
+      - source: public_docker_password
+        target: docker_password
 
   publish_tag:
     group: publish
