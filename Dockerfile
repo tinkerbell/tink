@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.11
 
 EXPOSE 42113
 EXPOSE 42114
