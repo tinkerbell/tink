@@ -60,12 +60,12 @@ function build_registry_and_update_worker_image() {
     sleep 5
 
     #pull the worker image and push into private registry
-    docker pull quay.io/tinkerbell/tink-worker-pr:master
-    docker tag quay.io/tinkerbell/tink-worker:master $HOST_IP/worker:latest
+    docker pull quay.io/tinkerbell/tink-worker:latest
+    docker tag quay.io/tinkerbell/tink-worker:latest $HOST_IP/tink-worker:latest
 
     #login to private registry and push the worker image
     docker login -u=$TINKERBELL_REGISTRY_USER -p=$TINKERBELL_REGISTRY_PASS $HOST_IP
-    docker push $HOST_IP/worker:latest
+    docker push $HOST_IP/tink-worker:latest
 }
 
 function start_docker_stack() {

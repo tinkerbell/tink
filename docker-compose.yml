@@ -6,7 +6,7 @@ services:
       - ./certs:/certs
 
   tink-server:
-    image: quay.io/tinkerbell/tink-pr:master  
+    image: quay.io/tinkerbell/tink:latest
     environment:
       FACILITY: ${FACILITY:-onprem}
       PACKET_ENV: ${PACKET_ENV:-testing}
@@ -62,8 +62,7 @@ services:
         tag: db
 
   tink-cli:
-    build:
-      context: cmd/tinkerbell
+    image: quay.io/tinkerbell/tink-cli:latest
     environment:
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
       TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
@@ -103,7 +102,7 @@ services:
     network_mode: host
 
   boots:
-    image: quay.io/tinkerbell/boots-pr:master
+    image: quay.io/tinkerbell/boots:latest
     network_mode: host
     command: -dhcp-addr 0.0.0.0:67 -tftp-addr $HOST_IP:69 -http-addr $HOST_IP:80 -log-level DEBUG
     environment:
@@ -217,7 +216,7 @@ services:
       - 42112:42112/tcp
 
   hegel:
-    image: quay.io/tinkerbell/hegel-pr:master
+    image: quay.io/tinkerbell/hegel:latest
     network_mode: host
     environment:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
