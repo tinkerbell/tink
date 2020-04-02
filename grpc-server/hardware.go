@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/packethost/tinkerbell/db"
-	"github.com/packethost/tinkerbell/metrics"
-	"github.com/packethost/tinkerbell/protos/hardware"
+	"github.com/tinkerbell/tink/db"
+	"github.com/tinkerbell/tink/metrics"
+	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/codes"

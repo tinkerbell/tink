@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/packethost/tinkerbell/db"
-	pb "github.com/packethost/tinkerbell/protos/workflow"
+	"github.com/tinkerbell/tink/db"
+	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

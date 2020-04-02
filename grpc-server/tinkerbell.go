@@ -3,8 +3,8 @@ package grpcserver
 import (
 	"context"
 
-	exec "github.com/packethost/tinkerbell/executor"
-	pb "github.com/packethost/tinkerbell/protos/workflow"
+	exec "github.com/tinkerbell/tink/executor"
+	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts

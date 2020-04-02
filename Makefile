@@ -1,6 +1,6 @@
-server := tinkerbell-server
-cli := tinkerbell-cli
-worker := tinkerbell-worker
+server := tink-server
+cli := tink-cli
+worker := tink-worker
 binaries := ${server} ${cli} ${worker}
 all: ${binaries}
 

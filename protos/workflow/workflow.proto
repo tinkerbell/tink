@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-option go_package = "github.com/packethost/tinkerbell/protos/workflow";
+option go_package = "workflow";
 
-package github.com.packethost.tinkerbell.protos.workflow;
+package github.com.tinkerbell.tink.protos.workflow;
 
-import "google/protobuf/timestamp.proto";
+import "timestamp.proto";
 
 service WorkflowSvc {
     rpc CreateWorkflow(CreateRequest) returns (CreateResponse);

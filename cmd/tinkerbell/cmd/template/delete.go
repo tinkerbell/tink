@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/packethost/tinkerbell/client"
-	"github.com/packethost/tinkerbell/protos/template"
+	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/protos/template"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )

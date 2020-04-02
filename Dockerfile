@@ -1,11 +1,18 @@
-FROM alpine:3.7
+FROM golang:1.13-alpine
 
-ENTRYPOINT [ "/tinkerbell" ]
 EXPOSE 42113
 EXPOSE 42114
 
-RUN apk add --no-cache --update --upgrade ca-certificates postgresql-client
-RUN apk add --no-cache --update --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing cfssl
+WORKDIR /go/src/app
+
+COPY . .
+
+RUN apk update && \
+	apk add ca-certificates postgresql-client && \
+	apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing cfssl && \
+	go build -o /go/bin/tink-server .
+
 COPY deploy/migrate /migrate
 COPY deploy/docker-entrypoint-initdb.d/tinkerbell-init.sql /init.sql
-COPY tinkerbell-server /tinkerbell
+
+ENTRYPOINT ["tink-server"]
