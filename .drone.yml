@@ -17,22 +17,37 @@ pipeline:
     commands:
       - CGO_ENABLED=0 go build
 
-  publish:
+  publish_pr:
     group: publish
     image: plugins/docker
     registry: quay.io
     repo: quay.io/tinkerbell/tink-pr
     tags:
-      - ${DRONE_BRANCH/\//-}
-      - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+      - ${DRONE_PULL_REQUEST}
+      - ${DRONE_PULL_REQUEST}-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
     when:
-      event: [push]
+      event: pull_request
     secrets:
-      - source: public_docker_username
-        target: docker_username
       - source: public_docker_password
         target: docker_password
+      - source: public_docker_username
+        target: docker_username
 
+  publish_master:
+    group: publish
+    image: plugins/docker
+    registry: quay.io
+    repo: quay.io/tinkerbell/tink
+    tags:
+      - latest
+      - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+    when:
+      branch: master
+      event: push
+    secrets: 
+      - docker_password
+      - docker_username
+    
   publish_tag:
     group: publish
     image: plugins/docker
@@ -40,5 +55,7 @@ pipeline:
     repo: quay.io/tinkerbell/tink
     tags: ${DRONE_TAG}
     when:
-      event: [tag]
-    secrets: [docker_username, docker_password]
+      event: tag
+    secrets:
+      - docker_password
+      - docker_username
