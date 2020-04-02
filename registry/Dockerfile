@@ -1,11 +1,6 @@
-FROM registry:2 AS auth
+FROM registry:2
 ARG REGISTRY_USERNAME
 ARG REGISTRY_PASSWORD
-RUN mkdir /auth \
-  && htpasswd -Bbn ${REGISTRY_USERNAME} ${REGISTRY_PASSWORD} > /auth/htpasswd
-
-FROM registry:2
-RUN mkdir -p /certs /auth 
-COPY --from=auth /auth/htpasswd /auth
+RUN mkdir -p /certs /auth
+RUN htpasswd -Bbn ${REGISTRY_USERNAME} ${REGISTRY_PASSWORD} > /auth/htpasswd
 EXPOSE 443
-

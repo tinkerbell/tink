@@ -5,15 +5,14 @@ services:
     volumes:
       - ./certs:/certs
 
-  tinkerbell:
-    build: .
-    environment: 
-      FACILITY: ${FACILITY:-lab1}
+  tink-server:
+    image: quay.io/tinkerbell/tink:latest
+    environment:
+      FACILITY: ${FACILITY:-onprem}
       PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
-      MAX_WORKFLOW_DATA_VERSIONS: 5
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
+      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       PGDATABASE: tinkerbell
       PGHOST: db
       PGPASSWORD: tinkerbell
@@ -21,19 +20,21 @@ services:
       PGSSLMODE: disable
       PGUSER: tinkerbell
     depends_on:
-      - "certs"
-      - "db"
+      fluentbit:
+        condition: service_started
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
       timeout: 2s
       retries: 30
-    volumes: 
+    volumes:
       - ./certs:/certs/${FACILITY}
     logging:
       driver: fluentd
       options:
-        tag: tinkerbell-server
+        tag: tink-server
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
@@ -47,45 +48,53 @@ services:
       POSTGRES_USER: tinkerbell
     ports:
       - 5432:5432
+    depends_on:
+      fluentbit:
+          condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tinkerbell"]
       interval: 1s
-      timeout: 1s
+      timeout:  1s
       retries: 30
     logging:
       driver: fluentd
       options:
         tag: db
-    depends_on:
-      - fluentbit
 
-  cli:
-    build:
-      context: cmd/tinkerbell
+  tink-cli:
+    image: quay.io/tinkerbell/tink-cli:latest
     environment:
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
       TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
     logging:
       driver: fluentd
       options:
-        tag: tinkerbell-cli
+        tag: tink-cli
+    depends_on:
+      tinkerbell:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     network_mode: host
-  
+
   registry:
     build:
       context: registry
-      args: 
-        REGISTRY_USERNAME: username
-        REGISTRY_PASSWORD: password
-    environment: 
+      args:
+        REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
+        REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASS
+    environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
       REGISTRY_HTTP_TLS_KEY: /certs/server-key.pem
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-    volumes: 
+    volumes:
       - ./certs:/certs
+    depends_on:
+      fluentbit:
+        condition: service_started
     logging:
       driver: fluentd
       options:
@@ -93,42 +102,59 @@ services:
     network_mode: host
 
   boots:
-    build:
-      context: ../boots
+    image: quay.io/tinkerbell/boots:latest
     network_mode: host
-    command: -dhcp-addr 0.0.0.0:67 -tftp-addr 127.0.0.1:69 -http-addr 127.0.0.1:80 -log-level DEBUG
+    command: -dhcp-addr 0.0.0.0:67 -tftp-addr $HOST_IP:69 -http-addr $HOST_IP:80 -log-level DEBUG
     environment:
-      API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-PcyR6MvHb7wMmyYf9p8dJ2Dvnb9HxX8E}
-      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
-      FACILITY_CODE: ${FACILITY:-lab1}
+      API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-ignored}
+      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
+      FACILITY_CODE: ${FACILITY:-onprem}
       PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
-      MIRROR_HOST: ${MIRROR_HOST:-127.0.0.1}
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
+      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
+      MIRROR_HOST: ${NGINX_IP:-127.0.0.1}
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
       DNS_SERVERS: 8.8.8.8
-      PUBLIC_IP: 127.0.0.1
-      BOOTP_BIND: 127.0.0.1:67
-      HTTP_BIND: 127.0.0.1:80
-      SYSLOG_BIND: 127.0.0.1:514
-      TFTP_BIND: 127.0.0.1:69
-      DOCKER_REGISTRY: 127.0.0.1
-      REGISTRY_USERNAME: username
-      REGISTRY_PASSWORD: password
-      TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
-      TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
-      ELASTIC_SEARCH_URL: 127.0.0.1:9200
+      PUBLIC_IP: $HOST_IP
+      BOOTP_BIND: $HOST_IP:67
+      HTTP_BIND: $HOST_IP:80
+      SYSLOG_BIND: $HOST_IP:514
+      TFTP_BIND: $HOST_IP:69
+      DOCKER_REGISTRY: $HOST_IP
+      REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
+      REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASS
+      TINKERBELL_GRPC_AUTHORITY: $HOST_IP:42113
+      TINKERBELL_CERT_URL: http://$HOST_IP:42114/cert
+      ELASTIC_SEARCH_URL: $HOST_IP:9200
     depends_on:
-      - tinkerbell
+      fluentbit:
+        condition: service_started
+      cacher:
+        condition: service_started
+    logging:
+        driver: fluentd
+        options:
+          tag: boots
+    ports:
+      - $HOST_IP:80:80/tcp
+      - 67:67/udp
+      - 69:69/udp
+    
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - $NGINX_IP:80:80/tcp
+    volumes:
+      - /packet/nginx/:/usr/share/nginx/html/
     logging:
       driver: fluentd
       options:
-        tag: tinkerbell
-    ports:
-      - 127.0.0.1:80:80/tcp
-      - 67:67/udp
-      - 69:69/udp
- 
+        tag: nginx
+
   elasticsearch:
     image: elasticsearch:7.3.0
     ports:
@@ -144,7 +170,7 @@ services:
       - elasticsearch
     restart: always
     environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - 5601:5601
 
@@ -158,3 +184,56 @@ services:
     volumes:
       - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
 
+  cacher:
+    image: quay.io/packet/cacher:workflow
+    environment:
+      FACILITY: ${FACILITY:-onprem}
+      PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
+      PACKET_API_URL: ${PACKET_API_URL}
+      PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN-ignored}
+      PACKET_ENV: testing
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      PGDATABASE: tinkerbell
+      PGHOST: db
+      PGPASSWORD: tinkerbell
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: tinkerbell
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
+    volumes:
+      - ./certs:/certs/${FACILITY}
+    logging:
+      driver: fluentd
+      options:
+        tag: cacher 
+    depends_on:
+      fluentbit:
+        condition: service_started
+      db:
+        condition: service_healthy
+    ports:
+      - 42111:42111/tcp
+      - 42112:42112/tcp
+
+  hegel:
+    image: quay.io/tinkerbell/hegel:latest
+    network_mode: host
+    environment:
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
+      ROLLBAR_DISABLE: 1
+      PACKET_ENV: testing
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}  
+      GRPC_PORT: 42115
+      HEGEL_FACILITY: ${FACILITY:-onprem}
+      HEGEL_USE_TLS: 0
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+    depends_on:
+      fluentbit:
+        condition: service_started
+      cacher:
+        condition: service_started
+    logging:
+      driver: fluentd
+      options:
+        tag: hegel
