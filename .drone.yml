@@ -48,7 +48,8 @@ pipeline:
     group: ci
     image: golang:1.13-alpine
     commands:
-      - CGO_ENABLED=0 go build
+      - apk add --update make
+      - make
 
   publish_pr_tink-cli:
     <<: *publish_pr_tmpl
