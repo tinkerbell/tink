@@ -5,7 +5,7 @@ services:
     volumes:
       - ./certs:/certs
 
-  tinkerbell:
+  tink-server:
     image: quay.io/tinkerbell/tink-pr:master  
     environment:
       FACILITY: ${FACILITY:-onprem}
@@ -23,7 +23,7 @@ services:
       fluentbit:
         condition: service_started
       db:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
@@ -34,7 +34,7 @@ services:
     logging:
       driver: fluentd
       options:
-        tag: tinkerbell-server
+        tag: tink-server
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
@@ -49,7 +49,8 @@ services:
     ports:
       - 5432:5432
     depends_on:
-    - fluentbit
+      fluentbit:
+          condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tinkerbell"]
       interval: 1s
@@ -60,7 +61,7 @@ services:
       options:
         tag: db
 
-  cli:
+  tink-cli:
     build:
       context: cmd/tinkerbell
     environment:
@@ -69,10 +70,12 @@ services:
     logging:
       driver: fluentd
       options:
-        tag: tinkerbell-cli
+        tag: tink-cli
     depends_on:
-      - db
-      - tinkerbell
+      tinkerbell:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     network_mode: host
 
   registry:
@@ -91,7 +94,8 @@ services:
     volumes:
       - ./certs:/certs
     depends_on:
-      - fluentbit
+      fluentbit:
+        condition: service_started
     logging:
       driver: fluentd
       options:
@@ -126,8 +130,10 @@ services:
       TINKERBELL_CERT_URL: http://$HOST_IP:42114/cert
       ELASTIC_SEARCH_URL: $HOST_IP:9200
     depends_on:
-      - cacher
-      - fluentbit
+      fluentbit:
+        condition: service_started
+      cacher:
+        condition: service_started
     logging:
         driver: fluentd
         options:
@@ -202,7 +208,10 @@ services:
       options:
         tag: cacher 
     depends_on:
-      - db
+      fluentbit:
+        condition: service_started
+      db:
+        condition: service_healthy
     ports:
       - 42111:42111/tcp
       - 42112:42112/tcp
@@ -221,8 +230,10 @@ services:
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
     depends_on:
-      - cacher
-      - fluentbit
+      fluentbit:
+        condition: service_started
+      cacher:
+        condition: service_started
     logging:
       driver: fluentd
       options:
