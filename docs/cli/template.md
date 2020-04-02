@@ -1,4 +1,4 @@
-## tinkerbell template
+## tink template
 
 Template operations.
 
@@ -23,30 +23,30 @@ Template operations:
 
  - The following command creates a workflow template using the `sample.tmpl` file and save it as `sample`. It returns a UUID for the newly created template.
  ```shell
-  $ tinkerbell template create -n <template-name> -p <path-to-template>
-  $ tinkerbell template create -n sample -p /tmp/sample.tmpl
+  $ tink template create -n <template-name> -p <path-to-template>
+  $ tink template create -n sample -p /tmp/sample.tmpl
  ``` 
 
  - List all the templates 
  ```shell
-  $ tinkerbell template list
+  $ tink template list
  ```
 
  - Update the name of an existing template
  ```shell
-  $ tinkerbell template update <template-uuid> -n <new-name>
-  $ tinkerbell template update edb80a56-b1f2-4502-abf9-17326324192b -n new-sample-template
+  $ tink template update <template-uuid> -n <new-name>
+  $ tink template update edb80a56-b1f2-4502-abf9-17326324192b -n new-sample-template
  ```
 
  - Update an existing template and keep the same name
  ```shell
-  $ tinkerbell template update <template-uuid> -p <path-to-new-template-file>
-  $ tinkerbell template update edb80a56-b1f2-4502-abf9-17326324192b -p /tmp/new-sample-template.tmpl
+  $ tink template update <template-uuid> -p <path-to-new-template-file>
+  $ tink template update edb80a56-b1f2-4502-abf9-17326324192b -p /tmp/new-sample-template.tmpl
  ```
 
 ### See Also
 
- - [tinkerbell hardware](hardware.md) - Hardware (worker) data operations 
- - [tinkerbell target](target.md) - Target operations
- - [tinkerbell workflow](workflow.md) - Workflow operations
+ - [tink hardware](hardware.md) - Hardware (worker) data operations 
+ - [tink target](target.md) - Target operations
+ - [tink workflow](workflow.md) - Workflow operations
 
