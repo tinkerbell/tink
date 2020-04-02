@@ -2,7 +2,7 @@
 
  - Clone the `tinkerbell` repository for latest code:
 ```shell
-$ git clone https://github.com/packethost/tinkerbell.git
+$ git clone https://github.com/tinkerbell/tink.git
 $ cd tinkerbell/terraform
 ```
 

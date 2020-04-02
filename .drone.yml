@@ -2,19 +2,43 @@
 
 workspace:
   base: /go
-  path: src/github.com/packethost/tinkerbell
+  path: src/github.com/tinkerbell/tink
 
 pipeline:
   test:
     group: ci
-    image: golang:1.10-alpine
+    image: golang:1.13-alpine
     commands:
-      - go test -v ./...
+      - CGO_ENABLED=0 go test -v ./...
 
   build:
     group: ci
-    image: golang:1.10-alpine
+    image: golang:1.13-alpine
     commands:
       - CGO_ENABLED=0 go build
 
+  publish:
+    group: publish
+    image: plugins/docker
+    registry: quay.io
+    repo: quay.io/tinkerbell/tink-pr
+    tags:
+      - ${DRONE_BRANCH/\//-}
+      - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+    when:
+      event: [push]
+    secrets:
+      - source: public_docker_username
+        target: docker_username
+      - source: public_docker_password
+        target: docker_password
 
+  publish_tag:
+    group: publish
+    image: plugins/docker
+    registry: quay.io
+    repo: quay.io/tinkerbell/tink
+    tags: ${DRONE_TAG}
+    when:
+      event: [tag]
+    secrets: [docker_username, docker_password]
