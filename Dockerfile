@@ -1,5 +1,6 @@
 FROM alpine:3.11
 
+ENTRYPOINT ["tink-server"]
 EXPOSE 42113
 EXPOSE 42114
 
@@ -9,5 +10,3 @@ RUN apk add --update ca-certificates && \
 COPY deploy/migrate /migrate
 COPY deploy/docker-entrypoint-initdb.d/tinkerbell-init.sql /init.sql
 COPY tink-server /bin/
-
-ENTRYPOINT ["tink-server"]
