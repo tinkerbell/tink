@@ -40,13 +40,13 @@ workspace:
 pipeline:
   test:
     group: ci
-    image: golang:1.13-alpine
+    image: golang:1.13-alpine3.11
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
   build:
     group: ci
-    image: golang:1.13-alpine
+    image: golang:1.13-alpine3.11
     commands:
       - apk add --update make
       - make
