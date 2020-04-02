@@ -97,7 +97,7 @@ services:
     network_mode: host
 
   cacher:
-    build: ../cacher
+    image: quay.io/packet/cacher:workflow
     environment:
       FACILITY: ${FACILITY:-lab1}
       PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
