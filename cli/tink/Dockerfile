@@ -1,7 +1,8 @@
 FROM alpine:3.11
 
-ENTRYPOINT [ "/tink-worker" ]
+CMD sleep infinity
 
 RUN apk add --no-cache --update --upgrade ca-certificates
 
-COPY tink-worker /tink-worker
+COPY tink-cli /bin/tink
+COPY sample.tmpl /tmp
