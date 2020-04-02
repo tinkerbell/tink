@@ -35,7 +35,26 @@ function setup_network () {
     sudo ip addr add $NGINX_IP/$IP_CIDR dev $network_interface
 }
 
+function setup_osie_with_nginx() {
+    mkdir -p /packet/nginx/misc/osie/current
+    mkdir -p /packet/nginx/misc/tinkerbell/workflow/
+    cd /packet/nginx/misc/tinkerbell/workflow/
+    wget https://raw.githubusercontent.com/tinkerbell/osie/master/installer/workflow-helper.sh
+    wget https://raw.githubusercontent.com/tinkerbell/osie/master/installer/workflow-helper-rc
+    chmod +x workflow-helper.sh
+    
+    cd /tmp
+    curl 'https://packet-osie-uploads.s3.amazonaws.com/osie-v19.10.23.00-n=55,c=be58d67,b=master.tar.gz' -o osie.tar.gz
+    tar -zxvf osie.tar.gz
+    cd /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master'
+    cp -r grub /packet/nginx/misc/osie/current/
+    cp modloop-x86_64 /packet/nginx/misc/osie/current/
+    cp initramfs-x86_64 /packet/nginx/misc/osie/current/
+    cp vmlinuz-x86_64 /packet/nginx/misc/osie/current/
+    rm /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master' -rf
+}
 function build_and_setup_certs () {
+    cd ~/go/src/github.com/tinkerbell/tink
     grep "$HOST_IP" /etc/network/interfaces
     if [[ $? -eq 1 ]]
     then            
@@ -89,6 +108,7 @@ function start_docker_stack() {
 
 setup_environemt;
 setup_network;
+setup_osie_with_nginx;
 build_and_setup_certs;
 build_registry_and_update_worker_image;
 start_docker_stack;
