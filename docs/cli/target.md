@@ -1,4 +1,4 @@
-## tinkerbell target
+## tink target
 
 Target operations.
 
@@ -23,12 +23,12 @@ Target operations:
 
  - The command below creates a workflow target and returns its UUID.
  ```shell
-  $ tinkerbell target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
+  $ tink target create '{"targets": {"machine1": {"mac_addr": "98:03:9b:4b:c5:34"}}}' 
  ```
 
 ### See Also
 
- - [tinkerbell hardware](hardware.md) - Hardware (worker) data operations 
- - [tinkerbell template](template.md) - Template operations
- - [tinkerbell workflow](workflow.md) - Workflow operations
+ - [tink hardware](hardware.md) - Hardware (worker) data operations 
+ - [tink template](template.md) - Template operations
+ - [tink workflow](workflow.md) - Workflow operations
 
