@@ -71,7 +71,7 @@ services:
       options:
         tag: tink-cli
     depends_on:
-      tinkerbell:
+      tink-server:
         condition: service_healthy
       db:
         condition: service_healthy
