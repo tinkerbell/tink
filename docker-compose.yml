@@ -10,8 +10,8 @@ services:
     environment: 
       FACILITY: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
       MAX_WORKFLOW_DATA_VERSIONS: 5
       PGDATABASE: tinkerbell
@@ -21,8 +21,7 @@ services:
       PGSSLMODE: disable
       PGUSER: tinkerbell
     depends_on:
-      - "certs"
-      - "db"
+      - db
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
       interval: 5s
@@ -69,6 +68,9 @@ services:
       driver: fluentd
       options:
         tag: tinkerbell-cli
+    depends_on: 
+      - db
+      - tinkerbell
     network_mode: host
   
   registry:
@@ -86,11 +88,62 @@ services:
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
     volumes: 
       - ./certs:/certs
+    depends_on: 
+      - fluentbit
     logging:
       driver: fluentd
       options:
         tag: registry
     network_mode: host
+
+  cacher:
+    image: quay.io/packet/cacher:workflow
+    environment:
+      FACILITY: ${FACILITY:-lab1}
+      PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
+      PACKET_API_URL: ${PACKET_API_URL}
+      PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
+      PACKET_ENV: testing
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      PGDATABASE: tinkerbell
+      PGHOST: db
+      PGPASSWORD: tinkerbell
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: tinkerbell
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
+    depends_on: 
+      - db
+    logging:
+      driver: fluentd
+      options:
+        tag: cacher
+    volumes:
+      - ./certs:/certs/${FACILITY}
+    ports:
+      - 42111:42111/tcp
+      - 42112:42112/tcp
+
+  hegel:
+    build: ../hegel
+    network_mode: host
+    environment:
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
+      ROLLBAR_DISABLE: 1
+      PACKET_ENV: testing
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      GRPC_PORT: 42115
+      HEGEL_FACILITY: ${FACILITY:-lab1}
+      HEGEL_USE_TLS: 0
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+    depends_on: 
+      - cacher
+      - fluentbit
+    logging:
+      driver: fluentd
+      options:
+        tag: hegel
 
   boots:
     build:
@@ -99,11 +152,11 @@ services:
     command: -dhcp-addr 0.0.0.0:67 -tftp-addr 127.0.0.1:69 -http-addr 127.0.0.1:80 -log-level DEBUG
     environment:
       API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-PcyR6MvHb7wMmyYf9p8dJ2Dvnb9HxX8E}
-      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-djR2TAvbnkY92i8Ea2KFMZW6MusW1fk7qzeCUHgtnQRSsXnqxoCr6V2vhSxpqASf}
+      API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
       FACILITY_CODE: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
       MIRROR_HOST: ${MIRROR_HOST:-127.0.0.1}
       DNS_SERVERS: 8.8.8.8
@@ -115,15 +168,18 @@ services:
       DOCKER_REGISTRY: 127.0.0.1
       REGISTRY_USERNAME: username
       REGISTRY_PASSWORD: password
+      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+      CACHER_CERT_URL: http://127.0.0.1:42112/cert
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
       TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
       ELASTIC_SEARCH_URL: 127.0.0.1:9200
     depends_on:
-      - tinkerbell
+      - cacher
+      - fluentbit
     logging:
       driver: fluentd
       options:
-        tag: tinkerbell
+        tag: boots
     ports:
       - 127.0.0.1:80:80/tcp
       - 67:67/udp
@@ -144,7 +200,7 @@ services:
       - elasticsearch
     restart: always
     environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - 5601:5601
 
@@ -157,4 +213,17 @@ services:
       - elasticsearch
     volumes:
       - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - $NGINX_IP:80:80/tcp
+    volumes:
+      - /packet/nginx/:/usr/share/nginx/html/
+    logging:
+      driver: fluentd
+      options:
+        tag: nginx
 
