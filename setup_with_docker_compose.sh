@@ -60,8 +60,8 @@ function build_registry_and_update_worker_image() {
     sleep 5
 
     #pull the worker image and push into private registry
-    docker pull quay.io/packet/tinkerbell-worker:workflow
-    docker tag quay.io/packet/tinkerbell-worker:workflow $HOST_IP/worker:latest
+    docker pull quay.io/tinkerbell/tink-worker-pr:master
+    docker tag quay.io/tinkerbell/tink-worker:master $HOST_IP/worker:latest
 
     #login to private registry and push the worker image
     docker login -u=$TINKERBELL_REGISTRY_USER -p=$TINKERBELL_REGISTRY_PASS $HOST_IP
@@ -72,7 +72,7 @@ function start_docker_stack() {
 
     docker-compose up --build -d db
     sleep 5
-    docker-compose up --build -d tinkerbell
+    docker-compose up --build -d tink-server
     sleep 5
     docker-compose up --build -d nginx
     sleep 5
@@ -83,6 +83,8 @@ function start_docker_stack() {
     docker-compose up --build -d boots
     sleep 5
     docker-compose up --build -d kibana
+    sleep 2
+    docker-compose up --build -d tink-cli
 }
 
 setup_environemt;
