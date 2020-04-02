@@ -11,11 +11,11 @@ Command line interface for Packet Workflow. The CLI allows you to update the har
 ### Operations
 
 ```shell
-  hardware    tinkerbell hardware client
+  hardware    tink hardware client
   help        Help about any command
-  target      tinkerbell target client
-  template    tinkerbell template client
-  workflow    tinkerbell workflow client
+  target      tink target client
+  template    tink template client
+  workflow    tink workflow client
 ```
 
 ### Options
@@ -26,9 +26,9 @@ Command line interface for Packet Workflow. The CLI allows you to update the har
 
 ### See Also
 
- - [tinkerbell hardware](hardware.md) - Hardware (worker) data operations 
- - [tinkerbell target](target.md) - Target operations
- - [tinkerbell template](template.md) - Template operations
- - [tinkerbell workflow](workflow.md) - Workflow operations
+ - [tink hardware](hardware.md) - Hardware (worker) data operations 
+ - [tink target](target.md) - Target operations
+ - [tink template](template.md) - Template operations
+ - [tink workflow](workflow.md) - Workflow operations
 
 
