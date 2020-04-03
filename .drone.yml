@@ -1,5 +1,38 @@
 ---
 
+publish_pr_tmpl: &publish_pr_tmpl
+  group: publish
+  image: plugins/docker
+  registry: quay.io
+  tags:
+    - ${DRONE_PULL_REQUEST}
+    - ${DRONE_PULL_REQUEST}-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+  when:
+    event: pull_request
+  secrets:
+    - source: public_docker_password
+      target: docker_password
+    - source: public_docker_username
+      target: docker_username
+
+publish_master_tmpl: &publish_master_tmpl
+  <<: *publish_pr_tmpl
+  tags:
+    - latest
+    - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+  when:
+    branch: master
+    event: push
+  secrets:
+    - docker_password
+    - docker_username
+
+publish_tag_tmpl: &publish_tag_tmpl
+  <<: *publish_master_tmpl
+  tags: ${DRONE_TAG}
+  when:
+    event: tag
+
 workspace:
   base: /go
   path: src/github.com/tinkerbell/tink
@@ -7,38 +40,68 @@ workspace:
 pipeline:
   test:
     group: ci
-    image: golang:1.13-alpine
+    image: golang:1.13-alpine3.11
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
   build:
     group: ci
-    image: golang:1.13-alpine
+    image: golang:1.13-alpine3.11
     commands:
-      - CGO_ENABLED=0 go build
+      - apk add --update make
+      - make
 
-  publish:
-    group: publish
-    image: plugins/docker
-    registry: quay.io
+  publish_pr_tink-cli:
+    <<: *publish_pr_tmpl
+    context: cli/tink
+    dockerfile: cli/tink/Dockerfile
+    repo: quay.io/tinkerbell/tink-cli-pr
+
+  publish_pr_tink-server:
+    <<: *publish_pr_tmpl
     repo: quay.io/tinkerbell/tink-pr
-    tags:
-      - ${DRONE_BRANCH/\//-}
-      - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
-    when:
-      event: [push]
-    secrets:
-      - source: public_docker_username
-        target: docker_username
-      - source: public_docker_password
-        target: docker_password
+    context: .
+    dockerfile: Dockerfile
+    repo: quay.io/tinkerbell/tink-pr
 
-  publish_tag:
-    group: publish
-    image: plugins/docker
-    registry: quay.io
+  publish_pr_tink-worker:
+    <<: *publish_pr_tmpl
+    context: worker
+    dockerfile: worker/Dockerfile
+    repo: quay.io/tinkerbell/tink-worker-pr
+
+  publish_master_tink-cli:
+    <<: *publish_master_tmpl
+    context: cli/tink
+    dockerfile: cli/tink/Dockerfile
+    repo: quay.io/tinkerbell/tink-cli
+
+  publish_master_tink-server:
+    <<: *publish_master_tmpl
+    context: .
+    dockerfile: Dockerfile
     repo: quay.io/tinkerbell/tink
-    tags: ${DRONE_TAG}
-    when:
-      event: [tag]
-    secrets: [docker_username, docker_password]
+
+  publish_master_tink-worker:
+    <<: *publish_master_tmpl
+    context: worker
+    dockerfile: worker/Dockerfile
+    repo: quay.io/tinkerbell/tink-worker
+
+  publish_tag_tink-cli:
+    <<: *publish_tag_tmpl
+    context: cli/tink
+    dockerfile: cli/tink/Dockerfile
+    repo: quay.io/tinkerbell/tink-cli
+
+  publish_tag_tink-server:
+    <<: *publish_tag_tmpl
+    context: .
+    dockerfile: Dockerfile
+    repo: quay.io/tinkerbell/tink
+
+  publish_tag_tink-worker:
+    <<: *publish_tag_tmpl
+    context: worker
+    dockerfile: worker/Dockerfile
+    repo: quay.io/tinkerbell/tink-worker
