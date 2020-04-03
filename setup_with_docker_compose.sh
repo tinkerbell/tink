@@ -47,10 +47,7 @@ function setup_osie_with_nginx() {
     curl 'https://packet-osie-uploads.s3.amazonaws.com/osie-v19.10.23.00-n=55,c=be58d67,b=master.tar.gz' -o osie.tar.gz
     tar -zxvf osie.tar.gz
     cd /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master'
-    cp -r grub /packet/nginx/misc/osie/current/
-    cp modloop-x86_64 /packet/nginx/misc/osie/current/
-    cp initramfs-x86_64 /packet/nginx/misc/osie/current/
-    cp vmlinuz-x86_64 /packet/nginx/misc/osie/current/
+    cp -r * /packet/nginx/misc/osie/current/
     rm /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master' -rf
 }
 function build_and_setup_certs () {
