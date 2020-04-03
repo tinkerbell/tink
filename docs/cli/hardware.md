@@ -1,4 +1,4 @@
-## tinkerbell hardware
+## tink hardware
 
 Hardware (worker) data operations.
 
@@ -23,7 +23,7 @@ Hardware operations:
 
 ### See Also
 
- - [tinkerbell target](target.md) - Target operations
- - [tinkerbell template](template.md) - Template operations
- - [tinkerbell workflow](workflow.md) - Workflow operations
+ - [tink target](target.md) - Target operations
+ - [tink template](template.md) - Template operations
+ - [tink workflow](workflow.md) - Workflow operations
 

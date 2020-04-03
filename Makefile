@@ -16,7 +16,7 @@ ${server}:
 	CGO_ENABLED=0 go build -o $@ .
 
 ${cli}:
-	CGO_ENABLED=0 go build -o ./cmd/tinkerbell/$@ ./cmd/tinkerbell
+	CGO_ENABLED=0 go build -o ./cli/tink/$@ ./cli/tink
 
 ${worker}:
 	CGO_ENABLED=0 go build -o ./worker/$@ ./worker/

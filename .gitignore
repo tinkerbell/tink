@@ -1,6 +1,6 @@
-tinkerbell-server
-**/tinkerbell-cli
-**/tinkerbell-worker
+tink-server
+**/tink-cli
+**/tink-worker
 bin/
 certs/
 

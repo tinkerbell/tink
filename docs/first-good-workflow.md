@@ -35,15 +35,15 @@ You have a setup ready with a Provisioner and a Worker node. If not, please foll
  ```
  - Create a target:
  ```shell
-  $ tinkerbell target create '{"targets": {"machine1": {"mac_addr": "<mac address of tf-worker>"}}}'
+  $ tink target create '{"targets": {"machine1": {"mac_addr": "<mac address of tf-worker>"}}}'
  ```
  - Create a template:
  ```shell
-  $ tinkerbell template create -n ubuntu-sample -p /root/go/src/github.com/tinkerbell/tink/workflow-samples/ubuntu/ubuntu.tmpl
+  $ tink template create -n ubuntu-sample -p /root/go/src/github.com/tinkerbell/tink/workflow-samples/ubuntu/ubuntu.tmpl
  ```
  - Create a workflow:
  ```shell
-  $ tinkerbell workflow create -t <template Id> -r <target_id>
+  $ tink workflow create -t <template Id> -r <target_id>
  ```
  - Reboot the worker machine
 
