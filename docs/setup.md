@@ -1,3 +1,25 @@
+# Setup the Packet Workflow Environment with Terraform on packet provider
+
+ - Clone the `tink` repository for latest code:
+```shell
+$ git clone https://github.com/tinkerbell/tink.git
+$ cd tink/terraform
+```
+
+ - Update the `input.tf` file with desired values 
+ - Add your Packet `auth_token` in `input.tf`
+ - Run the following commands
+```shell
+$ terraform init
+$ terraform apply
+``` 
+
+The above commands will create a complete setup with `tf-provisioner` and `tf-worker` machines for the `packet` provider on which you can run any workflow. As an output it returns the IP address of the provisioner and MAC address of the worker machine.
+
+
+***_Note_ :*** The default names of machines created by Terraform are `tf-provisioner` and `tf-worker`. If you prefer other names, you need to replace `tf-provisioner` and `tf-worker` with the new ones at all places in `main.tf`.
+
+
 # Setup the Provisioner machine with docker-compose.yml file
 
 ## Install git and git lfs as follows
