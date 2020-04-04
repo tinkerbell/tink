@@ -1,0 +1,33 @@
+version: '0.1'
+name: ubuntu_provisioning
+global_timeout: 6000
+tasks:
+- name: "os-installation"
+  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  volumes:
+    - /dev:/dev
+    - /dev/console:/dev/console
+    - /lib/firmware:/lib/firmware:ro
+  actions:
+  - name: "disk-wipe"
+    image: disk-wipe:v3
+    timeout: 90
+  - name: "disk-partition"
+    image: disk-partition:v3
+    timeout: 600
+    environment:
+       MIRROR_HOST: 192.168.1.2
+    volumes:
+      - /statedir:/statedir
+  - name: "install-root-fs"
+    image: install-root-fs:v3
+    timeout: 600
+    environment:
+       MIRROR_HOST: 192.168.1.2
+  - name: "install-grub"
+    image: install-grub:v3
+    timeout: 600
+    environment:
+       MIRROR_HOST: 192.168.1.2
+    volumes:
+      - /statedir:/statedir
