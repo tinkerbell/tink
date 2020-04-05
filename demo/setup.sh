@@ -2,31 +2,15 @@
 
 source tinkenv
 
-function setup_environment() {
-    # Below variables will eventually goaway but required for now
-    export FACILITY="onprem"
-    export ROLLBAR_TOKEN="ignored"
-    export ROLLBAR_DISABLE=1
-
-    # export input variables
-    echo "HOST_IP=$host_ip" >> /etc/environment
-    echo "NGINX_IP=$nginx_ip" >> /etc/environment
-    export IP_CIDR=$cidr
-    export BROAD_IP=$broad_ip
-    export NETMASK=$netmask
-    echo "TINKERBELL_REGISTRY_USER=$private_registry_user" >> /etc/environment
-    echo "TINKERBELL_REGISTRY_PASS=$private_registry_pass" >> /etc/environment
-    echo "TINKERBELL_GRPC_AUTHORITY=127.0.0.1:42113" >> /etc/environment
-    echo "TINKERBELL_CERT_URL=http://127.0.0.1:42114/cert" >> /etc/environment
-}
-
-function setup_network () {
+function setup_network() {
     network_interface=$(grep auto /etc/network/interfaces | tail -1 | cut -d ' ' -f 2)
     echo "This is the network interface" $network_interface
 
     grep "$HOST_IP" /etc/network/interfaces
     if [[ $? -eq 1 ]]
     then
+        declare bond=$(cat /etc/network/interfaces | tail -1)
+        sed -i -e "s/$bond//g" /etc/network/interfaces
         sed -i "/$network_interface inet \(manual\|dhcp\)/c\\iface $network_interface inet static\n    address $HOST_IP\n    netmask $NETMASK\n    broadcast $BROAD_IP" /etc/network/interfaces
     fi
     ifdown  $network_interface
@@ -49,18 +33,21 @@ function setup_osie_with_nginx() {
     cd /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master'
     cp -r grub /packet/nginx/misc/osie/current/
     cp modloop-x86_64 /packet/nginx/misc/osie/current/
-    cp initramfs-x86_64 /packet/nginx/misc/osie/current/
-    cp vmlinuz-x86_64 /packet/nginx/misc/osie/current/
+#    cp initramfs-x86_64 /packet/nginx/misc/osie/current/
+#    cp vmlinuz-x86_64 /packet/nginx/misc/osie/current/
     rm /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master' -rf
 
+    cd ~/go/src/github.com/tinkerbell/tink/demo/misc/osie
+    cp initramfs-x86_64 /packet/nginx/misc/osie/current/
+    cp vmlinuz-x86_64 /packet/nginx/misc/osie/current/
+
     cd /packet/nginx/misc/osie/current
-    curl 'https://packet-osie-uploads.s3.amazonaws.com/ubuntu_18_04.tar.gz'
+    curl 'https://packet-osie-uploads.s3.amazonaws.com/ubuntu_18_04.tar.gz' -o ubuntu_18_04.tar.gz
     tar -zxvf ubuntu_18_04.tar.gz
     rm ubuntu_18_04.tar.gz
 }
 function build_and_setup_certs () {
-#     sudo apt update -y
-     sudo apt-get install -y wget ca-certificates
+    sudo apt-get install -y wget ca-certificates
 
     cd ~/go/src/github.com/tinkerbell/tink
     grep "$HOST_IP" tls/server-csr.in.json
@@ -118,7 +105,6 @@ function update_iptables() {
     iptables -I FORWARD -s $HOST_IP/$IP_CIDR  -j ACCEPT
 }
 
-setup_environment;
 setup_network;
 setup_osie_with_nginx;
 build_and_setup_certs;
