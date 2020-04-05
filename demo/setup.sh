@@ -2,6 +2,24 @@
 
 source tinkenv
 
+function initial_install() {
+  # install Go
+  wget https://dl.google.com/go/go1.13.9.linux-amd64.tar.gz
+  tar -C /usr/local -xzf go1.13.9.linux-amd64.tar.gz go/
+  rm go1.13.9.linux-amd64.tar.gz
+
+  # set GOPATH
+  echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+  echo 'export GOPATH=$GOPATH:$HOME/go' >> ~/.bashrc
+  echo 'export PATH=$PATH:$GOPATH' >> ~/.bashrc
+  source ~/.bashrc
+
+  # install Docker and Docker Compose
+  curl -L get.docker.com | bash
+  curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  chmod +x /usr/local/bin/docker-compose
+}
+
 function setup_network() {
     network_interface=$(grep auto /etc/network/interfaces | tail -1 | cut -d ' ' -f 2)
     echo "This is the network interface" $network_interface
@@ -58,24 +76,24 @@ function build_and_setup_certs () {
     # build the certificates
     docker-compose up --build -d certs
     sleep 5
-    #Update host to trust registry certificate
+    # update host to trust registry certificate
     mkdir -p /etc/docker/certs.d/$HOST_IP
     cp certs/ca.pem /etc/docker/certs.d/$HOST_IP/ca.crt
 
-    #copy certificate in tinkerbell
+    # copy certificate in tinkerbell
     cp certs/ca.pem /packet/nginx/workflow/ca.pem
 }
 
 function build_registry_and_update_worker_image() {
-    #Build private registry
+    # build private registry
     docker-compose up --build -d registry
     sleep 5
 
-    #pull the worker image and push into private registry
+    # pull the worker image and push into private registry
     docker pull quay.io/tinkerbell/tink-worker:latest
     docker tag quay.io/tinkerbell/tink-worker:latest $HOST_IP/tink-worker:latest
 
-    #login to private registry and push the worker image
+    # login to private registry and push the worker image
     docker login -u=$TINKERBELL_REGISTRY_USER -p=$TINKERBELL_REGISTRY_PASS $HOST_IP
     docker push $HOST_IP/tink-worker:latest
 }
@@ -105,6 +123,7 @@ function update_iptables() {
     iptables -I FORWARD -s $HOST_IP/$IP_CIDR  -j ACCEPT
 }
 
+initial_install;
 setup_network;
 setup_osie_with_nginx;
 build_and_setup_certs;

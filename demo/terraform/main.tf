@@ -11,15 +11,15 @@ locals {
 # Create a new VLAN in datacenter "ewr1"
 resource "packet_vlan" "provisioning-vlan" {
   description = "provisioning-vlan"
-  facility    = "dfw2"
+  facility    = "sjc1"
   project_id  = local.project_id
 }
 
 # Create a device and add it to tf_project_1
 resource "packet_device" "tf-provisioner" {
   hostname         = "tf-provisioner"
-  plan             = "c3.small.x86"
-  facilities       = ["dfw2"]
+  plan             = "t3.small.x86"
+  facilities       = ["sjc1"]
   operating_system = "ubuntu_18_04"
   billing_cycle    = "hourly"
   project_id       = local.project_id
@@ -29,8 +29,8 @@ resource "packet_device" "tf-provisioner" {
 # Create a device and add it to tf_project_1
 resource "packet_device" "tf-worker" {
   hostname         = "tf-worker"
-  plan             = "c3.small.x86"
-  facilities       = ["dfw2"]
+  plan             = "c2.medium.x86"
+  facilities       = ["sjc1"]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "https://boot.netboot.xyz"
   always_pxe       = "true"
