@@ -2,7 +2,7 @@
 
 ### Boots
 
-Handles DHCP requests, hands out IPs, and serves up iPXE. It also uses the Tinkerbell client to pull and push hardware data. 
+Handles DHCP requests, hands out IPs, and serves up iPXE. It also uses the Tinkerbell client to pull and push hardware data. `boots` will only respond to a predefined set of MAC addresses so it can be deployed in an existing network without interfering with existing DHCP infrastructure.
 
 ### Osie
 
