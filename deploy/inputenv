@@ -1,0 +1,20 @@
+# Subnet(IP block) used by Tinkerbell stack
+export TINKERBELL_NETWORK="192.168.1.0/29"
+# Netmask for network
+export TINKERBELL_NETMASK="255.255.255.248"
+# Host IP is used by provisioner to expose different services such as tink, boots, etc.
+export TINKERBELL_HOST_IP="192.168.1.1"
+# Ngix IP is used by provisioner to serve different files required for iPXE boot
+export TINKERBELL_NGINX_IP="192.168.1.2"
+# Broadcast IP for TINKERBELL_NETWORK
+export TINKERBELL_BROADCAST_IP="192.168.1.7"
+
+# Default interface on Provisioner
+export TINKERBELL_PROVISIONER_INTERFACE="enpsp10"
+
+# We host private registry on provisioner which is used by different workers
+# Details for Private registry
+# Private Registry User
+export TINKERBELL_REGISTRY_USER="admin"
+# Private Registry Password
+export TINKERBELL_REGISTRY_PASSWORD="admin123"

@@ -41,7 +41,7 @@ services:
 
   db:
     build:
-      context: deploy
+      context: db
     environment:
       POSTGRES_DB: tinkerbell
       POSTGRES_PASSWORD: tinkerbell
@@ -82,7 +82,7 @@ services:
       context: registry
       args:
         REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
-        REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASS
+        REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
     environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
@@ -104,7 +104,7 @@ services:
   boots:
     image: quay.io/tinkerbell/boots:latest
     network_mode: host
-    command: -dhcp-addr 0.0.0.0:67 -tftp-addr $HOST_IP:69 -http-addr $HOST_IP:80 -log-level DEBUG
+    command: -dhcp-addr 0.0.0.0:67 -tftp-addr $TINKERBELL_HOST_IP:69 -http-addr $TINKERBELL_HOST_IP:80 -log-level DEBUG
     environment:
       API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-ignored}
       API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
@@ -117,17 +117,17 @@ services:
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
       DNS_SERVERS: 8.8.8.8
-      PUBLIC_IP: $HOST_IP
-      BOOTP_BIND: $HOST_IP:67
-      HTTP_BIND: $HOST_IP:80
-      SYSLOG_BIND: $HOST_IP:514
-      TFTP_BIND: $HOST_IP:69
-      DOCKER_REGISTRY: $HOST_IP
+      PUBLIC_IP: $TINKERBELL_HOST_IP
+      BOOTP_BIND: $TINKERBELL_HOST_IP:67
+      HTTP_BIND: $TINKERBELL_HOST_IP:80
+      SYSLOG_BIND: $TINKERBELL_HOST_IP:514
+      TFTP_BIND: $TINKERBELL_HOST_IP:69
+      DOCKER_REGISTRY: $TINKERBELL_HOST_IP
       REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
-      REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASS
-      TINKERBELL_GRPC_AUTHORITY: $HOST_IP:42113
-      TINKERBELL_CERT_URL: http://$HOST_IP:42114/cert
-      ELASTIC_SEARCH_URL: $HOST_IP:9200
+      REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
+      TINKERBELL_GRPC_AUTHORITY: $TINKERBELL_HOST_IP:42113
+      TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
+      ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
     depends_on:
       fluentbit:
         condition: service_started
@@ -138,7 +138,7 @@ services:
         options:
           tag: boots
     ports:
-      - $HOST_IP:80:80/tcp
+      - $TINKERBELL_HOST_IP:80:80/tcp
       - 67:67/udp
       - 69:69/udp
     
@@ -147,7 +147,7 @@ services:
     restart: unless-stopped
     tty: true
     ports:
-      - $NGINX_IP:80:80/tcp
+      - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
       - /packet/nginx/:/usr/share/nginx/html/
     logging:
