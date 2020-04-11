@@ -81,7 +81,7 @@ services:
     build:
       context: registry
       args:
-        REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
+        REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USERNAME
         REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
     environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:443
