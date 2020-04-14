@@ -4,13 +4,31 @@ option go_package = "template";
 
 package github.com.tinkerbell.tink.protos.template;
 
+import "google/api/annotations.proto";
 import "timestamp.proto";
 
 service Template {
-	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse);
-	rpc GetTemplate(GetRequest) returns (WorkflowTemplate);
-	rpc DeleteTemplate(GetRequest) returns (Empty);
-	rpc ListTemplates(Empty) returns (stream WorkflowTemplate);
+	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse) {
+		option (google.api.http) = {
+            post: "/v1/template"
+            body: "*"
+        };
+	};
+	rpc GetTemplate(GetRequest) returns (WorkflowTemplate) {
+		option (google.api.http) = {
+            get: "/v1/templates/{id}"
+        };
+	};
+	rpc DeleteTemplate(GetRequest) returns (Empty) {
+		option (google.api.http) = {
+            delete: "/v1/templates/{id}"
+        };
+	};
+	rpc ListTemplates(Empty) returns (stream WorkflowTemplate) {
+		option (google.api.http) = {
+            get: "/v1/templates"
+        };
+	};
 	rpc UpdateTemplate(WorkflowTemplate) returns (Empty);
 }
 

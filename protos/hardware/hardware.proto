@@ -4,12 +4,23 @@ option go_package = "hardware";
 
 package github.com.tinkerbell.tink.protos.hardware;
 
+import "google/api/annotations.proto";
+
 service HardwareService {
-	rpc Push (PushRequest) returns (Empty);
+	rpc Push (PushRequest) returns (Empty) {
+		option (google.api.http) = {
+            post: "/v1/hardware"
+            body: "*"
+        };
+	};
 	rpc ByMAC(GetRequest) returns (Hardware);
 	rpc ByIP(GetRequest) returns (Hardware);
 	rpc ByID(GetRequest) returns (Hardware);
-	rpc All(Empty) returns (stream Hardware);
+	rpc All(Empty) returns (stream Hardware) {
+		option (google.api.http) = {
+            get: "/v1/hardware"
+        };
+	};
 	rpc Ingest(Empty) returns (Empty);
 	rpc Watch(GetRequest) returns (stream Hardware);
 	rpc Delete(DeleteRequest) returns (Empty);
