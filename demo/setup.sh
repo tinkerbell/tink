@@ -24,17 +24,17 @@ function setup_network() {
     network_interface=$(grep auto /etc/network/interfaces | tail -1 | cut -d ' ' -f 2)
     echo "This is the network interface" $network_interface
 
-    grep "$HOST_IP" /etc/network/interfaces
+    grep "$TINKERBELL_HOST_IP" /etc/network/interfaces
     if [[ $? -eq 1 ]]
     then
         declare bond=$(cat /etc/network/interfaces | tail -1)
         sed -i -e "s/$bond//g" /etc/network/interfaces
-        sed -i "/$network_interface inet \(manual\|dhcp\)/c\\iface $network_interface inet static\n    address $HOST_IP\n    netmask $NETMASK\n    broadcast $BROAD_IP" /etc/network/interfaces
+        sed -i "/$network_interface inet \(manual\|dhcp\)/c\\iface $network_interface inet static\n    address $TINKERBELL_HOST_IP\n    netmask $NETMASK\n    broadcast $BROAD_IP" /etc/network/interfaces
     fi
     ifdown  $network_interface
     ifup  $network_interface
 
-    sudo ip addr add $NGINX_IP/$IP_CIDR dev $network_interface
+    sudo ip addr add $TINKERBELL_NGINX_IP/$IP_CIDR dev $network_interface
 }
 
 function setup_osie_with_nginx() {
@@ -65,17 +65,17 @@ function build_and_setup_certs () {
     sudo apt-get install -y wget ca-certificates
 
     cd ~/go/src/github.com/tinkerbell/tink
-    grep "$HOST_IP" tls/server-csr.in.json
+    grep "$TINKERBELL_HOST_IP" tls/server-csr.in.json
     if [[ $? -eq 1 ]]
     then
-        sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$HOST_IP\"\,/g" tls/server-csr.in.json
+        sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$TINKERBELL_HOST_IP\"\,/g" tls/server-csr.in.json
     fi
     # build the certificates
     docker-compose up --build -d certs
     sleep 5
     # update host to trust registry certificate
-    mkdir -p /etc/docker/certs.d/$HOST_IP
-    cp certs/ca.pem /etc/docker/certs.d/$HOST_IP/ca.crt
+    mkdir -p /etc/docker/certs.d/$TINKERBELL_HOST_IP
+    cp certs/ca.pem /etc/docker/certs.d/$TINKERBELL_HOST_IP/ca.crt
 
     # copy certificate in tinkerbell
     cp certs/ca.pem /etc/tinkerbell/nginx/workflow/ca.pem
@@ -88,11 +88,16 @@ function build_registry_and_update_worker_image() {
 
     # pull the worker image and push into private registry
     docker pull quay.io/tinkerbell/tink-worker:latest
-    docker tag quay.io/tinkerbell/tink-worker:latest $HOST_IP/tink-worker:latest
+    docker tag quay.io/tinkerbell/tink-worker:latest $TINKERBELL_HOST_IP/tink-worker:latest
+
+    # pull the fluent-bit image and push into private registry
+    docker pull fluent/fluent-bit:1.3
+    docker tag fluent/fluent-bit:1.3 "$TINKERBELL_HOST_IP"/fluent-bit:1.3
 
     # login to private registry and push the worker image
-    docker login -u=$TINKERBELL_REGISTRY_USER -p=$TINKERBELL_REGISTRY_PASS $HOST_IP
-    docker push $HOST_IP/tink-worker:latest
+    docker login -u=$TINKERBELL_REGISTRY_USER -p=$TINKERBELL_REGISTRY_PASSWORD $TINKERBELL_HOST_IP
+    docker push $TINKERBELL_HOST_IP/tink-worker:latest
+    docker push $TINKERBELL_HOST_IP/fluent-bit:1.3
 }
 
 function start_docker_stack() {
@@ -115,9 +120,9 @@ function start_docker_stack() {
 }
 
 function update_iptables() {
-    iptables -t nat -I POSTROUTING -s $HOST_IP/$IP_CIDR  -j MASQUERADE
-    iptables -I FORWARD -d $HOST_IP/$IP_CIDR  -j ACCEPT
-    iptables -I FORWARD -s $HOST_IP/$IP_CIDR  -j ACCEPT
+    iptables -t nat -I POSTROUTING -s $TINKERBELL_HOST_IP/$IP_CIDR  -j MASQUERADE
+    iptables -I FORWARD -d $TINKERBELL_HOST_IP/$IP_CIDR  -j ACCEPT
+    iptables -I FORWARD -s $TINKERBELL_HOST_IP/$IP_CIDR  -j ACCEPT
 }
 
 initial_install;
