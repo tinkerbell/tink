@@ -29,7 +29,11 @@ cprout=/statedir/cpr.json
 # custom
 mkdir -p $target
 mkdir -p $target/boot
-mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+
+if [[ -d /sys/firmware/efi ]]; then
+    mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+fi
+
 mount -t ext4 /dev/sda3 $target
 mkdir -p $target/boot/efi
 

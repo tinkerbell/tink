@@ -38,28 +38,25 @@ function setup_network() {
 }
 
 function setup_osie_with_nginx() {
-    mkdir -p /packet/nginx/misc/osie/current
-    mkdir -p /packet/nginx/workflow/
-    cd /packet/nginx/workflow/
+    mkdir -p /etc/tinkerbell/nginx/misc/osie/current
+    mkdir -p /etc/tinkerbell/nginx/workflow/
+    cd /etc/tinkerbell/nginx/workflow/
     wget https://raw.githubusercontent.com/tinkerbell/osie/master/installer/workflow-helper.sh
     wget https://raw.githubusercontent.com/tinkerbell/osie/master/installer/workflow-helper-rc
     chmod +x workflow-helper.sh
 
     cd /tmp
-    curl 'https://packet-osie-uploads.s3.amazonaws.com/osie-v19.10.23.00-n=55,c=be58d67,b=master.tar.gz' -o osie.tar.gz
-    tar -zxvf osie.tar.gz
-    cd /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master'
-    cp -r grub /packet/nginx/misc/osie/current/
-    cp modloop-x86_64 /packet/nginx/misc/osie/current/
-#    cp initramfs-x86_64 /packet/nginx/misc/osie/current/
-#    cp vmlinuz-x86_64 /packet/nginx/misc/osie/current/
-    rm /tmp/'osie-v19.10.23.00-n=55,c=be58d67,b=master' -rf
+    curl 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o osie.tar.gz
+    mkdir osie-latest
+    tar -zxvf osie.tar.gz -C osie-latest --strip-components 1
+    cd /tmp/'osie-latest'
+    cp -r grub /etc/tinkerbell/nginx/misc/osie/current/
+    cp modloop-x86_64 /etc/tinkerbell/nginx/misc/osie/current/
+    cp initramfs-x86_64 /etc/tinkerbell/nginx/misc/osie/current/
+    cp vmlinuz-x86_64 /etc/tinkerbell/nginx/misc/osie/current/
+    rm /tmp/'osie-latest' -rf
 
-    cd ~/go/src/github.com/tinkerbell/tink/demo/misc/osie
-    cp initramfs-x86_64 /packet/nginx/misc/osie/current/
-    cp vmlinuz-x86_64 /packet/nginx/misc/osie/current/
-
-    cd /packet/nginx/misc/osie/current
+    cd /etc/tinkerbell/nginx/misc/osie/current
     curl 'https://packet-osie-uploads.s3.amazonaws.com/ubuntu_18_04.tar.gz' -o ubuntu_18_04.tar.gz
     tar -zxvf ubuntu_18_04.tar.gz
     rm ubuntu_18_04.tar.gz
@@ -81,7 +78,7 @@ function build_and_setup_certs () {
     cp certs/ca.pem /etc/docker/certs.d/$HOST_IP/ca.crt
 
     # copy certificate in tinkerbell
-    cp certs/ca.pem /packet/nginx/workflow/ca.pem
+    cp certs/ca.pem /etc/tinkerbell/nginx/workflow/ca.pem
 }
 
 function build_registry_and_update_worker_image() {
