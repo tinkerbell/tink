@@ -36,22 +36,37 @@ list_network_interfaces() {
 }
 
 get_tinkerbell_network_interface() {
-	read -p 'Which one would you like to use for with Tinkerbell? ' tink_interface	
-	ip -o link show | awk -F': ' '{print $2}' | sed 's/[ \t].*//;/^\(lo\|\)$/d' | sed 's/[ \t].*//;/^\(bond0\|\)$/d' | grep "$tink_interface"
+    # read for network interface if TB_INTERFACE is not defined
+	if [ -z $TB_INTERFACE ]; then
+		read -p 'Which one would you like to use for with Tinkerbell? ' tink_interface	
+	else
+        tink_interface=$TB_INTERFACE
+	fi
 	
-	if [ $? -ne 0 ]; then
-		echo "$ERR Invalid interface selected. Exiting setup."
-		exit 1
-	fi	
-	echo -e "# Network interface for Tinkerbell \nexport TINKERBELL_NETWORK_INTERFACE=$tink_interface" >> "$ENV_FILE"	
+    ip -o link show | awk -F': ' '{print $2}' | sed 's/[ \t].*//;/^\(lo\|\)$/d' | sed 's/[ \t].*//;/^\(bond0\|\)$/d' | grep "$tink_interface"
+    if [ $? -ne 0 ]; then
+        echo "$ERR Invalid interface selected. Exiting setup."
+        exit 1
+    fi	
+    echo -e "# Network interface for Tinkerbell \nexport TINKERBELL_NETWORK_INTERFACE=$tink_interface" >> "$ENV_FILE"	
 }
 
 get_tinkerbell_ips() {
-	read -p 'Select the subnet for Tinkerbell ecosystem: [default 192.168.1.0/29]: ' tink_network
-	tink_network=${tink_network:-"192.168.1.0/29"}
+	# read for tinkerbell network if TB_NETWORK is not defined
+	if [ -z $TB_NETWORK ]; then
+		read -p 'Select the subnet for Tinkerbell ecosystem: [default 192.168.1.0/29]: ' tink_network
+		tink_network=${tink_network:-"192.168.1.0/29"}
+	else
+		tink_network=$TB_NETWORK
+	fi
 
-	read -p 'Select the IP address for Tinkerbell [default 192.168.1.1]: ' ip_addr	
-	ip_addr=${ip_addr:-"192.168.1.1"}	
+	# read for tinkerbell IP address if TB_IPADDR is not defined
+	if [ -z $TB_IPADDR ]; then
+		read -p 'Select the IP address for Tinkerbell [default 192.168.1.1]: ' ip_addr	
+		ip_addr=${ip_addr:-"192.168.1.1"}	
+	else
+		ip_addr=$TB_IPADDR
+	fi
 
 	host=$(($(echo $ip_addr | cut -d "." -f 4 | xargs) + 1))
 	nginx_ip="$(echo $ip_addr | cut -d "." -f 1).$(echo $ip_addr | cut -d "." -f 2).$(echo $ip_addr | cut -d "." -f 3).$host"
@@ -107,12 +122,14 @@ toaddr() {
 }
 
 get_registry_credentials() {
-	read -p 'Create a Docker registry username [default admin]? ' username	
-	username=${username:-"admin"}
-
-	read -sp 'Registry password [default admin]? ' password	
-	password=${password:-"admin"}
-
+	# read for registry username if TB_REGUSER is not defined
+	if [ -z $TB_REGUSER ]; then
+		read -p 'Create a Docker registry username [default admin]? ' username	
+		username=${username:-"admin"}
+	else 
+		username=$TB_REGUSER
+	fi
+	password=$(head -c 12 /dev/urandom | sha256sum | cut -d' ' -f1)
 	echo -e "\n# We host a private Docker registry on provisioner which is used by different workers" >> "$ENV_FILE"	
 	echo -e "# Registry username \nexport TINKERBELL_REGISTRY_USERNAME=$username" >> "$ENV_FILE"	
 	echo -e "\n# Registry password \nexport TINKERBELL_REGISTRY_PASSWORD=$password" >> "$ENV_FILE"	
@@ -162,6 +179,18 @@ is_network_configured() {
     ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_HOST_IP >> /dev/null && ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_NGINX_IP >> /dev/null
 }
 
+write_iface_config(){
+    iface_config="$(cat <<EOF | sed 's/^\s\{4\}//g' | sed ':a;N;$!ba;s/\n/\\n/g'
+    iface $TINKERBELL_NETWORK_INTERFACE inet static
+        address $TINKERBELL_HOST_IP
+        netmask $TINKERBELL_NETMASK
+        broadcast $TINKERBELL_BROADCAST_IP
+        pre-up sleep 4
+EOF
+    )"
+    sed -i "/^iface $TINKERBELL_NETWORK_INTERFACE/,/^\$/c $iface_config" /etc/network/interfaces
+}
+
 setup_networking() {
 	if ! is_network_configured ; then
 		cidr=$(echo $TINKERBELL_NETWORK | grep -Eo "\/[[:digit:]]+" | grep -v "^$" | tr -d "/")
@@ -176,39 +205,26 @@ setup_networking() {
 				 	echo "$INFO tinkerbell network interface is already configured"
 				else 
 				 	# plumb IP and restart to tinkerbell network interface
-					sed -i "/$TINKERBELL_NETWORK_INTERFACE inet \(manual\|dhcp\)/c\\iface $TINKERBELL_NETWORK_INTERFACE inet static\n    address $TINKERBELL_HOST_IP\n    netmask $TINKERBELL_NETMASK\n    broadcast $TINKERBELL_BROADCAST_IP" /etc/network/interfaces
+					echo "" >> /etc/network/interfaces
+					write_iface_config  
 					ifdown "$TINKERBELL_NETWORK_INTERFACE"
 					ifup "$TINKERBELL_NETWORK_INTERFACE"					
 				fi
 				# add NGINX IP
-				if ! sudo ip addr add "$TINKERBELL_NGINX_IP/$cidr" dev "$TINKERBELL_NETWORK_INTERFACE"; then
+				if ! ip addr add "$TINKERBELL_NGINX_IP/$cidr" dev "$TINKERBELL_NETWORK_INTERFACE"; then
 					echo "$ERR failed to add NGINX IP address to network interface - $TINKERBELL_NETWORK_INTERFACE"
 					exit 1
 				fi
 				;;
 			centos)
-				if ! systemctl enable NetworkManager; then 
-					echo "$ERR failed to enable NetworkManager"
-					exit 1
-				fi  
-				if ! systemctl start NetworkManager; then
-					echo "$ERR failed to start NetworkManager"
-					exit 1
-				fi    
-				if ! nmcli con add type ethernet con-name $TINKERBELL_NETWORK_INTERFACE ifname $TINKERBELL_NETWORK_INTERFACE ip4 $TINKERBELL_HOST_IP/$cidr; then
-					echo "$ERR failed to add IP address to interface $TINKERBELL_NETWORK_INTERFACE"
-					exit 1
-				fi
-				if ! nmcli con up $TINKERBELL_NETWORK_INTERFACE; then
-					echo "$ERR failed to bring up the interface $TINKERBELL_NETWORK_INTERFACE"
-					exit 1
-				fi
-
-				# add NGINX IP
-				if ! ip addr add $TINKERBELL_NGINX_IP/$cidr dev $TINKERBELL_NETWORK_INTERFACE; then
-					echo "$ERR failed to add NGINX IP address to network interface - $TINKERBELL_NETWORK_INTERFACE"
-					exit 1
-				fi
+				sed -i '/^ONBOOT.*no$/s/no/yes/; /^BOOTPROTO.*none$/s/none/static/; /^MASTER/d; /^SLAVE/d' /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+				cat <<EOF >> /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+IPADDR0=$TINKERBELL_HOST_IP
+NETMASK0=$TINKERBELL_NETMASK
+IPADDR1=$TINKERBELL_NGINX_IP
+NETMASK1=$TINKERBELL_NETMASK
+EOF
+				systemctl restart network
 				;;
 		esac
 		echo "$INFO tinkerbell network interface configured successfully"
@@ -219,7 +235,7 @@ setup_networking() {
 
 setup_osie() {
 	osie_current=/etc/tinkerbell/nginx/misc/osie/current
-	tink_workflow=/etc/tinkerbell/nginx/misc/tinkerbell/workflow/
+	tink_workflow=/etc/tinkerbell/nginx/workflow/
 	if [ ! -d "$osie_current" ] && [ ! -d "$tink_workflow" ]; then 
 		mkdir -p "$osie_current"
     	mkdir -p "$tink_workflow"
@@ -262,13 +278,15 @@ gen_certs() {
 		exit 1
 	fi
 
-	# update host to trust registry certificate
-	if mkdir -p /etc/docker/certs.d/"$TINKERBELL_HOST_IP"; then
-		cp "$deploy"/certs/ca.pem /etc/docker/certs.d/"$TINKERBELL_HOST_IP"/ca.crt
+	certs_dir="/etc/docker/certs.d/$TINKERBELL_HOST_IP"
+	if [ ! -d "$certs_dir" ]; then
+		mkdir -p "$certs_dir"
 	fi
 
-	# copy public key to NGINX for workers
-	cp "$deploy"/certs/ca.pem /etc/tinkerbell/nginx/misc/tinkerbell/workflow/ca.pem
+	# update host to trust registry certificate
+	cp "$deploy"/certs/ca.pem "$certs_dir"/ca.crt
+	# copy public key to NGINX for workers 
+	cp "$deploy"/certs/ca.pem /etc/tinkerbell/nginx/workflow/ca.pem
 }
 
 generate_certificates() {
@@ -364,8 +382,8 @@ do_setup() {
 			;;
 		centos)
 			systemctl start docker
+			# enable IP forwarding for docker
 			echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
-			systemctl restart network
 			setup_networking "$lsb_dist"
 			setup_osie
 			generate_certificates

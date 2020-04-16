@@ -113,7 +113,7 @@ services:
       PACKET_VERSION: ${PACKET_VERSION:-ignored}
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
-      MIRROR_HOST: ${NGINX_IP:-127.0.0.1}
+      MIRROR_HOST: ${TINKERBELL_NGINX_IP:-127.0.0.1}
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
       DNS_SERVERS: 8.8.8.8
@@ -123,7 +123,7 @@ services:
       SYSLOG_BIND: $TINKERBELL_HOST_IP:514
       TFTP_BIND: $TINKERBELL_HOST_IP:69
       DOCKER_REGISTRY: $TINKERBELL_HOST_IP
-      REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
+      REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USERNAME
       REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
       TINKERBELL_GRPC_AUTHORITY: $TINKERBELL_HOST_IP:42113
       TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
@@ -149,7 +149,7 @@ services:
     ports:
       - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
-      - /packet/nginx/:/usr/share/nginx/html/
+      - /etc/tinkerbell/nginx/:/usr/share/nginx/html/
     logging:
       driver: fluentd
       options:
