@@ -57,7 +57,7 @@ function setup_osie_with_nginx() {
     rm /tmp/'osie-latest' -rf
 
     cd /etc/tinkerbell/nginx/misc/osie/current
-    curl 'https://packet-osie-uploads.s3.amazonaws.com/ubuntu_18_04.tar.gz' -o ubuntu_18_04.tar.gz
+    curl 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/ubuntu_18_04.tar.gz' -o ubuntu_18_04.tar.gz
     tar -zxvf ubuntu_18_04.tar.gz
     rm ubuntu_18_04.tar.gz
 }
