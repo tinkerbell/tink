@@ -18,7 +18,7 @@ resource "packet_vlan" "provisioning-vlan" {
 # Create a device and add it to tf_project_1
 resource "packet_device" "tf-provisioner" {
   hostname         = "tf-provisioner"
-  plan             = "t3.small.x86"
+  plan             = "c3.small.x86"
   facilities       = ["sjc1"]
   operating_system = "ubuntu_18_04"
   billing_cycle    = "hourly"
