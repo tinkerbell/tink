@@ -12,7 +12,7 @@ import (
 )
 
 // CreateTemplate creates a new workflow template
-func CreateTemplate(ctx context.Context, db *sql.DB, name string, data []byte, id uuid.UUID) error {
+func CreateTemplate(ctx context.Context, db *sql.DB, name string, data string, id uuid.UUID) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -40,9 +40,9 @@ func CreateTemplate(ctx context.Context, db *sql.DB, name string, data []byte, i
 }
 
 // GetTemplate returns a workflow template
-func GetTemplate(ctx context.Context, db *sql.DB, id string) ([]byte, error) {
+func GetTemplate(ctx context.Context, db *sql.DB, id string) (string, string, error) {
 	query := `
-	SELECT data
+	SELECT name, data
 	FROM template
 	WHERE
 		id = $1
@@ -50,10 +50,11 @@ func GetTemplate(ctx context.Context, db *sql.DB, id string) ([]byte, error) {
 		deleted_at IS NULL
 	`
 	row := db.QueryRowContext(ctx, query, id)
-	buf := []byte{}
-	err := row.Scan(&buf)
+	name := []byte{}
+	data := []byte{}
+	err := row.Scan(&name, &data)
 	if err == nil {
-		return buf, nil
+		return string(name), string(data), nil
 	}
 
 	if err != sql.ErrNoRows {
@@ -63,7 +64,7 @@ func GetTemplate(ctx context.Context, db *sql.DB, id string) ([]byte, error) {
 		err = nil
 	}
 
-	return []byte{}, nil
+	return "", "", nil
 }
 
 // DeleteTemplate deletes a workflow template
@@ -136,20 +137,20 @@ func ListTemplates(db *sql.DB, fn func(id, n string, in, del *timestamp.Timestam
 }
 
 // UpdateTemplate update a given template
-func UpdateTemplate(ctx context.Context, db *sql.DB, name string, data []byte, id uuid.UUID) error {
+func UpdateTemplate(ctx context.Context, db *sql.DB, name string, data string, id uuid.UUID) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	if data == nil && name != "" {
+	if data == "" && name != "" {
 		_, err = tx.Exec(`
 		UPDATE template 
 		SET 
 			updated_at = NOW(), name = $2
 		WHERE 
 			id = $1;`, id, name)
-	} else if data != nil && name == "" {
+	} else if data != "" && name == "" {
 		_, err = tx.Exec(`
 		UPDATE template 
 		SET 
