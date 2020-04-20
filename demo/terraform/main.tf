@@ -1,6 +1,6 @@
 # Configure the Packet Provider.
 provider "packet" {
-  auth_token = var.auth_token
+  auth_token = var.packet_api_token
 }
 
 # Declare your project ID
