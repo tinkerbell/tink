@@ -93,7 +93,7 @@ name: ubuntu_provisioning
 global_timeout: 2500
 tasks:
 - name: "os-installation"
-  worker: ""
+  worker: "98:03:9b:4b:c5:34"
   volumes:
     - /dev:/dev
     - /lib/firmware:/lib/firmware:ro
