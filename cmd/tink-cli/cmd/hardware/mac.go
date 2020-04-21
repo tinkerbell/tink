@@ -4,6 +4,7 @@ package hardware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -28,11 +29,15 @@ var macCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, mac := range args {
-			hw, err := client.HardwareClient.ByMAC(context.Background(), &hardware.GetRequest{MAC: mac})
+			hw, err := client.HardwareClient.ByMAC(context.Background(), &hardware.GetRequest{Mac: mac})
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(hw.JSON)
+			b, err := json.Marshal(hw)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(string(b))
 		}
 	},
 }

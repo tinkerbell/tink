@@ -34,13 +34,113 @@ message Empty {
 }
 
 message GetRequest {
-	string MAC = 1;
-	string IP = 2;
-	string ID = 3;
+	string mac = 1;
+	string ip = 2;
+	string id = 3;
 }
 
 message Hardware {
-	string JSON = 1;
+	message DHCP {
+		string mac = 1;
+		string ip = 2;
+		string hostname = 3;
+		int64 lease_time = 4;
+		repeated string name_servers = 5;
+		repeated string time_servers = 6;
+		string gateway = 7;
+		string arch = 8;
+		bool uefi = 9;
+		string iface_name = 10;
+	}
+	message Netboot {
+		message IPXE {
+			string url = 1;
+			string contents = 2;
+		}
+		message Bootstrapper {
+			string kernel = 1;
+			string initrd = 2;
+			string os = 3;
+		}
+
+		bool allow_pxe = 1;
+		bool allow_workflow = 2;
+		IPXE ipxe = 3;
+		Bootstrapper bootstrapper = 4;
+	}
+	message Network {
+		DHCP dhcp = 1;
+		Netboot netboot = 2;
+	}
+	message Metadata {
+		message Manufacturer {
+			string id = 1;
+			string slug = 2;
+		}
+		message Instance {
+			message OperatingSystem {
+				string slug = 1;
+				string distro = 2;
+				string version = 3;
+				string image_tag = 4;
+				string os_slug = 5;
+			}
+			message IP {
+				string address = 1;
+				string netmask = 2;
+				string gateway = 3;
+				int64 family = 4;
+				bool public = 5;
+				bool management = 6;
+			}
+			message Storage {
+				repeated string disks = 1;
+				repeated string raid = 2;
+				repeated string filesystems = 3;
+			}
+
+			string id = 1;
+			string state = 2;
+			string hostname = 3;
+			bool allow_pxe = 4;
+			bool rescue = 5;
+
+			OperatingSystem OS = 6;
+			bool always_pxe = 7;
+			string ipxe_script_url = 8;
+			repeated IP ips = 9;
+			string userdata = 10;
+
+			string crypted_root_password = 11;
+
+			repeated string tags = 12;
+			Storage storage = 13;
+			repeated string ssh_keys = 14;
+			bool network_ready = 15;
+		}
+		message Custom {
+			Instance.OperatingSystem preinstalled_os = 1;
+			repeated string private_subnets = 2;
+		}
+		message Facility {
+			string plan_slug = 1;
+			string plan_version_slug = 2;
+			string facility_code = 3;
+		}
+
+		string state = 1;
+		int64 bonding_mode = 2;
+		Manufacturer manufacturer = 3;
+		Instance instance = 4;
+		Custom custom = 5;
+		Facility facility = 6;
+	}
+
+	string id = 1;
+	DHCP dhcp = 2;
+	Netboot netboot = 3;
+	repeated Network network = 4;
+	Metadata metadata = 5;
 }
 
 message DeleteRequest {

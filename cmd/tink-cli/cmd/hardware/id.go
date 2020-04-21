@@ -4,6 +4,7 @@ package hardware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -22,11 +23,15 @@ var idCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, id := range args {
-			hw, err := client.HardwareClient.ByID(context.Background(), &hardware.GetRequest{ID: id})
+			hw, err := client.HardwareClient.ByID(context.Background(), &hardware.GetRequest{Id: id})
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(hw.JSON)
+			b, err := json.Marshal(hw)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(string(b))
 		}
 	},
 }

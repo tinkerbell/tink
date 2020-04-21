@@ -59,7 +59,7 @@ func updateTemplate(id string) {
 		}
 	} else {
 		req.Name = templateName
-		req.Data = readTemplateData()
+		req.Data = string(readTemplateData())
 	}
 
 	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)

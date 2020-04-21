@@ -125,25 +125,27 @@ func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardwar
 	}
 
 	metrics.CacheHits.With(labels).Inc()
-	return &hardware.Hardware{JSON: j}, nil
+	hw := &hardware.Hardware{}
+	json.Unmarshal([]byte(j), hw)
+	return hw, nil
 }
 
 func (s *server) ByMAC(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByMAC", func() (string, error) {
-		return db.GetByMAC(ctx, s.db, in.MAC)
+		return db.GetByMAC(ctx, s.db, in.Mac)
 	})
 }
 
 func (s *server) ByIP(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByIP", func() (string, error) {
-		return db.GetByIP(ctx, s.db, in.IP)
+		return db.GetByIP(ctx, s.db, in.Ip)
 	})
 }
 
 // ByID implements hardware.ByID
 func (s *server) ByID(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByID", func() (string, error) {
-		return db.GetByID(ctx, s.db, in.ID)
+		return db.GetByID(ctx, s.db, in.Id)
 	})
 }
 
@@ -165,8 +167,10 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.GetAll(s.db, func(j string) error {
-		return stream.Send(&hardware.Hardware{JSON: j})
+	err := db.GetAll(s.db, func(j []byte) error {
+		hw := &hardware.Hardware{}
+		json.Unmarshal(j, hw)
+		return stream.Send(hw)
 	})
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -178,16 +182,16 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 }
 
 func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_WatchServer) error {
-	l := logger.With("id", in.ID)
+	l := logger.With("id", in.Id)
 
 	ch := make(chan string, 1)
 	s.watchLock.Lock()
-	old, ok := s.watch[in.ID]
+	old, ok := s.watch[in.Id]
 	if ok {
 		l.Info("evicting old watch")
 		close(old)
 	}
-	s.watch[in.ID] = ch
+	s.watch[in.Id] = ch
 	s.watchLock.Unlock()
 
 	labels := prometheus.Labels{"method": "Watch", "op": "push"}
@@ -200,7 +204,7 @@ func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_
 			return
 		}
 		s.watchLock.Lock()
-		delete(s.watch, in.ID)
+		delete(s.watch, in.Id)
 		s.watchLock.Unlock()
 		close(ch)
 	}()
@@ -223,7 +227,7 @@ func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_
 			}
 
 			hw.Reset()
-			hw.JSON = j
+			json.Unmarshal([]byte(j), hw)
 			err := stream.Send(hw)
 			if err != nil {
 				metrics.CacheErrors.With(labels).Inc()

@@ -4,6 +4,7 @@ package hardware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -26,7 +27,7 @@ var watchCmd = &cobra.Command{
 		stdoutLock := sync.Mutex{}
 		for _, id := range args {
 			go func(id string) {
-				stream, err := client.HardwareClient.Watch(context.Background(), &hardware.GetRequest{ID: id})
+				stream, err := client.HardwareClient.Watch(context.Background(), &hardware.GetRequest{Id: id})
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -35,7 +36,11 @@ var watchCmd = &cobra.Command{
 				err = nil
 				for hw, err = stream.Recv(); err == nil && hw != nil; hw, err = stream.Recv() {
 					stdoutLock.Lock()
-					fmt.Println(hw.JSON)
+					b, err := json.Marshal(hw)
+					if err != nil {
+						log.Fatal(err)
+					}
+					fmt.Println(string(b))
 					stdoutLock.Unlock()
 				}
 				if err != nil && err != io.EOF {
