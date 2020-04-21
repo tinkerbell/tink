@@ -31,8 +31,10 @@ get_distribution() {
 }
 
 list_network_interfaces() {
-	echo "Following network interfaces found on the system:"
-	ip -o link show | awk -F': ' '{print $2}' | grep '^[e]'
+	if [ -z $TB_INTERFACE ]; then
+		echo "Following network interfaces found on the system:"
+		ip -o link show | awk -F': ' '{print $2}' | grep '^[e]'
+	fi
 }
 
 get_tinkerbell_network_interface() {
@@ -181,14 +183,22 @@ is_network_configured() {
 
 write_iface_config(){
     iface_config="$(cat <<EOF | sed 's/^\s\{4\}//g' | sed ':a;N;$!ba;s/\n/\\n/g'
-    iface $TINKERBELL_NETWORK_INTERFACE inet static
-        address $TINKERBELL_HOST_IP
-        netmask $TINKERBELL_NETMASK
+	auto $TINKERBELL_NETWORK_INTERFACE:0
+	iface $TINKERBELL_NETWORK_INTERFACE:0 inet static
+		address $TINKERBELL_HOST_IP
+		netmask $TINKERBELL_NETMASK
+		broadcast $TINKERBELL_BROADCAST_IP
+		pre-up sleep 4
+
+	auto $TINKERBELL_NETWORK_INTERFACE:1
+	iface $TINKERBELL_NETWORK_INTERFACE:1 inet static
+		address $TINKERBELL_NGINX_IP
+		netmask $TINKERBELL_NETMASK
         broadcast $TINKERBELL_BROADCAST_IP
-        pre-up sleep 4
+		pre-up sleep 4
 EOF
     )"
-    sed -i "/^iface $TINKERBELL_NETWORK_INTERFACE/,/^\$/c $iface_config" /etc/network/interfaces
+    sed -i "/^auto $TINKERBELL_NETWORK_INTERFACE/,/^\$/c $iface_config" /etc/network/interfaces
 }
 
 setup_networking() {
@@ -205,15 +215,19 @@ setup_networking() {
 				 	echo "$INFO tinkerbell network interface is already configured"
 				else 
 				 	# plumb IP and restart to tinkerbell network interface
-					echo "" >> /etc/network/interfaces
-					write_iface_config  
+					if grep -q $TINKERBELL_NETWORK_INTERFACE /etc/network/interfaces ; then 
+						echo "" >> /etc/network/interfaces
+						write_iface_config
+					else 
+						echo -e "\nauto $TINKERBELL_NETWORK_INTERFACE\n" >> /etc/network/interfaces
+						write_iface_config  
+					fi
+					
+					if ! command_exists ifdown; then
+						apt update && apt install -y ifupdown
+					fi 
 					ifdown "$TINKERBELL_NETWORK_INTERFACE"
 					ifup "$TINKERBELL_NETWORK_INTERFACE"					
-				fi
-				# add NGINX IP
-				if ! ip addr add "$TINKERBELL_NGINX_IP/$cidr" dev "$TINKERBELL_NETWORK_INTERFACE"; then
-					echo "$ERR failed to add NGINX IP address to network interface - $TINKERBELL_NETWORK_INTERFACE"
-					exit 1
 				fi
 				;;
 			centos)
@@ -254,6 +268,7 @@ setup_osie() {
 			popd
 		fi
 		popd
+		rm -f /tmp/osie.tar.gz
 	else 
 		echo "$INFO found existing osie files, skipping osie setup"
 	fi
@@ -364,6 +379,7 @@ do_setup() {
 	echo "$INFO getting setup artifacts"	
 	wget https://github.com/infracloudio/tink/raw/deploy_stack/deploy.tar.gz
 	tar -xf deploy.tar.gz
+	rm -f deploy.tar.gz
 
 	# Run setup for each distro accordingly
 	case "$lsb_dist" in
