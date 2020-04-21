@@ -335,7 +335,7 @@ start_registry() {
 	docker tag quay.io/tinkerbell/tink-worker:latest "$TINKERBELL_HOST_IP"/tink-worker:latest
 	docker pull fluent/fluent-bit:1.3 
 	docker tag fluent/fluent-bit:1.3 "$TINKERBELL_HOST_IP"/fluent-bit:1.3
-	docker login -u="$TINKERBELL_REGISTRY_USERNAME" -p="$TINKERBELL_REGISTRY_PASSWORD" "$TINKERBELL_HOST_IP"
+	echo -n "$TINKERBELL_REGISTRY_PASSWORD" | docker login -u="$TINKERBELL_REGISTRY_USERNAME" --password-stdin "$TINKERBELL_HOST_IP"
 	docker push "$TINKERBELL_HOST_IP"/tink-worker:latest
 	docker push "$TINKERBELL_HOST_IP"/fluent-bit:1.3
 }
