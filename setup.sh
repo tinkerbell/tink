@@ -367,37 +367,38 @@ start_components() {
 
 check_prerequisites() {
 	echo "$INFO verifying prerequisites"
-	if command_exists git; then
-		echo "$BLANK- git already installed, found $(git --version)"
-	else
-		echo "$BLANK- installing git"
-		apt-get update >> /dev/null && apt-get install -y --no-install-recommends git >> /dev/null 
-		echo "$BLANK- $(git --version) installed successfully"
-	fi
-
-	if command_exists ifdown; then
-		echo "$BLANK- ifupdown already installed"
-	else
-		echo "$BLANK- installing ifupdown"
-		apt-get install -y ifupdown >> /dev/null && echo "$BLANK- ifupdown installed successfully"
-	fi
-
-	# TODO: verify if all required ports are available
-}	
-
-do_setup() {
-	check_prerequisites
-	echo "$INFO starting tinkerbell stack setup"
-
-	# perform some very rudimentary platform detection
-	lsb_dist=$( get_distribution )
-	lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
-
-	# setup the prerequisites
-	generate_envrc
-	source $ENV_FILE 
+	case "$1" in 
+		ubuntu)
+			if command_exists git; then
+				echo "$BLANK- git already installed, found $(git --version)"
+			else
+				echo "$BLANK- updating packages"
+				apt-get update >> /dev/null
+				echo "$BLANK- installing git"
+				apt-get install -y --no-install-recommends git >> /dev/null 
+				echo "$BLANK- $(git --version) installed successfully"
+			fi			
+			if command_exists ifdown; then
+				echo "$BLANK- ifupdown already installed"
+			else
+				echo "$BLANK- installing ifupdown"
+				apt-get install -y ifupdown >> /dev/null && echo "$BLANK- ifupdown installed successfully"
+			fi
+			;;
+		centos)
+			if command_exists git; then
+				echo "$BLANK- git already installed, found $(git --version)"
+			else
+				echo "$BLANK- updating packages"
+				yum update -y >> /dev/null
+				echo "$BLANK- installing git"
+				yum install -y git >> /dev/null 
+				echo "$BLANK- $(git --version) installed successfully"
+			fi	
+			;;	
+	esac
+	
 	setup_docker
-
 	# get resources
 	echo "$INFO getting https://github.com/tinkerbell/tink for latest artifacts"	
 	if [ -d tink ]; then
@@ -407,6 +408,18 @@ do_setup() {
 		git clone --single-branch -b master https://github.com/tinkerbell/tink
 		cd tink
 	fi	
+	# TODO: verify if all required ports are available
+}	
+
+do_setup() {
+	# perform some very rudimentary platform detection
+	lsb_dist=$( get_distribution )
+	lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
+
+	echo "$INFO starting tinkerbell stack setup"
+	check_prerequisites "$lsb_dist"
+	generate_envrc
+	source $ENV_FILE 
 
 	# Run setup for each distro accordingly
 	case "$lsb_dist" in
