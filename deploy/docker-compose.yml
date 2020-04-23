@@ -7,6 +7,7 @@ services:
 
   tink-server:
     image: quay.io/tinkerbell/tink:latest
+    restart: unless-stopped
     environment:
       FACILITY: ${FACILITY:-onprem}
       PACKET_ENV: ${PACKET_ENV:-testing}
@@ -41,7 +42,8 @@ services:
 
   db:
     build:
-      context: deploy
+      context: db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: tinkerbell
       POSTGRES_PASSWORD: tinkerbell
@@ -63,13 +65,10 @@ services:
 
   tink-cli:
     image: quay.io/tinkerbell/tink-cli:latest
+    restart: unless-stopped
     environment:
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
       TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
-    logging:
-      driver: fluentd
-      options:
-        tag: tink-cli
     depends_on:
       tink-server:
         condition: service_healthy
@@ -81,8 +80,9 @@ services:
     build:
       context: registry
       args:
-        REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
-        REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASS
+        REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USERNAME
+        REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
+    restart: unless-stopped
     environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
@@ -103,8 +103,9 @@ services:
 
   boots:
     image: quay.io/tinkerbell/boots:latest
+    restart: unless-stopped
     network_mode: host
-    command: -dhcp-addr 0.0.0.0:67 -tftp-addr $HOST_IP:69 -http-addr $HOST_IP:80 -log-level DEBUG
+    command: -dhcp-addr 0.0.0.0:67 -tftp-addr $TINKERBELL_HOST_IP:69 -http-addr $TINKERBELL_HOST_IP:80 -log-level DEBUG
     environment:
       API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-ignored}
       API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
@@ -113,21 +114,21 @@ services:
       PACKET_VERSION: ${PACKET_VERSION:-ignored}
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
-      MIRROR_HOST: ${NGINX_IP:-127.0.0.1}
+      MIRROR_HOST: ${TINKERBELL_NGINX_IP:-127.0.0.1}
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
       DNS_SERVERS: 8.8.8.8
-      PUBLIC_IP: $HOST_IP
-      BOOTP_BIND: $HOST_IP:67
-      HTTP_BIND: $HOST_IP:80
-      SYSLOG_BIND: $HOST_IP:514
-      TFTP_BIND: $HOST_IP:69
-      DOCKER_REGISTRY: $HOST_IP
-      REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USER
-      REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASS
-      TINKERBELL_GRPC_AUTHORITY: $HOST_IP:42113
-      TINKERBELL_CERT_URL: http://$HOST_IP:42114/cert
-      ELASTIC_SEARCH_URL: $HOST_IP:9200
+      PUBLIC_IP: $TINKERBELL_HOST_IP
+      BOOTP_BIND: $TINKERBELL_HOST_IP:67
+      HTTP_BIND: $TINKERBELL_HOST_IP:80
+      SYSLOG_BIND: $TINKERBELL_HOST_IP:514
+      TFTP_BIND: $TINKERBELL_HOST_IP:69
+      DOCKER_REGISTRY: $TINKERBELL_HOST_IP
+      REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USERNAME
+      REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
+      TINKERBELL_GRPC_AUTHORITY: $TINKERBELL_HOST_IP:42113
+      TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
+      ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
     depends_on:
       fluentbit:
         condition: service_started
@@ -138,7 +139,7 @@ services:
         options:
           tag: boots
     ports:
-      - $HOST_IP:80:80/tcp
+      - $TINKERBELL_HOST_IP:80:80/tcp
       - 67:67/udp
       - 69:69/udp
     
@@ -147,9 +148,9 @@ services:
     restart: unless-stopped
     tty: true
     ports:
-      - $NGINX_IP:80:80/tcp
+      - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
-      - /packet/nginx/:/usr/share/nginx/html/
+      - /var/tinkerbell/nginx/:/usr/share/nginx/html/
     logging:
       driver: fluentd
       options:
@@ -157,6 +158,7 @@ services:
 
   elasticsearch:
     image: elasticsearch:7.3.0
+    restart: unless-stopped
     ports:
       - 9200:9200
       - 9300:9300
@@ -168,7 +170,7 @@ services:
     image: kibana:7.3.0
     depends_on:
       - elasticsearch
-    restart: always
+    restart: unless-stopped
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
@@ -176,6 +178,7 @@ services:
 
   fluentbit:
     image: fluent/fluent-bit:1.3
+    restart: unless-stopped
     ports:
       - 24224:24224
       - 24224:24224/udp
@@ -186,6 +189,7 @@ services:
 
   cacher:
     image: quay.io/packet/cacher:workflow
+    restart: unless-stopped
     environment:
       FACILITY: ${FACILITY:-onprem}
       PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
@@ -217,6 +221,7 @@ services:
 
   hegel:
     image: quay.io/tinkerbell/hegel:latest
+    restart: unless-stopped
     network_mode: host
     environment:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}

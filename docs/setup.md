@@ -1,43 +1,79 @@
-# Setup the Provisioner machine with docker-compose.yml file
+# Setup the Provisioner
 
-## Install git and git lfs as follows
+### Prerequisites
+ - The setup must be executed as a privileged or root user. 
+ - The setup downloads about 1.5GB of assets, therefore, it is advised to have a minimum of 10GB disk space available before you begin. 
 
-1. ### Setup git and git lfs
-    ```shell
-    $ sudo apt install -y git  
-    $ wget https://github.com/git-lfs/git-lfs/releases/download/v2.9.0/git-lfs-linux-amd64-v2.9.0.tar.gz  
-    $ tar -C /usr/local/bin -xzf git-lfs-linux-amd64-v2.9.0.tar.gz  
-    $ rm git-lfs-linux-amd64-v2.9.0.tar.gz  
-    $ git lfs install  
+### Interactive Mode
+Execute the following commands to bring up the Tinkerbell stack with an interactive setup:
+```shell
+$ wget https://raw.githubusercontent.com/tinkerbell/tink/master/setup.sh && chmod +x setup.sh
+$ ./setup.sh
+```
 
-2. ### Setup go
-    ```shell
-    $ wget https://dl.google.com/go/go1.13.9.linux-amd64.tar.gz
-    $ tar -C /usr/local -xzf go1.13.9.linux-amd64.tar.gz go/
-    $ rm go1.12.13.linux-amd64.tar.gz
+### Declarative Mode
+You can also execute the setup in declarative mode. In order to do so, define the following environment variables (examples here):
+```shell
+export TB_INTERFACE=network-interface         # enp1s0f1
+export TB_NETWORK=network-with-cidr           # 192.168.1.0/29
+export TB_IPADDR=provisioner-ip-address       # 192.168.1.1
+export TB_REGUSER=registry-username           # admin
+```
 
-3. ### Set GOPATH
-    ```shell
-    $ echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-    $ echo 'export GOPATH=$GOPATH:$HOME/go' >> ~/.bashrc
-    $ echo 'export PATH=$PATH:$GOPATH' >> ~/.bashrc
-    $ source ~/.bashrc
+Now, you can execute the setup with the following command:
+```shell
+$ curl https://raw.githubusercontent.com/tinkerbell/tink/master/setup.sh | bash
+```
 
-4. ### Install docker and docker-compose as follows:
-   ```shell
-    $ curl -L get.docker.com | bash
-    $ curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    $ chmod +x /usr/local/bin/docker-compose
+### Good to know
+ - All the environment variables are kept in the `envrc` file, which is generated from the setup itself.  
+ - It is advised that you keep all the environment variables in the same file. 
+ - It is important to note that if you execute the setup the again, a new `envrc` will be generated. However, the existing environment configuration be saved as `envrc.bak`.
+ - The setup removes all the `.tar.gz` files downloaded in process.
 
-5. ### Clone the tink repo in the $GOPATH
-    ```shell
-    $ mkdir -p ~/go/src/github.com/tinkerbell
-    $ cd ~/go/src/github.com/tinkerbell
-    $ git clone https://github.com/tinkerbell/tink.git
-    $ cd tink
+ # Setup the Provisioner
 
-6. ### Provide the input details in "inputenv" file
+### Prerequisites
+ - The setup must be executed as a privileged or root user. 
+ - The setup downloads about 1.5GB of assets, therefore, it is advised to have a minimum of 10GB disk space available before you begin. 
 
-7. ### Run the following command
-    ```
-    $ sudo ./setup_with_docker_compose.sh
+### Interactive Mode
+Execute the following commands to bring up the Tinkerbell stack with an interactive setup:
+```shell
+$ wget https://raw.githubusercontent.com/tinkerbell/tink/master/setup.sh && chmod +x setup.sh
+$ ./setup.sh
+```
+
+### Declarative Mode
+You can also execute the setup in declarative mode. In order to do so, define the following environment variables (examples here):
+```shell
+export TB_INTERFACE=network-interface         # enp1s0f1
+export TB_NETWORK=network-with-cidr           # 192.168.1.0/29
+export TB_IPADDR=provisioner-ip-address       # 192.168.1.1
+export TB_REGUSER=registry-username           # admin
+```
+
+Now, you can execute the setup with the following command:
+```shell
+$ curl https://raw.githubusercontent.com/tinkerbell/tink/master/setup.sh | bash
+```
+
+### Good to know
+ - All the environment variables are kept in the `envrc` file, which is generated from the setup itself.  
+ - It is advised that you keep all the environment variables in the same file. 
+ - It is important to note that if you execute the setup the again, a new `envrc` will be generated. However, the existing environment configuration be saved as `envrc.bak`.
+ - The setup removes all the `.tar.gz` files downloaded in process.
+
+### For Packet Environment
+
+The script was tested with:
+ - Server class: `c3.small.x86` 
+ - Operating System: Ubuntu 18.04 and CentOS 7
+ - Region: Amsterdam, NL (AMS1)
+ - ENV variables:
+ ```shell
+  export TB_INTERFACE=enp1s0f1
+  export TB_NETWORK=192.168.1.0/29
+  export TB_IPADDR=192.168.1.1
+  export TB_REGUSER=admin
+ ``` 
