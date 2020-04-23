@@ -3,4 +3,4 @@ tink-server
 **/tink-worker
 bin/
 certs/
-
+/tink

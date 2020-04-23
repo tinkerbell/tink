@@ -1,7 +1,15 @@
 package main
 
-import "github.com/tinkerbell/tink/cli/tink/cmd"
+import (
+	"fmt"
+	"os"
+
+	"github.com/tinkerbell/tink/cli/tink/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, fmt.Sprintf("%s", err.Error()))
+		os.Exit(1)
+	}
 }
