@@ -244,8 +244,6 @@ EOF
 		if is_network_configured ; then
 			echo "$INFO tinkerbell network interface configured successfully"
 		else 
-	else 
-		else 
 			echo "$ERR tinkerbell network interface configuration failed"
 		fi
 	else 
@@ -369,6 +367,14 @@ start_components() {
 
 check_prerequisites() {
 	echo "$INFO verifying prerequisites"
+	if command_exists git; then
+		echo "$BLANK- git already installed, found $(git --version)"
+	else
+		echo "$BLANK- installing git"
+		apt-get update >> /dev/null && apt-get install -y --no-install-recommends git >> /dev/null 
+		echo "$BLANK- $(git --version) installed successfully"
+	fi
+
 	if command_exists ifdown; then
 		echo "$BLANK- ifupdown already installed"
 	else
@@ -376,7 +382,7 @@ check_prerequisites() {
 		apt-get install -y ifupdown >> /dev/null && echo "$BLANK- ifupdown installed successfully"
 	fi
 
-	# TODO: verify if all  required ports are available
+	# TODO: verify if all required ports are available
 }	
 
 do_setup() {
@@ -393,11 +399,14 @@ do_setup() {
 	setup_docker
 
 	# get resources
-	# TODO: get from https://raw.githubusercontent.com/tinkerbell/tink/master/deploy.tar.gz
-	echo "$INFO getting setup artifacts"	
-	wget https://github.com/infracloudio/tink/raw/deploy_stack/deploy.tar.gz
-	tar -xf deploy.tar.gz
-	rm -f deploy.tar.gz
+	echo "$INFO getting https://github.com/tinkerbell/tink for latest artifacts"	
+	if [ -d tink ]; then
+		cd tink 
+		git checkout master && git pull >> /dev/null
+	else 
+		git clone --single-branch -b master https://github.com/tinkerbell/tink
+		cd tink
+	fi	
 
 	# Run setup for each distro accordingly
 	case "$lsb_dist" in
