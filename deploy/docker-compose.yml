@@ -69,10 +69,6 @@ services:
     environment:
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
       TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
-    logging:
-      driver: fluentd
-      options:
-        tag: tink-cli
     depends_on:
       tink-server:
         condition: service_healthy
