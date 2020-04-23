@@ -17,19 +17,23 @@ var rootCmd = &cobra.Command{
 	Short: "tinkerbell CLI",
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "facility", "f", "", "used to build grcp and http urls")
-	client.Setup()
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() error {
+	if !isHelpCommand() {
+		client.Setup()
+	}
+
+	return rootCmd.Execute()
+}
+
+func isHelpCommand() bool {
+	return len(os.Args) == 1 || (len(os.Args) == 2 && os.Args[1] == "--help")
 }
 
 // initConfig reads in config file and ENV variables if set.
