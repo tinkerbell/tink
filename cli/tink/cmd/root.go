@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "facility", "f", "", "used to build grcp and http urls")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "facility", "f", "", "used to build grpc and http urls")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
