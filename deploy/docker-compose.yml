@@ -150,7 +150,7 @@ services:
     ports:
       - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
-      - /etc/tinkerbell/nginx/:/usr/share/nginx/html/
+      - /var/tinkerbell/nginx/:/usr/share/nginx/html/
     logging:
       driver: fluentd
       options:

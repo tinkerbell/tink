@@ -252,8 +252,8 @@ EOF
 }
 
 setup_osie() {
-	osie_current=/etc/tinkerbell/nginx/misc/osie/current
-	tink_workflow=/etc/tinkerbell/nginx/workflow/
+	osie_current=/var/tinkerbell/nginx/misc/osie/current
+	tink_workflow=/var/tinkerbell/nginx/workflow/
 	if [ ! -d "$osie_current" ] && [ ! -d "$tink_workflow" ]; then 
 		mkdir -p "$osie_current"
     	mkdir -p "$tink_workflow"
@@ -305,7 +305,7 @@ gen_certs() {
 	# update host to trust registry certificate
 	cp "$deploy"/certs/ca.pem "$certs_dir"/ca.crt
 	# copy public key to NGINX for workers 
-	cp "$deploy"/certs/ca.pem /etc/tinkerbell/nginx/workflow/ca.pem
+	cp "$deploy"/certs/ca.pem /var/tinkerbell/nginx/workflow/ca.pem
 }
 
 generate_certificates() {
