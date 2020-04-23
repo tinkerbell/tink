@@ -18,6 +18,7 @@ RESET="$(tput sgr0)"
 INFO="${GREEN}INFO:$RESET"
 ERR="${RED}ERROR:$RESET"
 WARN="${YELLOW}WARNING:$RESET"
+BLANK="      "
 
 get_distribution() {
 	lsb_dist=""
@@ -183,19 +184,19 @@ is_network_configured() {
 
 write_iface_config(){
     iface_config="$(cat <<EOF | sed 's/^\s\{4\}//g' | sed ':a;N;$!ba;s/\n/\\n/g'
-	auto $TINKERBELL_NETWORK_INTERFACE:0
-	iface $TINKERBELL_NETWORK_INTERFACE:0 inet static
-		address $TINKERBELL_HOST_IP
-		netmask $TINKERBELL_NETMASK
-		broadcast $TINKERBELL_BROADCAST_IP
-		pre-up sleep 4
-
-	auto $TINKERBELL_NETWORK_INTERFACE:1
-	iface $TINKERBELL_NETWORK_INTERFACE:1 inet static
-		address $TINKERBELL_NGINX_IP
-		netmask $TINKERBELL_NETMASK
+    auto $TINKERBELL_NETWORK_INTERFACE:0
+    iface $TINKERBELL_NETWORK_INTERFACE:0 inet static
+        address $TINKERBELL_HOST_IP
+        netmask $TINKERBELL_NETMASK
         broadcast $TINKERBELL_BROADCAST_IP
-		pre-up sleep 4
+        pre-up sleep 4
+
+    auto $TINKERBELL_NETWORK_INTERFACE:1
+    iface $TINKERBELL_NETWORK_INTERFACE:1 inet static
+        address $TINKERBELL_NGINX_IP
+        netmask $TINKERBELL_NETMASK
+        broadcast $TINKERBELL_BROADCAST_IP
+        pre-up sleep 4
 EOF
     )"
     sed -i "/^auto $TINKERBELL_NETWORK_INTERFACE/,/^\$/c $iface_config" /etc/network/interfaces
@@ -222,12 +223,10 @@ setup_networking() {
 						echo -e "\nauto $TINKERBELL_NETWORK_INTERFACE\n" >> /etc/network/interfaces
 						write_iface_config  
 					fi
-					
-					if ! command_exists ifdown; then
-						apt update && apt install -y ifupdown
-					fi 
-					ifdown "$TINKERBELL_NETWORK_INTERFACE"
-					ifup "$TINKERBELL_NETWORK_INTERFACE"					
+					ifdown "$TINKERBELL_NETWORK_INTERFACE:0"
+					ifdown "$TINKERBELL_NETWORK_INTERFACE:1"
+					ifup "$TINKERBELL_NETWORK_INTERFACE:0"
+					ifup "$TINKERBELL_NETWORK_INTERFACE:1"
 				fi
 				;;
 			centos)
@@ -242,7 +241,13 @@ EOF
 				systemctl restart network
 				;;
 		esac
-		echo "$INFO tinkerbell network interface configured successfully"
+		if is_network_configured ; then
+			echo "$INFO tinkerbell network interface configured successfully"
+		else 
+	else 
+		else 
+			echo "$ERR tinkerbell network interface configuration failed"
+		fi
 	else 
 		echo "$INFO tinkerbell network interface is already configured"
 	fi
@@ -362,7 +367,20 @@ start_components() {
 	done
 }
 
+check_prerequisites() {
+	echo "$INFO verifying prerequisites"
+	if command_exists ifdown; then
+		echo "$BLANK- ifupdown already installed"
+	else
+		echo "$BLANK- installing ifupdown"
+		apt-get install -y ifupdown >> /dev/null && echo "$BLANK- ifupdown installed successfully"
+	fi
+
+	# TODO: verify if all  required ports are available
+}	
+
 do_setup() {
+	check_prerequisites
 	echo "$INFO starting tinkerbell stack setup"
 
 	# perform some very rudimentary platform detection
