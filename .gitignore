@@ -1,9 +1,8 @@
-tink-server
-**/tink-cli
-**/tink-worker
 bin/
 certs/
-/tink
+cmd/tink-cli/tink-cli
+cmd/tink-server/tink-server
+cmd/tink-worker/tink-worker
 
 # Terraform
 .terraform

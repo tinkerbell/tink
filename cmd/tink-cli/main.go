@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tinkerbell/tink/cli/tink/cmd"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd"
 )
 
 func main() {
