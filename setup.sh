@@ -344,6 +344,10 @@ start_registry() {
 }
 
 setup_docker_registry() {
+	registry_images=/var/tinkerbell/registry
+	if [ ! -d "$registry_images" ]; then
+		mkdir -p "$registry_images"
+	fi
 	if [ -f ~/.docker/config.json ]; then 
 		if grep -q "$TINKERBELL_HOST_IP" ~/.docker/config.json; then
 			echo "$INFO found existing docker auth token for registry $TINKERBELL_HOST_IP, using existing registry"
