@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "facility", "f", "", "used to build grcp and http urls")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "facility", "f", "", "used to build grpc and http urls")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -33,7 +33,7 @@ func Execute() error {
 }
 
 func isHelpCommand() bool {
-	return len(os.Args) == 1 || (len(os.Args) == 2 && os.Args[1] == "--help")
+	return len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-h" || os.Args[1] == "--help"))
 }
 
 // initConfig reads in config file and ENV variables if set.
