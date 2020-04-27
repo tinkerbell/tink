@@ -50,7 +50,7 @@ func updateTemplate(id string) {
 		req.Name = templateName
 	} else if filePath != "" && templateName == "" {
 		data := readTemplateData()
-		if data != nil {
+		if data != "" {
 			if err := tryParseTemplate(data); err != nil {
 				log.Println(err)
 				return
@@ -59,7 +59,7 @@ func updateTemplate(id string) {
 		}
 	} else {
 		req.Name = templateName
-		req.Data = string(readTemplateData())
+		req.Data = readTemplateData()
 	}
 
 	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)
@@ -69,7 +69,7 @@ func updateTemplate(id string) {
 	fmt.Println("Updated Template: ", id)
 }
 
-func readTemplateData() []byte {
+func readTemplateData() string {
 	f, err := os.Open(filePath)
 	if err != nil {
 		log.Println(err)
@@ -80,7 +80,7 @@ func readTemplateData() []byte {
 	if err != nil {
 		log.Println(err)
 	}
-	return data
+	return string(data)
 }
 
 func init() {
