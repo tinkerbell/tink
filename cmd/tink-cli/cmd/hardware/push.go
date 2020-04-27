@@ -51,7 +51,13 @@ tink hardware push --file /tmp/data.json`,
 		} else if s.ID == "" {
 			log.Fatalf("invalid json, ID is required: %s", data)
 		}
-		if _, err := client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: data}); err != nil {
+
+		hw := hardware.Hardware{}
+		err := json.Unmarshal([]byte(data), &hw)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if _, err := client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: &hw}); err != nil {
 			log.Fatal(err)
 		}
 		log.Println("Hardware data pushed successfully")

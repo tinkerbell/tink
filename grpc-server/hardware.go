@@ -23,39 +23,31 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	// must be a copy so deferred cacheInFlight.Dec matches the Inc
 	labels = prometheus.Labels{"method": "Push", "op": ""}
 
-	var h struct {
-		ID    string
-		State string
-	}
-	err := json.Unmarshal([]byte(in.Data), &h)
-	if err != nil {
+	hw := in.Data
+	if hw.Id == "" {
 		metrics.CacheTotals.With(labels).Inc()
 		metrics.CacheErrors.With(labels).Inc()
-		err = errors.Wrap(err, "unmarshal json")
+		err := errors.New("id must be set to a UUID")
 		logger.Error(err)
 		return &hardware.Empty{}, err
 	}
 
-	if h.ID == "" {
-		metrics.CacheTotals.With(labels).Inc()
-		metrics.CacheErrors.With(labels).Inc()
-		err = errors.New("id must be set to a UUID")
-		logger.Error(err)
-		return &hardware.Empty{}, err
-	}
-
-	logger.With("id", h.ID).Info("data pushed")
+	logger.With("id", hw.Id).Info("data pushed")
 
 	var fn func() error
 	msg := ""
-	if h.State != "deleted" {
+	data, err := json.Marshal(hw)
+	if err != nil {
+		logger.Error(err)
+	}
+	if hw.Metadata.State != "deleted" {
 		labels["op"] = "insert"
 		msg = "inserting into DB"
-		fn = func() error { return db.InsertIntoDB(ctx, s.db, in.Data) }
+		fn = func() error { return db.InsertIntoDB(ctx, s.db, string(data)) }
 	} else {
 		msg = "deleting from DB"
 		labels["op"] = "delete"
-		fn = func() error { return db.DeleteFromDB(ctx, s.db, h.ID) }
+		fn = func() error { return db.DeleteFromDB(ctx, s.db, hw.Id) }
 	}
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -75,12 +67,12 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	}
 
 	s.watchLock.RLock()
-	if ch := s.watch[h.ID]; ch != nil {
+	if ch := s.watch[hw.Id]; ch != nil {
 		select {
-		case ch <- in.Data:
+		case ch <- string(data):
 		default:
 			metrics.WatchMissTotal.Inc()
-			logger.With("id", h.ID).Info("skipping blocked watcher")
+			logger.With("id", hw.Id ).Info("skipping blocked watcher")
 		}
 	}
 	s.watchLock.RUnlock()

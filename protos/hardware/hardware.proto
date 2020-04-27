@@ -27,7 +27,7 @@ service HardwareService {
 }
 
 message PushRequest {
-	string data = 1;
+	Hardware data = 1;
 }
 
 message Empty {
