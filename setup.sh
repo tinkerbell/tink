@@ -223,6 +223,7 @@ setup_networking() {
 						echo -e "\nauto $TINKERBELL_NETWORK_INTERFACE\n" >> /etc/network/interfaces
 						write_iface_config  
 					fi
+					ip link set $TINKERBELL_NETWORK_INTERFACE nomaster
 					ifdown "$TINKERBELL_NETWORK_INTERFACE:0"
 					ifdown "$TINKERBELL_NETWORK_INTERFACE:1"
 					ifup "$TINKERBELL_NETWORK_INTERFACE:0"
