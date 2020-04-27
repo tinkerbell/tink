@@ -8,10 +8,10 @@ You have a setup ready with a provisioner and a worker node. If not, please foll
 
 ### Hardware Data
 
-While the data model changes are in progress, the following data should be enough to get your wofkflow rolling at the moment:
+While the data model changes are in progress, the following data should be enough to get your workflow rolling at the moment:
 ```json
 {
-  "id": "ce2e62ed-826f-4485-a39f-a82bb74338e2",     // device UUID
+  "id": "ce2e62ed-826f-4485-a39f-a82bb74338e2",     // hardware UUID
   "arch": "x86_64",
   "allow_pxe": true,
   "allow_workflow": true,                           // to boot into workflow mode
