@@ -28,7 +28,7 @@ provisioning workflows, that is...
    - [Fluent Bit](docs/components.md#fluent-bit)
    - [Kibana](docs/components.md#kibana)
  - [Architecture](docs/architecture.md)
- - [Example: First Good Workflow](docs/first-good-workflow.md)
+ - [Say "Hello-World!" with a Workflow](docs/hello-world.md)
  - [Concepts](docs/concepts.md)
    - [Template](docs/concepts.md#template)
    - [Target](docs/concepts.md#target)
