@@ -48,3 +48,8 @@ The script was tested with:
  ```shell
  $ curl https://raw.githubusercontent.com/tinkerbell/tink/master/setup.sh | bash
  ```
+
+### What's Next
+
+Once you have the provisioner setup successfully, you can try executing your first workflow. Follow the steps described in [here](hello-world.md) to say "Hello World!" with a workflow.
+
