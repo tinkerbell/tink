@@ -5,15 +5,16 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"text/template"
 
+	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	uuid "github.com/satori/go.uuid"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/metrics"
 	"github.com/tinkerbell/tink/protos/workflow"
 	workflowpb "github.com/tinkerbell/tink/protos/workflow"
-	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
-	uuid "github.com/satori/go.uuid"
 )
 
 var state = map[int32]workflow.State{
@@ -267,35 +268,33 @@ func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, tar string) (st
 	if err != nil {
 		return "", err
 	}
-	tarData, err := db.TargetsByID(ctx, sqlDB, tar)
-	if err != nil {
-		return "", err
-	}
-	return renderTemplate(string(tempData), []byte(tarData))
+	return renderTemplate(string(tempData), []byte(tar))
 }
 
 func renderTemplate(tempData string, tarData []byte) (string, error) {
-	type machine map[string]string
-	type Environment struct {
-		Targets map[string]machine `json:"targets"`
+	type Target struct {
+		Hardware map[string]string `json:hardware`
+	}
+	var target Target
+
+	err := json.Unmarshal(tarData, &target)
+	if err != nil {
+		logger.Error(err)
+		return "", nil
 	}
 
-	var env Environment
 	t := template.New("workflow-template")
-	_, err := t.Parse(tempData)
+	_, err = t.Parse(string(tempData))
 	if err != nil {
 		logger.Error(err)
 		return "", nil
 	}
-	err = json.Unmarshal(tarData, &env)
-	if err != nil {
-		logger.Error(err)
-		return "", nil
-	}
+
 	buf := new(bytes.Buffer)
-	err = t.Execute(buf, env)
+	err = t.Execute(buf, target)
 	if err != nil {
 		return "", nil
 	}
+	fmt.Println(buf.String())
 	return buf.String(), nil
 }

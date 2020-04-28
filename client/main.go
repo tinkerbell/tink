@@ -7,11 +7,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/protos/hardware"
-	"github.com/tinkerbell/tink/protos/target"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -19,7 +18,6 @@ import (
 // gRPC clients
 var (
 	TemplateClient template.TemplateClient
-	TargetClient   target.TargetClient
 	WorkflowClient workflow.WorkflowSvcClient
 	HardwareClient hardware.HardwareServiceClient
 )
@@ -66,15 +64,14 @@ func Setup() {
 		log.Fatal(err)
 	}
 	TemplateClient = template.NewTemplateClient(conn)
-	TargetClient = target.NewTargetClient(conn)
 	WorkflowClient = workflow.NewWorkflowSvcClient(conn)
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
 }
 
 func NewTinkerbellClient() (hardware.HardwareServiceClient, error) {
 	conn, err := GetConnection()
-        if err != nil {
-                log.Fatal(err)
-        }
+	if err != nil {
+		log.Fatal(err)
+	}
 	return hardware.NewHardwareServiceClient(conn), nil
 }

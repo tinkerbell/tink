@@ -12,12 +12,7 @@ var Log = logger
 
 // SetupWorkflow ... Set up workflow
 func SetupWorkflow(tar string, tmpl string) (string, error) {
-	//Add target machine mac/ip addr into targets table
-	targetID, err := CreateTargets(tar)
-	if err != nil {
-		return "", err
-	}
-	logger.Infoln("Target Created : ", targetID)
+	targetID := "c9d6faa4-08a2-4285-ae6c-f3401211bd56"
 	//Add template in template table
 	templateID, err := CreateTemplate(tmpl)
 	if err != nil {
