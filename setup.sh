@@ -19,6 +19,7 @@ INFO="${GREEN}INFO:$RESET"
 ERR="${RED}ERROR:$RESET"
 WARN="${YELLOW}WARNING:$RESET"
 BLANK="      "
+NEXT="\n${GREEN}NEXT:$RESET"
 
 get_distribution() {
 	lsb_dist=""
@@ -416,6 +417,11 @@ check_prerequisites() {
 	# TODO: verify if all required ports are available
 }	
 
+whats_next() {
+	echo "$NEXT With the provisioner setup successfully, you can now try executing your first workflow."
+	echo "$BLANK Follow the steps described in https://github.com/tinkerbell/tink/blob/master/docs/hello-world.md to say 'Hello World!' with a workflow."
+}
+
 do_setup() {
 	# perform some very rudimentary platform detection
 	lsb_dist=$( get_distribution )
@@ -440,6 +446,7 @@ do_setup() {
 				echo ""
 			done
 			echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
+			whats_next
 			exit 0
 			;;
 		centos)
@@ -456,6 +463,7 @@ do_setup() {
 				echo ""
 			done
 			echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
+			whats_next
 			exit 0
 			;;
 		*)
