@@ -3,11 +3,13 @@ package httpserver
 import (
 	"bytes"
 	"context"
+	"crypto/subtle"
 	"crypto/x509"
 	"encoding/json"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 
@@ -26,6 +28,8 @@ var (
 	gitRevJSON     []byte
 	grpcListenAddr = "localhost:42113"
 	httpListenAddr = ":42114"
+	authUsername   = os.Getenv("TINK_AUTH_USERNAME")
+	authPassword   = os.Getenv("TINK_AUTH_PASSWORD")
 	startTime      = time.Now()
 	logger         log.Logger
 )
@@ -69,7 +73,7 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	setupGitRevJSON()
 	http.HandleFunc("/version", versionHandler)
 	http.HandleFunc("/_packet/healthcheck", healthCheckHandler)
-	http.Handle("/", mux)
+	http.Handle("/", BasicAuth(mux))
 
 	srv := &http.Server{
 		Addr: httpListenAddr,
@@ -128,4 +132,18 @@ func setupGitRevJSON() {
 		panic(err)
 	}
 	gitRevJSON = b
+}
+
+func BasicAuth(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(authUsername)) != 1 ||
+			subtle.ConstantTimeCompare([]byte(pass), []byte(authPassword)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Tink Realm"`)
+			w.WriteHeader(401)
+			w.Write([]byte("401 Unauthorized\n"))
+			return
+		}
+		handler.ServeHTTP(w, r)
+	})
 }
