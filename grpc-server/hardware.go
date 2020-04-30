@@ -80,17 +80,6 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	return &hardware.Empty{}, err
 }
 
-func (s *server) Ingest(ctx context.Context, in *hardware.Empty) (*hardware.Empty, error) {
-	logger.Info("ingest")
-	labels := prometheus.Labels{"method": "Ingest", "op": ""}
-	metrics.CacheInFlight.With(labels).Inc()
-	defer metrics.CacheInFlight.With(labels).Dec()
-
-	logger.Info("Ingest called but is deprecated")
-
-	return &hardware.Empty{}, nil
-}
-
 func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardware, error) {
 	labels := prometheus.Labels{"method": method, "op": "get"}
 

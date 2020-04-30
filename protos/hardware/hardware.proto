@@ -21,7 +21,6 @@ service HardwareService {
             get: "/v1/hardware"
         };
 	};
-	rpc Ingest(Empty) returns (Empty);
 	rpc Watch(GetRequest) returns (stream Hardware);
 	rpc Delete(DeleteRequest) returns (Empty);
 }
