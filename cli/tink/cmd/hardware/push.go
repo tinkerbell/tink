@@ -3,42 +3,47 @@
 package hardware
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
+	"io"
 	"log"
+	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/hardware"
-	"github.com/spf13/cobra"
 )
 
 // pushCmd represents the push command
 var pushCmd = &cobra.Command{
 	Use:     "push",
 	Short:   "Push new hardware to tinkerbell",
-	Example: `tinkerbell hardware push '{"id":"2a1519e5-781c-4251-a979-3a6bedb8ba59", ...}' '{"id:"315169a4-a863-43ef-8817-2b6a57bd1eef", ...}'`,
-	Args: func(_ *cobra.Command, args []string) error {
+	Example: "cat data.json | tink hardware push",
+	Run: func(cmd *cobra.Command, args []string) {
+		data := readHardwareData(os.Stdin)
 		s := struct {
 			ID string
 		}{}
-		for _, arg := range args {
-			if json.NewDecoder(strings.NewReader(arg)).Decode(&s) != nil {
-				return fmt.Errorf("invalid json: %s", arg)
-			} else if s.ID == "" {
-				return fmt.Errorf("invalid json, ID is required: %s", arg)
-			}
+		if json.NewDecoder(strings.NewReader(data)).Decode(&s) != nil {
+			log.Fatalf("invalid json: %s", data)
+		} else if s.ID == "" {
+			log.Fatalf("invalid json, ID is required: %s", data)
 		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		for _, j := range args {
-			if _, err := client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: j}); err != nil {
-				log.Fatal(err)
-			}
+		if _, err := client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: data}); err != nil {
+			log.Fatal(err)
 		}
+		log.Println("Hardware data pushed successfully")
 	},
+}
+
+func readHardwareData(r io.Reader) string {
+	scanner := bufio.NewScanner(bufio.NewReader(r))
+	for scanner.Scan() {
+		return scanner.Text()
+	}
+	return ""
 }
 
 func init() {
