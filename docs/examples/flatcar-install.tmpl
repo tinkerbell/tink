@@ -1,0 +1,22 @@
+version: '0.1'
+name: flatcar-install
+global_timeout: 1800
+tasks:
+- name: "flatcar-install"
+  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  volumes:
+  - /dev:/dev
+  - /statedir:/statedir
+  actions:
+  - name: "dump-ignition"
+    image: alpine
+    command:
+    - sh
+    - -c
+    - echo 'eyJpZ25pdGlvbiI6eyJjb25maWciOnt9LCJzZWN1cml0eSI6eyJ0bHMiOnt9fSwidGltZW91dHMiOnt9LCJ2ZXJzaW9uIjoiMi4yLjAifSwibmV0d29ya2QiOnt9LCJwYXNzd2QiOnt9LCJzdG9yYWdlIjp7fSwic3lzdGVtZCI6e319' | base64 -d > /statedir/ignition.json
+  - name: "flatcar-install"
+    image: flatcar-install
+    command:
+    - -s
+    - -i
+    - /statedir/ignition.json
