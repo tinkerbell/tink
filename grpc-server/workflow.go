@@ -272,12 +272,8 @@ func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, tar string) (st
 }
 
 func renderTemplate(tempData string, tarData []byte) (string, error) {
-	type Target struct {
-		Hardware map[string]string `json:hardware`
-	}
-	var target Target
-
-	err := json.Unmarshal(tarData, &target)
+	var hardware map[string]interface{}
+	err := json.Unmarshal(tarData, &hardware)
 	if err != nil {
 		logger.Error(err)
 		return "", nil
@@ -291,7 +287,7 @@ func renderTemplate(tempData string, tarData []byte) (string, error) {
 	}
 
 	buf := new(bytes.Buffer)
-	err = t.Execute(buf, target)
+	err = t.Execute(buf, hardware)
 	if err != nil {
 		return "", nil
 	}
