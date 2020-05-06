@@ -3,7 +3,6 @@
 package hardware
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -18,8 +17,8 @@ import (
 )
 
 var (
-	filePath string
-	fPath    = "file-path"
+	file  string
+	sFile = "file"
 )
 
 // pushCmd represents the push command
@@ -27,12 +26,12 @@ var pushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Push new hardware to tinkerbell",
 	Example: `cat /tmp/data.json | tink hardware push
-tink hardware push -p /tmp/data.json`,
+tink hardware push --file /tmp/data.json`,
 	PreRunE: func(c *cobra.Command, args []string) error {
 		if !isInputFromPipe() {
-			path, _ := c.Flags().GetString(fPath)
+			path, _ := c.Flags().GetString(sFile)
 			if path == "" {
-				return fmt.Errorf("%v either pipe the data or provide the required flag", c.UseLine())
+				return fmt.Errorf("either pipe the data or provide the required '--file' flag")
 			}
 		}
 		return nil
@@ -65,15 +64,15 @@ func isInputFromPipe() bool {
 }
 
 func readDataFromStdin() string {
-	scanner := bufio.NewScanner(bufio.NewReader(os.Stdin))
-	for scanner.Scan() {
-		return scanner.Text()
+	data, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		return ""
 	}
-	return ""
+	return string(data)
 }
 
 func readDataFromFile() string {
-	f, err := os.Open(filePath)
+	f, err := os.Open(file)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,7 +87,7 @@ func readDataFromFile() string {
 
 func init() {
 	flags := pushCmd.PersistentFlags()
-	flags.StringVarP(&filePath, "file-path", "p", "", "path to the hardware data file")
+	flags.StringVarP(&file, "file", "", "", "hardware data file")
 
 	SubCommands = append(SubCommands, pushCmd)
 }
