@@ -29,7 +29,7 @@ resource "packet_device" "tf-provisioner" {
 # Create a device and add it to tf_project_1
 resource "packet_device" "tf-worker" {
   hostname         = "tf-worker"
-  plan             = "c2.medium.x86"
+  plan             = "c3.small.x86"
   facilities       = ["sjc1"]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "https://boot.netboot.xyz"
