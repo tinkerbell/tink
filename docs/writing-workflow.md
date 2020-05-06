@@ -1,13 +1,13 @@
 # Writing a [Workflow](concepts.md#workflow)
 
-Any workflow comprises two building blocks: hardware device (worker) and a template. 
+Any workflow comprises two building blocks: worker (targeted hardware) and a template.
 
 ### Creating a [worker](concepts.md#worker)
 
-A hardware device is a worker machine on which workflow needs to run.
+A worker is targeted hardware on which workflow needs to run.
 User need to push the hardware details as per the below command:
 ```shell
- $ tink hardware push "<Hardware Data in json format>" 
+ $ tink hardware push "<targeted hardware data in json format>" 
 ```
 ### Creating a [template](concepts.md#template)
 
@@ -75,7 +75,7 @@ The above command returns a UUID for the workflow thus created. The workflow ID 
 
 It's a good practice to verify that the worker have been well substituted in the template. In order to do so, use the following command:
 ```yaml
- $ tink workflow get <workflow Id returns from the above command>
+ $ tink workflow get <workflow Id returned from the above command>
 
 version: '0.1'
 name: ubuntu_provisioning

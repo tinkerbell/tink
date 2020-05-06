@@ -35,7 +35,7 @@ var createCmd = &cobra.Command{
 func addFlags() {
 	flags := createCmd.PersistentFlags()
 	flags.StringVarP(&template, "template", "t", "", "workflow template")
-	flags.StringVarP(&hardware, "hardware", "r", "", "workflow target hardwares")
+	flags.StringVarP(&hardware, "hardware", "r", "", "workflow targeted hardwares")
 
 	createCmd.MarkPersistentFlagRequired(fHardware)
 	createCmd.MarkPersistentFlagRequired(fTemplate)

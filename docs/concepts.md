@@ -1,5 +1,8 @@
 # Concepts
 
+### Hardware
+A *hardware device* is defined separately and is substituted in a template at the time of creating a workflow.
+
 ### Template
 
 A template is a Go template based definition that defines the overall flow of a workflow. A user must write a template based on a valid template format. Template can consist of custom variable which can be substituted before execution. For example, a hardware device is defined separately and is substituted in a template at the time of creating a workflow.

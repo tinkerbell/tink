@@ -263,17 +263,17 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	return nil
 }
 
-func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, tar string) (string, error) {
+func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, devices string) (string, error) {
 	tempData, err := db.GetTemplate(ctx, sqlDB, temp)
 	if err != nil {
 		return "", err
 	}
-	return renderTemplate(string(tempData), []byte(tar))
+	return renderTemplate(string(tempData), []byte(devices))
 }
 
-func renderTemplate(tempData string, tarData []byte) (string, error) {
+func renderTemplate(tempData string, devices []byte) (string, error) {
 	var hardware map[string]interface{}
-	err := json.Unmarshal(tarData, &hardware)
+	err := json.Unmarshal(devices, &hardware)
 	if err != nil {
 		logger.Error(err)
 		return "", nil
