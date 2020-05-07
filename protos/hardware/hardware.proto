@@ -56,16 +56,17 @@ message Hardware {
 			string url = 1;
 			string contents = 2;
 		}
-		message Bootstrapper {
-			string kernel = 1;
-			string initrd = 2;
-			string os = 3;
+		message Osie {
+			string base_url = 1;
+			string kernel = 2;
+			string initrd = 3;
 		}
 
 		bool allow_pxe = 1;
 		bool allow_workflow = 2;
 		IPXE ipxe = 3;
-		Bootstrapper bootstrapper = 4;
+//		Bootstrapper bootstrapper = 4;
+		Osie osie = 5;
 	}
 	message Network {
 		DHCP dhcp = 1;
