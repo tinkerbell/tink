@@ -10,7 +10,7 @@ cli: ${cli}
 worker : ${worker}
 
 ${server} ${cli} ${worker}:
-	CGO_ENABLED=0 go build -o $@ ./$@
+	CGO_ENABLED=0 GOOS=$$GOOS go build -o $@ ./$@
 
 run: ${binaries}
 	docker-compose up -d --build db
