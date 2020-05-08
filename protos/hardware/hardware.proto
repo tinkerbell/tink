@@ -40,24 +40,30 @@ message GetRequest {
 
 message Hardware {
 	message DHCP {
+		message IP {
+			string address = 1;
+			string netmask = 2;
+			string gateway = 3;
+			int64 family = 4;
+		}
 		string mac = 1;
-		string ip = 2;
+		string OBSOLETE_ip = 2;
 		string hostname = 3;
 		int64 lease_time = 4;
 		repeated string name_servers = 5;
 		repeated string time_servers = 6;
-		string gateway = 7;
+		string OBSOLETE_gateway = 7;
 		string arch = 8;
 		bool uefi = 9;
 		string iface_name = 10;
+		IP ip = 11;
 	}
 	message Netboot {
 		message IPXE {
 			string url = 1;
 			string contents = 2;
 		}
-		message Bootstrapper {
-
+		message Bootstrapper { // obsolete
 		}
 		message Osie {
 			string base_url = 1;
@@ -68,7 +74,7 @@ message Hardware {
 		bool allow_pxe = 1;
 		bool allow_workflow = 2;
 		IPXE ipxe = 3;
-		Bootstrapper bootstrapper = 4;
+		Bootstrapper OBSOLETE_bootstrapper = 4;
 		Osie osie = 5;
 	}
 	message Network {

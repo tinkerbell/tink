@@ -90,7 +90,7 @@ func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	  "instance": {
 	    "ip_addresses": [
 	      {
-		"address": "` + ip + `"
+		    "address": "` + ip + `"
 	      }
 	    ]
 	  }
@@ -99,7 +99,9 @@ func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	hardwareOrManagement := `
 	{
 		"dhcp": {
-			"ip": "` + ip + `"
+			"ip": {
+				"address": "` + ip + `"
+			}
 		}
 	}
 	`

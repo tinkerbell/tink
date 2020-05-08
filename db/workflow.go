@@ -760,7 +760,9 @@ func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error)
 	hardwareOrManagement := `
         {
 			"dhcp": {
-				"ip": "` + ip + `"
+				"ip": {
+					"address": "` + ip + `"
+				}
 			}
 		}
 		`
