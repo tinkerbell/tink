@@ -23,7 +23,6 @@ Hardware operations:
 
 ### See Also
 
- - [tink target](target.md) - Target operations
  - [tink template](template.md) - Template operations
  - [tink workflow](workflow.md) - Workflow operations
 

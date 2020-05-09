@@ -10,7 +10,7 @@ Installs operating systems and handles deprovisioning.
 
 ### Tinkerbell
 
-Service responsible for processing workflows. It is comprised of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, i.e., a template and a target.
+Service responsible for processing workflows. It is comprised of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, i.e., a template hardware devices.
 
 ### Hegel
 

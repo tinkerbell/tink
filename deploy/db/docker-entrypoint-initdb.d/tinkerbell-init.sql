@@ -25,21 +25,10 @@ CREATE TABLE IF NOT EXISTS template (
 CREATE INDEX IF NOT EXISTS idx_tid ON template (id);
 CREATE INDEX IF NOT EXISTS idx_tdeleted_at ON template (deleted_at NULLS FIRST);
 
-CREATE TABLE IF NOT EXISTS targets (
-        id UUID UNIQUE
-        , inserted_at TIMESTAMPTZ
-        , deleted_at TIMESTAMPTZ
-        , data JSONB
-);
-
-CREATE INDEX IF NOT EXISTS idx_rid ON targets (id);
-CREATE INDEX IF NOT EXISTS idx_rdeleted_at ON targets (deleted_at NULLS FIRST);
-CREATE INDEX IF NOT EXISTS idxgin_rtype ON targets USING GIN (data JSONB_PATH_OPS);
-
 CREATE TABLE IF NOT EXISTS workflow (
 	id UUID UNIQUE NOT NULL
 	, template UUID NOT NULL
-	, target UUID NOT NULL
+	, devices JSONB NOT NULL
 	, created_at TIMESTAMPTZ
 	, updated_at TIMESTAMPTZ
 	, deleted_at TIMESTAMPTZ

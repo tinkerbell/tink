@@ -13,13 +13,12 @@ import (
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/packethost/pkg/log"
+	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/metrics"
 	"github.com/tinkerbell/tink/protos/hardware"
-	"github.com/tinkerbell/tink/protos/target"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -70,7 +69,6 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 	// register servers
 	s := grpc.NewServer(params...)
 	template.RegisterTemplateServer(s, server)
-	target.RegisterTargetServer(s, server)
 	workflow.RegisterWorkflowSvcServer(s, server)
 	hardware.RegisterHardwareServiceServer(s, server)
 

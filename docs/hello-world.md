@@ -67,10 +67,6 @@ $ docker push <registry-host>/hello-world
 ### Workflow
 
 We can now define a workflow with the following steps:
- - Create a target:
- ```shell
-  $ tink target create '{"targets": {"machine1": {"mac_addr": "<worker-mac-address>"}}}'
- ```
  - Create a template:
  ```shell
   # get the template from examples/hello-world.tmpl and save it
@@ -78,7 +74,7 @@ We can now define a workflow with the following steps:
  ```
  - Create a workflow:
  ```shell
-  $ tink workflow create -t <template-uuid> -r <target-uuid>
+  $ tink workflow create -t <template-uuid> -r '{"device_1":"mac/IP"}'
  ```
  - Reboot the worker machine
 
