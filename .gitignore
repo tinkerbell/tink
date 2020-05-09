@@ -4,3 +4,8 @@ tink-server
 bin/
 certs/
 /tink
+
+# Terraform
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
