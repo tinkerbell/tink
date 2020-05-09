@@ -14,9 +14,9 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	pb "github.com/tinkerbell/tink/protos/workflow"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
+	pb "github.com/tinkerbell/tink/protos/workflow"
 	"gopkg.in/yaml.v2"
 )
 
@@ -91,13 +91,13 @@ func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, data string, i
 func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 	INSERT INTO
-		workflow (created_at, updated_at, template, target, id)
+		workflow (created_at, updated_at, template, devices, id)
 	VALUES
 		($1, $1, $2, $3, $4)
 	ON CONFLICT (id)
 	DO
 	UPDATE SET
-		(updated_at, deleted_at, template, target) = ($1, NULL, $2, $3);
+		(updated_at, deleted_at, template, devices) = ($1, NULL, $2, $3);
 	`, time.Now(), wf.Template, wf.Target, wf.ID)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow")
@@ -378,7 +378,7 @@ func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]strin
 // GetWorkflow returns a workflow
 func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
 	query := `
-	SELECT template, target
+	SELECT template, devices
 	FROM workflow
 	WHERE
 		id = $1
@@ -448,7 +448,7 @@ func DeleteWorkflow(ctx context.Context, db *sql.DB, id string, state int32) err
 // ListWorkflows returns all workflows
 func ListWorkflows(db *sql.DB, fn func(wf Workflow) error) error {
 	rows, err := db.Query(`
-	SELECT id, template, target, created_at, updated_at
+	SELECT id, template, devices, created_at, updated_at
 	FROM workflow
 	WHERE
 		deleted_at IS NULL;
@@ -510,7 +510,7 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 		_, err = tx.Exec(`
 		UPDATE workflow
 		SET
-			updated_at = NOW(), target = $2
+			updated_at = NOW(), devices = $2
 		WHERE
 			id = $1;
 		`, wf.ID, wf.Target)
@@ -518,7 +518,7 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 		_, err = tx.Exec(`
 		UPDATE workflow
 		SET
-			updated_at = NOW(), template = $2, target = $3
+			updated_at = NOW(), template = $2, devices = $3
 		WHERE
 			id = $1;
 		`, wf.ID, wf.Template, wf.Target)

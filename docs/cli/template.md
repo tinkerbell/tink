@@ -16,7 +16,7 @@ Template operations:
 ### Options
 
 ```
-  -h, --help   help for target
+  -h, --help   help for template
 ```
 
 ### Examples
@@ -47,6 +47,5 @@ Template operations:
 ### See Also
 
  - [tink hardware](hardware.md) - Hardware (worker) data operations 
- - [tink target](target.md) - Target operations
  - [tink workflow](workflow.md) - Workflow operations
 

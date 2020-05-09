@@ -1,8 +1,11 @@
 # Concepts
 
+### Hardware
+A *hardware device* is defined separately and is substituted in a template at the time of creating a workflow.
+
 ### Template
 
-A template is a Go template based definition that defines the overall flow of a workflow. A user must write a template based on a valid template format. Template can consist of custom variable which can be substituted before execution. For example, a target is defined separately and is substituted in a template at the time of creating a workflow.
+A template is a Go template based definition that defines the overall flow of a workflow. A user must write a template based on a valid template format. Template can consist of custom variable which can be substituted before execution. For example, a hardware device is defined separately and is substituted in a template at the time of creating a workflow.
 
 A template is stored as a blob in the database and is parsed later during the creation of a worflow. A user can CRUD a template using the CLI (`tink template`). Here is a sample workflow template: 
 
@@ -12,7 +15,7 @@ name: ubuntu_provisioning
 global_timeout: 6000
 tasks:
 - name: "os-installation"
-  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  worker: "{{.device_1}}"
   volumes:
     - /dev:/dev
     - /dev/console:/dev/console
@@ -44,28 +47,6 @@ A template comprises Tasks, which are executed in a sequential manner. A task ca
 
 It is important to note that an action can also have its own volumes and environment variables. Therefore, any entry at an action will overwrite the value defined at the task level. For example, in the above template the `MIRROR_HOST` environment variable defined at action `disk-partition` will overwrite the value defined at task level. However, the other actions will receive the original value defined at the task level.
 
-
-### Targets
-
-Targets are mapping between the virtual worker name and the actual host. Currently we are refer targets with MAC or IP address. Here is a sample target definition:
-
-```json
-{
-    "machine1":  {
-        "ip_addr": "192.168.1.2"
-    },
-    "machine2" :  {
-        "mac_addr": "ca:00:64:b8:2d:00"
-    }
-}
-```
-
-A target can be accessed in template like (refer above template):
-
-```
-{{ index .Targets "machine1" "ip_addr"}}
-{{ index .Targets "machine2" "mac_addr"}}
-```
 
 ### Provisioner
 
@@ -103,5 +84,4 @@ The other worker may retrieve and use this data and eventually add some more:
 {"operating_system": "ubuntu_18_04", "mac_addr": "F5:C9:E2:99:BD:9B", "instance_id": "123e4567-e89b-12d3-a456-426655440000", "ip_addresses": [{"address_family": 4, "address": "172.27.0.23", "cidr": 31, "private": true}]}
 ```
 ![](img/ephemeral-data.png)
-
 
