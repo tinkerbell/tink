@@ -47,12 +47,12 @@ message Hardware {
 			int64 family = 4;
 		}
 		string mac = 1;
-		string OBSOLETE_ip = 2;
+		string OBSOLETE_ip = 2; // obsolete
 		string hostname = 3;
 		int64 lease_time = 4;
 		repeated string name_servers = 5;
 		repeated string time_servers = 6;
-		string OBSOLETE_gateway = 7;
+		string OBSOLETE_gateway = 7; // obsolete
 		string arch = 8;
 		bool uefi = 9;
 		string iface_name = 10;
@@ -74,12 +74,18 @@ message Hardware {
 		bool allow_pxe = 1;
 		bool allow_workflow = 2;
 		IPXE ipxe = 3;
-		Bootstrapper OBSOLETE_bootstrapper = 4;
+		Bootstrapper OBSOLETE_bootstrapper = 4; // obsolete
 		Osie osie = 5;
 	}
 	message Network {
-		DHCP dhcp = 1;
-		Netboot netboot = 2;
+		message Interface {
+			DHCP dhcp = 1;
+			Netboot netboot = 2;
+		}
+		DHCP OBSOLETE_dhcp = 1; // obsolete
+		Netboot OBSOLETE_netboot = 2; // obsolete
+		repeated Interface interfaces = 3;
+		Interface default = 4;
 	}
 	message Metadata {
 		message Manufacturer {
@@ -146,10 +152,12 @@ message Hardware {
 	}
 
 	string id = 1;
-	DHCP dhcp = 2;
-	Netboot netboot = 3;
-	repeated Network network = 4;
+	DHCP OBSOLETE_dhcp = 2; // obsolete
+	Netboot OBSOLETE_netboot = 3; //obsolete
+	repeated Network OBSOLETE_network = 4; // obsolete
 	Metadata metadata = 5;
+	Network network = 6;
+
 }
 
 message DeleteRequest {

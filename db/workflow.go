@@ -724,13 +724,15 @@ func parseYaml(ymlContent []byte) (*wfYamlstruct, error) {
 func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, error) {
 	arg := `
 	{
-	  "network_ports": [
-	    {
-	      "data": {
-		"mac": "` + mac + `"
-	      }
-	    }
-	  ]
+		"network": {
+			"interfaces": [
+				{
+					"dhcp": {
+						"mac": "` + mac + `"
+					}
+				}
+			]
+		}
 	}
 	`
 	query := `
@@ -746,6 +748,7 @@ func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, erro
 }
 
 func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
+	// update for instance (under metadata)
 	instance := `
         {
           "instance": {
@@ -758,14 +761,20 @@ func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error)
         }
         `
 	hardwareOrManagement := `
-        {
-			"dhcp": {
-				"ip": {
-					"address": "` + ip + `"
+	{
+		"network": {
+			"interfaces": [
+				{
+					"dhcp": {
+						"ip": {
+							"address": "` + ip + `"
+						}
+					}
 				}
-			}
+			]
 		}
-		`
+	}
+	`
 
 	query := `
         SELECT id

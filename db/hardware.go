@@ -66,9 +66,15 @@ func InsertIntoDB(ctx context.Context, db *sql.DB, data string) error {
 func GetByMAC(ctx context.Context, db *sql.DB, mac string) (string, error) {
 	arg := `
 	{
-	  "dhcp": {
-		"mac": "` + mac + `"
-	  }
+		"network": {
+			"interfaces": [
+				{
+					"dhcp": {
+						"mac": "` + mac + `"
+					}
+				}
+			]
+		}
 	}
 	`
 	query := `
@@ -98,10 +104,16 @@ func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	`
 	hardwareOrManagement := `
 	{
-		"dhcp": {
-			"ip": {
-				"address": "` + ip + `"
-			}
+		"network": {
+			"interfaces": [
+				{
+					"dhcp": {
+						"ip": {
+							"address": "` + ip + `"
+						}
+					}
+				}
+			]
 		}
 	}
 	`
