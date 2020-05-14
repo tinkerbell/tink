@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/cli/tink/cmd/template"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/template"
 )
 
 // templateCmd represents the template sub-command

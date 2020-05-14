@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/cli/tink/cmd/workflow"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/workflow"
 )
 
 // workflowCmd represents the workflow sub-command

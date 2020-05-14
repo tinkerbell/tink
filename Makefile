@@ -1,6 +1,6 @@
-server := tink-server
-cli := tink-cli
-worker := tink-worker
+server := cmd/tink-server
+cli := cmd/tink-cli
+worker := cmd/tink-worker
 binaries := ${server} ${cli} ${worker}
 all: ${binaries}
 
@@ -9,17 +9,8 @@ server: ${server}
 cli: ${cli}
 worker : ${worker}
 
-${bindir}:
-	mkdir -p $@/
-
-${server}:
-	CGO_ENABLED=0 go build -o $@ .
-
-${cli}:
-	CGO_ENABLED=0 go build -o ./cli/tink/$@ ./cli/tink
-
-${worker}:
-	CGO_ENABLED=0 go build -o ./worker/$@ ./worker/
+${server} ${cli} ${worker}:
+	CGO_ENABLED=0 go build -o $@ ./$@
 
 run: ${binaries}
 	docker-compose up -d --build db

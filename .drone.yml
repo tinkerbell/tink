@@ -53,55 +53,55 @@ pipeline:
 
   publish_pr_tink-cli:
     <<: *publish_pr_tmpl
-    context: cli/tink
-    dockerfile: cli/tink/Dockerfile
+    context: cmd/tink-cli
+    dockerfile: cmd/tink-cli/Dockerfile
     repo: quay.io/tinkerbell/tink-cli-pr
 
   publish_pr_tink-server:
     <<: *publish_pr_tmpl
     repo: quay.io/tinkerbell/tink-pr
-    context: .
-    dockerfile: Dockerfile
+    context: cmd/tink-server
+    dockerfile: cmd/tink-server/Dockerfile
     repo: quay.io/tinkerbell/tink-pr
 
   publish_pr_tink-worker:
     <<: *publish_pr_tmpl
-    context: worker
-    dockerfile: worker/Dockerfile
+    context: cmd/tink-worker
+    dockerfile: cmd/tink-worker/Dockerfile
     repo: quay.io/tinkerbell/tink-worker-pr
 
   publish_master_tink-cli:
     <<: *publish_master_tmpl
-    context: cli/tink
-    dockerfile: cli/tink/Dockerfile
+    context: cmd/tink-cli
+    dockerfile: cmd/tink-cli/Dockerfile
     repo: quay.io/tinkerbell/tink-cli
 
   publish_master_tink-server:
     <<: *publish_master_tmpl
-    context: .
-    dockerfile: Dockerfile
+    context: cmd/tink-server
+    dockerfile: cmd/tink-server/Dockerfile
     repo: quay.io/tinkerbell/tink
 
   publish_master_tink-worker:
     <<: *publish_master_tmpl
-    context: worker
-    dockerfile: worker/Dockerfile
+    context: cmd/tink-worker
+    dockerfile: cmd/tink-worker/Dockerfile
     repo: quay.io/tinkerbell/tink-worker
 
   publish_tag_tink-cli:
     <<: *publish_tag_tmpl
-    context: cli/tink
-    dockerfile: cli/tink/Dockerfile
+    context: cmd/tink-cli
+    dockerfile: cmd/tink-cli/Dockerfile
     repo: quay.io/tinkerbell/tink-cli
 
   publish_tag_tink-server:
     <<: *publish_tag_tmpl
-    context: .
-    dockerfile: Dockerfile
+    context: cmd/tink-server
+    dockerfile: cmd/tink-server/Dockerfile
     repo: quay.io/tinkerbell/tink
 
   publish_tag_tink-worker:
     <<: *publish_tag_tmpl
-    context: worker
-    dockerfile: worker/Dockerfile
+    context: cmd/tink-worker
+    dockerfile: cmd/tink-worker/Dockerfile
     repo: quay.io/tinkerbell/tink-worker

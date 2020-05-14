@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/cli/tink/cmd/hardware"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/hardware"
 )
 
 var hardwareCmd = &cobra.Command{
