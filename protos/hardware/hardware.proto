@@ -15,12 +15,14 @@ service HardwareService {
 	};
 	rpc ByMAC(GetRequest) returns (Hardware) {
 		option (google.api.http) = {
-            get: "/v1/hardware/mac/{mac}"
+            post: "/v1/hardware/mac"
+            body: "*"
         };
 	};
 	rpc ByIP(GetRequest) returns (Hardware) {
 		option (google.api.http) = {
-            get: "/v1/hardware/ip/{ip}"
+            post: "/v1/hardware/ip"
+            body: "*"
         };
 	};
 	rpc ByID(GetRequest) returns (Hardware) {
