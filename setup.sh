@@ -10,11 +10,16 @@ set -e
 # file to hold all environment variables 
 ENV_FILE=envrc
 
-# color codes
-RED="$(tput setaf 1)"
-GREEN="$(tput setaf 2)"
-YELLOW="$(tput setaf 3)"
-RESET="$(tput sgr0)"
+if which tput >> /dev/null; then
+	# color codes
+	RED="$(tput setaf 1)"
+	GREEN="$(tput setaf 2)"
+	YELLOW="$(tput setaf 3)"
+	RESET="$(tput sgr0)"
+else
+	echo "color coding will not happen as tput command not found."
+fi
+
 INFO="${GREEN}INFO:$RESET"
 ERR="${RED}ERROR:$RESET"
 WARN="${YELLOW}WARNING:$RESET"
@@ -166,8 +171,27 @@ setup_docker() {
 	if command_exists docker; then
 		echo "$INFO docker already installed, found $(docker -v)"
 	else
-		echo "$INFO installing docker"
-		curl -L get.docker.com | bash   >> /dev/null && echo "$INFO $(docker -v) installed successfully"
+		if [ -f /etc/redhat-release ] && [ $(. /etc/os-release && echo "$VERSION_ID") == 8 ]; then
+			echo "$INFO installing docker for CentOS8" 
+			yum install 'dnf-command(config-manager)' -y
+			dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+			if dnf list docker-ce >> /dev/null; then
+				dnf install docker-ce --nobest -y
+				if systemctl start docker; then
+					systemctl enable docker
+					echo "$INFO $(docker -v) installed successfully"
+				else
+				    echo "$ERR docker is not installed successfully"
+					exit 1
+				fi
+			else
+				echo "$ERR docker-ce package not found"
+				exit 1
+			fi
+		else
+		    echo "$INFO installing docker"
+			curl -L get.docker.com | bash   >> /dev/null && echo "$INFO $(docker -v) installed successfully"
+		fi
 	fi
 
 	if command_exists docker-compose; then
@@ -232,7 +256,19 @@ setup_networking() {
 				fi
 				;;
 			centos)
-				sed -i '/^ONBOOT.*no$/s/no/yes/; /^BOOTPROTO.*none$/s/none/static/; /^MASTER/d; /^SLAVE/d' /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+				if [ -f /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE ]; then
+					sed -i '/^ONBOOT.*no$/s/no/yes/; /^BOOTPROTO.*none$/s/none/static/; /^MASTER/d; /^SLAVE/d' /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+				else
+				   touch /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+				   HWADDRESS=$(ip addr show $TINKERBELL_NETWORK_INTERFACE | grep ether | awk -F 'ether' '{print $2}' | cut -d" " -f2)
+				   cat <<EOF >> /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+DEVICE=$TINKERBELL_NETWORK_INTERFACE
+ONBOOT=yes
+HWADDR=$HWADDRESS
+BOOTPROTO=static
+EOF
+				fi
+
 				cat <<EOF >> /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
 IPADDR0=$TINKERBELL_HOST_IP
 NETMASK0=$TINKERBELL_NETMASK
@@ -240,7 +276,7 @@ IPADDR1=$TINKERBELL_NGINX_IP
 NETMASK1=$TINKERBELL_NETMASK
 EOF
 				ip link set $TINKERBELL_NETWORK_INTERFACE nomaster
-				systemctl restart network
+				ifup $TINKERBELL_NETWORK_INTERFACE
 				;;
 		esac
 		if is_network_configured ; then
