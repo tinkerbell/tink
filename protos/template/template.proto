@@ -10,7 +10,7 @@ import "timestamp.proto";
 service Template {
 	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse) {
 		option (google.api.http) = {
-            post: "/v1/template"
+            post: "/v1/templates"
             body: "*"
         };
 	};

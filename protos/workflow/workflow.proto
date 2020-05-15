@@ -10,7 +10,7 @@ import "timestamp.proto";
 service WorkflowSvc {
     rpc CreateWorkflow(CreateRequest) returns (CreateResponse) {
         option (google.api.http) = {
-            post: "/v1/workflow"
+            post: "/v1/workflows"
             body: "*"
         };
     };
@@ -31,7 +31,7 @@ service WorkflowSvc {
     };
     rpc GetWorkflowContext(GetRequest) returns (WorkflowContext) {
         option (google.api.http) = {
-            delete: "/v1/workflows/{id}/state"
+            get: "/v1/workflows/{id}/state"
         };
     };
     rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus) {

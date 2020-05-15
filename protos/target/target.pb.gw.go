@@ -387,7 +387,7 @@ func RegisterTargetHandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 }
 
 var (
-	pattern_Target_CreateTargets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "target"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Target_CreateTargets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "targets"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Target_TargetByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "targets", "ID"}, "", runtime.AssumeColonVerbOpt(true)))
 
