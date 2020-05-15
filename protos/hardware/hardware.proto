@@ -13,9 +13,21 @@ service HardwareService {
             body: "*"
         };
 	};
-	rpc ByMAC(GetRequest) returns (Hardware);
-	rpc ByIP(GetRequest) returns (Hardware);
-	rpc ByID(GetRequest) returns (Hardware);
+	rpc ByMAC(GetRequest) returns (Hardware) {
+		option (google.api.http) = {
+            get: "/v1/hardware/mac/{mac}"
+        };
+	};
+	rpc ByIP(GetRequest) returns (Hardware) {
+		option (google.api.http) = {
+            get: "/v1/hardware/ip/{ip}"
+        };
+	};
+	rpc ByID(GetRequest) returns (Hardware) {
+		option (google.api.http) = {
+            get: "/v1/hardware/{id}"
+        };
+	};
 	rpc All(Empty) returns (stream Hardware) {
 		option (google.api.http) = {
             get: "/v1/hardware"

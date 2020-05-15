@@ -29,8 +29,16 @@ service WorkflowSvc {
             get: "/v1/workflows"
         };
     };
-    rpc GetWorkflowContext(GetRequest) returns (WorkflowContext);
-    rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus);
+    rpc GetWorkflowContext(GetRequest) returns (WorkflowContext) {
+        option (google.api.http) = {
+            delete: "/v1/workflows/{id}/state"
+        };
+    };
+    rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus) {
+        option (google.api.http) = {
+            get: "/v1/workflows/{id}/events"
+        };
+    };
     rpc GetWorkflowContexts(WorkflowContextRequest) returns (WorkflowContextList) {}
     rpc GetWorkflowActions(WorkflowActionsRequest) returns (WorkflowActionList) {}
     rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}
