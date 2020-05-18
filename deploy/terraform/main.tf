@@ -14,7 +14,7 @@ resource "packet_vlan" "provisioning-vlan" {
 # Create a device and add it to tf_project_1
 resource "packet_device" "tink-provisioner" {
   hostname         = "tink-provisioner"
-  plan             = "c3.small.x86"
+  plan             = var.device_type
   facilities       = [var.facility]
   operating_system = "ubuntu_18_04"
   billing_cycle    = "hourly"
@@ -25,7 +25,7 @@ resource "packet_device" "tink-provisioner" {
 # Create a device and add it to tf_project_1
 resource "packet_device" "tink-worker" {
   hostname         = "tink-worker"
-  plan             = "c3.small.x86"
+  plan             = var.device_type
   facilities       = [var.facility]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "https://boot.netboot.xyz"
