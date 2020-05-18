@@ -49,6 +49,10 @@ resource "packet_port_vlan_attachment" "worker" {
   vlan_vnid = packet_vlan.provisioning-vlan.vxlan
 }
 
+output "provisioner_dns_name" {
+  value = "${split("-", packet_device.tink-provisioner.id)[0]}.packethost.net"
+}
+
 output "provisioner_ip" {
   value = "${packet_device.tink-provisioner.network[0].address}"
 }
