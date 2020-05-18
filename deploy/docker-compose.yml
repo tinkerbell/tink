@@ -41,13 +41,14 @@ services:
       - 42114:42114/tcp
 
   db:
-    build:
-      context: db
+    image: postgres:10-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: tinkerbell
       POSTGRES_PASSWORD: tinkerbell
       POSTGRES_USER: tinkerbell
+    volumes:
+      - ./db/tinkerbell-init.sql:/docker-entrypoint-initdb.d/tinkerbell-init.sql:ro
     ports:
       - 5432:5432
     depends_on:
@@ -143,7 +144,7 @@ services:
       - $TINKERBELL_HOST_IP:80:80/tcp
       - 67:67/udp
       - 69:69/udp
-    
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -210,7 +211,7 @@ services:
     logging:
       driver: fluentd
       options:
-        tag: cacher 
+        tag: cacher
     depends_on:
       fluentbit:
         condition: service_started
@@ -228,7 +229,7 @@ services:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
       ROLLBAR_DISABLE: 1
       PACKET_ENV: testing
-      PACKET_VERSION: ${PACKET_VERSION:-ignored}  
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
       GRPC_PORT: 42115
       HEGEL_FACILITY: ${FACILITY:-onprem}
       HEGEL_USE_TLS: 0
