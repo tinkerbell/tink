@@ -4,16 +4,11 @@ provider "packet" {
   version    = "~> 2.9"
 }
 
-# Declare your project ID
-locals {
-  project_id = var.project_id
-}
-
 # Create a new VLAN in datacenter "ewr1"
 resource "packet_vlan" "provisioning-vlan" {
   description = "provisioning-vlan"
   facility    = "sjc1"
-  project_id  = local.project_id
+  project_id  = var.project_id
 }
 
 # Create a device and add it to tf_project_1
@@ -23,7 +18,7 @@ resource "packet_device" "tf-provisioner" {
   facilities       = ["sjc1"]
   operating_system = "ubuntu_18_04"
   billing_cycle    = "hourly"
-  project_id       = local.project_id
+  project_id       = var.project_id
   network_type     = "hybrid"
 }
 
@@ -36,7 +31,7 @@ resource "packet_device" "tf-worker" {
   ipxe_script_url  = "https://boot.netboot.xyz"
   always_pxe       = "true"
   billing_cycle    = "hourly"
-  project_id       = local.project_id
+  project_id       = var.project_id
   network_type     = "layer2-individual"
 }
 
