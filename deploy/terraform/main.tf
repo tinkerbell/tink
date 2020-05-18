@@ -7,7 +7,7 @@ provider "packet" {
 # Create a new VLAN in datacenter "ewr1"
 resource "packet_vlan" "provisioning-vlan" {
   description = "provisioning-vlan"
-  facility    = "sjc1"
+  facility    = var.facility
   project_id  = var.project_id
 }
 
@@ -15,7 +15,7 @@ resource "packet_vlan" "provisioning-vlan" {
 resource "packet_device" "tink-provisioner" {
   hostname         = "tink-provisioner"
   plan             = "c3.small.x86"
-  facilities       = ["sjc1"]
+  facilities       = [var.facility]
   operating_system = "ubuntu_18_04"
   billing_cycle    = "hourly"
   project_id       = var.project_id
@@ -26,7 +26,7 @@ resource "packet_device" "tink-provisioner" {
 resource "packet_device" "tink-worker" {
   hostname         = "tink-worker"
   plan             = "c3.small.x86"
-  facilities       = ["sjc1"]
+  facilities       = [var.facility]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "https://boot.netboot.xyz"
   always_pxe       = "true"
