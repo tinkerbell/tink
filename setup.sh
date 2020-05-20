@@ -188,6 +188,12 @@ setup_docker() {
 				echo "$ERR docker-ce package not found"
 				exit 1
 			fi
+		elif [ $(. /etc/os-release && echo "$VERSION_ID") == 20.04 ]; then
+			echo "$INFO installing docker for Ubuntu 20.04"
+			if apt install docker.io -y >> /dev/null; then
+			   systemctl enable --now docker
+			   echo "$INFO $(docker -v) installed successfully"
+			fi
 		else
 		    echo "$INFO installing docker"
 			curl -L get.docker.com | bash   >> /dev/null && echo "$INFO $(docker -v) installed successfully"
@@ -516,4 +522,3 @@ do_setup() {
 # wrapped up in a function so that we have some protection against only getting
 # half the file during "curl | sh"
 do_setup
-
