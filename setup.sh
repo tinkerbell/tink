@@ -24,7 +24,7 @@ INFO="${GREEN}INFO:$RESET"
 ERR="${RED}ERROR:$RESET"
 WARN="${YELLOW}WARNING:$RESET"
 BLANK="      "
-NEXT="\n${GREEN}NEXT:$RESET"
+NEXT="${GREEN}NEXT:$RESET"
 
 get_distribution() {
 	lsb_dist=""
@@ -455,7 +455,7 @@ check_prerequisites() {
 
 whats_next() {
 	echo "$NEXT With the provisioner setup successfully, you can now try executing your first workflow."
-	echo "$BLANK Follow the steps described in https://github.com/tinkerbell/tink/blob/master/docs/hello-world.md to say 'Hello World!' with a workflow."
+	echo "$BLANK Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 }
 
 do_setup() {
