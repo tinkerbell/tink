@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/tinkerbell/tink/db"
-	"github.com/tinkerbell/tink/metrics"
-	"github.com/tinkerbell/tink/protos/template"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	uuid "github.com/satori/go.uuid"
+	"github.com/tinkerbell/tink/db"
+	"github.com/tinkerbell/tink/metrics"
+	"github.com/tinkerbell/tink/protos/template"
 )
 
 // CreateTemplate implements template.CreateTemplate

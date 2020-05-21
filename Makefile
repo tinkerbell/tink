@@ -18,3 +18,7 @@ run: ${binaries}
 test:
 	go clean -testcache
 	go test ./test -v
+
+verify:
+	goimports -d .
+	golint ./...

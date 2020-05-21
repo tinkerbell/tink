@@ -6,9 +6,9 @@ import (
 	"io"
 	"log"
 
+	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/hardware"
-	"github.com/spf13/cobra"
 )
 
 // allCmd represents the all command

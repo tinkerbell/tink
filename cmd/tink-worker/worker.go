@@ -12,9 +12,8 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/tinkerbell/tink/protos/workflow"
 	"github.com/sirupsen/logrus"
-
+	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc/status"
 )
 

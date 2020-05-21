@@ -62,7 +62,15 @@ steps:
       - apk add --update make
       - make
 
-  - name: publish pr tink-cli
+  - name: fmt_lint_check
+    image: golang:1.13-alpine3.11
+    commands:
+      - apk add --update make
+      - go get golang.org/x/tools/cmd/goimports
+      - go get golang.org/x/lint/golint
+      - make verify
+
+  - name: publish_pr_tink-cli
     <<: *publish_pr_tmpl
     settings:
       <<: *quay_settings_pr
