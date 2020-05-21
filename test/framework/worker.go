@@ -9,9 +9,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dc "github.com/docker/docker/client"
-	"github.com/tinkerbell/tink/protos/workflow"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/tinkerbell/tink/protos/workflow"
 )
 
 var cli *dc.Client
@@ -110,6 +110,7 @@ func captureLogs(ctx context.Context, cli *dc.Client, id string) {
 	fmt.Println("Logging Finished for container ", id)
 }
 
+// StartWorkers starts the dummy workers
 func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.ActionState, error) {
 	log = logger.WithField("workflow_id", wfID)
 	var wg sync.WaitGroup
