@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tinkerbell/tink/protos/hardware"
-	"github.com/tinkerbell/tink/protos/target"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 )
@@ -50,10 +49,6 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 	err := hardware.RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcListenAddr, dialOpts)
-	if err != nil {
-		logger.Error(err)
-	}
-	err = target.RegisterTargetHandlerFromEndpoint(ctx, mux, grpcListenAddr, dialOpts)
 	if err != nil {
 		logger.Error(err)
 	}

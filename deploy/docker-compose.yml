@@ -113,6 +113,7 @@ services:
       TINKERBELL_GRPC_AUTHORITY: $TINKERBELL_HOST_IP:42113
       TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
       ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
+      DISCOVERY_TYPE: tinkerbell
     depends_on:
       cacher:
         condition: service_started
