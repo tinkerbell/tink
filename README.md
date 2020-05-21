@@ -2,9 +2,19 @@
 
 [![Build Status](https://cloud.drone.io/api/badges/tinkerbell/tink/status.svg)](https://cloud.drone.io/tinkerbell/tink)
 
+<<<<<<< HEAD
 Tinkerbell is a bare metal provisioning and workflow engine comprised of three major components: a DHCP server ([boots](https://github.com/packethost/boots)), a workflow engine (tinkerbell, this repository), and a metadata service ([hegel](https://github.com/packethost/hegel)).
 The workflow engine is comprised of a server and a CLI, which communicate over gRPC.
 The CLI is used to create a workflow along with its building blocks, templates and targeted hardware.
+=======
+Tinkerbell is a bare metal provisioning and workflow engine.
+It is comprised of following three major components:
+1. A DHCP server ([boots](https://github.com/packethost/boots))
+2. A workflow engine (tinkerbell, this repository)
+3. A metadata service ([hegel](https://github.com/packethost/hegel)).
+
+The workflow engine is comprised of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, templates and targeted hardware.
+>>>>>>> Update the README.md file
 
 # Packet Workflow
 
