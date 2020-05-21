@@ -1,107 +1,144 @@
 ---
+publish_tmpl: &publish_tmpl
+  image: plugins/docker
+  depends_on:
+    - build
+    - test
 
 publish_pr_tmpl: &publish_pr_tmpl
-  group: publish
-  image: plugins/docker
-  registry: quay.io
-  tags:
-    - ${DRONE_PULL_REQUEST}
-    - ${DRONE_PULL_REQUEST}-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+  <<: *publish_tmpl
   when:
     event: pull_request
-  secrets:
-    - source: public_docker_password
-      target: docker_password
-    - source: public_docker_username
-      target: docker_username
+pr_tags: &pr_tags
+  tags:
+    - pr${DRONE_PULL_REQUEST}
+    - pr${DRONE_PULL_REQUEST}-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
 
 publish_master_tmpl: &publish_master_tmpl
-  <<: *publish_pr_tmpl
+  <<: *publish_tmpl
+  when:
+    event: push
+    branch: master
+master_tags: &master_tags
   tags:
     - latest
     - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
-  when:
-    branch: master
-    event: push
-  secrets:
-    - docker_password
-    - docker_username
 
 publish_tag_tmpl: &publish_tag_tmpl
-  <<: *publish_master_tmpl
-  tags: ${DRONE_TAG}
+  <<: *publish_tmpl
   when:
     event: tag
+tag_tags: &tag_tags
+  tags:
+    - ${DRONE_TAG}
 
-workspace:
-  base: /go
-  path: src/github.com/tinkerbell/tink
+quay_settings: &quay_settings
+  registry: quay.io
+  username:
+    from_secret: docker_username
+  password:
+    from_secret: docker_password
 
-pipeline:
-  test:
-    group: ci
+quay_settings_pr: &quay_settings_pr
+  registry: quay.io
+  username:
+    from_secret: public_docker_username
+  password:
+    from_secret: public_docker_password
+
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: test
     image: golang:1.13-alpine3.11
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
-  build:
-    group: ci
+  - name: build
     image: golang:1.13-alpine3.11
     commands:
       - apk add --update make
       - make
 
-  publish_pr_tink-cli:
+  - name: publish pr tink-cli
     <<: *publish_pr_tmpl
-    context: cmd/tink-cli
-    dockerfile: cmd/tink-cli/Dockerfile
-    repo: quay.io/tinkerbell/tink-cli-pr
+    settings:
+      <<: *quay_settings_pr
+      <<: *pr_tags
+      context: cmd/tink-cli
+      dockerfile: cmd/tink-cli/Dockerfile
+      repo: quay.io/tinkerbell/tink-cli-pr
 
-  publish_pr_tink-server:
+  - name: publish pr tink-server
     <<: *publish_pr_tmpl
-    repo: quay.io/tinkerbell/tink-pr
-    context: cmd/tink-server
-    dockerfile: cmd/tink-server/Dockerfile
-    repo: quay.io/tinkerbell/tink-pr
+    settings:
+      <<: *quay_settings_pr
+      <<: *pr_tags
+      context: cmd/tink-server
+      dockerfile: cmd/tink-server/Dockerfile
+      repo: quay.io/tinkerbell/tink-pr
 
-  publish_pr_tink-worker:
+  - name: publish pr tink-worker
     <<: *publish_pr_tmpl
-    context: cmd/tink-worker
-    dockerfile: cmd/tink-worker/Dockerfile
-    repo: quay.io/tinkerbell/tink-worker-pr
+    settings:
+      <<: *quay_settings_pr
+      <<: *pr_tags
+      context: cmd/tink-worker
+      dockerfile: cmd/tink-worker/Dockerfile
+      repo: quay.io/tinkerbell/tink-worker-pr
 
-  publish_master_tink-cli:
+  - name: publish master tink-cli
     <<: *publish_master_tmpl
-    context: cmd/tink-cli
-    dockerfile: cmd/tink-cli/Dockerfile
-    repo: quay.io/tinkerbell/tink-cli
+    settings:
+      <<: *quay_settings
+      <<: *master_tags
+      context: cmd/tink-cli
+      dockerfile: cmd/tink-cli/Dockerfile
+      repo: quay.io/tinkerbell/tink-cli
 
-  publish_master_tink-server:
+  - name: publish master tink-server
     <<: *publish_master_tmpl
-    context: cmd/tink-server
-    dockerfile: cmd/tink-server/Dockerfile
-    repo: quay.io/tinkerbell/tink
+    settings:
+      <<: *quay_settings
+      <<: *master_tags
+      context: cmd/tink-server
+      dockerfile: cmd/tink-server/Dockerfile
+      repo: quay.io/tinkerbell/tink
 
-  publish_master_tink-worker:
+  - name: publish master tink-worker
     <<: *publish_master_tmpl
-    context: cmd/tink-worker
-    dockerfile: cmd/tink-worker/Dockerfile
-    repo: quay.io/tinkerbell/tink-worker
+    settings:
+      <<: *quay_settings
+      <<: *master_tags
+      context: cmd/tink-worker
+      dockerfile: cmd/tink-worker/Dockerfile
+      repo: quay.io/tinkerbell/tink-worker
 
-  publish_tag_tink-cli:
+  - name: publish tag tink-cli
     <<: *publish_tag_tmpl
-    context: cmd/tink-cli
-    dockerfile: cmd/tink-cli/Dockerfile
-    repo: quay.io/tinkerbell/tink-cli
+    settings:
+      <<: *quay_settings
+      <<: *tag_tags
+      context: cmd/tink-cli
+      dockerfile: cmd/tink-cli/Dockerfile
+      repo: quay.io/tinkerbell/tink-cli
 
-  publish_tag_tink-server:
+  - name: publish tag tink-server
     <<: *publish_tag_tmpl
-    context: cmd/tink-server
-    dockerfile: cmd/tink-server/Dockerfile
-    repo: quay.io/tinkerbell/tink
+    settings:
+      <<: *quay_settings
+      <<: *tag_tags
+      context: cmd/tink-server
+      dockerfile: cmd/tink-server/Dockerfile
+      repo: quay.io/tinkerbell/tink
 
-  publish_tag_tink-worker:
+  - name: publish tag tink-worker
     <<: *publish_tag_tmpl
-    context: cmd/tink-worker
-    dockerfile: cmd/tink-worker/Dockerfile
-    repo: quay.io/tinkerbell/tink-worker
+    settings:
+      <<: *quay_settings
+      <<: *tag_tags
+      context: cmd/tink-worker
+      dockerfile: cmd/tink-worker/Dockerfile
+      repo: quay.io/tinkerbell/tink-worker
