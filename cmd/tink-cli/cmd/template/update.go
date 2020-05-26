@@ -47,8 +47,14 @@ func updateTemplate(id string) {
 	if filePath == "" && templateName != "" {
 		req.Name = templateName
 	} else if filePath != "" && templateName == "" {
-		validateTemplate()
-		req.Data = readTemplateData()
+		data := readTemplateData()
+		if data != nil {
+			if err := tryParseTemplate(data); err != nil {
+				log.Println(err)
+				return
+			}
+			req.Data = data
+		}
 	} else {
 		req.Name = templateName
 		req.Data = readTemplateData()
