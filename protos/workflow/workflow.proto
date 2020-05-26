@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "workflow";
 
-package github.com.tinkerbell.tink.protos.workflow;
+package workflow;
 
 import "timestamp.proto";
 
@@ -28,7 +28,7 @@ message Empty {
 message Workflow {
     string id = 1;
     string template = 2;
-    string target = 3;
+    string hardware = 3;
     State state = 4;
     google.protobuf.Timestamp createdAt = 5;
     google.protobuf.Timestamp updatedAt = 6;
@@ -46,7 +46,7 @@ enum State {
 
 message CreateRequest {
     string template = 1;
-    string target = 2;
+    string hardware = 2;
 }
 
 message CreateResponse {

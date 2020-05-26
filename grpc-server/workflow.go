@@ -40,10 +40,10 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		wf := db.Workflow{
 			ID:       id.String(),
 			Template: in.Template,
-			Target:   in.Target,
+			Hardware: in.Hardware,
 			State:    workflow.State_value[workflow.State_PENDING.String()],
 		}
-		data, err := createYaml(ctx, s.db, in.Template, in.Target)
+		data, err := createYaml(ctx, s.db, in.Template, in.Hardware)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create Yaml")
 		}
@@ -100,14 +100,14 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 		}
 		l.Error(err)
 	}
-	yamlData, err := createYaml(ctx, s.db, w.Template, w.Target)
+	yamlData, err := createYaml(ctx, s.db, w.Template, w.Hardware)
 	if err != nil {
 		return &workflow.Workflow{}, err
 	}
 	wf := &workflow.Workflow{
 		Id:       w.ID,
 		Template: w.Template,
-		Target:   w.Target,
+		Hardware: w.Hardware,
 		State:    state[w.State],
 		Data:     yamlData,
 	}
@@ -169,7 +169,7 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowSvc_Li
 		wf := &workflowpb.Workflow{
 			Id:        w.ID,
 			Template:  w.Template,
-			Target:    w.Target,
+			Hardware:  w.Hardware,
 			CreatedAt: w.CreatedAt,
 			UpdatedAt: w.UpdatedAt,
 		}

@@ -3,7 +3,7 @@ name: packet_osie_provision
 global_timeout: 600
 tasks:
 - name: "run-first-worker"
-  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  worker: "{{.device_1}}"
   actions:
   - name: "update-data"
     image: update-data
@@ -16,7 +16,7 @@ tasks:
     on-timeout: ["echo", "Timeout"]
     on-failure: ["echo", "Failure"]
 - name: "run-second-worker"
-  worker: "{{index .Targets "machine2" "mac_addr"}}"
+  worker: "{{.device_2}}"
   actions:
   - name: "overwrite-again"
     image: update-data
