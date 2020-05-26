@@ -54,9 +54,9 @@ type (
 
 // Workflow represents a workflow instance in database
 type Workflow struct {
-	State                int32
-	ID, Target, Template string
-	CreatedAt, UpdatedAt *timestamp.Timestamp
+	State                  int32
+	ID, Hardware, Template string
+	CreatedAt, UpdatedAt   *timestamp.Timestamp
 }
 
 var (
@@ -98,7 +98,7 @@ func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) 
 	DO
 	UPDATE SET
 		(updated_at, deleted_at, template, devices) = ($1, NULL, $2, $3);
-	`, time.Now(), wf.Template, wf.Target, wf.ID)
+	`, time.Now(), wf.Template, wf.Hardware, wf.ID)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow")
 	}
@@ -149,7 +149,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		if err != nil {
 			return err
 		} else if workerID == "" {
-			return fmt.Errorf("Target mentioned with refernece %s not found", task.WorkerAddr)
+			return fmt.Errorf("Hardware mentioned with refernece %s not found", task.WorkerAddr)
 		}
 		workerUID, err := uuid.FromString(workerID)
 		if err != nil {
@@ -389,7 +389,7 @@ func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
 	var tmp, tar string
 	err := row.Scan(&tmp, &tar)
 	if err == nil {
-		return Workflow{ID: id, Template: tmp, Target: tar}, nil
+		return Workflow{ID: id, Template: tmp, Hardware: tar}, nil
 	}
 
 	if err != sql.ErrNoRows {
@@ -475,7 +475,7 @@ func ListWorkflows(db *sql.DB, fn func(wf Workflow) error) error {
 		wf := Workflow{
 			ID:       id,
 			Template: tmp,
-			Target:   tar,
+			Hardware: tar,
 		}
 		wf.CreatedAt, _ = ptypes.TimestampProto(crAt)
 		wf.UpdatedAt, _ = ptypes.TimestampProto(upAt)
@@ -498,7 +498,7 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	if wf.Target == "" && wf.Template != "" {
+	if wf.Hardware == "" && wf.Template != "" {
 		_, err = tx.Exec(`
 		UPDATE workflow
 		SET
@@ -506,14 +506,14 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 		WHERE
 			id = $1;
 		`, wf.ID, wf.Template)
-	} else if wf.Target != "" && wf.Template == "" {
+	} else if wf.Hardware != "" && wf.Template == "" {
 		_, err = tx.Exec(`
 		UPDATE workflow
 		SET
 			updated_at = NOW(), devices = $2
 		WHERE
 			id = $1;
-		`, wf.ID, wf.Target)
+		`, wf.ID, wf.Hardware)
 	} else {
 		_, err = tx.Exec(`
 		UPDATE workflow
@@ -521,7 +521,7 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 			updated_at = NOW(), template = $2, devices = $3
 		WHERE
 			id = $1;
-		`, wf.ID, wf.Template, wf.Target)
+		`, wf.ID, wf.Template, wf.Hardware)
 	}
 
 	if err != nil {

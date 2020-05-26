@@ -3,7 +3,7 @@ name: packet_osie_provision
 global_timeout: 600
 tasks:
 - name: "run_one_worker"
-  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  worker: "{{.device_1}}"
   environment:
        MIRROR_HOST: 192.168.1.2
   actions:

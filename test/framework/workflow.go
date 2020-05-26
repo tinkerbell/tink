@@ -8,8 +8,8 @@ import (
 )
 
 // CreateWorkflow : create workflow
-func CreateWorkflow(template string, target string) (string, error) {
-	req := workflow.CreateRequest{Template: template, Target: target}
+func CreateWorkflow(template string, hardware string) (string, error) {
+	req := workflow.CreateRequest{Template: template, Hardware: hardware}
 	res, err := client.WorkflowClient.CreateWorkflow(context.Background(), &req)
 	if err != nil {
 		return "", err

@@ -13,7 +13,7 @@ import (
 var (
 	hID       = "Workflow ID"
 	hTemplate = "Template ID"
-	hTarget   = "Target ID"
+	hDevice   = "Hardware device"
 	hState    = "State"
 )
 

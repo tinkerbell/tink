@@ -14,7 +14,7 @@ package e2e
 //func TestWfTimeout(t *testing.T) {
 //	// Start test only if the test case exist in the table
 //	if test, ok := testCases["testWfTimeout"]; ok {
-//		wfID, err := framework.SetupWorkflow(test.target, test.template)
+//		wfID, err := framework.SetupWorkflow(test.hardware, test.template)
 //
 //		if err != nil {
 //			t.Error(err)

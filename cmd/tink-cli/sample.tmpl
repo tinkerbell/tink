@@ -3,7 +3,7 @@ name: packet_osie_provision
 global_timeout: 600
 tasks:
 - name: "OS Installation"
-  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  worker: "{{.device_1}}"
   actions:
   - name: "server_partitioning"
     image: hello-world
@@ -16,7 +16,7 @@ tasks:
     image: hello-world  
     timeout: 60
 - name: "Updated DB Entries"
-  worker: "{{index .Targets "machine1" "mac_addr"}}"
+  worker: "{{.device_1}}"
   actions:
   - name: "update_db"
     image: hello-world

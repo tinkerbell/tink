@@ -42,7 +42,7 @@ func addFlags() {
 }
 
 func createWorkflow(c *cobra.Command, args []string) {
-	req := workflow.CreateRequest{Template: template, Target: hardware}
+	req := workflow.CreateRequest{Template: template, Hardware: hardware}
 	res, err := client.WorkflowClient.CreateWorkflow(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
