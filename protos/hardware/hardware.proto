@@ -99,7 +99,7 @@ message Hardware {
 		DHCP OBSOLETE_dhcp = 1; // obsolete
 		Netboot OBSOLETE_netboot = 2; // obsolete
 		repeated Interface interfaces = 3;
-		Interface default = 4;
+		Interface OBSOLETE_default = 4; // obsolete
 	}
 	message Metadata {
 		message Manufacturer {

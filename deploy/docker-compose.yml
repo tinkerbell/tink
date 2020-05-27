@@ -26,7 +26,7 @@ services:
       timeout: 2s
       retries: 30
     volumes:
-      - ./state/certs:/certs/${FACILITY}
+      - ./state/certs:/certs/${FACILITY:-onprem}
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
@@ -149,7 +149,7 @@ services:
       PGUSER: tinkerbell
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
     volumes:
-      - ./state/certs:/certs/${FACILITY}
+      - ./state/certs:/certs/${FACILITY:-onprem}
     depends_on:
       db:
         condition: service_healthy
