@@ -145,7 +145,7 @@ message Hardware {
 					int64 gid = 5;
 				}
 
-				message Filesystem {
+				message Mount {
 					message FilesystemOptions {
 						bool force = 1;
 						repeated string options = 2;
@@ -155,6 +155,11 @@ message Hardware {
 					string format = 2;
 					repeated File files = 3;
 					FilesystemOptions create = 4;
+					string point = 5;
+				}
+
+				message Filesystem {
+					Mount mount = 1;
 				}
 
 				message RAID {
