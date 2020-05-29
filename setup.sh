@@ -232,19 +232,66 @@ setup_networking() {
 	if ! is_network_configured; then
 		cidr=$(echo $TINKERBELL_NETWORK | grep -Eo "\/[[:digit:]]+" | grep -v "^$" | tr -d "/")
 		case "$1" in
-		ubuntu)
-			if [ ! -f /etc/network/interfaces ]; then
-				echo "$ERR file /etc/network/interfaces not found"
-				exit 1
-			fi
+			ubuntu)
+				v16=16.04
+				version=$(. /etc/os-release && echo "$VERSION_ID")
+				if (( $(echo "$version > $v16" | bc -l) )); then
+					echo "$INFO found Ubuntu $version, using 'netplan' for network configuration"
 
-			if grep -q $TINKERBELL_HOST_IP /etc/network/interfaces; then
-				echo "$INFO tinkerbell network interface is already configured"
-			else
-				# plumb IP and restart to tinkerbell network interface
-				if grep -q $TINKERBELL_NETWORK_INTERFACE /etc/network/interfaces; then
-					echo "" >>/etc/network/interfaces
-					write_iface_config
+					# this is required to fix the bug described here
+					# https://bugs.launchpad.net/netplan/+bug/1810043
+					apt-get install -y --no-install-recommends netplan.io >> /dev/null
+					cat >/etc/netplan/${TINKERBELL_NETWORK_INTERFACE}.yaml <<EOF
+---
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    $TINKERBELL_NETWORK_INTERFACE:
+      addresses:
+        - $TINKERBELL_HOST_IP/$cidr
+        - $TINKERBELL_NGINX_IP/$cidr
+EOF
+					ip link set $TINKERBELL_NETWORK_INTERFACE nomaster
+					netplan apply
+					echo "$INFO waiting for the network configuration to be applied by systemd-networkd"
+					sleep 3
+				else
+					echo "$INFO found Ubuntu $version, using '/etc/network/interfaces' for network configuration"
+					if [ ! -f /etc/network/interfaces ] ; then
+						echo "$ERR file /etc/network/interfaces not found"
+						exit 1
+					fi
+
+					if grep -q $TINKERBELL_HOST_IP /etc/network/interfaces ; then
+						echo "$INFO tinkerbell network interface is already configured"
+					else
+						if command_exists ifdown; then
+							echo "$BLANK- ifupdown already installed"
+						else
+							echo "$BLANK- installing ifupdown"
+							apt-get install -y ifupdown >> /dev/null && echo "$BLANK- ifupdown installed successfully"
+						fi
+
+						# plumb IP and restart to tinkerbell network interface
+						if grep -q $TINKERBELL_NETWORK_INTERFACE /etc/network/interfaces ; then
+							echo "" >> /etc/network/interfaces
+							write_iface_config
+						else
+							echo -e "\nauto $TINKERBELL_NETWORK_INTERFACE\n" >> /etc/network/interfaces
+							write_iface_config
+						fi
+						ip link set $TINKERBELL_NETWORK_INTERFACE nomaster
+						ifdown "$TINKERBELL_NETWORK_INTERFACE:0"
+						ifdown "$TINKERBELL_NETWORK_INTERFACE:1"
+						ifup "$TINKERBELL_NETWORK_INTERFACE:0"
+						ifup "$TINKERBELL_NETWORK_INTERFACE:1"
+					fi
+				fi
+				;;
+			centos)
+				if [ -f /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE ]; then
+					sed -i '/^ONBOOT.*no$/s/no/yes/; /^BOOTPROTO.*none$/s/none/static/; /^MASTER/d; /^SLAVE/d' /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
 				else
 					echo -e "\nauto $TINKERBELL_NETWORK_INTERFACE\n" >>/etc/network/interfaces
 					write_iface_config
@@ -284,6 +331,7 @@ EOF
 			echo "$INFO tinkerbell network interface configured successfully"
 		else
 			echo "$ERR tinkerbell network interface configuration failed"
+			exit 1
 		fi
 	else
 		echo "$INFO tinkerbell network interface is already configured"
@@ -416,34 +464,28 @@ start_components() {
 check_prerequisites() {
 	echo "$INFO verifying prerequisites"
 	case "$1" in
-	ubuntu)
-		if command_exists git; then
-			echo "$BLANK- git already installed, found $(git --version)"
-		else
-			echo "$BLANK- updating packages"
-			apt-get update >>/dev/null
-			echo "$BLANK- installing git"
-			apt-get install -y --no-install-recommends git >>/dev/null
-			echo "$BLANK- $(git --version) installed successfully"
-		fi
-		if command_exists ifdown; then
-			echo "$BLANK- ifupdown already installed"
-		else
-			echo "$BLANK- installing ifupdown"
-			apt-get install -y ifupdown >>/dev/null && echo "$BLANK- ifupdown installed successfully"
-		fi
-		;;
-	centos)
-		if command_exists git; then
-			echo "$BLANK- git already installed, found $(git --version)"
-		else
-			echo "$BLANK- updating packages"
-			yum update -y >>/dev/null
-			echo "$BLANK- installing git"
-			yum install -y git >>/dev/null
-			echo "$BLANK- $(git --version) installed successfully"
-		fi
-		;;
+		ubuntu)
+			if command_exists git; then
+				echo "$BLANK- git already installed, found $(git --version)"
+			else
+				echo "$BLANK- updating packages"
+				apt-get update >> /dev/null
+				echo "$BLANK- installing git"
+				apt-get install -y --no-install-recommends git >> /dev/null
+				echo "$BLANK- $(git --version) installed successfully"
+			fi
+			;;
+		centos)
+			if command_exists git; then
+				echo "$BLANK- git already installed, found $(git --version)"
+			else
+				echo "$BLANK- updating packages"
+				yum update -y >> /dev/null
+				echo "$BLANK- installing git"
+				yum install -y git >> /dev/null
+				echo "$BLANK- $(git --version) installed successfully"
+			fi
+			;;
 	esac
 
 	setup_docker
