@@ -1,9 +1,17 @@
 variable "packet_api_token" {
   description = "Packet user api token"
-  default     = "<packet_user_api_token>"
 }
 
 variable "project_id" {
   description = "Project ID"
-  default     = "<project_id>"
+}
+
+variable "facility" {
+  description = "Packet facility to provision in"
+  default     = "sjc1"
+}
+
+variable "device_type" {
+  description = "Type of device to provision"
+  default     = "c3.small.x86"
 }
