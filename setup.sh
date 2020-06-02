@@ -163,46 +163,6 @@ generate_envrc() {
 	echo -e "export ROLLBAR_DISABLE=1\n" >>"$ENV_FILE"
 }
 
-command_exists() {
-	command -v "$@" >/dev/null 2>&1
-}
-
-setup_docker() {
-	if command_exists docker; then
-		echo "$INFO docker already installed, found $(docker -v)"
-	else
-		if [ -f /etc/redhat-release ] && [ $(. /etc/os-release && echo "$VERSION_ID") == 8 ]; then
-			echo "$INFO installing docker for CentOS8"
-			yum install 'dnf-command(config-manager)' -y
-			dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-			if dnf list docker-ce >>/dev/null; then
-				dnf install docker-ce --nobest -y
-				if systemctl start docker; then
-					systemctl enable docker
-					echo "$INFO $(docker -v) installed successfully"
-				else
-					echo "$ERR docker is not installed successfully"
-					exit 1
-				fi
-			else
-				echo "$ERR docker-ce package not found"
-				exit 1
-			fi
-		else
-			echo "$INFO installing docker"
-			curl -L get.docker.com | bash >>/dev/null && echo "$INFO $(docker -v) installed successfully"
-		fi
-	fi
-
-	if command_exists docker-compose; then
-		echo "$INFO docker-compose already installed, found $(docker-compose -v)"
-	else
-		echo "$INFO installing docker-compose"
-		curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-		chmod +x /usr/local/bin/docker-compose
-	fi
-}
-
 is_network_configured() {
 	ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_HOST_IP >>/dev/null && ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_NGINX_IP >>/dev/null
 }
@@ -413,50 +373,32 @@ start_components() {
 	done
 }
 
+command_exists() {
+	command -v "$@" >/dev/null 2>&1
+}
+
+check_command() {
+	if command_exists "$1"; then
+		echo "$BLANK Found prerequisite: $1"
+		return 0
+	else
+		echo "$ERR Prerequisite command not installed: $1"
+		return 1
+	fi
+}
+
 check_prerequisites() {
 	echo "$INFO verifying prerequisites"
-	case "$1" in
-	ubuntu)
-		if command_exists git; then
-			echo "$BLANK- git already installed, found $(git --version)"
-		else
-			echo "$BLANK- updating packages"
-			apt-get update >>/dev/null
-			echo "$BLANK- installing git"
-			apt-get install -y --no-install-recommends git >>/dev/null
-			echo "$BLANK- $(git --version) installed successfully"
-		fi
-		if command_exists ifdown; then
-			echo "$BLANK- ifupdown already installed"
-		else
-			echo "$BLANK- installing ifupdown"
-			apt-get install -y ifupdown >>/dev/null && echo "$BLANK- ifupdown installed successfully"
-		fi
-		;;
-	centos)
-		if command_exists git; then
-			echo "$BLANK- git already installed, found $(git --version)"
-		else
-			echo "$BLANK- updating packages"
-			yum update -y >>/dev/null
-			echo "$BLANK- installing git"
-			yum install -y git >>/dev/null
-			echo "$BLANK- $(git --version) installed successfully"
-		fi
-		;;
-	esac
+	failed=0
+	check_command git || failed=1
+	check_command ifup || failed=1
+	check_command docker || failed=1
+	check_command docker-compose || failed=1
 
-	setup_docker
-	# get resources
-	echo "$INFO getting https://github.com/tinkerbell/tink for latest artifacts"
-	if [ -d tink ]; then
-		cd tink
-		git checkout master && git pull >>/dev/null
-	else
-		git clone --single-branch -b master https://github.com/tinkerbell/tink
-		cd tink
+	if [ $failed -eq 1 ]; then
+		echo "$ERR Prerequisites not met. Please install the missing commands and re-run $0."
+		exit 1
 	fi
-	# TODO: verify if all required ports are available
 }
 
 whats_next() {
@@ -492,7 +434,6 @@ do_setup() {
 		exit 0
 		;;
 	centos)
-		systemctl start docker
 		# enable IP forwarding for docker
 		echo "net.ipv4.ip_forward=1" >>/etc/sysctl.conf
 		setup_networking "$lsb_dist"
