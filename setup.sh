@@ -10,7 +10,7 @@ set -e
 # file to hold all environment variables
 ENV_FILE=envrc
 
-if which tput >>/dev/null; then
+if command -v tput >>/dev/null; then
 	# color codes
 	RED="$(tput setaf 1)"
 	GREEN="$(tput setaf 2)"
