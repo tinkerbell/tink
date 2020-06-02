@@ -113,7 +113,7 @@ services:
       TINKERBELL_GRPC_AUTHORITY: $TINKERBELL_HOST_IP:42113
       TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
       ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
-      DISCOVERY_TYPE: tinkerbell
+      HARDWARE_DATA_MODEL: tinkerbell
     depends_on:
       cacher:
         condition: service_started
@@ -171,6 +171,9 @@ services:
       HEGEL_USE_TLS: 0
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+      TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
+      TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
+      HARDWARE_DATA_MODEL: tinkerbell
     depends_on:
       cacher:
         condition: service_started

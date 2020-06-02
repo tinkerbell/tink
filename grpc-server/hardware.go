@@ -32,6 +32,8 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		return &hardware.Empty{}, err
 	}
 
+	// TODO: somewhere here validate json (if ip addr contains cidr, etc.)
+
 	logger.With("id", hw.Id).Info("data pushed")
 
 	var fn func() error
