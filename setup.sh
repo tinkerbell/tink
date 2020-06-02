@@ -156,8 +156,8 @@ setup_osie() {
 }
 
 check_container_status() {
-	docker ps | grep "$1" >>/dev/null
-	if [ "$?" -ne "0" ]; then
+
+	if docker ps | grep -q "$1"; then
 		echo "$ERR failed to start container $1"
 		exit 1
 	fi
@@ -167,8 +167,8 @@ gen_certs() {
 	sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$TINKERBELL_HOST_IP\"\,/g" "$deploy"/tls/server-csr.in.json
 	docker-compose -f "$deploy"/docker-compose.yml up --build -d certs
 	sleep 2
-	docker ps -a | grep certs | grep "Exited (0)" >>/dev/null
-	if [ "$?" -eq "0" ]; then
+
+	if docker ps -a | grep certs | grep -q "Exited (0)"; then
 		sleep 2
 	else
 		echo "$ERR failed to generate certificates"
