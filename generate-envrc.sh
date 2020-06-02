@@ -61,6 +61,8 @@ export TINKERBELL_NETWORK_INTERFACE=$tink_interface"
 # $ ipcalc 192.168.1.0/29
 export TINKERBELL_NETWORK=192.168.1.0/29
 
+export TINKERBELL_CIDR=29
+
 # Host IP is used by provisioner to expose different services such as tink, boots, etc.
 export TINKERBELL_HOST_IP=192.168.1.1
 
