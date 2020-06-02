@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "workflow";
 
-package workflow;
+package github.com.tinkerbell.tink.protos.workflow;
 
 import "timestamp.proto";
 
