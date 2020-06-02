@@ -39,7 +39,18 @@ get_distribution() {
 }
 
 is_network_configured() {
-	ip addr show "$TINKERBELL_PROVISIONER_INTERFACE" | grep "$TINKERBELL_HOST_IP" >>/dev/null && ip addr show "$TINKERBELL_PROVISIONER_INTERFACE" | grep "$TINKERBELL_NGINX_IP" >>/dev/null
+	# Require the provisioner interface have both the host and nginx IP
+	if ! ip addr show "$TINKERBELL_NETWORK_INTERFACE" |
+		grep -q "$TINKERBELL_HOST_IP"; then
+		return 1
+	fi
+
+	if ! ip addr show "$TINKERBELL_NETWORK_INTERFACE" |
+		grep -q "$TINKERBELL_NGINX_IP"; then
+		return 1
+	fi
+
+	return 0
 }
 
 write_iface_config() {
