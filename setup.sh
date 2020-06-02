@@ -38,7 +38,7 @@ get_distribution() {
 }
 
 is_network_configured() {
-	ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_HOST_IP >>/dev/null && ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_NGINX_IP >>/dev/null
+	ip addr show "$TINKERBELL_PROVISIONER_INTERFACE" | grep "$TINKERBELL_HOST_IP" >>/dev/null && ip addr show "$TINKERBELL_PROVISIONER_INTERFACE" | grep "$TINKERBELL_NGINX_IP" >>/dev/null
 }
 
 write_iface_config() {
@@ -71,18 +71,18 @@ setup_networking() {
 				exit 1
 			fi
 
-			if grep -q $TINKERBELL_HOST_IP /etc/network/interfaces; then
+			if grep -q "$TINKERBELL_HOST_IP" /etc/network/interfaces; then
 				echo "$INFO tinkerbell network interface is already configured"
 			else
 				# plumb IP and restart to tinkerbell network interface
-				if grep -q $TINKERBELL_NETWORK_INTERFACE /etc/network/interfaces; then
+				if grep -q "$TINKERBELL_NETWORK_INTERFACE" /etc/network/interfaces; then
 					echo "" >>/etc/network/interfaces
 					write_iface_config
 				else
 					echo -e "\nauto $TINKERBELL_NETWORK_INTERFACE\n" >>/etc/network/interfaces
 					write_iface_config
 				fi
-				ip link set $TINKERBELL_NETWORK_INTERFACE nomaster
+				ip link set "$TINKERBELL_NETWORK_INTERFACE" nomaster
 				ifdown "$TINKERBELL_NETWORK_INTERFACE:0"
 				ifdown "$TINKERBELL_NETWORK_INTERFACE:1"
 				ifup "$TINKERBELL_NETWORK_INTERFACE:0"
@@ -90,12 +90,12 @@ setup_networking() {
 			fi
 			;;
 		centos)
-			if [ -f /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE ]; then
-				sed -i '/^ONBOOT.*no$/s/no/yes/; /^BOOTPROTO.*none$/s/none/static/; /^MASTER/d; /^SLAVE/d' /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+			if [ -f "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE" ]; then
+				sed -i '/^ONBOOT.*no$/s/no/yes/; /^BOOTPROTO.*none$/s/none/static/; /^MASTER/d; /^SLAVE/d' "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
 			else
-				touch /etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
-				HWADDRESS=$(ip addr show $TINKERBELL_NETWORK_INTERFACE | grep ether | awk -F 'ether' '{print $2}' | cut -d" " -f2)
-				cat <<EOF >>/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+				touch "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
+				HWADDRESS=$(ip addr show "$TINKERBELL_NETWORK_INTERFACE" | grep ether | awk -F 'ether' '{print $2}' | cut -d" " -f2)
+				cat <<EOF >>"/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
 DEVICE=$TINKERBELL_NETWORK_INTERFACE
 ONBOOT=yes
 HWADDR=$HWADDRESS
@@ -103,14 +103,14 @@ BOOTPROTO=static
 EOF
 			fi
 
-			cat <<EOF >>/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE
+			cat <<EOF >>"/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
 IPADDR0=$TINKERBELL_HOST_IP
 NETMASK0=$TINKERBELL_NETMASK
 IPADDR1=$TINKERBELL_NGINX_IP
 NETMASK1=$TINKERBELL_NETMASK
 EOF
-			ip link set $TINKERBELL_NETWORK_INTERFACE nomaster
-			ifup $TINKERBELL_NETWORK_INTERFACE
+			ip link set "$TINKERBELL_NETWORK_INTERFACE" nomaster
+			ifup "$TINKERBELL_NETWORK_INTERFACE"
 			;;
 		esac
 		if is_network_configured; then
