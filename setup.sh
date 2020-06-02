@@ -82,27 +82,7 @@ setup_networking() {
 		fi
 		;;
 	centos)
-		if [ -f "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE" ]; then
-			sed -i '/^ONBOOT.*no$/s/no/yes/; /^BOOTPROTO.*none$/s/none/static/; /^MASTER/d; /^SLAVE/d' "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
-		else
-			touch "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
-			HWADDRESS=$(ip addr show "$TINKERBELL_NETWORK_INTERFACE" | grep ether | awk -F 'ether' '{print $2}' | cut -d" " -f2)
-			cat <<EOF >>"/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
-DEVICE=$TINKERBELL_NETWORK_INTERFACE
-ONBOOT=yes
-HWADDR=$HWADDRESS
-BOOTPROTO=static
-EOF
-		fi
-
-		cat <<EOF >>"/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
-IPADDR0=$TINKERBELL_HOST_IP
-NETMASK0=$TINKERBELL_NETMASK
-IPADDR1=$TINKERBELL_NGINX_IP
-NETMASK1=$TINKERBELL_NETMASK
-EOF
-		ip link set "$TINKERBELL_NETWORK_INTERFACE" nomaster
-		ifup "$TINKERBELL_NETWORK_INTERFACE"
+		setup_networking_centos
 		;;
 	esac
 	if is_network_configured; then
@@ -185,6 +165,43 @@ iface $TINKERBELL_NETWORK_INTERFACE:1 inet static
     pre-up sleep 4
 
 EOF
+)
+
+setup_networking_centos() (
+	local HWADDRESS
+	local content
+
+	HWADDRESS=$(ip addr show "$TINKERBELL_NETWORK_INTERFACE" | grep ether | awk -F 'ether' '{print $2}' | cut -d" " -f2)
+	content=$(
+		cat <<EOF
+DEVICE=$TINKERBELL_NETWORK_INTERFACE
+ONBOOT=yes
+HWADDR=$HWADDRESS
+BOOTPROTO=static
+
+IPADDR0=$TINKERBELL_HOST_IP
+NETMASK0=$TINKERBELL_NETMASK
+IPADDR1=$TINKERBELL_NGINX_IP
+NETMASK1=$TINKERBELL_NETMASK
+EOF
+	)
+
+	local cfgfile="/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE"
+
+	if [ -f "$cfgfile" ]; then
+		echo "$ERR network config already exists: $cfgfile"
+		echo "$BLANK Please update it to match this configuration:"
+		echo "$content"
+		echo ""
+		echo "$BLANK Then, run the following commands:"
+		echo "ip link set $TINKERBELL_NETWORK_INTERFACE nomaster"
+		echo "ifup $TINKERBELL_NETWORK_INTERFACE"
+	fi
+
+	echo "$content" >"$cfgfile"
+
+	ip link set "$TINKERBELL_NETWORK_INTERFACE" nomaster
+	ifup "$TINKERBELL_NETWORK_INTERFACE"
 )
 
 setup_osie() {
