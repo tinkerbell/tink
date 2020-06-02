@@ -30,6 +30,7 @@ get_distribution() {
 	lsb_dist=""
 	# Every system that we officially support has /etc/os-release
 	if [ -r /etc/os-release ]; then
+		# shellcheck disable=SC1091
 		lsb_dist="$(. /etc/os-release && echo "$ID")"
 	fi
 	# Returning an empty string here should be alright since the
@@ -292,6 +293,7 @@ do_setup() {
 		exit 1
 	fi
 
+	# shellcheck disable=SC1090
 	source "$ENV_FILE"
 
 	# Run setup for each distro accordingly
