@@ -38,6 +38,17 @@ get_distribution() {
 	echo "$lsb_dist"
 }
 
+get_distro_version() {
+	lsb_version="0"
+	# Every system that we officially support has /etc/os-release
+	if [ -r /etc/os-release ]; then
+		# shellcheck disable=SC1091
+		lsb_version="$(. /etc/os-release && echo "$VERSION_ID")"
+	fi
+
+	echo "$lsb_version"
+}
+
 is_network_configured() {
 	# Require the provisioner interface have both the host and nginx IP
 	if ! ip addr show "$TINKERBELL_NETWORK_INTERFACE" |
@@ -303,6 +314,7 @@ do_setup() {
 	# perform some very rudimentary platform detection
 	lsb_dist=$(get_distribution)
 	lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
+	lsb_version=$(get_distro_version)
 
 	echo "$INFO starting tinkerbell stack setup"
 	check_prerequisites "$lsb_dist"
@@ -318,7 +330,7 @@ do_setup() {
 	# Run setup for each distro accordingly
 	case "$lsb_dist" in
 	ubuntu)
-		setup_networking "$lsb_dist"
+		setup_networking "$lsb_dist" "$lsb_version"
 		setup_osie
 		generate_certificates
 		setup_docker_registry
@@ -335,7 +347,7 @@ do_setup() {
 	centos)
 		# enable IP forwarding for docker
 		echo "net.ipv4.ip_forward=1" >>/etc/sysctl.conf
-		setup_networking "$lsb_dist"
+		setup_networking "$lsb_dist" "$lsb_version"
 		setup_osie
 		generate_certificates
 		setup_docker_registry
