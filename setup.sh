@@ -64,7 +64,6 @@ EOF
 
 setup_networking() {
 	if ! is_network_configured; then
-		cidr=$(echo $TINKERBELL_NETWORK | grep -Eo "\/[[:digit:]]+" | grep -v "^$" | tr -d "/")
 		case "$1" in
 		ubuntu)
 			if [ ! -f /etc/network/interfaces ]; then
