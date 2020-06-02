@@ -214,12 +214,13 @@ message Hardware {
 		Facility facility = 6;
 	}
 
-	string id = 1;
+	string OBSOLETE_JSON = 1; // obsolete
 	DHCP OBSOLETE_dhcp = 2; // obsolete
 	Netboot OBSOLETE_netboot = 3; //obsolete
 	repeated Network OBSOLETE_network = 4; // obsolete
 	Metadata metadata = 5;
 	Network network = 6;
+	string id = 7;
 
 }
 
