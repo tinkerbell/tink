@@ -53,27 +53,6 @@ is_network_configured() {
 	return 0
 }
 
-write_iface_config() {
-	iface_config="$(
-		cat <<EOF | sed 's/^\s\{4\}//g' | sed ':a;N;$!ba;s/\n/\\n/g'
-    auto $TINKERBELL_NETWORK_INTERFACE:0
-    iface $TINKERBELL_NETWORK_INTERFACE:0 inet static
-        address $TINKERBELL_HOST_IP
-        netmask $TINKERBELL_NETMASK
-        broadcast $TINKERBELL_BROADCAST_IP
-        pre-up sleep 4
-
-    auto $TINKERBELL_NETWORK_INTERFACE:1
-    iface $TINKERBELL_NETWORK_INTERFACE:1 inet static
-        address $TINKERBELL_NGINX_IP
-        netmask $TINKERBELL_NETMASK
-        broadcast $TINKERBELL_BROADCAST_IP
-        pre-up sleep 4
-EOF
-	)"
-	sed -i "/^auto $TINKERBELL_NETWORK_INTERFACE/,/^\$/c $iface_config" /etc/network/interfaces
-}
-
 setup_networking() {
 	if is_network_configured; then
 		echo "$INFO tinkerbell network interface is already configured"
@@ -82,28 +61,7 @@ setup_networking() {
 
 	case "$1" in
 	ubuntu)
-		if [ ! -f /etc/network/interfaces ]; then
-			echo "$ERR file /etc/network/interfaces not found"
-			exit 1
-		fi
-
-		if grep -q "$TINKERBELL_HOST_IP" /etc/network/interfaces; then
-			echo "$INFO tinkerbell network interface is already configured"
-		else
-			# plumb IP and restart to tinkerbell network interface
-			if grep -q "$TINKERBELL_NETWORK_INTERFACE" /etc/network/interfaces; then
-				echo "" >>/etc/network/interfaces
-				write_iface_config
-			else
-				echo -e "\nauto $TINKERBELL_NETWORK_INTERFACE\n" >>/etc/network/interfaces
-				write_iface_config
-			fi
-			ip link set "$TINKERBELL_NETWORK_INTERFACE" nomaster
-			ifdown "$TINKERBELL_NETWORK_INTERFACE:0"
-			ifdown "$TINKERBELL_NETWORK_INTERFACE:1"
-			ifup "$TINKERBELL_NETWORK_INTERFACE:0"
-			ifup "$TINKERBELL_NETWORK_INTERFACE:1"
-		fi
+		setup_networking_ubuntu_legacy
 		;;
 	centos)
 		if [ -f "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE" ]; then
@@ -135,6 +93,55 @@ EOF
 		echo "$ERR tinkerbell network interface configuration failed"
 	fi
 }
+
+setup_networking_ubuntu_legacy() (
+	if [ ! -f /etc/network/interfaces ]; then
+		echo "$ERR file /etc/network/interfaces not found"
+		exit 1
+	fi
+
+	if grep -q "$TINKERBELL_NETWORK_INTERFACE" /etc/network/interfaces; then
+		echo "$ERR /etc/network/interfaces already has an entry for $TINKERBELL_NETWORK_INTERFACE."
+		echo "$BLANK To prevent breaking your network, please edit /etc/network/interfaces"
+		echo "$BLANK and configure $TINKERBELL_NETWORK_INTERFACE as follows:"
+		generate_iface_config
+		echo ""
+		echo "$BLANK Then run the following commands:"
+		echo "$BLANK ip link set $TINKERBELL_NETWORK_INTERFACE nomaster"
+		echo "$BLANK ifdown $TINKERBELL_NETWORK_INTERFACE:0"
+		echo "$BLANK ifdown $TINKERBELL_NETWORK_INTERFACE:1"
+		echo "$BLANK ifup $TINKERBELL_NETWORK_INTERFACE:0"
+		echo "$BLANK ifup $TINKERBELL_NETWORK_INTERFACE:1"
+		exit 1
+	else
+		generate_iface_config >>/etc/network/interfaces
+		ip link set "$TINKERBELL_NETWORK_INTERFACE" nomaster
+		ifdown "$TINKERBELL_NETWORK_INTERFACE:0"
+		ifdown "$TINKERBELL_NETWORK_INTERFACE:1"
+		ifup "$TINKERBELL_NETWORK_INTERFACE:0"
+		ifup "$TINKERBELL_NETWORK_INTERFACE:1"
+	fi
+)
+
+generate_iface_config() (
+	cat <<EOF
+
+auto $TINKERBELL_NETWORK_INTERFACE:0
+iface $TINKERBELL_NETWORK_INTERFACE:0 inet static
+    address $TINKERBELL_HOST_IP
+    netmask $TINKERBELL_NETMASK
+    broadcast $TINKERBELL_BROADCAST_IP
+    pre-up sleep 4
+
+auto $TINKERBELL_NETWORK_INTERFACE:1
+iface $TINKERBELL_NETWORK_INTERFACE:1 inet static
+    address $TINKERBELL_NGINX_IP
+    netmask $TINKERBELL_NETMASK
+    broadcast $TINKERBELL_BROADCAST_IP
+    pre-up sleep 4
+
+EOF
+)
 
 setup_osie() {
 	osie_current=/var/tinkerbell/nginx/misc/osie/current
