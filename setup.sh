@@ -113,7 +113,29 @@ EOF
 }
 
 setup_networking_netplan() (
-	:
+	jq -n \
+		--arg interface "$TINKERBELL_NETWORK_INTERFACE" \
+		--arg cidr "$TINKERBELL_CIDR" \
+		--arg host_ip "$TINKERBELL_HOST_IP" \
+		--arg nginx_ip "$TINKERBELL_NGINX_IP" \
+		'{
+  network: {
+    renderer: "networkd",
+    ethernets: {
+      ($interface): {
+        addresses: [
+          "\($host_ip)/\($cidr)",
+          "\($nginx_ip)/\($cidr)"
+        ]
+      }
+    }
+  }
+}' >"/etc/netplan/${TINKERBELL_NETWORK_INTERFACE}.yaml"
+
+	ip link set "$TINKERBELL_NETWORK_INTERFACE" nomaster
+	netplan apply
+	echo "$INFO waiting for the network configuration to be applied by systemd-networkd"
+	sleep 3
 )
 
 setup_networking_ubuntu_legacy() (
@@ -307,6 +329,7 @@ check_prerequisites() {
 	failed=0
 	check_command git || failed=1
 	check_command bc || failed=1
+	check_command jq || failed=1
 	check_command ifup || failed=1
 	check_command docker || failed=1
 	check_command docker-compose || failed=1
