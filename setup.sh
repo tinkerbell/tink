@@ -65,14 +65,21 @@ is_network_configured() {
 }
 
 setup_networking() {
+	distro=$1
+	version=$2
+
 	if is_network_configured; then
 		echo "$INFO tinkerbell network interface is already configured"
 		return 0
 	fi
 
-	case "$1" in
+	case "$distro" in
 	ubuntu)
-		setup_networking_ubuntu_legacy
+		if (($(echo "$version >= 17.10" | bc -l))); then
+			setup_networking_netplan
+		else
+			setup_networking_ubuntu_legacy
+		fi
 		;;
 	centos)
 		if [ -f "/etc/sysconfig/network-scripts/ifcfg-$TINKERBELL_NETWORK_INTERFACE" ]; then
@@ -104,6 +111,10 @@ EOF
 		echo "$ERR tinkerbell network interface configuration failed"
 	fi
 }
+
+setup_networking_netplan() (
+	:
+)
 
 setup_networking_ubuntu_legacy() (
 	if [ ! -f /etc/network/interfaces ]; then
@@ -295,6 +306,7 @@ check_prerequisites() {
 	echo "$INFO verifying prerequisites"
 	failed=0
 	check_command git || failed=1
+	check_command bc || failed=1
 	check_command ifup || failed=1
 	check_command docker || failed=1
 	check_command docker-compose || failed=1
