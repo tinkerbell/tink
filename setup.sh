@@ -37,132 +37,6 @@ get_distribution() {
 	echo "$lsb_dist"
 }
 
-list_network_interfaces() {
-	if [ -z $TB_INTERFACE ]; then
-		echo "Following network interfaces found on the system:"
-		ip -o link show | awk -F': ' '{print $2}' | grep '^[e]'
-	fi
-}
-
-get_tinkerbell_network_interface() {
-	# read for network interface if TB_INTERFACE is not defined
-	if [ -z $TB_INTERFACE ]; then
-		read -p 'Which one would you like to use for with Tinkerbell? ' tink_interface
-	else
-		tink_interface=$TB_INTERFACE
-	fi
-
-	ip -o link show | awk -F': ' '{print $2}' | sed 's/[ \t].*//;/^\(lo\|\)$/d' | sed 's/[ \t].*//;/^\(bond0\|\)$/d' | grep "$tink_interface"
-	if [ $? -ne 0 ]; then
-		echo "$ERR Invalid interface selected. Exiting setup."
-		exit 1
-	fi
-	echo -e "# Network interface for Tinkerbell \nexport TINKERBELL_NETWORK_INTERFACE=$tink_interface" >>"$ENV_FILE"
-}
-
-get_tinkerbell_ips() {
-	# read for tinkerbell network if TB_NETWORK is not defined
-	if [ -z $TB_NETWORK ]; then
-		read -p 'Select the subnet for Tinkerbell ecosystem: [default 192.168.1.0/29]: ' tink_network
-		tink_network=${tink_network:-"192.168.1.0/29"}
-	else
-		tink_network=$TB_NETWORK
-	fi
-
-	# read for tinkerbell IP address if TB_IPADDR is not defined
-	if [ -z $TB_IPADDR ]; then
-		read -p 'Select the IP address for Tinkerbell [default 192.168.1.1]: ' ip_addr
-		ip_addr=${ip_addr:-"192.168.1.1"}
-	else
-		ip_addr=$TB_IPADDR
-	fi
-
-	host=$(($(echo $ip_addr | cut -d "." -f 4 | xargs) + 1))
-	nginx_ip="$(echo $ip_addr | cut -d "." -f 1).$(echo $ip_addr | cut -d "." -f 2).$(echo $ip_addr | cut -d "." -f 3).$host"
-
-	# calculate network and broadcast based on supplied provide IP range
-	if [[ $tink_network =~ ^([0-9\.]+)/([0-9]+)$ ]]; then
-		# CIDR notation
-		IPADDR=${BASH_REMATCH[1]}
-		NETMASKLEN=${BASH_REMATCH[2]}
-		zeros=$((32 - NETMASKLEN))
-		NETMASKNUM=0
-		for ((i = 0; i < $zeros; i++)); do
-			NETMASKNUM=$(((NETMASKNUM << 1) ^ 1))
-		done
-		NETMASKNUM=$((NETMASKNUM ^ 0xFFFFFFFF))
-		toaddr $NETMASKNUM NETMASK
-	else
-		IPADDR=${1:-192.168.1.1}
-		NETMASK=${2:-255.255.255.248}
-	fi
-
-	tonum $IPADDR IPADDRNUM
-	tonum $NETMASK NETMASKNUM
-
-	# The logic to calculate network and broadcast
-	INVNETMASKNUM=$((0xFFFFFFFF ^ NETMASKNUM))
-	NETWORKNUM=$((IPADDRNUM & NETMASKNUM))
-	BROADCASTNUM=$((INVNETMASKNUM | NETWORKNUM))
-
-	toaddr $NETWORKNUM NETWORK
-	toaddr $BROADCASTNUM BROADCAST
-
-	echo -e "\n# Subnet (IP block) used by Tinkerbell ecosystem \nexport TINKERBELL_NETWORK=$tink_network" >>"$ENV_FILE"
-	echo -e "\n# Host IP is used by provisioner to expose different services such as tink, boots, etc. \nexport TINKERBELL_HOST_IP=$ip_addr" >>"$ENV_FILE"
-	echo -e "\n# NGINX IP is used by provisioner to serve files required for iPXE boot \nexport TINKERBELL_NGINX_IP=$nginx_ip" >>"$ENV_FILE"
-	echo -e "\n# Netmask for Tinkerbell network \nexport TINKERBELL_NETMASK=$NETMASK" >>"$ENV_FILE"
-	echo -e "\n# Broadcast IP for Tinkerbell network \nexport TINKERBELL_BROADCAST_IP=$BROADCAST" >>"$ENV_FILE"
-}
-
-tonum() {
-	if [[ $1 =~ ([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+) ]]; then
-		addr=$(((${BASH_REMATCH[1]} << 24) + (${BASH_REMATCH[2]} << 16) + (${BASH_REMATCH[3]} << 8) + ${BASH_REMATCH[4]}))
-		eval "$2=\$addr"
-	fi
-}
-
-toaddr() {
-	b1=$((($1 & 0xFF000000) >> 24))
-	b2=$((($1 & 0xFF0000) >> 16))
-	b3=$((($1 & 0xFF00) >> 8))
-	b4=$(($1 & 0xFF))
-	eval "$2=\$b1.\$b2.\$b3.\$b4"
-}
-
-get_registry_credentials() {
-	# read for registry username if TB_REGUSER is not defined
-	if [ -z $TB_REGUSER ]; then
-		read -p 'Create a Docker registry username [default admin]? ' username
-		username=${username:-"admin"}
-	else
-		username=$TB_REGUSER
-	fi
-	password=$(head -c 12 /dev/urandom | sha256sum | cut -d' ' -f1)
-	echo -e "\n# We host a private Docker registry on provisioner which is used by different workers" >>"$ENV_FILE"
-	echo -e "# Registry username \nexport TINKERBELL_REGISTRY_USERNAME=$username" >>"$ENV_FILE"
-	echo -e "\n# Registry password \nexport TINKERBELL_REGISTRY_PASSWORD=$password" >>"$ENV_FILE"
-	echo ""
-}
-
-generate_envrc() {
-	# backup existing environment config if any
-	if [ -f "$ENV_FILE" ]; then
-		echo "$INFO found existing $ENV_FILE, moving it to $ENV_FILE.bak"
-		mv "$ENV_FILE" "$ENV_FILE".bak
-	fi
-
-	list_network_interfaces
-	tink_interface=$(get_tinkerbell_network_interface)
-	get_tinkerbell_ips
-	get_registry_credentials
-
-	# the following envs will eventually goaway but are required for now
-	echo -e "\nexport FACILITY=onprem" >>"$ENV_FILE"
-	echo -e "export ROLLBAR_TOKEN=ignored" >>"$ENV_FILE"
-	echo -e "export ROLLBAR_DISABLE=1\n" >>"$ENV_FILE"
-}
-
 is_network_configured() {
 	ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_HOST_IP >>/dev/null && ip addr show $TINKERBELL_PROVISIONER_INTERFACE | grep $TINKERBELL_NGINX_IP >>/dev/null
 }
@@ -413,8 +287,13 @@ do_setup() {
 
 	echo "$INFO starting tinkerbell stack setup"
 	check_prerequisites "$lsb_dist"
-	generate_envrc
-	source $ENV_FILE
+
+	if [ ! -f "$ENV_FILE" ]; then
+		echo "$ERR Run './generate-envrc.sh network-interface > \"$ENV_FILE\"' before continuing."
+		exit 1
+	fi
+
+	source "$ENV_FILE"
 
 	# Run setup for each distro accordingly
 	case "$lsb_dist" in
