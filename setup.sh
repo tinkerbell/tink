@@ -68,6 +68,8 @@ setup_networking() {
 	distro=$1
 	version=$2
 
+	setup_network_forwarding
+
 	if is_network_configured; then
 		echo "$INFO tinkerbell network interface is already configured"
 		return 0
@@ -91,6 +93,19 @@ setup_networking() {
 		echo "$ERR tinkerbell network interface configuration failed"
 	fi
 }
+
+setup_network_forwarding() (
+	# enable IP forwarding for docker
+	if [ "$(sysctl -n net.ipv4.ip_forward)" != "1" ]; then
+		if [ -d /etc/sysctl.d ]; then
+			echo "net.ipv4.ip_forward=1" >/etc/sysctl.d/99-tinkerbell.conf
+		elif [ -f /etc/sysctl.conf ]; then
+			echo "net.ipv4.ip_forward=1" >>/etc/sysctl.conf
+		fi
+
+		sysctl net.ipv4.ip_forward=1
+	fi
+)
 
 setup_networking_netplan() (
 	jq -n \
@@ -379,10 +394,11 @@ do_setup() {
 	# shellcheck disable=SC1090
 	source "$ENV_FILE"
 
+	setup_networking "$lsb_dist" "$lsb_version"
+
 	# Run setup for each distro accordingly
 	case "$lsb_dist" in
 	ubuntu)
-		setup_networking "$lsb_dist" "$lsb_version"
 		setup_osie
 		generate_certificates
 		setup_docker_registry
@@ -397,9 +413,6 @@ do_setup() {
 		exit 0
 		;;
 	centos)
-		# enable IP forwarding for docker
-		echo "net.ipv4.ip_forward=1" >>/etc/sysctl.conf
-		setup_networking "$lsb_dist" "$lsb_version"
 		setup_osie
 		generate_certificates
 		setup_docker_registry
