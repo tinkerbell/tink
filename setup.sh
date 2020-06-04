@@ -362,7 +362,7 @@ generate_certificates() {
 	if [ -d "$deploy"/certs ]; then 
 		echo "$WARN found certs directory"
 		if grep -q "\"$TINKERBELL_HOST_IP\"" "$deploy"/tls/server-csr.in.json; then
-			echo "$WARN found server enty in TLS"
+			echo "$WARN found server entry in TLS"
 			echo "$INFO found existing certificates for host $TINKERBELL_HOST_IP, skipping certificate generation"
 		else 
 			gen_certs

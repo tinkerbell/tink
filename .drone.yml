@@ -56,13 +56,18 @@ steps:
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
+  - name: check spelling
+    image: nixos/nix
+    commands:
+      - ./ci-checks.sh
+
   - name: build
     image: golang:1.13-alpine3.11
     commands:
       - apk add --update make
       - make
 
-  - name: fmt_lint_check
+  - name: fmt and lint check of go code
     image: golang:1.13-alpine3.11
     commands:
       - apk add --update make

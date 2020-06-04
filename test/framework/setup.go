@@ -64,7 +64,7 @@ func createWorkerImage() error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		logger.Errorln("Faield to create worker image", err)
+		logger.Errorln("Failed to create worker image", err)
 	}
 	logger.Infoln("Worker Image created")
 	return err
@@ -104,7 +104,7 @@ func StartStack() error {
 	// Docker compose file for starting the containers
 	filepath := "../test-docker-compose.yml"
 
-	// Intialize logger
+	// Initialize logger
 	initializeLogger()
 
 	// Start Db and logging components
