@@ -1,13 +1,14 @@
-# Tinkerbell 
+# Tinkerbell
 
 [![Build Status](https://cloud.drone.io/api/badges/tinkerbell/tink/status.svg)](https://cloud.drone.io/tinkerbell/tink)
 
-Tinkerbell is a bare metal provisioning and workflow engine comprised of three major components: a DHCP server ([boots](https://github.com/packethost/boots)), a workflow engine (tinkerbell, this repository), and a metadata service ([hegel](https://github.com/packethost/hegel)). The workflow engine is comprised of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, templates and targeted hardware.
+Tinkerbell is a bare metal provisioning and workflow engine comprised of three major components: a DHCP server ([boots](https://github.com/packethost/boots)), a workflow engine (tinkerbell, this repository), and a metadata service ([hegel](https://github.com/packethost/hegel)).
+The workflow engine is comprised of a server and a CLI, which communicate over gRPC.
+The CLI is used to create a workflow along with its building blocks, templates and targeted hardware.
 
-# Packet Workflow 
+# Packet Workflow
 
-A Packet Workflow is an open-source microservice that’s responsible for handling flexible, bare metal
-provisioning workflows, that is...
+A Packet Workflow is an open-source microservice that’s responsible for handling flexible, bare metal provisioning workflows, that is...
  - standalone and does not need the Packet API to function
  - contains `Boots`, `Tinkerbell`, `Osie`, and workers
  - can bootstrap any remote worker using `Boots + Osie`
@@ -15,7 +16,7 @@ provisioning workflows, that is...
  - receive, manipulate, and save runtime data
 
 ## Content
- 
+
  - [Setup](docs/setup.md)
  - [Components](docs/components.md)
    - [Boots](docs/components.md#boots)

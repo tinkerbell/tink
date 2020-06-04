@@ -4,7 +4,8 @@ Here is an example to execute the most simple workflow that says "Hello World!".
 
 ### Prerequisite
 
-You have a setup ready with a provisioner and a worker node. If not, please follow the steps [here](setup.md) to complete the setup.
+You have a setup ready with a provisioner and a worker node.
+If not, please follow the steps [here](setup.md) to complete the setup.
 
 ### Hardware Data
 
@@ -45,7 +46,8 @@ A few details to note:
  - `ip_addresses.address` is the IP to hand out
  - `network_ports` is the worker MAC address
 
-Now that we have the hardware data, we need to push it into the database. In order to do so, remove the extra spaces in the above JSON and use the following command to push the data:
+Now that we have the hardware data, we need to push it into the database.
+In order to do so, remove the extra spaces in the above JSON and use the following command to push the data:
 ```
 $ tink hardware push '<json-data-here>'
 ```
@@ -57,7 +59,8 @@ $ tink hardware mac <worker-mac-address>
 
 ### Action images
 
-The workflow will have a single task that will have a single action. The action here is to say `Hello-world!`, so we will push the action image to the registry running on the provisioner:
+The workflow will have a single task that will have a single action.
+The action here is to say `Hello-world!`, so we will push the action image to the registry running on the provisioner:
 ```shell
 $ docker pull hello-world
 $ docker tag hello-world <registry-host>/hello-world

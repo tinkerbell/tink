@@ -12,7 +12,8 @@ $ ./setup.sh
 ```
 
 ### Declarative Mode
-You can also execute the setup in declarative mode. In order to do so, define the following environment variables (examples here):
+You can also execute the setup in declarative mode.
+In order to do so, define the following environment variables (examples here):
 ```shell
 export TB_INTERFACE=network-interface         # enp1s0f1
 export TB_NETWORK=network-with-cidr           # 192.168.1.0/29
@@ -28,7 +29,8 @@ $ curl https://raw.githubusercontent.com/tinkerbell/tink/master/setup.sh | bash
 ### Good to know
  - All the environment variables are kept in the `envrc` file, which is generated from the setup itself.
  - It is advised that you keep all the environment variables in the same file.
- - It is important to note that if you execute the setup the again, a new `envrc` will be generated. However, the existing environment configuration be saved as `envrc.bak`.
+ - It is important to note that if you execute the setup the again, a new `envrc` will be generated.
+   However, the existing environment configuration be saved as `envrc.bak`.
  - The setup removes all the `.tar.gz` files downloaded in process.
 
 ### For Packet Environment
@@ -51,5 +53,6 @@ The script was tested with:
 
 ### What's Next
 
-Once you have the provisioner setup successfully, you can try executing your first workflow. Follow the steps described in [here](hello-world.md) to say "Hello World!" with a workflow.
+Once you have the provisioner setup successfully, you can try executing your first workflow.
+Follow the steps described in [here](hello-world.md) to say "Hello World!" with a workflow.
 

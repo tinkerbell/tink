@@ -6,7 +6,7 @@ Template operations.
 
 Template operations:
 ```shell
-  create      create a workflow template 
+  create      create a workflow template
   delete      delete a template
   get         get a template
   list        list all saved templates
@@ -21,13 +21,14 @@ Template operations:
 
 ### Examples
 
- - The following command creates a workflow template using the `sample.tmpl` file and save it as `sample`. It returns a UUID for the newly created template.
+ - The following command creates a workflow template using the `sample.tmpl` file and save it as `sample`.
+   It returns a UUID for the newly created template.
  ```shell
   $ tink template create -n <template-name> -p <path-to-template>
   $ tink template create -n sample -p /tmp/sample.tmpl
- ``` 
+ ```
 
- - List all the templates 
+ - List all the templates
  ```shell
   $ tink template list
  ```
@@ -46,6 +47,6 @@ Template operations:
 
 ### See Also
 
- - [tink hardware](hardware.md) - Hardware (worker) data operations 
+ - [tink hardware](hardware.md) - Hardware (worker) data operations
  - [tink workflow](workflow.md) - Workflow operations
 
