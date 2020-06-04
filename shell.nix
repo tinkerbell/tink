@@ -13,6 +13,7 @@ mkShell {
   buildInputs = [
     gnumake
     go
+    pythonPackages.codespell
     shfmt
     shellcheck
     terraform
