@@ -5,7 +5,6 @@ pull_request_rules:
       - "#approved-reviews-by>=1"
       - label=ready-to-merge
       - label!=hold-off-merging
-      - status-success=CI / build
     actions:
       merge:
         commit_message: title+body
