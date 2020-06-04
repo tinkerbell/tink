@@ -1,7 +1,8 @@
 # Concepts
 
 ### Hardware
-A *hardware device* is defined separately and is substituted in a template at the time of creating a workflow.
+
+A _hardware device_ is defined separately and is substituted in a template at the time of creating a workflow.
 
 ### Template
 
@@ -15,37 +16,37 @@ A user can CRUD a template using the CLI (`tink template`).
 Here is a sample workflow template:
 
 ```yaml
-version: '0.1'
+version: "0.1"
 name: ubuntu_provisioning
 global_timeout: 6000
 tasks:
-- name: "os-installation"
-  worker: "{{.device_1}}"
-  volumes:
-    - /dev:/dev
-    - /dev/console:/dev/console
-    - /lib/firmware:/lib/firmware:ro
-  environment:
-    MIRROR_HOST: 192.168.1.2
-  actions:
-  - name: "disk-wipe"
-    image: disk-wipe
-    timeout: 90
-  - name: "disk-partition"
-    image: disk-partition
-    timeout: 600
-    environment:
-       MIRROR_HOST: 192.168.1.3
-    volumes:
-      - /statedir:/statedir
-  - name: "install-root-fs"
-    image: install-root-fs
-    timeout: 600
-  - name: "install-grub"
-    image: install-grub
-    timeout: 600
-    volumes:
-      - /statedir:/statedir
+    - name: "os-installation"
+      worker: "{{.device_1}}"
+      volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+      environment:
+          MIRROR_HOST: 192.168.1.2
+      actions:
+          - name: "disk-wipe"
+            image: disk-wipe
+            timeout: 90
+          - name: "disk-partition"
+            image: disk-partition
+            timeout: 600
+            environment:
+                MIRROR_HOST: 192.168.1.3
+            volumes:
+                - /statedir:/statedir
+          - name: "install-root-fs"
+            image: install-root-fs
+            timeout: 600
+          - name: "install-grub"
+            image: install-grub
+            timeout: 600
+            volumes:
+                - /statedir:/statedir
 ```
 
 A template comprises Tasks, which are executed in a sequential manner.
@@ -58,20 +59,20 @@ Therefore, any entry at an action will overwrite the value defined at the task l
 For example, in the above template the `MIRROR_HOST` environment variable defined at action `disk-partition` will overwrite the value defined at task level.
 However, the other actions will receive the original value defined at the task level.
 
-
 ### Provisioner
 
 The provisioner machine is the main driver for executing a workflow.
 A provisioner houses the following components:
- - Database (Postgres)
- - Tinkerbell (CLI and server)
- - Boots
- - Hegel
- - Image Registry (optional)
- - Elasticsearch
- - Fluent Bit
- - Kibana
- - NGINX
+
+-   Database (Postgres)
+-   Tinkerbell (CLI and server)
+-   Boots
+-   Hegel
+-   Image Registry (optional)
+-   Elasticsearch
+-   Fluent Bit
+-   Kibana
+-   NGINX
 
 It is up to you if you would like to divide these components into multiple servers.
 
@@ -84,7 +85,6 @@ When the node boots, a worker container starts and connects with provisioner to 
 After the completion of an action, the worker sends action status to provisioner.
 When all workflows which are related to a worker are complete, a worker can terminate.
 
-
 ### Ephemeral Data
 
 The workers that are part of a workflow might require to share some data.
@@ -92,13 +92,29 @@ This can take the form of a light JSON like below, or some binary files that oth
 For instance, a worker may add the following data:
 
 ```json
- {"operating_system": "ubuntu_18_04", "mac_addr": "F5:C9:E2:99:BD:9B", "instance_id": "123e4567-e89b-12d3-a456-426655440000"}
+{
+    "instance_id": "123e4567-e89b-12d3-a456-426655440000",
+    "mac_addr": "F5:C9:E2:99:BD:9B",
+    "operating_system": "ubuntu_18_04"
+}
 ```
 
 The other worker may retrieve and use this data and eventually add some more:
 
 ```json
-{"operating_system": "ubuntu_18_04", "mac_addr": "F5:C9:E2:99:BD:9B", "instance_id": "123e4567-e89b-12d3-a456-426655440000", "ip_addresses": [{"address_family": 4, "address": "172.27.0.23", "cidr": 31, "private": true}]}
+{
+    "instance_id": "123e4567-e89b-12d3-a456-426655440000",
+    "ip_addresses": [
+        {
+            "address": "172.27.0.23",
+            "address_family": 4,
+            "cidr": 31,
+            "private": true
+        }
+    ],
+    "mac_addr": "F5:C9:E2:99:BD:9B",
+    "operating_system": "ubuntu_18_04"
+}
 ```
-![](img/ephemeral-data.png)
 
+![](img/ephemeral-data.png)

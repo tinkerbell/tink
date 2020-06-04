@@ -27,8 +27,6 @@ It also enables you to create a template which is eventually used to create a wo
 
 ### See Also
 
- - [tink hardware](hardware.md) - Hardware (worker) data operations
- - [tink template](template.md) - Template operations
- - [tink workflow](workflow.md) - Workflow operations
-
-
+-   [tink hardware](hardware.md) - Hardware (worker) data operations
+-   [tink template](template.md) - Template operations
+-   [tink workflow](workflow.md) - Workflow operations

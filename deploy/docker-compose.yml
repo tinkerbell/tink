@@ -1,4 +1,4 @@
-version: '2.1'
+version: "2.1"
 services:
   certs:
     build: tls
@@ -53,11 +53,11 @@ services:
       - 5432:5432
     depends_on:
       fluentbit:
-          condition: service_started
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tinkerbell"]
       interval: 1s
-      timeout:  1s
+      timeout: 1s
       retries: 30
     logging:
       driver: fluentd
@@ -137,9 +137,9 @@ services:
       cacher:
         condition: service_started
     logging:
-        driver: fluentd
-        options:
-          tag: boots
+      driver: fluentd
+      options:
+        tag: boots
     ports:
       - $TINKERBELL_HOST_IP:80:80/tcp
       - 67:67/udp
