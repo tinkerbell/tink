@@ -296,8 +296,14 @@ setup_osie() {
 		mkdir -p "$osie_current"
     	mkdir -p "$tink_workflow"
     	pushd /tmp
-    	curl 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o osie.tar.gz
-    	tar -zxf osie.tar.gz
+
+        if [ -z "${TB_OSIE_TAR:-}" ]; then
+            curl 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o osie.tar.gz
+            tar -zxf osie.tar.gz
+        else
+            tar -zxf "$TB_OSIE_TAR"
+        fi
+
     	if pushd /tmp/osie*/ ; then
 			if mv workflow-helper.sh workflow-helper-rc "$tink_workflow"; then
 				cp -r ./* "$osie_current"
