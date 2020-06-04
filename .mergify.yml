@@ -8,6 +8,6 @@ pull_request_rules:
       - status-success=CI / build
     actions:
       merge:
-        method: squash
+        method: rebase
         commit_message: title+body
-        strict: smart
+        strict: smart+fastpath
