@@ -86,6 +86,11 @@ setup_networking() {
 	centos)
 		setup_networking_centos
 		;;
+	*)
+		echo "$ERR this setup script cannot configure $distro ($version)"
+		echo "$BLANK please read this script's source and configure it manually."
+		exit 1
+		;;
 	esac
 	if is_network_configured; then
 		echo "$INFO tinkerbell network interface configured successfully"
@@ -396,44 +401,17 @@ do_setup() {
 
 	setup_networking "$lsb_dist" "$lsb_version"
 
-	# Run setup for each distro accordingly
-	case "$lsb_dist" in
-	ubuntu)
-		setup_osie
-		generate_certificates
-		setup_docker_registry
-		start_components
+	setup_osie
+	generate_certificates
+	setup_docker_registry
+	start_components
+	echo ""
+	until docker-compose -f "$(pwd)"/deploy/docker-compose.yml ps; do
+		sleep 3
 		echo ""
-		until docker-compose -f "$(pwd)"/deploy/docker-compose.yml ps; do
-			sleep 3
-			echo ""
-		done
-		echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
-		whats_next
-		exit 0
-		;;
-	centos)
-		setup_osie
-		generate_certificates
-		setup_docker_registry
-		start_components
-		until docker-compose -f "$(pwd)"/deploy/docker-compose.yml ps; do
-			sleep 3
-			echo ""
-		done
-		echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
-		whats_next
-		exit 0
-		;;
-	*)
-		echo
-		echo "$ERR unsupported distribution '$lsb_dist'"
-		echo
-		exit 1
-		;;
-	esac
-	echo "$INFO tinkerbell stack setup failed on $lsb_dist server"
-	exit 1
+	done
+	echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
+	whats_next
 }
 
 # wrapped up in a function so that we have some protection against only getting
