@@ -16,7 +16,7 @@ import (
 // ipCmd represents the ip command
 var ipCmd = &cobra.Command{
 	Use:     "ip",
-	Short:   "Get hardware by any associated ip",
+	Short:   "get hardware by any associated ip",
 	Example: "tink hardware ip 10.0.0.2 10.0.0.3",
 	Args: func(_ *cobra.Command, args []string) error {
 		for _, arg := range args {
