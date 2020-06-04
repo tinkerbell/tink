@@ -13,6 +13,7 @@ mkShell {
   buildInputs = [
     gnumake
     go
+    nodePackages.prettier
     pythonPackages.codespell
     shfmt
     shellcheck
