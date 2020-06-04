@@ -43,7 +43,7 @@ tasks:
       - /statedir:/statedir
 ```
 
-A template comprises Tasks, which are executed in a sequential manner. A task can consits multiple Actions. As can be in the above example, a task supports volumes and environment variables. The volumes and environment variables defined for a particular task level are inherited by each action in that particular task. 
+A template comprises Tasks, which are executed in a sequential manner. A task can consists multiple Actions. As can be in the above example, a task supports volumes and environment variables. The volumes and environment variables defined for a particular task level are inherited by each action in that particular task. 
 
 It is important to note that an action can also have its own volumes and environment variables. Therefore, any entry at an action will overwrite the value defined at the task level. For example, in the above template the `MIRROR_HOST` environment variable defined at action `disk-partition` will overwrite the value defined at task level. However, the other actions will receive the original value defined at the task level.
 
@@ -61,7 +61,7 @@ The provisioner machine is the main driver for executing a workflow. A provision
  - Kibana
  - NGINX
 
-It is upto you if you would like to divide these components into multiple servers.
+It is up to you if you would like to divide these components into multiple servers.
 
 ### Worker
 

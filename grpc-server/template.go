@@ -21,7 +21,7 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 
 	msg := ""
 	labels["op"] = "createtemplate"
-	msg = "creating a new Teamplate"
+	msg = "creating a new Template"
 	id := uuid.NewV4()
 	fn := func() error { return db.CreateTemplate(ctx, s.db, in.Name, in.Data, id) }
 

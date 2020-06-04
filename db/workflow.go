@@ -111,7 +111,7 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, wo
 	INSERT INTO
 		workflow_worker_map (workflow_id, worker_id)
 	SELECT $1, $2
-	WHERE 
+	WHERE
 		NOT EXISTS (
 			SELECT workflow_id FROM workflow_worker_map WHERE workflow_id = $1 AND worker_id = $2
 		);
@@ -149,7 +149,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		if err != nil {
 			return err
 		} else if workerID == "" {
-			return fmt.Errorf("Hardware mentioned with refernece %s not found", task.WorkerAddr)
+			return fmt.Errorf("Hardware mentioned with reference %s not found", task.WorkerAddr)
 		}
 		workerUID, err := uuid.FromString(workerID)
 		if err != nil {
@@ -546,8 +546,8 @@ func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.Workflow
 	UPDATE workflow_state
 	SET current_task_name = $2,
 		current_action_name = $3,
-		current_action_state = $4, 
-		current_worker = $5, 
+		current_action_state = $4,
+		current_worker = $5,
 		current_action_index = $6
 	WHERE
 		workflow_id = $1;
@@ -649,9 +649,9 @@ func ShowWorkflowEvents(db *sql.DB, wfID string, fn func(wfs pb.WorkflowActionSt
 	rows, err := db.Query(`
        SELECT worker_id, task_name, action_name, execution_time, message, status, created_at
 	   FROM workflow_event
-	   WHERE 
+	   WHERE
 			   workflow_id = $1
-		ORDER BY 
+		ORDER BY
 				created_at ASC;
 	   `, wfID)
 
@@ -797,7 +797,7 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 
 func isValidLength(name string) error {
 	if len(name) > 200 {
-		return fmt.Errorf("Task/Action Name %s in the Temlate as more than 200 characters", name)
+		return fmt.Errorf("Task/Action Name %s in the Template as more than 200 characters", name)
 	}
 	return nil
 }

@@ -60,7 +60,7 @@ func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.Wait
 	select {
 	case status := <-wait:
 		statusChannel <- status.StatusCode
-		fmt.Println("Worker with id ", id, "finished sucessfully with status code ", status.StatusCode)
+		fmt.Println("Worker with id ", id, "finished successfully with status code ", status.StatusCode)
 		//stopLogs <- true
 	case err := <-errC:
 		log.Println("Worker with id ", id, "failed : ", err)

@@ -118,7 +118,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 		}
 	}
 	log.Infoln("Action container exits with status code ", status)
-	return fmt.Sprintf("Successfull Execution"), status, nil
+	return fmt.Sprintf("Successful Execution"), status, nil
 }
 
 func captureLogs(ctx context.Context, id string) {
@@ -271,7 +271,7 @@ func removeContainer(ctx context.Context, id string) error {
 func initializeDockerClient() (*client.Client, error) {
 	registry = os.Getenv("DOCKER_REGISTRY")
 	if registry == "" {
-		return nil, errors.New("requried DOCKER_REGISTRY")
+		return nil, errors.New("required DOCKER_REGISTRY")
 	}
 	c, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
