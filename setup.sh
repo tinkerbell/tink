@@ -10,6 +10,16 @@ set -e
 # file to hold all environment variables
 ENV_FILE=envrc
 
+SCRATCH=$(mktemp -d -t tmp.XXXXXXXXXX)
+readonly SCRATCH
+function finish() {
+	rm -rf "$SCRATCH"
+}
+trap finish EXIT
+
+DEPLOYDIR=$(pwd)/deploy
+readonly DEPLOYDIR
+
 if command -v tput >>/dev/null; then
 	# color codes
 	RED="$(tput setaf 1)"
@@ -225,32 +235,31 @@ EOF
 )
 
 setup_osie() {
-	osie_current=/var/tinkerbell/nginx/misc/osie/current
-	tink_workflow=/var/tinkerbell/nginx/workflow/
+	mkdir -p "$DEPLOYDIR/webroot"
+
+	local osie_current=$DEPLOYDIR/webroot/misc/osie/current
+	local tink_workflow=$DEPLOYDIR/webroot/workflow/
 	if [ ! -d "$osie_current" ] && [ ! -d "$tink_workflow" ]; then
 		mkdir -p "$osie_current"
 		mkdir -p "$tink_workflow"
-		pushd /tmp
+		pushd "$SCRATCH"
 
 		if [ -z "${TB_OSIE_TAR:-}" ]; then
-			curl 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o osie.tar.gz
+			curl 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o ./osie.tar.gz
 			tar -zxf osie.tar.gz
 		else
 			tar -zxf "$TB_OSIE_TAR"
 		fi
 
-		if pushd /tmp/osie*/; then
+		if pushd osie*/; then
 			if mv workflow-helper.sh workflow-helper-rc "$tink_workflow"; then
 				cp -r ./* "$osie_current"
-				rm /tmp/latest -rf
 			else
 				echo "$ERR failed to move 'workflow-helper.sh' and 'workflow-helper-rc'"
 				exit 1
 			fi
 			popd
 		fi
-		popd
-		rm -f /tmp/osie.tar.gz
 	else
 		echo "$INFO found existing osie files, skipping osie setup"
 	fi
