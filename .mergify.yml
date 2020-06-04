@@ -7,7 +7,7 @@ pull_request_rules:
       - "#changes-requested-reviews-by=0"
       - "#commented-reviews-by=0"
       - label=ready-to-merge
-      - label!=hold-off-merging
+      - label!=do-not-merge
     actions:
       merge:
         commit_message: title+body
