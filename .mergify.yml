@@ -11,4 +11,3 @@ pull_request_rules:
       merge:
         commit_message: title+body
         strict: smart+fastpath
-        strict_method: rebase
