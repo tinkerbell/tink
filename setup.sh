@@ -12,9 +12,9 @@ ENV_FILE=envrc
 
 SCRATCH=$(mktemp -d -t tmp.XXXXXXXXXX)
 readonly SCRATCH
-function finish() {
+function finish() (
 	rm -rf "$SCRATCH"
-}
+)
 trap finish EXIT
 
 DEPLOYDIR=$(pwd)/deploy
@@ -36,8 +36,8 @@ WARN="${YELLOW}WARNING:$RESET"
 BLANK="      "
 NEXT="${GREEN}NEXT:$RESET"
 
-get_distribution() {
-	lsb_dist=""
+get_distribution() (
+	local lsb_dist=""
 	# Every system that we officially support has /etc/os-release
 	if [ -r /etc/os-release ]; then
 		# shellcheck disable=SC1091
@@ -46,10 +46,10 @@ get_distribution() {
 	# Returning an empty string here should be alright since the
 	# case statements don't act unless you provide an actual value
 	echo "$lsb_dist"
-}
+)
 
-get_distro_version() {
-	lsb_version="0"
+get_distro_version() (
+	local lsb_version="0"
 	# Every system that we officially support has /etc/os-release
 	if [ -r /etc/os-release ]; then
 		# shellcheck disable=SC1091
@@ -57,9 +57,9 @@ get_distro_version() {
 	fi
 
 	echo "$lsb_version"
-}
+)
 
-is_network_configured() {
+is_network_configured() (
 	# Require the provisioner interface have both the host and nginx IP
 	if ! ip addr show "$TINKERBELL_NETWORK_INTERFACE" |
 		grep -q "$TINKERBELL_HOST_IP"; then
@@ -72,9 +72,9 @@ is_network_configured() {
 	fi
 
 	return 0
-}
+)
 
-setup_networking() {
+setup_networking() (
 	distro=$1
 	version=$2
 
@@ -107,7 +107,7 @@ setup_networking() {
 	else
 		echo "$ERR tinkerbell network interface configuration failed"
 	fi
-}
+)
 
 setup_network_forwarding() (
 	# enable IP forwarding for docker
@@ -234,7 +234,7 @@ EOF
 	ifup "$TINKERBELL_NETWORK_INTERFACE"
 )
 
-setup_osie() {
+setup_osie() (
 	mkdir -p "$DEPLOYDIR/webroot"
 
 	local osie_current=$DEPLOYDIR/webroot/misc/osie/current
@@ -263,17 +263,16 @@ setup_osie() {
 	else
 		echo "$INFO found existing osie files, skipping osie setup"
 	fi
-}
+)
 
-check_container_status() {
-
+check_container_status() (
 	if docker ps | grep -q "$1"; then
 		echo "$ERR failed to start container $1"
 		exit 1
 	fi
-}
+)
 
-gen_certs() {
+gen_certs() (
 	sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$TINKERBELL_HOST_IP\"\,/g" "$DEPLOYDIR"/tls/server-csr.in.json
 	docker-compose -f "$DEPLOYDIR"/docker-compose.yml up --build -d certs
 	sleep 2
@@ -294,9 +293,9 @@ gen_certs() {
 	cp "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/ca.crt
 	# copy public key to NGINX for workers
 	cp "$DEPLOYDIR"/certs/ca.pem /var/tinkerbell/nginx/workflow/ca.pem
-}
+)
 
-generate_certificates() {
+generate_certificates() (
 	if [ ! -d "$DEPLOYDIR"/tls ]; then
 		echo "$ERR directory 'tls' does not exist"
 		exit 1
@@ -313,9 +312,9 @@ generate_certificates() {
 	else
 		gen_certs
 	fi
-}
+)
 
-start_registry() {
+start_registry() (
 	docker-compose -f "$(pwd)"/deploy/docker-compose.yml up --build -d registry
 	sleep 5
 	check_container_status "registry"
@@ -328,9 +327,9 @@ start_registry() {
 	echo -n "$TINKERBELL_REGISTRY_PASSWORD" | docker login -u="$TINKERBELL_REGISTRY_USERNAME" --password-stdin "$TINKERBELL_HOST_IP"
 	docker push "$TINKERBELL_HOST_IP"/tink-worker:latest
 	docker push "$TINKERBELL_HOST_IP"/fluent-bit:1.3
-}
+)
 
-setup_docker_registry() {
+setup_docker_registry() (
 	registry_images=/var/tinkerbell/registry
 	if [ ! -d "$registry_images" ]; then
 		mkdir -p "$registry_images"
@@ -344,22 +343,22 @@ setup_docker_registry() {
 	else
 		start_registry
 	fi
-}
+)
 
-start_components() {
-	components=(db cacher hegel tink-server boots tink-cli nginx kibana)
+start_components() (
+	local components=(db cacher hegel tink-server boots tink-cli nginx kibana)
 	for comp in "${components[@]}"; do
 		docker-compose -f "$(pwd)"/deploy/docker-compose.yml up --build -d "$comp"
 		sleep 3
 		check_container_status "$comp"
 	done
-}
+)
 
-command_exists() {
+command_exists() (
 	command -v "$@" >/dev/null 2>&1
-}
+)
 
-check_command() {
+check_command() (
 	if command_exists "$1"; then
 		echo "$BLANK Found prerequisite: $1"
 		return 0
@@ -367,9 +366,9 @@ check_command() {
 		echo "$ERR Prerequisite command not installed: $1"
 		return 1
 	fi
-}
+)
 
-check_prerequisites() {
+check_prerequisites() (
 	echo "$INFO verifying prerequisites"
 	failed=0
 	check_command git || failed=1
@@ -383,14 +382,14 @@ check_prerequisites() {
 		echo "$ERR Prerequisites not met. Please install the missing commands and re-run $0."
 		exit 1
 	fi
-}
+)
 
-whats_next() {
+whats_next() (
 	echo "$NEXT With the provisioner setup successfully, you can now try executing your first workflow."
 	echo "$BLANK Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
-}
+)
 
-do_setup() {
+do_setup() (
 	# perform some very rudimentary platform detection
 	lsb_dist=$(get_distribution)
 	lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
@@ -420,7 +419,7 @@ do_setup() {
 	done
 	echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
 	whats_next
-}
+)
 
 # wrapped up in a function so that we have some protection against only getting
 # half the file during "curl | sh"
