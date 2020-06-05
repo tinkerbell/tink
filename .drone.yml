@@ -56,7 +56,7 @@ steps:
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
-  - name: check spelling
+  - name: ci-checks
     image: nixos/nix
     commands:
       - ./ci-checks.sh

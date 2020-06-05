@@ -1,4 +1,4 @@
-version: '2.1'
+version: "2.1"
 services:
   certs:
     build: tls
@@ -7,7 +7,7 @@ services:
 
   tinkerbell:
     build: .
-    environment: 
+    environment:
       FACILITY: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
       PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
@@ -31,7 +31,7 @@ services:
       interval: 5s
       timeout: 2s
       retries: 30
-    volumes: 
+    volumes:
       - ./certs:/certs/${FACILITY}
         #logging:
         #driver: fluentd
@@ -62,21 +62,21 @@ services:
       driver: fluentd
       options:
         tag: db
- 
+
   registry:
     build:
       context: registry
-      args: 
+      args:
         REGISTRY_USERNAME: username
         REGISTRY_PASSWORD: password
-    environment: 
+    environment:
       REGISTRY_HTTP_ADDR: localhost:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
       REGISTRY_HTTP_TLS_KEY: /certs/server-key.pem
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-    volumes: 
+    volumes:
       - ./certs:/certs
     depends_on:
       - fluentbit
@@ -127,7 +127,7 @@ services:
       - 127.0.0.1:80:80/tcp
       - 67:67/udp
       - 69:69/udp
-  
+
   elasticsearch:
     image: elasticsearch:7.3.0
     ports:
@@ -156,4 +156,3 @@ services:
       - kibana
     volumes:
       - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
-
