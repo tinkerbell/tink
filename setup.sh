@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # stops the execution if a command or pipeline has an error
 set -e
