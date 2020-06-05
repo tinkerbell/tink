@@ -88,7 +88,7 @@ services:
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
     volumes:
       - ./certs:/certs
-      - ./var/tinkerbell/registry:/var/lib/registry
+      - ./registry:/var/lib/registry
     depends_on:
       fluentbit:
         condition: service_started
