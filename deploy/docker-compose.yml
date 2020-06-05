@@ -1,10 +1,5 @@
 version: "2.1"
 services:
-  certs:
-    build: tls
-    volumes:
-      - ./certs:/certs
-
   tink-server:
     image: quay.io/tinkerbell/tink:latest
     restart: unless-stopped

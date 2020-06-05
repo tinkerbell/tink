@@ -273,16 +273,38 @@ check_container_status() (
 )
 
 gen_certs() (
-	sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$TINKERBELL_HOST_IP\"\,/g" "$DEPLOYDIR"/tls/server-csr.in.json
-	docker-compose -f "$DEPLOYDIR"/docker-compose.yml up --build -d certs
-	sleep 2
+	mkdir -p "$DEPLOYDIR/certs"
 
-	if docker ps -a | grep certs | grep -q "Exited (0)"; then
-		sleep 2
-	else
-		echo "$ERR failed to generate certificates"
-		exit 1
+	if [ ! -f "$DEPLOYDIR/certs/ca.json" ]; then
+		jq \
+			'.
+			 | .names[0].L = $facility
+			' \
+			"$DEPLOYDIR/tls/ca.in.json" \
+			--arg ip "$TINKERBELL_HOST_IP" \
+			--arg facility "$FACILITY" \
+			>"$DEPLOYDIR/certs/ca.json"
 	fi
+
+	if [ ! -f "$DEPLOYDIR/certs/server-csr.json" ]; then
+
+		jq \
+			'.
+			| .hosts += [ $ip, "tinkerbell.\($facility).packet.net" ]
+			| .names[0].L = $facility
+			| .hosts = (.hosts | sorto | unique)
+			' \
+			"$DEPLOYDIR/tls/server-csr.in.json" \
+			--arg ip "$TINKERBELL_HOST_IP" \
+			--arg facility "$FACILITY" \
+			>"$DEPLOYDIR/certs/server-csr.json"
+	fi
+
+	docker build --tag "tinkerbell-certs" "$DEPLOYDIR/tls"
+	docker run --rm \
+		--volume "$DEPLOYDIR/certs:/certs" \
+		--user "$UID:$GID" \
+		tinkerbell-certs
 
 	certs_dir="/etc/docker/certs.d/$TINKERBELL_HOST_IP"
 	if [ ! -d "$certs_dir" ]; then
@@ -290,17 +312,13 @@ gen_certs() (
 	fi
 
 	# update host to trust registry certificate
-	cp "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/ca.crt
+	cp "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/tinkerbell.crt
+
 	# copy public key to NGINX for workers
-	cp "$DEPLOYDIR"/certs/ca.pem /var/tinkerbell/nginx/workflow/ca.pem
+	cp "$DEPLOYDIR"/certs/ca.pem "$DEPLOYDIR/webroot/workflow/ca.pem"
 )
 
 generate_certificates() (
-	if [ ! -d "$DEPLOYDIR"/tls ]; then
-		echo "$ERR directory 'tls' does not exist"
-		exit 1
-	fi
-
 	if [ -d "$DEPLOYDIR"/certs ]; then
 		echo "$WARN found certs directory"
 		if grep -q "\"$TINKERBELL_HOST_IP\"" "$DEPLOYDIR"/tls/server-csr.in.json; then
