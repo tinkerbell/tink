@@ -274,8 +274,8 @@ check_container_status() {
 }
 
 gen_certs() {
-	sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$TINKERBELL_HOST_IP\"\,/g" "$deploy"/tls/server-csr.in.json
-	docker-compose -f "$deploy"/docker-compose.yml up --build -d certs
+	sed -i -e "s/localhost\"\,/localhost\"\,\n    \"$TINKERBELL_HOST_IP\"\,/g" "$DEPLOYDIR"/tls/server-csr.in.json
+	docker-compose -f "$DEPLOYDIR"/docker-compose.yml up --build -d certs
 	sleep 2
 
 	if docker ps -a | grep certs | grep -q "Exited (0)"; then
@@ -291,21 +291,20 @@ gen_certs() {
 	fi
 
 	# update host to trust registry certificate
-	cp "$deploy"/certs/ca.pem "$certs_dir"/ca.crt
+	cp "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/ca.crt
 	# copy public key to NGINX for workers
-	cp "$deploy"/certs/ca.pem /var/tinkerbell/nginx/workflow/ca.pem
+	cp "$DEPLOYDIR"/certs/ca.pem /var/tinkerbell/nginx/workflow/ca.pem
 }
 
 generate_certificates() {
-	deploy="$(pwd)"/deploy
-	if [ ! -d "$deploy"/tls ]; then
+	if [ ! -d "$DEPLOYDIR"/tls ]; then
 		echo "$ERR directory 'tls' does not exist"
 		exit 1
 	fi
 
-	if [ -d "$deploy"/certs ]; then
+	if [ -d "$DEPLOYDIR"/certs ]; then
 		echo "$WARN found certs directory"
-		if grep -q "\"$TINKERBELL_HOST_IP\"" "$deploy"/tls/server-csr.in.json; then
+		if grep -q "\"$TINKERBELL_HOST_IP\"" "$DEPLOYDIR"/tls/server-csr.in.json; then
 			echo "$WARN found server entry in TLS"
 			echo "$INFO found existing certificates for host $TINKERBELL_HOST_IP, skipping certificate generation"
 		else
