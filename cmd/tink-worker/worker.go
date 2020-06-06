@@ -65,7 +65,7 @@ func processWorkflowActions(client pb.WorkflowSvcClient) error {
 		for wfID, wfContext := range workflowcontexts {
 			actions, ok := workflowactions[wfID]
 			if !ok {
-				return fmt.Errorf("Can't find actions for workflow %s", wfID)
+				return fmt.Errorf("can't find actions for workflow %s", wfID)
 			}
 
 			turn := false

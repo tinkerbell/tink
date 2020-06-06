@@ -23,7 +23,7 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 	}
 	wfs, _ := db.GetfromWfWorkflowTable(context, sdb, req.WorkerId)
 	if wfs == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Worker not found for any workflows")
+		return nil, status.Errorf(codes.InvalidArgument, "worker not found for any workflows")
 	}
 
 	wfContexts := []*pb.WorkflowContext{}
@@ -31,7 +31,7 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 	for _, wf := range wfs {
 		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
 		if err != nil {
-			return nil, status.Errorf(codes.Aborted, "Invalid workflow %s found for worker %s", wf, req.WorkerId)
+			return nil, status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
 		}
 		wfContexts = append(wfContexts, wfContext)
 	}
@@ -69,11 +69,11 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, s
 	fmt.Printf("Received action status: %s\n", req)
 	wfContext, err := db.GetWorkflowContexts(context, sdb, wfID)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Workflow context not found for workflow %s", wfID)
+		return nil, status.Errorf(codes.InvalidArgument, "workflow context not found for workflow %s", wfID)
 	}
 	wfActions, err := db.GetWorkflowActions(context, sdb, wfID)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Workflow actions not found for workflow %s", wfID)
+		return nil, status.Errorf(codes.InvalidArgument, "workflow actions not found for workflow %s", wfID)
 	}
 
 	// We need bunch of checks here considering
@@ -86,10 +86,10 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, s
 	}
 	action := wfActions.ActionList[actionIndex]
 	if action.GetTaskName() != req.GetTaskName() {
-		return nil, status.Errorf(codes.FailedPrecondition, "Reported task name not matching in actions info")
+		return nil, status.Errorf(codes.FailedPrecondition, "reported task name not matching in actions info")
 	}
 	if action.GetName() != req.GetActionName() {
-		return nil, status.Errorf(codes.FailedPrecondition, "Reported action name not matching in actions info")
+		return nil, status.Errorf(codes.FailedPrecondition, "reported action name not matching in actions info")
 	}
 	wfContext.CurrentWorker = action.GetWorkerId()
 	wfContext.CurrentTask = req.GetTaskName()
@@ -98,13 +98,13 @@ func ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus, s
 	wfContext.CurrentActionIndex = actionIndex
 	err = db.UpdateWorkflowState(context, sdb, wfContext)
 	if err != nil {
-		return &pb.Empty{}, fmt.Errorf("Failed to update the workflow_state table. Error : %s", err)
+		return &pb.Empty{}, fmt.Errorf("failed to update the workflow_state table. Error : %s", err)
 	}
 	// TODO the below "time" would be a part of the request which is coming form worker.
 	time := time.Now()
 	err = db.InsertIntoWorkflowEventTable(context, sdb, req, time)
 	if err != nil {
-		return &pb.Empty{}, fmt.Errorf("Failed to update the workflow_event table. Error : %s", err)
+		return &pb.Empty{}, fmt.Errorf("failed to update the workflow_event table. Error : %s", err)
 	}
 	fmt.Printf("Current context %s\n", wfContext)
 	return &pb.Empty{}, nil
