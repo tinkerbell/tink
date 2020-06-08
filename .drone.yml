@@ -58,6 +58,7 @@ steps:
 
   - name: ci-checks
     image: nixos/nix
+    pull: true
     commands:
       - ./ci-checks.sh
 
