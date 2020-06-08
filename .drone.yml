@@ -56,6 +56,13 @@ steps:
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
+  - name: cache.nixos.org check
+    image: alpine
+    pull: true
+    commands:
+      - apk add --update curl
+      - curl -v https://cache.nixos.org/fn2dw5vg0gn7xljpcm8dw32jy7a8s13j.narinfo >/dev/null
+
   - name: ci-checks
     image: nixos/nix
     pull: true
