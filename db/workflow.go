@@ -149,7 +149,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		if err != nil {
 			return err
 		} else if workerID == "" {
-			return fmt.Errorf("Hardware mentioned with reference %s not found", task.WorkerAddr)
+			return fmt.Errorf("hardware mentioned with reference %s not found", task.WorkerAddr)
 		}
 		workerUID, err := uuid.FromString(workerID)
 		if err != nil {
@@ -820,7 +820,7 @@ func validateTemplateValues(tasks []task) error {
 		}
 		_, ok := taskNameMap[task.Name]
 		if ok {
-			return fmt.Errorf("Provided template has duplicate task name \"%s\"", task.Name)
+			return fmt.Errorf("provided template has duplicate task name \"%s\"", task.Name)
 		}
 		taskNameMap[task.Name] = struct{}{}
 		actionNameMap := make(map[string]struct{})
@@ -831,12 +831,12 @@ func validateTemplateValues(tasks []task) error {
 			}
 			err = isValidImageName(action.Image)
 			if err != nil {
-				return fmt.Errorf("Invalid Image name %s", action.Image)
+				return fmt.Errorf("invalid Image name %s", action.Image)
 			}
 
 			_, ok := actionNameMap[action.Name]
 			if ok {
-				return fmt.Errorf("Provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
+				return fmt.Errorf("provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
 			}
 			actionNameMap[action.Name] = struct{}{}
 		}

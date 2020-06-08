@@ -34,7 +34,7 @@ func main() {
 	rClient = pb.NewWorkflowSvcClient(conn)
 	err = processWorkflowActions(rClient)
 	if err != nil {
-		logger.Errorln("Worker Finished with error", err)
+		logger.Errorln("worker Finished with error", err)
 	}
 }
 
@@ -45,7 +45,7 @@ func tryClientConnection() (*grpc.ClientConn, error) {
 		if e != nil {
 			err = e
 			logger.Errorln(err)
-			logger.Errorf("Retrying after %v seconds", retryInterval)
+			logger.Errorf("retrying after %v seconds", retryInterval)
 			<-time.After(retryInterval * time.Second)
 			continue
 		}
