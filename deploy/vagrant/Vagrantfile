@@ -1,0 +1,56 @@
+$provisioner_ip_address = '10.11.12.2'
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
+
+Vagrant.configure('2') do |config|
+
+  config.vm.define :provisioner do |provisioner|
+    provisioner.vm.box = 'generic/ubuntu1804'
+    provisioner.vm.hostname = 'provisioner'
+    provisioner.vm.synced_folder '.', '/vagrant', type: 'rsync'
+    provisioner.vm.provision :shell, path: 'tinkerbell.sh', args: [$provisioner_ip_address]
+
+    provisioner.vm.provider :libvirt do |lv, override|
+      lv.memory = 2*1024
+      lv.cpus = 2
+      lv.cpu_mode = 'host-passthrough'
+      override.vm.network "private_network",
+        ip: $provisioner_ip_address,
+        libvirt__dhcp_enabled: false,
+        libvirt__forward_mode: 'none'
+    end
+
+    provisioner.vm.provider :virtualbox do |vb, override|
+      vb.memory = 2*1024
+      vb.cpus = 2
+      override.vm.network "private_network", ip: $provisioner_ip_address
+    end
+  end
+
+  config.vm.define "worker" do |worker|
+    worker.vm.box = nil
+    worker.vm.network "private_network", ip: $provisioner_ip_address, mac: "080027000001", auto_config: false
+
+    worker.vm.provider :libvirt do |lv|
+      lv.memory = 1*1024
+      lv.cpus = 1
+      lv.boot 'network'
+      lv.mgmt_attach = false
+    end
+
+    worker.vm.provider :virtualbox do |vb, worker|
+      worker.vm.box = 'generic/alpine38'
+      vb.memory = 1*1024
+      vb.cpus = 1
+      vb.gui = true
+      vb.customize [
+        'modifyvm', :id,
+        '--nic1', 'none',
+        '--boot1', 'net',
+        '--boot2', 'none',
+        '--boot3', 'none',
+        '--boot4', 'none',
+        '--macaddress1', '080027000001'
+      ]
+    end
+  end
+end
