@@ -57,7 +57,7 @@ steps:
       - CGO_ENABLED=0 go test -v ./...
 
   - name: ci-checks
-    image: nixos/nix
+    image: nixos/nix:2.3.4
     commands:
       - ./ci-checks.sh
 
