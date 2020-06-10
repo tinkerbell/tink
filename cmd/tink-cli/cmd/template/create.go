@@ -3,6 +3,7 @@ package template
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -36,20 +37,34 @@ cat /tmp/example.tmpl | tink template create -n example`,
 		return nil
 	},
 	Run: func(c *cobra.Command, args []string) {
-		var data []byte
+		var reader io.Reader
 		if isInputFromPipe() {
-			data = readDataFromStdin()
+			reader = os.Stdin
 		} else {
-			data = readTemplateData()
+			f, err := os.Open(filePath)
+			if err != nil {
+				log.Println(err)
+			}
+			reader = f
 		}
+
+		data := readAll(reader)
 		if data != nil {
 			if err := tryParseTemplate(data); err != nil {
 				log.Println(err)
 				return
 			}
-			createTemplate(c, data)
+			createTemplate(data)
 		}
 	},
+}
+
+func readAll(reader io.Reader) []byte {
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		log.Println(err)
+	}
+	return data
 }
 
 func addFlags() {
@@ -67,21 +82,7 @@ func tryParseTemplate(data []byte) error {
 	return nil
 }
 
-func readTemplateData() []byte {
-	f, err := os.Open(filePath)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Println(err)
-	}
-	return data
-}
-
-func createTemplate(c *cobra.Command, data []byte) {
+func createTemplate(data []byte) {
 	req := template.WorkflowTemplate{Name: templateName, Data: data}
 	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
 	if err != nil {
@@ -94,14 +95,6 @@ func createTemplate(c *cobra.Command, data []byte) {
 func isInputFromPipe() bool {
 	fileInfo, _ := os.Stdin.Stat()
 	return fileInfo.Mode()&os.ModeCharDevice == 0
-}
-
-func readDataFromStdin() []byte {
-	data, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		return nil
-	}
-	return data
 }
 
 func init() {

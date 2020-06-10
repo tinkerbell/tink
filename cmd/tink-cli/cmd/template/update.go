@@ -3,7 +3,9 @@ package template
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
@@ -65,6 +67,20 @@ func updateTemplate(id string) {
 		log.Fatal(err)
 	}
 	fmt.Println("Updated Template: ", id)
+}
+
+func readTemplateData() []byte {
+	f, err := os.Open(filePath)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Println(err)
+	}
+	return data
 }
 
 func init() {
