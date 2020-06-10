@@ -221,7 +221,7 @@ message Hardware {
 	Metadata metadata = 5;
 	Network network = 6;
 	string id = 7;
-
+	int64 version = 8;
 }
 
 message DeleteRequest {

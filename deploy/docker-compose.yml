@@ -99,8 +99,8 @@ services:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       MIRROR_HOST: ${TINKERBELL_NGINX_IP:-127.0.0.1}
-      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
-      CACHER_CERT_URL: http://127.0.0.1:42112/cert
+#      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+#      CACHER_CERT_URL: http://127.0.0.1:42112/cert
       DNS_SERVERS: 8.8.8.8
       PUBLIC_IP: $TINKERBELL_HOST_IP
       BOOTP_BIND: $TINKERBELL_HOST_IP:67
@@ -113,10 +113,10 @@ services:
       TINKERBELL_GRPC_AUTHORITY: $TINKERBELL_HOST_IP:42113
       TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
       ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
-      HARDWARE_DATA_MODEL: tinkerbell
+      DATA_MODEL_VERSION: 1
     depends_on:
-      cacher:
-        condition: service_started
+      db:
+        condition: service_healthy
     ports:
       - $TINKERBELL_HOST_IP:80:80/tcp
       - 67:67/udp
@@ -131,31 +131,31 @@ services:
     volumes:
       - ./state/webroot:/usr/share/nginx/html/
 
-  cacher:
-    image: quay.io/packet/cacher:workflow
-    restart: unless-stopped
-    environment:
-      FACILITY: ${FACILITY:-onprem}
-      PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
-      PACKET_API_URL: ${PACKET_API_URL}
-      PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN-ignored}
-      PACKET_ENV: testing
-      PACKET_VERSION: ${PACKET_VERSION:-ignored}
-      PGDATABASE: tinkerbell
-      PGHOST: db
-      PGPASSWORD: tinkerbell
-      PGPORT: 5432
-      PGSSLMODE: disable
-      PGUSER: tinkerbell
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
-    volumes:
-      - ./state/certs:/certs/${FACILITY:-onprem}
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - 42111:42111/tcp
-      - 42112:42112/tcp
+  # cacher:
+  #   image: quay.io/packet/cacher:workflow
+  #   restart: unless-stopped
+  #   environment:
+  #     FACILITY: ${FACILITY:-onprem}
+  #     PACKET_API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN}
+  #     PACKET_API_URL: ${PACKET_API_URL}
+  #     PACKET_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN-ignored}
+  #     PACKET_ENV: testing
+  #     PACKET_VERSION: ${PACKET_VERSION:-ignored}
+  #     PGDATABASE: tinkerbell
+  #     PGHOST: db
+  #     PGPASSWORD: tinkerbell
+  #     PGPORT: 5432
+  #     PGSSLMODE: disable
+  #     PGUSER: tinkerbell
+  #     ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
+  #   volumes:
+  #     - ./state/certs:/certs/${FACILITY:-onprem}
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   ports:
+  #     - 42111:42111/tcp
+  #     - 42112:42112/tcp
 
   hegel:
     image: quay.io/tinkerbell/hegel:latest
@@ -169,11 +169,11 @@ services:
       GRPC_PORT: 42115
       HEGEL_FACILITY: ${FACILITY:-onprem}
       HEGEL_USE_TLS: 0
-      CACHER_CERT_URL: http://127.0.0.1:42112/cert
-      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
+#      CACHER_CERT_URL: http://127.0.0.1:42112/cert
+#      CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
       TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
-      HARDWARE_DATA_MODEL: tinkerbell
+      DATA_MODEL_VERSION: 1
     depends_on:
-      cacher:
-        condition: service_started
+      db:
+        condition: service_healthy
