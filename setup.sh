@@ -331,35 +331,44 @@ generate_certificates() (
 	fi
 )
 
+docker_login() (
+	echo -n "$TINKERBELL_REGISTRY_PASSWORD" | docker login -u="$TINKERBELL_REGISTRY_USERNAME" --password-stdin "$TINKERBELL_HOST_IP"
+)
+
+# This function takes an image specified as first parameter and it tags and
+# push it using the second one. useful to proxy images from a repository to
+# another.
+docker_mirror_image() (
+	local from=$1
+	local to=$2
+
+	docker pull "$from"
+	docker tag "$from" "$to"
+	docker push "$to"
+)
+
 start_registry() (
 	docker-compose -f "$(pwd)"/deploy/docker-compose.yml up --build -d registry
 	sleep 5
 	check_container_status "registry"
+)
 
-	# push latest worker image to registry
-	docker pull quay.io/tinkerbell/tink-worker:latest
-	docker tag quay.io/tinkerbell/tink-worker:latest "$TINKERBELL_HOST_IP"/tink-worker:latest
-	docker pull fluent/fluent-bit:1.3
-	docker tag fluent/fluent-bit:1.3 "$TINKERBELL_HOST_IP"/fluent-bit:1.3
-	echo -n "$TINKERBELL_REGISTRY_PASSWORD" | docker login -u="$TINKERBELL_REGISTRY_USERNAME" --password-stdin "$TINKERBELL_HOST_IP"
-	docker push "$TINKERBELL_HOST_IP"/tink-worker:latest
-	docker push "$TINKERBELL_HOST_IP"/fluent-bit:1.3
+# This function supposes that the registry is up and running.
+# It configures with the required dependencies.
+bootstrap_docker_registry() (
+	docker_login
+
+	docker_mirror_image "quay.io/tinkerbell/tink-worker:latest" "${TINKERBELL_HOST_IP}/tink-worker:latest"
+	docker_mirror_image "fluent/fluent-bit:1.3" "${TINKERBELL_HOST_IP}/fluent-bit:1.3"
 )
 
 setup_docker_registry() (
-	registry_images=/var/tinkerbell/registry
+	local registry_images="$DEPLOYDIR/registry"
 	if [ ! -d "$registry_images" ]; then
 		mkdir -p "$registry_images"
 	fi
-	if [ -f ~/.docker/config.json ]; then
-		if grep -q "$TINKERBELL_HOST_IP" ~/.docker/config.json; then
-			echo "$INFO found existing docker auth token for registry $TINKERBELL_HOST_IP, using existing registry"
-		else
-			start_registry
-		fi
-	else
-		start_registry
-	fi
+	start_registry
+	bootstrap_docker_registry
 )
 
 start_components() (
