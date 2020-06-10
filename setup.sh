@@ -266,8 +266,41 @@ setup_osie() (
 )
 
 check_container_status() (
-	if docker ps | grep -q "$1"; then
-		echo "$ERR failed to start container $1"
+	local container_name="$1"
+	local container_id
+	container_id=$(docker-compose -f "$DEPLOYDIR/docker-compose.yml" ps -q "$container_name")
+
+	local start_moment
+	local current_status
+	start_moment=$(docker inspect "${container_id}" --format '{{ .State.StartedAt }}')
+	current_status=$(docker inspect "${container_id}" --format '{{ .State.Health.Status }}')
+
+	case "$current_status" in
+	starting)
+		: # move on to the events check
+		;;
+	healthy)
+		return 0
+		;;
+	unhealthy)
+		echo "$ERR $container_name is already running but not healthy. status: $current_status"
+		exit 1
+		;;
+	*)
+		echo "$ERR $container_name is already running but its state is a mystery. status: $current_status"
+		exit 1
+		;;
+	esac
+
+	local status
+	read status < <(docker events \
+		--since "$start_moment" \
+		--filter "container=$container_id" \
+		--filter "event=health_status" \
+		--format '{{.Status}}')
+
+	if [ "$status" != "health_status: healthy" ]; then
+		echo "$ERR $container_name is not healthy. status: $status"
 		exit 1
 	fi
 )
@@ -349,7 +382,6 @@ docker_mirror_image() (
 
 start_registry() (
 	docker-compose -f "$(pwd)"/deploy/docker-compose.yml up --build -d registry
-	sleep 5
 	check_container_status "registry"
 )
 
