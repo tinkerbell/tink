@@ -287,12 +287,11 @@ gen_certs() (
 	fi
 
 	if [ ! -f "$DEPLOYDIR/certs/server-csr.json" ]; then
-
 		jq \
 			'.
 			| .hosts += [ $ip, "tinkerbell.\($facility).packet.net" ]
 			| .names[0].L = $facility
-			| .hosts = (.hosts | sorto | unique)
+			| .hosts = (.hosts | sort | unique)
 			' \
 			"$DEPLOYDIR/tls/server-csr.in.json" \
 			--arg ip "$TINKERBELL_HOST_IP" \
