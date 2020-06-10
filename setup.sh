@@ -45,7 +45,7 @@ get_distribution() (
 	fi
 	# Returning an empty string here should be alright since the
 	# case statements don't act unless you provide an actual value
-	echo "$lsb_dist"
+	echo "$lsb_dist" | tr '[:upper:]' '[:lower:]'
 )
 
 get_distro_version() (
@@ -504,7 +504,6 @@ whats_next() (
 do_setup() (
 	# perform some very rudimentary platform detection
 	lsb_dist=$(get_distribution)
-	lsb_dist="$(echo "$lsb_dist" | tr '[:upper:]' '[:lower:]')"
 	lsb_version=$(get_distro_version)
 
 	echo "$INFO starting tinkerbell stack setup"
