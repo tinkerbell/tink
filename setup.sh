@@ -496,8 +496,9 @@ check_prerequisites() (
 )
 
 whats_next() (
-	echo "$NEXT With the provisioner setup successfully, you can now try executing your first workflow."
-	echo "$BLANK Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
+	echo "$NEXT 1. Enter ./deploy and run: source ../envrc; docker-compose up"
+	echo "$BLANK 2. Try executing your fist workflow."
+	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )
 
 do_setup() (
@@ -522,12 +523,7 @@ do_setup() (
 	setup_osie
 	generate_certificates
 	setup_docker_registry
-	start_components
-	echo ""
-	until docker-compose -f "$(pwd)"/deploy/docker-compose.yml ps; do
-		sleep 3
-		echo ""
-	done
+
 	echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
 	whats_next
 )
