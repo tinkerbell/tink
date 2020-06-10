@@ -87,7 +87,7 @@ setup_networking() (
 
 	case "$distro" in
 	ubuntu)
-		if (($(echo "$version >= 17.10" | bc -l))); then
+		if jq -n --exit-status '$distro_version >= 17.10' --argjson distro_version "$version"; then
 			setup_networking_netplan
 		else
 			setup_networking_ubuntu_legacy
@@ -441,7 +441,6 @@ check_prerequisites() (
 	echo "$INFO verifying prerequisites"
 	failed=0
 	check_command git || failed=1
-	check_command bc || failed=1
 	check_command jq || failed=1
 	check_command ifup || failed=1
 	check_command docker || failed=1
