@@ -53,7 +53,7 @@ generate_envrc() (
 	registry_password=$(generate_password)
 	cat <<EOF
 # Network interface for Tinkerbell's network
-export TINKERBELL_NETWORK_INTERFACE=$tink_interface"
+export TINKERBELL_NETWORK_INTERFACE="$tink_interface"
 
 # Subnet (IP block) used by Tinkerbell's provisioning tools
 # Hint: calculate the values in this file with ipcalc:
@@ -77,7 +77,7 @@ export TINKERBELL_BROADCAST_IP=192.168.1.7
 
 # Docker Registry's username and password
 export TINKERBELL_REGISTRY_USERNAME=admin
-export TINKERBELL_REGISTRY_PASSWORD=$registry_password
+export TINKERBELL_REGISTRY_PASSWORD="$registry_password"
 
 # Legacy options, to be deleted:
 export FACILITY=onprem
