@@ -79,6 +79,11 @@ services:
         REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USERNAME
         REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --cacert /certs/ca.pem https://127.0.0.1"]
+      interval: 5s
+      timeout: 1s
+      retries: 5
     environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
