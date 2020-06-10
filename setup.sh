@@ -410,7 +410,7 @@ docker_mirror_image() (
 )
 
 start_registry() (
-	docker-compose -f "$(pwd)"/deploy/docker-compose.yml up --build -d registry
+	docker-compose -f "$DEPLOYDIR/docker-compose.yml" up --build -d registry
 	check_container_status "registry"
 )
 
@@ -435,7 +435,7 @@ setup_docker_registry() (
 start_components() (
 	local components=(db cacher hegel tink-server boots tink-cli nginx kibana)
 	for comp in "${components[@]}"; do
-		docker-compose -f "$(pwd)"/deploy/docker-compose.yml up --build -d "$comp"
+		docker-compose -f "$DEPLOYDIR/docker-compose.yml" up --build -d "$comp"
 		sleep 3
 		check_container_status "$comp"
 	done
