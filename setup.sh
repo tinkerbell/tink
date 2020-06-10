@@ -338,16 +338,27 @@ gen_certs() (
 		--user "$UID:$GID" \
 		tinkerbell-certs
 
-	certs_dir="/etc/docker/certs.d/$TINKERBELL_HOST_IP"
-	if [ ! -d "$certs_dir" ]; then
-		mkdir -p "$certs_dir"
+	local certs_dir="/etc/docker/certs.d/$TINKERBELL_HOST_IP"
+
+	# copy public key to NGINX for workers
+	if ! cmp --quiet "$DEPLOYDIR"/certs/ca.pem "$DEPLOYDIR/webroot/workflow/ca.pem"; then
+		cp "$DEPLOYDIR"/certs/ca.pem "$DEPLOYDIR/webroot/workflow/ca.pem"
 	fi
 
 	# update host to trust registry certificate
-	cp "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/tinkerbell.crt
+	if ! cmp --quiet "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/tinkerbell.crt; then
+		if ! cp "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/tinkerbell.crt; then
+			echo "$ERR please copy $DEPLOYDIR/certs/ca.pem to $certs_dir/tinkerbell.crt"
+			echo "$BLANK and run $0 again:"
 
-	# copy public key to NGINX for workers
-	cp "$DEPLOYDIR"/certs/ca.pem "$DEPLOYDIR/webroot/workflow/ca.pem"
+			if [ ! -d "$certs_dir" ]; then
+				echo "sudo mkdir -p '$certs_dir'"
+			fi
+			echo "sudo cp '$DEPLOYDIR/certs/ca.pem' '$certs_dir/tinkerbell.crt'"
+
+			exit 1
+		fi
+	fi
 )
 
 generate_certificates() (
