@@ -14,7 +14,7 @@ import (
 // allCmd represents the all command
 var allCmd = &cobra.Command{
 	Use:   "all",
-	Short: "Get all known hardware for facility",
+	Short: "get all known hardware for facility",
 	Run: func(cmd *cobra.Command, args []string) {
 		alls, err := client.HardwareClient.All(context.Background(), &hardware.Empty{})
 		if err != nil {

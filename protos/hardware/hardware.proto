@@ -12,6 +12,7 @@ service HardwareService {
 	rpc All(Empty) returns (stream Hardware);
 	rpc Ingest(Empty) returns (Empty);
 	rpc Watch(GetRequest) returns (stream Hardware);
+	rpc Delete(DeleteRequest) returns (Empty);
 }
 
 message PushRequest {
@@ -29,4 +30,8 @@ message GetRequest {
 
 message Hardware {
 	string JSON = 1;
+}
+
+message DeleteRequest {
+	string ID = 1;
 }

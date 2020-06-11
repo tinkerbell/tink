@@ -244,3 +244,57 @@ func (s *server) Cert() []byte {
 func (s *server) ModTime() time.Time {
 	return s.modT
 }
+
+func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardware.Empty, error) {
+	logger.Info("delete")
+	labels := prometheus.Labels{"method": "Delete", "op": ""}
+	metrics.CacheInFlight.With(labels).Inc()
+	defer metrics.CacheInFlight.With(labels).Dec()
+
+	// must be a copy so deferred cacheInFlight.Dec matches the Inc
+	labels = prometheus.Labels{"method": "Delete", "op": ""}
+
+	if in.ID == "" {
+		metrics.CacheTotals.With(labels).Inc()
+		metrics.CacheErrors.With(labels).Inc()
+		err := errors.New("id must be set to a UUID")
+		logger.Error(err)
+		return &hardware.Empty{}, err
+	}
+
+	logger.With("id", in.ID).Info("data deleted")
+
+	var fn func() error
+	labels["op"] = "delete"
+	msg := "deleting into DB"
+	fn = func() error { return db.DeleteFromDB(ctx, s.db, in.ID) }
+
+	metrics.CacheTotals.With(labels).Inc()
+	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
+	defer timer.ObserveDuration()
+
+	logger.Info(msg)
+	err := fn()
+	logger.Info("done " + msg)
+	if err != nil {
+		metrics.CacheErrors.With(labels).Inc()
+		l := logger
+		if pqErr := db.Error(err); pqErr != nil {
+			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
+		}
+		l.Error(err)
+	}
+
+	s.watchLock.RLock()
+	if ch := s.watch[in.ID]; ch != nil {
+		select {
+		case ch <- in.ID:
+		default:
+			metrics.WatchMissTotal.Inc()
+			logger.With("id", in.ID).Info("skipping blocked watcher")
+		}
+	}
+	s.watchLock.RUnlock()
+
+	return &hardware.Empty{}, err
+}

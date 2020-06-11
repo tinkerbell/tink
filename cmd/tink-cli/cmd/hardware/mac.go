@@ -16,7 +16,7 @@ import (
 // macCmd represents the mac command
 var macCmd = &cobra.Command{
 	Use:     "mac",
-	Short:   "Get hardware by any associated mac",
+	Short:   "get hardware by any associated mac",
 	Example: "tink hardware mac 00:00:00:00:00:01 00:00:00:00:00:02",
 	Args: func(_ *cobra.Command, args []string) error {
 		for _, arg := range args {
