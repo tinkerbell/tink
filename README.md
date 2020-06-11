@@ -2,17 +2,24 @@
 
 [![Build Status](https://cloud.drone.io/api/badges/tinkerbell/tink/status.svg)](https://cloud.drone.io/tinkerbell/tink)
 
-Tinkerbell is a bare metal provisioning and workflow engine comprised of three major components: a DHCP server ([boots](https://github.com/packethost/boots)), a workflow engine (tinkerbell, this repository), and a metadata service ([hegel](https://github.com/packethost/hegel)).
-The workflow engine is comprised of a server and a CLI, which communicate over gRPC.
-The CLI is used to create a workflow along with its building blocks, templates and targeted hardware.
+It is comprised of following five major components:
 
-# Packet Workflow
+1.  A DHCP server ([boots](https://github.com/tinkerbell/boots))
+2.  A workflow engine (tink, this repository)
+3.  A metadata service ([hegel](https://github.com/tinkerbell/hegel))
+4.  An in-memory installation environment([osie](https://github.com/tinkerbell/osie))
+5.  A controller/handler of BMC interactions([pbnj](https://github.com/tinkerbell/pbnj))
+
+The workflow engine is comprised of a server and a CLI, which communicates over gRPC.  
+ The CLI is used to create a workflow and its building blocks: templates and targeted hardware.
+
+## Packet Workflow
 
 A Packet Workflow is an open-source microservice that’s responsible for handling flexible, bare metal provisioning workflows, that is...
 
 -   standalone and does not need the Packet API to function
--   contains `Boots`, `Tinkerbell`, `Osie`, and workers
--   can bootstrap any remote worker using `Boots + Osie`
+-   contains `Boots`, `Tink`, `Hegel`, `OSIE`, `PBnJ` and workers
+-   can bootstrap any remote worker using `Boots + Hegel + OSIE + PBnJ`
 -   can run any set of actions as Docker container runtimes
 -   receive, manipulate, and save runtime data
 
@@ -21,8 +28,9 @@ A Packet Workflow is an open-source microservice that’s responsible for handli
 -   [Setup](docs/setup.md)
 -   [Components](docs/components.md)
     -   [Boots](docs/components.md#boots)
-    -   [Osie](docs/components.md#osie)
-    -   [Tinkerbell](docs/components.md#tinkerbell)
+    -   [OSIE](docs/components.md#osie)
+    -   [PBnJ](docs/components.md#pbnj)
+    -   [Tink](docs/components.md#tink)
     -   [Hegel](docs/components.md#hegel)
     -   [Database](docs/components.md#database)
     -   [Image Registry](docs/components.md#registry)

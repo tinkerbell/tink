@@ -6,20 +6,21 @@ Handles DHCP requests, hands out IPs, and serves up iPXE.
 It also uses the Tinkerbell client to pull and push hardware data.
 `boots` will only respond to a predefined set of MAC addresses so it can be deployed in an existing network without interfering with existing DHCP infrastructure.
 
-### Osie
+### OSIE
 
 Installs operating systems and handles deprovisioning.
 
-### Tinkerbell
+### PBnJ
 
-Service responsible for processing workflows.
-It is comprised of a server and a CLI, which communicate over gRPC.
-The CLI is used to create a workflow along with its building blocks, i.e., a template hardware devices.
+Communicates with BMCs to control power and boot settings.
+
+### Tink
+
+Service responsible for processing workflows. It is comprised of a server and a CLI, which communicate over gRPC. The CLI is used to create a workflow along with its building blocks, i.e., a template and targeted hardware devices.
 
 ### Hegel
 
-Metadata service used by Tinkerbell and Osie during provisioning.
-It collects data from Tinkerbell and transforms it into a JSON format to be consumed as metadata.
+Metadata service used by Tinkerbell and Osie during provisioning. It collects data from Tinkerbell and transforms it into a JSON format to be consumed as metadata.
 
 ### Database
 
