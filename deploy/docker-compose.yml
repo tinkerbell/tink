@@ -26,7 +26,7 @@ services:
       timeout: 2s
       retries: 30
     volumes:
-      - ./certs:/certs/${FACILITY}
+      - ./state/certs:/certs/${FACILITY}
     logging:
       driver: fluentd
       options:
@@ -92,8 +92,8 @@ services:
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
     volumes:
-      - ./certs:/certs
-      - ./registry:/var/lib/registry
+      - ./state/certs:/certs
+      - ./state/registry:/var/lib/registry
     depends_on:
       fluentbit:
         condition: service_started
@@ -152,7 +152,7 @@ services:
     ports:
       - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
-      - ./webroot:/usr/share/nginx/html/
+      - ./state/webroot:/usr/share/nginx/html/
     logging:
       driver: fluentd
       options:
@@ -207,7 +207,7 @@ services:
       PGUSER: tinkerbell
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
     volumes:
-      - ./certs:/certs/${FACILITY}
+      - ./state/certs:/certs/${FACILITY}
     logging:
       driver: fluentd
       options:

@@ -19,6 +19,7 @@ trap finish EXIT
 
 DEPLOYDIR=$(pwd)/deploy
 readonly DEPLOYDIR
+readonly STATEDIR=$DEPLOYDIR/state
 
 if command -v tput >>/dev/null; then
 	# color codes
@@ -253,10 +254,10 @@ EOF
 )
 
 setup_osie() (
-	mkdir -p "$DEPLOYDIR/webroot"
+	mkdir -p "$STATEDIR/webroot"
 
-	local osie_current=$DEPLOYDIR/webroot/misc/osie/current
-	local tink_workflow=$DEPLOYDIR/webroot/workflow/
+	local osie_current=$STATEDIR/webroot/misc/osie/current
+	local tink_workflow=$STATEDIR/webroot/workflow/
 	if [ ! -d "$osie_current" ] && [ ! -d "$tink_workflow" ]; then
 		mkdir -p "$osie_current"
 		mkdir -p "$tink_workflow"
@@ -324,9 +325,9 @@ check_container_status() (
 )
 
 gen_certs() (
-	mkdir -p "$DEPLOYDIR/certs"
+	mkdir -p "$STATEDIR/certs"
 
-	if [ ! -f "$DEPLOYDIR/certs/ca.json" ]; then
+	if [ ! -f "$STATEDIR/certs/ca.json" ]; then
 		jq \
 			'.
 			 | .names[0].L = $facility
@@ -334,10 +335,10 @@ gen_certs() (
 			"$DEPLOYDIR/tls/ca.in.json" \
 			--arg ip "$TINKERBELL_HOST_IP" \
 			--arg facility "$FACILITY" \
-			>"$DEPLOYDIR/certs/ca.json"
+			>"$STATEDIR/certs/ca.json"
 	fi
 
-	if [ ! -f "$DEPLOYDIR/certs/server-csr.json" ]; then
+	if [ ! -f "$STATEDIR/certs/server-csr.json" ]; then
 		jq \
 			'.
 			| .hosts += [ $ip, "tinkerbell.\($facility).packet.net" ]
@@ -347,32 +348,32 @@ gen_certs() (
 			"$DEPLOYDIR/tls/server-csr.in.json" \
 			--arg ip "$TINKERBELL_HOST_IP" \
 			--arg facility "$FACILITY" \
-			>"$DEPLOYDIR/certs/server-csr.json"
+			>"$STATEDIR/certs/server-csr.json"
 	fi
 
 	docker build --tag "tinkerbell-certs" "$DEPLOYDIR/tls"
 	docker run --rm \
-		--volume "$DEPLOYDIR/certs:/certs" \
+		--volume "$STATEDIR/certs:/certs" \
 		--user "$UID:$(id -g)" \
 		tinkerbell-certs
 
 	local certs_dir="/etc/docker/certs.d/$TINKERBELL_HOST_IP"
 
 	# copy public key to NGINX for workers
-	if ! cmp --quiet "$DEPLOYDIR"/certs/ca.pem "$DEPLOYDIR/webroot/workflow/ca.pem"; then
-		cp "$DEPLOYDIR"/certs/ca.pem "$DEPLOYDIR/webroot/workflow/ca.pem"
+	if ! cmp --quiet "$STATEDIR"/certs/ca.pem "$STATEDIR/webroot/workflow/ca.pem"; then
+		cp "$STATEDIR"/certs/ca.pem "$STATEDIR/webroot/workflow/ca.pem"
 	fi
 
 	# update host to trust registry certificate
-	if ! cmp --quiet "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/tinkerbell.crt; then
-		if ! cp "$DEPLOYDIR"/certs/ca.pem "$certs_dir"/tinkerbell.crt; then
-			echo "$ERR please copy $DEPLOYDIR/certs/ca.pem to $certs_dir/tinkerbell.crt"
+	if ! cmp --quiet "$STATEDIR/certs/ca.pem" "$certs_dir/tinkerbell.crt"; then
+		if ! cp "$STATEDIR/certs/ca.pem" "$certs_dir/tinkerbell.crt"; then
+			echo "$ERR please copy $STATEDIR/certs/ca.pem to $certs_dir/tinkerbell.crt"
 			echo "$BLANK and run $0 again:"
 
 			if [ ! -d "$certs_dir" ]; then
 				echo "sudo mkdir -p '$certs_dir'"
 			fi
-			echo "sudo cp '$DEPLOYDIR/certs/ca.pem' '$certs_dir/tinkerbell.crt'"
+			echo "sudo cp '$STATEDIR/certs/ca.pem' '$certs_dir/tinkerbell.crt'"
 
 			exit 1
 		fi
@@ -380,9 +381,9 @@ gen_certs() (
 )
 
 generate_certificates() (
-	if [ -d "$DEPLOYDIR"/certs ]; then
+	if [ -d "$STATEDIR/certs" ]; then
 		echo "$WARN found certs directory"
-		if grep -q "\"$TINKERBELL_HOST_IP\"" "$DEPLOYDIR"/tls/server-csr.in.json; then
+		if grep -q "\"$TINKERBELL_HOST_IP\"" "$STATEDIR/certs/server-csr.json"; then
 			echo "$WARN found server entry in TLS"
 			echo "$INFO found existing certificates for host $TINKERBELL_HOST_IP, skipping certificate generation"
 		else
@@ -424,7 +425,7 @@ bootstrap_docker_registry() (
 )
 
 setup_docker_registry() (
-	local registry_images="$DEPLOYDIR/registry"
+	local registry_images="$STATEDIR/registry"
 	if [ ! -d "$registry_images" ]; then
 		mkdir -p "$registry_images"
 	fi
