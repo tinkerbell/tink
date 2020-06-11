@@ -27,7 +27,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	if hw.Id == "" {
 		metrics.CacheTotals.With(labels).Inc()
 		metrics.CacheErrors.With(labels).Inc()
-		err := errors.New("id must be set to a UUID")
+		err := errors.New("id must be set to a UUID, got id: " + hw.Id)
 		logger.Error(err)
 		return &hardware.Empty{}, err
 	}

@@ -129,15 +129,19 @@ func setupGitRevJSON() {
 	gitRevJSON = b
 }
 
+// BasicAuth adds authentication to the routes handled by handler
+// skips authentication if both authUsername and authPassword aren't set
 func BasicAuth(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(authUsername)) != 1 ||
-			subtle.ConstantTimeCompare([]byte(pass), []byte(authPassword)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Tink Realm"`)
-			w.WriteHeader(401)
-			w.Write([]byte("401 Unauthorized\n"))
-			return
+		if authUsername != "" || authPassword != "" {
+			user, pass, ok := r.BasicAuth()
+			if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(authUsername)) != 1 ||
+				subtle.ConstantTimeCompare([]byte(pass), []byte(authPassword)) != 1 {
+				w.Header().Set("WWW-Authenticate", `Basic realm="Tink Realm"`)
+				w.WriteHeader(401)
+				w.Write([]byte("401 Unauthorized\n"))
+				return
+			}
 		}
 		handler.ServeHTTP(w, r)
 	})

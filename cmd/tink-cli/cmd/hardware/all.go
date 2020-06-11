@@ -27,12 +27,12 @@ var allCmd = &cobra.Command{
 		for hw, err = alls.Recv(); err == nil && hw != nil; hw, err = alls.Recv() {
 			b, err := json.Marshal(hw)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 			fmt.Println(string(b))
 		}
 		if err != nil && err != io.EOF {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	},
 }
