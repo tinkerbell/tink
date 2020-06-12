@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 
 # stops the execution if a command or pipeline has an error
-set -e
+set -eu
 
-if command -v tput >>/dev/null; then
+if command -v tput >/dev/null && tput setaf 1 >/dev/null 2>&1; then
 	# color codes
 	RED="$(tput setaf 1)"
 	RESET="$(tput sgr0)"
-else
-	echo "color coding will not happen as tput command not found."
 fi
 
-ERR="${RED}ERROR:$RESET"
+ERR="${RED:-}ERROR:${RESET:-}"
 
 err() (
 	if [ -z "${1:-}" ]; then

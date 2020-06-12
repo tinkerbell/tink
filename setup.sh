@@ -21,21 +21,19 @@ DEPLOYDIR=$(pwd)/deploy
 readonly DEPLOYDIR
 readonly STATEDIR=$DEPLOYDIR/state
 
-if command -v tput >>/dev/null; then
+if command -v tput >/dev/null && tput setaf 1 >/dev/null 2>&1; then
 	# color codes
 	RED="$(tput setaf 1)"
 	GREEN="$(tput setaf 2)"
 	YELLOW="$(tput setaf 3)"
 	RESET="$(tput sgr0)"
-else
-	echo "color coding will not happen as tput command not found."
 fi
 
-INFO="${GREEN}INFO:$RESET"
-ERR="${RED}ERROR:$RESET"
-WARN="${YELLOW}WARNING:$RESET"
+INFO="${GREEN:-}INFO:${RESET:-}"
+ERR="${RED:-}ERROR:${RESET:-}"
+WARN="${YELLOW:-}WARNING:${RESET:-}"
 BLANK="      "
-NEXT="${GREEN}NEXT:$RESET"
+NEXT="${GREEN:-}NEXT:${RESET:-}"
 
 get_distribution() (
 	local lsb_dist=""
