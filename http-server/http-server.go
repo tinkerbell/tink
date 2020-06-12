@@ -25,8 +25,8 @@ import (
 var (
 	gitRev         = "unknown"
 	gitRevJSON     []byte
-	grpcListenAddr = "localhost:42113"
-	httpListenAddr = ":42114"
+	grpcListenAddr = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
+	httpListenAddr = os.Getenv("TINKERBELL_HTTP_AUTHORITY")
 	authUsername   = os.Getenv("TINK_AUTH_USERNAME")
 	authPassword   = os.Getenv("TINK_AUTH_PASSWORD")
 	startTime      = time.Now()
@@ -48,6 +48,10 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	mux := grpcRuntime.NewServeMux()
 
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
+
+	if grpcListenAddr == "" {
+		grpcListenAddr = "localhost:42113"
+	}
 	err := hardware.RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcListenAddr, dialOpts)
 	if err != nil {
 		logger.Error(err)
@@ -70,6 +74,9 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	http.HandleFunc("/_packet/healthcheck", healthCheckHandler)
 	http.Handle("/", BasicAuth(mux))
 
+	if httpListenAddr == "" {
+		httpListenAddr = ":42114"
+	}
 	srv := &http.Server{
 		Addr: httpListenAddr,
 	}

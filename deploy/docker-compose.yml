@@ -15,13 +15,15 @@ services:
       PGPORT: 5432
       PGSSLMODE: disable
       PGUSER: tinkerbell
+      TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
+      TINKERBELL_HTTP_AUTHORITY: :42114
       TINK_AUTH_USERNAME: ${TINKERBELL_TINK_USERNAME:-admin}
       TINK_AUTH_PASSWORD: ${TINKERBELL_TINK_PASSWORD:-admin}
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"]
+      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"] # port needs to match TINKERBELL_HTTP_AUTHORITY
       interval: 5s
       timeout: 2s
       retries: 30
