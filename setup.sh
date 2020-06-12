@@ -317,7 +317,7 @@ check_container_status() (
 	fi
 )
 
-gen_certs() (
+generate_certificates() (
 	mkdir -p "$STATEDIR/certs"
 
 	if [ ! -f "$STATEDIR/certs/ca.json" ]; then
@@ -370,20 +370,6 @@ gen_certs() (
 
 			exit 1
 		fi
-	fi
-)
-
-generate_certificates() (
-	if [ -d "$STATEDIR/certs" ]; then
-		echo "$WARN found certs directory"
-		if grep -q "\"$TINKERBELL_HOST_IP\"" "$STATEDIR/certs/server-csr.json"; then
-			echo "$WARN found server entry in TLS"
-			echo "$INFO found existing certificates for host $TINKERBELL_HOST_IP, skipping certificate generation"
-		else
-			gen_certs
-		fi
-	else
-		gen_certs
 	fi
 )
 
