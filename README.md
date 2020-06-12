@@ -10,8 +10,8 @@ It is comprised of following five major components:
 4.  An in-memory installation environment([osie](https://github.com/tinkerbell/osie))
 5.  A controller/handler of BMC interactions([pbnj](https://github.com/tinkerbell/pbnj))
 
-The workflow engine is comprised of a server and a CLI, which communicates over gRPC.  
- The CLI is used to create a workflow and its building blocks: templates and targeted hardware.
+The workflow engine is comprised of a server and a CLI, which communicates over gRPC.
+The CLI is used to create a workflow and its building blocks: templates and targeted hardware.
 
 ## Packet Workflow
 
@@ -34,9 +34,6 @@ A Packet Workflow is an open-source microservice that’s responsible for handli
     -   [Hegel](docs/components.md#hegel)
     -   [Database](docs/components.md#database)
     -   [Image Registry](docs/components.md#registry)
-    -   [Elasticsearch](docs/components.md#elastic)
-    -   [Fluent Bit](docs/components.md#fluent-bit)
-    -   [Kibana](docs/components.md#kibana)
 -   [Architecture](docs/architecture.md)
 -   [Say "Hello-World!" with a Workflow](docs/hello-world.md)
 -   [Concepts](docs/concepts.md)

@@ -69,9 +69,6 @@ A provisioner houses the following components:
 -   Boots
 -   Hegel
 -   Image Registry (optional)
--   Elasticsearch
--   Fluent Bit
--   Kibana
 -   NGINX
 
 It is up to you if you would like to divide these components into multiple servers.
