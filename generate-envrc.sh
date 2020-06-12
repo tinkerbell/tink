@@ -55,25 +55,20 @@ generate_envrc() (
 # Network interface for Tinkerbell's network
 export TINKERBELL_NETWORK_INTERFACE="$tink_interface"
 
-# Subnet (IP block) used by Tinkerbell's provisioning tools
-# Hint: calculate the values in this file with ipcalc:
-#
-# $ ipcalc 192.168.1.0/29
-export TINKERBELL_NETWORK=192.168.1.0/29
-
+# Decide on a subnet for provisioning. Tinkerbell should "own" this
+# network space. Its subnet should be just large enough to be able
+# to provision your hardware.
 export TINKERBELL_CIDR=29
 
-# Host IP is used by provisioner to expose different services such as tink, boots, etc.
+# Host IP is used by provisioner to expose different services such as
+# tink, boots, etc.
+#
+# The host IP should the first IP in the range, and the Nginx IP
+# should be the second address.
 export TINKERBELL_HOST_IP=192.168.1.1
 
 # NGINX IP is used by provisioner to serve files required for iPXE boot
 export TINKERBELL_NGINX_IP=192.168.1.2
-
-# Netmask for Tinkerbell network
-export TINKERBELL_NETMASK=255.255.255.248
-
-# Broadcast IP for Tinkerbell network
-export TINKERBELL_BROADCAST_IP=192.168.1.7
 
 # Docker Registry's username and password
 export TINKERBELL_REGISTRY_USERNAME=admin
