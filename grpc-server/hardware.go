@@ -74,10 +74,10 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		case ch <- string(data):
 		default:
 			metrics.WatchMissTotal.Inc()
-			logger.With("id", hw.Id ).Info("skipping blocked watcher")
 		}
 	}
 	s.watchLock.RUnlock()
+	logger.With("id", hw.Id ).Info("skipping blocked watcher")
 
 	return &hardware.Empty{}, err
 }
