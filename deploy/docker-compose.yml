@@ -1,10 +1,5 @@
 version: "2.1"
 services:
-  certs:
-    build: tls
-    volumes:
-      - ./certs:/certs
-
   tink-server:
     image: quay.io/tinkerbell/tink:latest
     restart: unless-stopped
@@ -31,7 +26,7 @@ services:
       timeout: 2s
       retries: 30
     volumes:
-      - ./certs:/certs/${FACILITY}
+      - ./state/certs:/certs/${FACILITY}
     logging:
       driver: fluentd
       options:
@@ -84,6 +79,11 @@ services:
         REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USERNAME
         REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --cacert /certs/ca.pem https://127.0.0.1"]
+      interval: 5s
+      timeout: 1s
+      retries: 5
     environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:443
       REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.pem
@@ -92,8 +92,8 @@ services:
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
     volumes:
-      - ./certs:/certs
-      - /var/tinkerbell/registry:/var/lib/registry
+      - ./state/certs:/certs
+      - ./state/registry:/var/lib/registry
     depends_on:
       fluentbit:
         condition: service_started
@@ -152,7 +152,7 @@ services:
     ports:
       - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
-      - /var/tinkerbell/nginx/:/usr/share/nginx/html/
+      - ./state/webroot:/usr/share/nginx/html/
     logging:
       driver: fluentd
       options:
@@ -187,7 +187,7 @@ services:
     depends_on:
       - elasticsearch
     volumes:
-      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
 
   cacher:
     image: quay.io/packet/cacher:workflow
@@ -207,7 +207,7 @@ services:
       PGUSER: tinkerbell
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
     volumes:
-      - ./certs:/certs/${FACILITY}
+      - ./state/certs:/certs/${FACILITY}
     logging:
       driver: fluentd
       options:

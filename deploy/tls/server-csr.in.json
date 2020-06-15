@@ -1,7 +1,6 @@
 {
   "CN": "tinkerbell",
   "hosts": [
-    "tinkerbell.@FACILITY@.packet.net",
     "tinkerbell.registry",
     "tinkerbell.tinkerbell",
     "tinkerbell",
