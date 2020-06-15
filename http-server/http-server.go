@@ -6,12 +6,13 @@ import (
 	"crypto/subtle"
 	"crypto/x509"
 	"encoding/json"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"net/http"
 	"os"
 	"runtime"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/packethost/pkg/log"

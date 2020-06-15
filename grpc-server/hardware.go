@@ -77,7 +77,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		}
 	}
 	s.watchLock.RUnlock()
-	logger.With("id", hw.Id ).Info("skipping blocked watcher")
+	logger.With("id", hw.Id).Info("skipping blocked watcher")
 
 	return &hardware.Empty{}, err
 }
