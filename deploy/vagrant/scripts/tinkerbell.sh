@@ -54,6 +54,15 @@ command_exists() (
 	command -v "$@" >/dev/null 2>&1
 )
 
+configure_vagrant_user() (
+	sudo usermod -aG docker vagrant
+
+	echo -n "$TINKERBELL_REGISTRY_PASSWORD" |
+		sudo -iu vagrant docker login \
+			--username="$TINKERBELL_REGISTRY_USERNAME" \
+			--password-stdin "$TINKERBELL_HOST_IP"
+)
+
 main() (
 	export DEBIAN_FRONTEND=noninteractive
 
@@ -84,7 +93,8 @@ main() (
 
 	secure_certs
 
-	sudo usermod -aG docker vagrant
+	configure_vagrant_user
+
 )
 
 main
