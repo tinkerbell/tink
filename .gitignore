@@ -8,3 +8,6 @@ cmd/tink-worker/tink-worker
 .terraform
 terraform.tfstate
 terraform.tfstate.backup
+
+# Vagrant
+**/.vagrant
