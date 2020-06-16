@@ -251,7 +251,7 @@ setup_osie() (
 
 	local osie_current=$STATEDIR/webroot/misc/osie/current
 	local tink_workflow=$STATEDIR/webroot/workflow/
-	if [ ! -d "$osie_current" ] && [ ! -d "$tink_workflow" ]; then
+	if [ ! -d "$osie_current" ] || [ ! -d "$tink_workflow" ]; then
 		mkdir -p "$osie_current"
 		mkdir -p "$tink_workflow"
 		pushd "$SCRATCH"
