@@ -58,13 +58,6 @@ command_exists() (
 	command -v "$@" >/dev/null 2>&1
 )
 
-mirror_hello_world() (
-	# push the hello-world workflow action image
-	docker pull hello-world
-	docker tag hello-world "$TINKERBELL_HOST_IP/hello-world"
-	docker push "$TINKERBELL_HOST_IP/hello-world"
-)
-
 main() (
 	export DEBIAN_FRONTEND=noninteractive
 
@@ -94,11 +87,6 @@ main() (
 	./setup.sh
 
 	secure_certs
-
-	mirror_hello_world
-
-	cd deploy
-	docker-compose up -d
 )
 
 main
