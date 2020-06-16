@@ -28,10 +28,6 @@ setup_docker() (
 
 	sudo apt-get update
 	sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-
-	sudo usermod -aG docker "$USER"
-
-	newgrp
 )
 
 setup_docker_compose() (
@@ -87,6 +83,8 @@ main() (
 	./setup.sh
 
 	secure_certs
+
+	sudo usermod -aG docker vagrant
 )
 
 main
