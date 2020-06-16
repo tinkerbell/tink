@@ -16,8 +16,6 @@ services:
       PGSSLMODE: disable
       PGUSER: tinkerbell
     depends_on:
-      fluentbit:
-        condition: service_started
       db:
         condition: service_healthy
     healthcheck:
@@ -27,10 +25,6 @@ services:
       retries: 30
     volumes:
       - ./state/certs:/certs/${FACILITY}
-    logging:
-      driver: fluentd
-      options:
-        tag: tink-server
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
@@ -46,18 +40,11 @@ services:
       - ./db/tinkerbell-init.sql:/docker-entrypoint-initdb.d/tinkerbell-init.sql:ro
     ports:
       - 5432:5432
-    depends_on:
-      fluentbit:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tinkerbell"]
       interval: 1s
       timeout: 1s
       retries: 30
-    logging:
-      driver: fluentd
-      options:
-        tag: db
 
   tink-cli:
     image: quay.io/tinkerbell/tink-cli:latest
@@ -94,13 +81,6 @@ services:
     volumes:
       - ./state/certs:/certs
       - ./state/registry:/var/lib/registry
-    depends_on:
-      fluentbit:
-        condition: service_started
-    logging:
-      driver: fluentd
-      options:
-        tag: registry
     network_mode: host
 
   boots:
@@ -132,14 +112,8 @@ services:
       TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
       ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
     depends_on:
-      fluentbit:
-        condition: service_started
       cacher:
         condition: service_started
-    logging:
-      driver: fluentd
-      options:
-        tag: boots
     ports:
       - $TINKERBELL_HOST_IP:80:80/tcp
       - 67:67/udp
@@ -153,41 +127,6 @@ services:
       - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
       - ./state/webroot:/usr/share/nginx/html/
-    logging:
-      driver: fluentd
-      options:
-        tag: nginx
-
-  elasticsearch:
-    image: elasticsearch:7.3.0
-    restart: unless-stopped
-    ports:
-      - 9200:9200
-      - 9300:9300
-    environment:
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - discovery.type=single-node
-
-  kibana:
-    image: kibana:7.3.0
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-    ports:
-      - 5601:5601
-
-  fluentbit:
-    image: fluent/fluent-bit:1.3
-    restart: unless-stopped
-    ports:
-      - 24224:24224
-      - 24224:24224/udp
-    depends_on:
-      - elasticsearch
-    volumes:
-      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
 
   cacher:
     image: quay.io/packet/cacher:workflow
@@ -208,13 +147,7 @@ services:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
     volumes:
       - ./state/certs:/certs/${FACILITY}
-    logging:
-      driver: fluentd
-      options:
-        tag: cacher
     depends_on:
-      fluentbit:
-        condition: service_started
       db:
         condition: service_healthy
     ports:
@@ -236,11 +169,5 @@ services:
       CACHER_CERT_URL: http://127.0.0.1:42112/cert
       CACHER_GRPC_AUTHORITY: 127.0.0.1:42111
     depends_on:
-      fluentbit:
-        condition: service_started
       cacher:
         condition: service_started
-    logging:
-      driver: fluentd
-      options:
-        tag: hegel
