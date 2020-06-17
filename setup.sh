@@ -442,7 +442,6 @@ check_prerequisites() (
 	failed=0
 	check_command docker || failed=1
 	check_command docker-compose || failed=1
-	check_command git || failed=1
 	check_command ip || failed=1
 	check_command jq || failed=1
 
