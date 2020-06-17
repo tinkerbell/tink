@@ -359,6 +359,12 @@ generate_certificates() (
 
 	# update host to trust registry certificate
 	if ! cmp --quiet "$STATEDIR/certs/ca.pem" "$certs_dir/tinkerbell.crt"; then
+		if [ ! -d "$certs_dir/tinkerbell.crt" ]; then
+			# The user will be told to create the directory
+			# in the next block, if copying the certs there
+			# fails.
+			mkdir -p "$certs_dir" || true >/dev/null 2>&1
+		fi
 		if ! cp "$STATEDIR/certs/ca.pem" "$certs_dir/tinkerbell.crt"; then
 			echo "$ERR please copy $STATEDIR/certs/ca.pem to $certs_dir/tinkerbell.crt"
 			echo "$BLANK and run $0 again:"
