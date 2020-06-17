@@ -11,6 +11,7 @@ with pkgs;
 
 mkShell {
   buildInputs = [
+    git
     gnumake
     go
     jq

@@ -305,7 +305,7 @@ check_container_status() (
 	esac
 
 	local status
-	read status < <(docker events \
+	read -r status < <(docker events \
 		--since "$start_moment" \
 		--filter "container=$container_id" \
 		--filter "event=health_status" \
