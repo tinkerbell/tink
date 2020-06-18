@@ -53,15 +53,16 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	if grpcListenAddr == "" {
 		grpcListenAddr = "localhost:42113"
 	}
-	err := hardware.RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcListenAddr, dialOpts)
+	grpcEndpoint := "localhost" + grpcListenAddr
+	err := hardware.RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		logger.Error(err)
 	}
-	err = template.RegisterTemplateHandlerFromEndpoint(ctx, mux, grpcListenAddr, dialOpts)
+	err = template.RegisterTemplateHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		logger.Error(err)
 	}
-	err = workflow.RegisterWorkflowSvcHandlerFromEndpoint(ctx, mux, grpcListenAddr, dialOpts)
+	err = workflow.RegisterWorkflowSvcHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		logger.Error(err)
 	}
