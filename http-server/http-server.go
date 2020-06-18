@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"crypto/x509"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"runtime"
@@ -26,7 +27,7 @@ import (
 var (
 	gitRev         = "unknown"
 	gitRevJSON     []byte
-	grpcListenAddr = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
+	grpcEndpoint = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 	httpListenAddr = os.Getenv("TINKERBELL_HTTP_AUTHORITY")
 	authUsername   = os.Getenv("TINK_AUTH_USERNAME")
 	authPassword   = os.Getenv("TINK_AUTH_PASSWORD")
@@ -50,11 +51,17 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 
-	if grpcListenAddr == "" {
-		grpcListenAddr = "localhost:42113"
+	if grpcEndpoint == "" {
+		grpcEndpoint = "localhost:42113"
 	}
-	grpcEndpoint := "localhost" + grpcListenAddr
-	err := hardware.RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
+	host, _, err := net.SplitHostPort(grpcEndpoint)
+	if err != nil {
+		logger.Error(err)
+	}
+	if host == "" {
+		grpcEndpoint = "localhost" + grpcEndpoint
+	}
+	err = hardware.RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		logger.Error(err)
 	}
