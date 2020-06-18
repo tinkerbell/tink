@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/docker/docker/api/types"
@@ -33,7 +34,7 @@ func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string,
 		AttachStderr: true,
 		Tty:          true,
 		Volumes:      volume,
-		Env:          []string{"TINKERBELL_GRPC_AUTHORITY=127.0.0.1:42113", "TINKERBELL_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=localhost:443", "DOCKER_API_VERSION=v1.40", "REGISTRY_USERNAME=username", "REGISTRY_PASSWORD=password"},
+		Env:          []string{"TINKERBELL_GRPC_AUTHORITY=127.0.0.1:42113", "TINKERBELL_CERT_URL=http://127.0.0.1:42114/cert", "WORKER_ID=" + workerID, "DOCKER_REGISTRY=localhost:443", "DOCKER_API_VERSION=v1.40", "REGISTRY_USERNAME=" + os.Getenv("TINKERBELL_REGISTRY_USERNAME"), "REGISTRY_PASSWORD=" + os.Getenv("TINKERBELL_REGISTRY_PASSWORD")},
 	}
 	hostConfig := &container.HostConfig{
 		NetworkMode: "host",

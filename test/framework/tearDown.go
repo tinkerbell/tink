@@ -7,7 +7,7 @@ import (
 
 // TearDown : remove the setup
 func TearDown() error {
-	cmd := exec.Command("/bin/sh", "-c", "docker-compose rm -svf")
+	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f ../deploy/docker-compose rm -svf")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()

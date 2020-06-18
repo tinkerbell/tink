@@ -9,8 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func buildCerts(filepath string) error {
-	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build certs")
+func buildCerts() error {
+	cmd := exec.Command("/bin/sh", "-c", "./generate_certs.sh")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
@@ -59,7 +59,7 @@ func removeWorkerImage() error {
 }
 
 func createWorkerImage() error {
-	cmd := exec.Command("/bin/sh", "-c", "docker build -t worker ../worker/")
+	cmd := exec.Command("/bin/sh", "-c", "docker build -t worker ../cmd/tink-worker/")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
@@ -94,7 +94,7 @@ func initializeLogger() {
 		}
 	} else {
 		logger.SetLevel(logrus.InfoLevel)
-		logger.Errorln("Variable TEST_LOG_LEVEL is not set. Default is Info.")
+		logger.Errorln("Variable TEST_LOG_LEVEL is not set. Default is INFO.")
 	}
 	logger.SetFormatter(&logrus.JSONFormatter{})
 }
@@ -102,7 +102,7 @@ func initializeLogger() {
 // StartStack : Starting stack
 func StartStack() error {
 	// Docker compose file for starting the containers
-	filepath := "../test-docker-compose.yml"
+	filepath := "../deploy/docker-compose.yml"
 
 	// Initialize logger
 	initializeLogger()
@@ -114,7 +114,7 @@ func StartStack() error {
 	}
 
 	// Building certs
-	err = buildCerts(filepath)
+	err = buildCerts()
 	if err != nil {
 		return err
 	}
@@ -153,9 +153,10 @@ func StartStack() error {
 	initializeLogger()
 
 	// Start other containers
-	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d")
+	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d tink-server ")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
+	//sleep(10)
 	return nil
 }

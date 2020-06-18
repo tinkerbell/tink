@@ -11,14 +11,15 @@ var log *logrus.Entry
 var Log = logger
 
 // SetupWorkflow ... Set up workflow
-func SetupWorkflow(tar string, tmpl string) (string, error) {
-	hardwareID := "c9d6faa4-08a2-4285-ae6c-f3401211bd56"
+func SetupWorkflow(hMAC string, tmpl string) (string, error) {
+	//hardwareID := `{"device_1":"98:03:9b:89:d7:ba"}`
 	//Add template in template table
 	templateID, err := CreateTemplate(tmpl)
 	if err != nil {
 		return "", err
 	}
 	logger.Infoln("Template Created : ", templateID)
+	hardwareID := `{"device_1":"` + hMAC + `"}`
 	workflowID, err := CreateWorkflow(templateID, hardwareID)
 	if err != nil {
 		logger.Debugln("Workflow is not Created because : ", err)

@@ -54,7 +54,10 @@ steps:
   - name: test
     image: golang:1.13-alpine3.11
     commands:
-      - CGO_ENABLED=0 go test -v ./...
+      - apk add --update make
+      - apk add docker
+      - apk add docker-compose
+      - CGO_ENABLED=0 make test
 
   - name: ci-checks
     image: nixos/nix:2.3.4
