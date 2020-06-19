@@ -27,7 +27,7 @@ import (
 var (
 	gitRev         = "unknown"
 	gitRevJSON     []byte
-	grpcEndpoint = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
+	grpcEndpoint   = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 	httpListenAddr = os.Getenv("TINKERBELL_HTTP_AUTHORITY")
 	authUsername   = os.Getenv("TINK_AUTH_USERNAME")
 	authPassword   = os.Getenv("TINK_AUTH_PASSWORD")
