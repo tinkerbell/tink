@@ -1,5 +1,5 @@
 FROM registry:2
-RUN apk add --no-cache --update curl
+RUN apk add --no-cache --update curl apache2-utils
 ARG REGISTRY_USERNAME
 ARG REGISTRY_PASSWORD
 RUN mkdir -p /certs /auth
