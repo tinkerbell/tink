@@ -183,7 +183,7 @@ message Hardware {
 			bool allow_pxe = 4;
 			bool rescue = 5;
 
-			OperatingSystem OS = 6;
+			OperatingSystem operating_system_version = 6;
 			bool always_pxe = 7;
 			string ipxe_script_url = 8;
 			repeated IP ips = 9;
@@ -197,7 +197,7 @@ message Hardware {
 			bool network_ready = 15;
 		}
 		message Custom {
-			Instance.OperatingSystem preinstalled_os = 1;
+			Instance.OperatingSystem preinstalled_operating_system_version = 1;
 			repeated string private_subnets = 2;
 		}
 		message Facility {
