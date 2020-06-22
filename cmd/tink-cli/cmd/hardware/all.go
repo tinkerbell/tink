@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -24,10 +25,14 @@ var allCmd = &cobra.Command{
 		var hw *hardware.Hardware
 		err = nil
 		for hw, err = alls.Recv(); err == nil && hw != nil; hw, err = alls.Recv() {
-			fmt.Println(hw.JSON)
+			b, err := json.Marshal(hw)
+			if err != nil {
+				log.Println(err)
+			}
+			fmt.Println(string(b))
 		}
 		if err != nil && err != io.EOF {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	},
 }

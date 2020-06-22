@@ -418,7 +418,7 @@ setup_docker_registry() (
 )
 
 start_components() (
-	local components=(db cacher hegel tink-server boots tink-cli nginx)
+	local components=(db hegel tink-server boots tink-cli nginx)
 	for comp in "${components[@]}"; do
 		docker-compose -f "$DEPLOYDIR/docker-compose.yml" up --build -d "$comp"
 		sleep 3

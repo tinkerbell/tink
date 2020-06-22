@@ -9,18 +9,18 @@ import (
 	"github.com/tinkerbell/tink/protos/template"
 )
 
-func readTemplateData(file string) ([]byte, error) {
+func readTemplateData(file string) (string, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return []byte(""), err
+		return "", err
 	}
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		return []byte(""), err
+		return "", err
 	}
-	return data, nil
+	return string(data), nil
 }
 
 // CreateTemplate : create template in the database

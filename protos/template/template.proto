@@ -4,13 +4,31 @@ option go_package = "template";
 
 package github.com.tinkerbell.tink.protos.template;
 
+import "google/api/annotations.proto";
 import "timestamp.proto";
 
 service Template {
-	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse);
-	rpc GetTemplate(GetRequest) returns (WorkflowTemplate);
-	rpc DeleteTemplate(GetRequest) returns (Empty);
-	rpc ListTemplates(Empty) returns (stream WorkflowTemplate);
+	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse) {
+		option (google.api.http) = {
+            post: "/v1/templates"
+            body: "*"
+        };
+	};
+	rpc GetTemplate(GetRequest) returns (WorkflowTemplate) {
+		option (google.api.http) = {
+            get: "/v1/templates/{id}"
+        };
+	};
+	rpc DeleteTemplate(GetRequest) returns (Empty) {
+		option (google.api.http) = {
+            delete: "/v1/templates/{id}"
+        };
+	};
+	rpc ListTemplates(Empty) returns (stream WorkflowTemplate) {
+		option (google.api.http) = {
+            get: "/v1/templates"
+        };
+	};
 	rpc UpdateTemplate(WorkflowTemplate) returns (Empty);
 }
 
@@ -20,10 +38,11 @@ message Empty {
 message WorkflowTemplate {
 	string id = 1;
 	string name = 2;
-	bytes data = 3;
+	bytes OBSOLETE_data = 3; // obsolete
 	google.protobuf.Timestamp createdAt = 4;
 	google.protobuf.Timestamp updatedAt = 5;
 	google.protobuf.Timestamp deletedAt = 6;
+	string data = 7;
 }
 
 message CreateResponse {

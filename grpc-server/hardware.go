@@ -23,39 +23,33 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	// must be a copy so deferred cacheInFlight.Dec matches the Inc
 	labels = prometheus.Labels{"method": "Push", "op": ""}
 
-	var h struct {
-		ID    string
-		State string
-	}
-	err := json.Unmarshal([]byte(in.Data), &h)
-	if err != nil {
+	hw := in.Data
+	if hw.Id == "" {
 		metrics.CacheTotals.With(labels).Inc()
 		metrics.CacheErrors.With(labels).Inc()
-		err = errors.Wrap(err, "unmarshal json")
+		err := errors.New("id must be set to a UUID, got id: " + hw.Id)
 		logger.Error(err)
 		return &hardware.Empty{}, err
 	}
 
-	if h.ID == "" {
-		metrics.CacheTotals.With(labels).Inc()
-		metrics.CacheErrors.With(labels).Inc()
-		err = errors.New("id must be set to a UUID")
-		logger.Error(err)
-		return &hardware.Empty{}, err
-	}
+	// TODO: somewhere here validate json (if ip addr contains cidr, etc.)
 
-	logger.With("id", h.ID).Info("data pushed")
+	logger.With("id", hw.Id).Info("data pushed")
 
 	var fn func() error
 	msg := ""
-	if h.State != "deleted" {
+	data, err := json.Marshal(hw)
+	if err != nil {
+		logger.Error(err)
+	}
+	if hw.Metadata.State != "deleted" {
 		labels["op"] = "insert"
 		msg = "inserting into DB"
-		fn = func() error { return db.InsertIntoDB(ctx, s.db, in.Data) }
+		fn = func() error { return db.InsertIntoDB(ctx, s.db, string(data)) }
 	} else {
 		msg = "deleting from DB"
 		labels["op"] = "delete"
-		fn = func() error { return db.DeleteFromDB(ctx, s.db, h.ID) }
+		fn = func() error { return db.DeleteFromDB(ctx, s.db, hw.Id) }
 	}
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -75,28 +69,17 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	}
 
 	s.watchLock.RLock()
-	if ch := s.watch[h.ID]; ch != nil {
+	if ch := s.watch[hw.Id]; ch != nil {
 		select {
-		case ch <- in.Data:
+		case ch <- string(data):
 		default:
 			metrics.WatchMissTotal.Inc()
-			logger.With("id", h.ID).Info("skipping blocked watcher")
 		}
 	}
 	s.watchLock.RUnlock()
+	logger.With("id", hw.Id).Info("skipping blocked watcher")
 
 	return &hardware.Empty{}, err
-}
-
-func (s *server) Ingest(ctx context.Context, in *hardware.Empty) (*hardware.Empty, error) {
-	logger.Info("ingest")
-	labels := prometheus.Labels{"method": "Ingest", "op": ""}
-	metrics.CacheInFlight.With(labels).Inc()
-	defer metrics.CacheInFlight.With(labels).Dec()
-
-	logger.Info("Ingest called but is deprecated")
-
-	return &hardware.Empty{}, nil
 }
 
 func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardware, error) {
@@ -125,25 +108,27 @@ func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardwar
 	}
 
 	metrics.CacheHits.With(labels).Inc()
-	return &hardware.Hardware{JSON: j}, nil
+	hw := &hardware.Hardware{}
+	json.Unmarshal([]byte(j), hw)
+	return hw, nil
 }
 
 func (s *server) ByMAC(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByMAC", func() (string, error) {
-		return db.GetByMAC(ctx, s.db, in.MAC)
+		return db.GetByMAC(ctx, s.db, in.Mac)
 	})
 }
 
 func (s *server) ByIP(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByIP", func() (string, error) {
-		return db.GetByIP(ctx, s.db, in.IP)
+		return db.GetByIP(ctx, s.db, in.Ip)
 	})
 }
 
 // ByID implements hardware.ByID
 func (s *server) ByID(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByID", func() (string, error) {
-		return db.GetByID(ctx, s.db, in.ID)
+		return db.GetByID(ctx, s.db, in.Id)
 	})
 }
 
@@ -165,8 +150,10 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.GetAll(s.db, func(j string) error {
-		return stream.Send(&hardware.Hardware{JSON: j})
+	err := db.GetAll(s.db, func(j []byte) error {
+		hw := &hardware.Hardware{}
+		json.Unmarshal(j, hw)
+		return stream.Send(hw)
 	})
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -178,16 +165,16 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 }
 
 func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_WatchServer) error {
-	l := logger.With("id", in.ID)
+	l := logger.With("id", in.Id)
 
 	ch := make(chan string, 1)
 	s.watchLock.Lock()
-	old, ok := s.watch[in.ID]
+	old, ok := s.watch[in.Id]
 	if ok {
 		l.Info("evicting old watch")
 		close(old)
 	}
-	s.watch[in.ID] = ch
+	s.watch[in.Id] = ch
 	s.watchLock.Unlock()
 
 	labels := prometheus.Labels{"method": "Watch", "op": "push"}
@@ -200,7 +187,7 @@ func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_
 			return
 		}
 		s.watchLock.Lock()
-		delete(s.watch, in.ID)
+		delete(s.watch, in.Id)
 		s.watchLock.Unlock()
 		close(ch)
 	}()
@@ -223,7 +210,7 @@ func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_
 			}
 
 			hw.Reset()
-			hw.JSON = j
+			json.Unmarshal([]byte(j), hw)
 			err := stream.Send(hw)
 			if err != nil {
 				metrics.CacheErrors.With(labels).Inc()

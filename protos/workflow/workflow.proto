@@ -4,15 +4,41 @@ option go_package = "workflow";
 
 package github.com.tinkerbell.tink.protos.workflow;
 
+import "google/api/annotations.proto";
 import "timestamp.proto";
 
 service WorkflowSvc {
-    rpc CreateWorkflow(CreateRequest) returns (CreateResponse);
-    rpc GetWorkflow(GetRequest) returns (Workflow);
-    rpc DeleteWorkflow(GetRequest) returns (Empty);
-    rpc ListWorkflows(Empty) returns (stream Workflow);
-    rpc GetWorkflowContext(GetRequest) returns (WorkflowContext);
-    rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus);
+    rpc CreateWorkflow(CreateRequest) returns (CreateResponse) {
+        option (google.api.http) = {
+            post: "/v1/workflows"
+            body: "*"
+        };
+    };
+    rpc GetWorkflow(GetRequest) returns (Workflow) {
+        option (google.api.http) = {
+            get: "/v1/workflows/{id}"
+        };
+    };
+    rpc DeleteWorkflow(GetRequest) returns (Empty) {
+        option (google.api.http) = {
+            delete: "/v1/workflows/{id}"
+        };
+    };
+    rpc ListWorkflows(Empty) returns (stream Workflow) {
+        option (google.api.http) = {
+            get: "/v1/workflows"
+        };
+    };
+    rpc GetWorkflowContext(GetRequest) returns (WorkflowContext) {
+        option (google.api.http) = {
+            get: "/v1/workflows/{id}/state"
+        };
+    };
+    rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus) {
+        option (google.api.http) = {
+            get: "/v1/workflows/{id}/events"
+        };
+    };
     rpc GetWorkflowContexts(WorkflowContextRequest) returns (WorkflowContextList) {}
     rpc GetWorkflowActions(WorkflowActionsRequest) returns (WorkflowActionList) {}
     rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}

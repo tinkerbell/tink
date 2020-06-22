@@ -66,13 +66,15 @@ func InsertIntoDB(ctx context.Context, db *sql.DB, data string) error {
 func GetByMAC(ctx context.Context, db *sql.DB, mac string) (string, error) {
 	arg := `
 	{
-	  "network_ports": [
-	    {
-	      "data": {
-		"mac": "` + mac + `"
-	      }
-	    }
-	  ]
+		"network": {
+			"interfaces": [
+				{
+					"dhcp": {
+						"mac": "` + mac + `"
+					}
+				}
+			]
+		}
 	}
 	`
 	query := `
@@ -94,7 +96,7 @@ func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	  "instance": {
 	    "ip_addresses": [
 	      {
-		"address": "` + ip + `"
+		    "address": "` + ip + `"
 	      }
 	    ]
 	  }
@@ -102,11 +104,17 @@ func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	`
 	hardwareOrManagement := `
 	{
-		"ip_addresses": [
-			{
-				"address": "` + ip + `"
-			}
-		]
+		"network": {
+			"interfaces": [
+				{
+					"dhcp": {
+						"ip": {
+							"address": "` + ip + `"
+						}
+					}
+				}
+			]
+		}
 	}
 	`
 
@@ -141,7 +149,7 @@ func GetByID(ctx context.Context, db *sql.DB, id string) (string, error) {
 }
 
 // GetAll : get data for all machine
-func GetAll(db *sql.DB, fn func(string) error) error {
+func GetAll(db *sql.DB, fn func([]byte) error) error {
 	rows, err := db.Query(`
 	SELECT data
 	FROM hardware
@@ -163,7 +171,7 @@ func GetAll(db *sql.DB, fn func(string) error) error {
 			return err
 		}
 
-		err = fn(string(buf))
+		err = fn(buf)
 		if err != nil {
 			return err
 		}

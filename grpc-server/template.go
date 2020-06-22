@@ -55,13 +55,13 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 	labels["op"] = "get"
 	msg = "getting a template"
 
-	fn := func() ([]byte, error) { return db.GetTemplate(ctx, s.db, in.Id) }
+	fn := func() (string, string, error) { return db.GetTemplate(ctx, s.db, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	d, err := fn()
+	n, d, err := fn()
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -71,7 +71,7 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 		}
 		l.Error(err)
 	}
-	return &template.WorkflowTemplate{Id: in.Id, Data: d}, err
+	return &template.WorkflowTemplate{Id: in.Id, Name: n, Data: d}, err
 }
 
 // DeleteTemplate implements template.DeleteTemplate

@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 
@@ -9,18 +10,18 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
-func readHwData(file string) (string, error) {
+func readHwData(file string) ([]byte, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return "", err
+		return []byte(""), err
 	}
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		return "", err
+		return []byte(""), err
 	}
-	return string(data), nil
+	return data, nil
 }
 
 // PushHardwareData : push hardware data
@@ -31,7 +32,9 @@ func PushHardwareData(hwDataFiles []string) error {
 		if err != nil {
 			return err
 		}
-		_, err = client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: data})
+		hw := hardware.Hardware{}
+		err = json.Unmarshal(data, &hw)
+		_, err = client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: &hw})
 		if err != nil {
 			return err
 		}

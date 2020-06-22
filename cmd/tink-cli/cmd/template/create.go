@@ -50,7 +50,7 @@ cat /tmp/example.tmpl | tink template create -n example`,
 
 		data := readAll(reader)
 		if data != nil {
-			if err := tryParseTemplate(data); err != nil {
+			if err := tryParseTemplate(string(data)); err != nil {
 				log.Println(err)
 				return
 			}
@@ -74,16 +74,16 @@ func addFlags() {
 	createCmd.MarkPersistentFlagRequired(fName)
 }
 
-func tryParseTemplate(data []byte) error {
+func tryParseTemplate(data string) error {
 	tmpl := *tt.New("")
-	if _, err := tmpl.Parse(string(data)); err != nil {
+	if _, err := tmpl.Parse(data); err != nil {
 		return err
 	}
 	return nil
 }
 
 func createTemplate(data []byte) {
-	req := template.WorkflowTemplate{Name: templateName, Data: data}
+	req := template.WorkflowTemplate{Name: templateName, Data: string(data)}
 	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
 	if err != nil {
 		log.Println(err)

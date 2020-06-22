@@ -25,7 +25,7 @@ import (
 
 var (
 	logger         log.Logger
-	grpcListenAddr = ":42113"
+	grpcListenAddr = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 )
 
 // Server is the gRPC server for tinkerbell
@@ -76,6 +76,9 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 
 	go func() {
 		logger.Info("serving grpc")
+		if grpcListenAddr == "" {
+			grpcListenAddr = ":42113"
+		}
 		lis, err := net.Listen("tcp", grpcListenAddr)
 		if err != nil {
 			err = errors.Wrap(err, "failed to listen")
