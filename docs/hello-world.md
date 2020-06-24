@@ -13,36 +13,36 @@ While the data model changes are in progress, the following data should be enoug
 
 ```json
 {
-  "id": "0eba0bf8-3772-4b4a-ab9f-6ebe93b90a94",
-  "metadata": {
-    "facility": {
-      "facility_code": "ewr1",
-      "plan_slug": "c2.medium.x86",
-      "plan_version_slug": ""
-    },
-    "instance": {},
-    "state": ""
-  },
-  "network": {
-    "interfaces": [
-      {
-        "dhcp": {
-          "arch": "x86_64",
-          "ip": {
-            "address": "192.168.1.5",
-            "gateway": "192.168.1.1",
-            "netmask": "255.255.255.248"
-          },
-          "mac": "00:00:00:00:00:00",
-          "uefi": false
+    "id": "0eba0bf8-3772-4b4a-ab9f-6ebe93b90a94",
+    "metadata": {
+        "facility": {
+            "facility_code": "ewr1",
+            "plan_slug": "c2.medium.x86",
+            "plan_version_slug": ""
         },
-        "netboot": {
-          "allow_pxe": true,
-          "allow_workflow": true
-        }
-      }
-    ]
-  }
+        "instance": {},
+        "state": ""
+    },
+    "network": {
+        "interfaces": [
+            {
+                "dhcp": {
+                    "arch": "x86_64",
+                    "ip": {
+                        "address": "192.168.1.5",
+                        "gateway": "192.168.1.1",
+                        "netmask": "255.255.255.248"
+                    },
+                    "mac": "00:00:00:00:00:00",
+                    "uefi": false
+                },
+                "netboot": {
+                    "allow_pxe": true,
+                    "allow_workflow": true
+                }
+            }
+        ]
+    }
 }
 ```
 
@@ -54,16 +54,11 @@ A few details to note:
 -   `network.interfaces[].dhcp.mac` is the worker MAC address
 
 Now that we have the hardware data, we need to push it into the database.
-In order to do so, remove the extra spaces in the above JSON and use the following command to push the data:
-
-```shell
-$ tink hardware push '<json-data-here>'
-```
-
-Or, if you have your json data in a file (e.g. `data.json`), you can use the following:
+In order to do so, save the above JSON into a file (e.g., `data.json`) and use either of the following commands to push the data:
 
 ```shell
 $ tink hardware push --file data.json
+$ cat data.json | tink hardware push
 ```
 
 Verify that the data was actually pushed using the command:
@@ -97,6 +92,7 @@ We can now define a workflow with the following steps:
 -   Create a workflow:
 
 ```shell
+ # the value of device_1 could be either the MAC address or IP address of the hardware/device
  $ tink workflow create -t <template-uuid> -r '{"device_1":"mac/IP"}'
 ```
 
