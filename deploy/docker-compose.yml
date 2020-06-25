@@ -42,6 +42,7 @@ services:
       POSTGRES_USER: tinkerbell
     volumes:
       - ./db/tinkerbell-init.sql:/docker-entrypoint-initdb.d/tinkerbell-init.sql:ro
+      - postgres_data:/var/lib/postgresql/data:rw
     ports:
       - 5432:5432
     healthcheck:
@@ -149,3 +150,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+volumes:
+  postgres_data:
