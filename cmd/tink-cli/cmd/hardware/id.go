@@ -4,7 +4,6 @@ package hardware
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -27,11 +26,12 @@ var idCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			b, err := json.Marshal(hw)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println(string(b))
+			//b, err := json.Marshal(hw)
+			//if err != nil {
+			//	log.Fatal(err)
+			//}
+			s := formatHardwareForPrint(hw)
+			fmt.Println(s)
 		}
 	},
 }

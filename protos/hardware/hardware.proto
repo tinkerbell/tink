@@ -218,10 +218,11 @@ message Hardware {
 	DHCP OBSOLETE_dhcp = 2; // obsolete
 	Netboot OBSOLETE_netboot = 3; //obsolete
 	repeated Network OBSOLETE_network = 4; // obsolete
-	Metadata metadata = 5;
+	Metadata OBSOLETE_metadata = 5;
 	Network network = 6;
 	string id = 7;
 	int64 version = 8;
+  string metadata = 9;
 }
 
 message DeleteRequest {

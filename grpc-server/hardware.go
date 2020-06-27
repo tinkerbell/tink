@@ -50,7 +50,18 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	if err != nil {
 		logger.Error(err)
 	}
-	if hw.Metadata.State != "deleted" {
+	var h struct {
+		State string
+	}
+	err = json.Unmarshal([]byte(hw.Metadata), &h)
+	if err != nil {
+		metrics.CacheTotals.With(labels).Inc()
+		metrics.CacheErrors.With(labels).Inc()
+		err = errors.Wrap(err, "unmarshal json")
+		logger.Error(err)
+		return &hardware.Empty{}, err
+	}
+	if h.State != "deleted" {
 		labels["op"] = "insert"
 		msg = "inserting into DB"
 		fn = func() error { return db.InsertIntoDB(ctx, s.db, string(data)) }

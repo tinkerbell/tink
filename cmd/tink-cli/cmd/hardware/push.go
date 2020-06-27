@@ -52,8 +52,9 @@ tink hardware push --file /tmp/data.json`,
 			log.Fatalf("invalid json, ID is required: %s", data)
 		}
 
+		b := formatHardwareForPush(data)
 		hw := hardware.Hardware{}
-		err := json.Unmarshal([]byte(data), &hw)
+		err := json.Unmarshal(b, &hw)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -6,11 +6,12 @@ import (
 	"log"
 	"os"
 
+	"github.com/tinkerbell/tink/protos/hardware"
+
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/protos/hardware"
 )
 
 // SubCommands holds the sub commands for template command
@@ -44,11 +45,51 @@ func printOutput(data bool, hw *hardware.Hardware, input string) {
 		}
 		t.Render()
 	} else {
-		hwData, err := json.Marshal(hw)
-		if err != nil {
-			log.Fatal("Failed to marshal hardware data", err)
-		} else {
-			log.Println(string(hwData))
-		}
+		hwData := formatHardwareForPrint(hw)
+		log.Println(string(hwData))
 	}
+}
+
+// formatHardwareForPush formats a hardware string with its metadata field converted from map to string
+func formatHardwareForPush(data string) []byte {
+	hwJSON := make(map[string]interface{})
+	err := json.Unmarshal([]byte(data), &hwJSON)
+	if err != nil {
+		log.Println(err)
+	}
+	//log.Println("hwjson\n", hwJSON)
+	metadata, err := json.Marshal(hwJSON["metadata"])
+	//log.Println("metadata\n", string(metadata))
+	hwJSON["metadata"] = string(metadata)
+	b, err := json.Marshal(hwJSON)
+	//log.Println("b\n", string(b))
+	return b
+}
+
+// formatHardwareForPrint returns hardware as a string
+// converts its metadata field from a json formatted string to a map
+func formatHardwareForPrint(hw *hardware.Hardware) string {
+	hwJSON := make(map[string]interface{})
+	hwByte, err := json.Marshal(hw)
+	if err != nil {
+		log.Println(err)
+	}
+	err = json.Unmarshal(hwByte, &hwJSON) // create hardware
+	if err != nil {
+		log.Println(err)
+	}
+	//log.Println("hwjson\n", hwJSON) //////
+	metadata := make(map[string]interface{})
+	err = json.Unmarshal([]byte(hw.Metadata), &metadata) // metadata is now a map
+	if err != nil {
+		log.Println(err)
+	}
+	//log.Println("metadata\n", metadata) ////
+	hwJSON["metadata"] = metadata
+	b, err := json.Marshal(hwJSON)
+	if err != nil {
+		log.Fatal("Failed to marshal hardware data", err)
+	}
+	//log.Println("b\n", string(b))
+	return string(b)
 }
