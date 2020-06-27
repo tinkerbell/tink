@@ -58,10 +58,20 @@ func formatHardwareForPush(data string) []byte {
 		log.Println(err)
 	}
 	//log.Println("hwjson\n", hwJSON)
-	metadata, err := json.Marshal(hwJSON["metadata"])
-	//log.Println("metadata\n", string(metadata))
-	hwJSON["metadata"] = string(metadata)
+	//log.Println("hwjson[metadata]\n", hwJSON["metadata"]) //////
+
+	if _, ok := hwJSON["metadata"]; ok {
+		metadata, err := json.Marshal(hwJSON["metadata"])
+		if err != nil {
+			log.Println(err)
+		}
+		//log.Println("metadata\n", string(metadata))
+		hwJSON["metadata"] = string(metadata)
+	}
 	b, err := json.Marshal(hwJSON)
+	if err != nil {
+		log.Println(err)
+	}
 	//log.Println("b\n", string(b))
 	return b
 }
@@ -79,13 +89,16 @@ func formatHardwareForPrint(hw *hardware.Hardware) string {
 		log.Println(err)
 	}
 	//log.Println("hwjson\n", hwJSON) //////
-	metadata := make(map[string]interface{})
-	err = json.Unmarshal([]byte(hw.Metadata), &metadata) // metadata is now a map
-	if err != nil {
-		log.Println(err)
+	//log.Println("hw.metadata\n", hw.Metadata) //////
+	if hw.Metadata != "" {
+		metadata := make(map[string]interface{})
+		err = json.Unmarshal([]byte(hw.Metadata), &metadata) // metadata is now a map
+		if err != nil {
+			log.Println(err)
+		}
+		//log.Println("metadata\n", metadata) ////
+		hwJSON["metadata"] = metadata
 	}
-	//log.Println("metadata\n", metadata) ////
-	hwJSON["metadata"] = metadata
 	b, err := json.Marshal(hwJSON)
 	if err != nil {
 		log.Fatal("Failed to marshal hardware data", err)

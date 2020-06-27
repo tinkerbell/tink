@@ -50,26 +50,30 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	if err != nil {
 		logger.Error(err)
 	}
-	var h struct {
-		State string
-	}
-	err = json.Unmarshal([]byte(hw.Metadata), &h)
-	if err != nil {
-		metrics.CacheTotals.With(labels).Inc()
-		metrics.CacheErrors.With(labels).Inc()
-		err = errors.Wrap(err, "unmarshal json")
-		logger.Error(err)
-		return &hardware.Empty{}, err
-	}
-	if h.State != "deleted" {
-		labels["op"] = "insert"
-		msg = "inserting into DB"
-		fn = func() error { return db.InsertIntoDB(ctx, s.db, string(data)) }
-	} else {
-		msg = "deleting from DB"
-		labels["op"] = "delete"
-		fn = func() error { return db.DeleteFromDB(ctx, s.db, hw.Id) }
-	}
+	//var h struct {
+	//	State string
+	//}
+	//err = json.Unmarshal([]byte(hw.Metadata), &h)
+	//if err != nil {
+	//	metrics.CacheTotals.With(labels).Inc()
+	//	metrics.CacheErrors.With(labels).Inc()
+	//	err = errors.Wrap(err, "unmarshal json")
+	//	logger.Error(err)
+	//	return &hardware.Empty{}, err
+	//}
+	//if h.State != "deleted" {
+	//	labels["op"] = "insert"
+	//	msg = "inserting into DB"
+	//	fn = func() error { return db.InsertIntoDB(ctx, s.db, string(data)) }
+	//} else {
+	//	msg = "deleting from DB"
+	//	labels["op"] = "delete"
+	//	fn = func() error { return db.DeleteFromDB(ctx, s.db, hw.Id) }
+	//}
+
+	labels["op"] = "insert"
+	msg = "inserting into DB"
+	fn = func() error { return db.InsertIntoDB(ctx, s.db, string(data)) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
