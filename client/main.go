@@ -76,3 +76,12 @@ func NewTinkerbellClient() (hardware.HardwareServiceClient, error) {
 	}
 	return hardware.NewHardwareServiceClient(conn), nil
 }
+
+// TinkerbellWorkflowClient creates a new workflow clients
+func TinkerbellWorkflowClient() (workflow.WorkflowSvcClient, error) {
+	conn, err := GetConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return workflow.NewWorkflowSvcClient(conn), nil
+}
