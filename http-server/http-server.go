@@ -19,7 +19,6 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 )
@@ -61,7 +60,7 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	if host == "" {
 		grpcEndpoint = "localhost" + grpcEndpoint
 	}
-	err = hardware.RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
+	err = RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		logger.Error(err)
 	}
