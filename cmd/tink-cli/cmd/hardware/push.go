@@ -24,7 +24,7 @@ var (
 // pushCmd represents the push command
 var pushCmd = &cobra.Command{
 	Use:   "push",
-	Short: "push new hardware to tinkerbell",
+	Short: "push new hardware to tink",
 	Example: `cat /tmp/data.json | tink hardware push
 tink hardware push --file /tmp/data.json`,
 	PreRunE: func(c *cobra.Command, args []string) error {
