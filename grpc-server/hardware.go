@@ -32,8 +32,11 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		return &hardware.Empty{}, err
 	}
 
-	// TODO: somewhere here validate json (if ip addr contains cidr, etc.)
-
+	// TODO: Add more validation for hardware data in the definition of below function if required
+	err := s.validateHardwareData(ctx, hw)
+	if err != nil {
+		return &hardware.Empty{}, err
+	}
 	logger.With("id", hw.Id).Info("data pushed")
 
 	var fn func() error
@@ -284,4 +287,25 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 	s.watchLock.RUnlock()
 
 	return &hardware.Empty{}, err
+}
+
+func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware) error {
+	interfaces := hw.GetNetwork().GetInterfaces()
+	for i := range hw.GetNetwork().GetInterfaces() {
+		data, _ := db.GetByMAC(ctx, s.db, interfaces[i].GetDhcp().GetMac())
+		if data != "" {
+			logger.With("MAC", interfaces[i].GetDhcp().GetMac()).Info("Duplicate MAC address found")
+			newhw := hardware.Hardware{}
+			err := json.Unmarshal([]byte(data), &newhw)
+			if err != nil {
+				logger.Error(err, "Failed to unmarshal hardware data")
+				return err
+			}
+			if newhw.Id == hw.Id {
+				return nil
+			}
+			return errors.New("conflicting hardware MAC address " + interfaces[i].GetDhcp().GetMac() + " provided with hardware data/info")
+		}
+	}
+	return nil
 }
