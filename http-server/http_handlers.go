@@ -58,6 +58,87 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		}
 	})
 
+	hardwareByMACPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "hardware", "mac"}, "", runtime.AssumeColonVerbOpt(true)))
+	mux.Handle("POST", hardwareByMACPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+
+		var gr hardware.GetRequest
+		newReader, berr := utilities.IOReaderFactory(req.Body)
+		if berr != nil {
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+		}
+
+		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+		}
+
+		hw, err := client.ByMAC(context.Background(), &hardware.GetRequest{Mac: gr.Mac})
+		if err != nil {
+			log.Fatal(err)
+		}
+		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		if err != nil {
+			log.Println(err) ///////
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+		}
+		w.Write(b)
+		w.Write([]byte("\n"))
+	})
+
+	hardwareByIPPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "hardware", "ip"}, "", runtime.AssumeColonVerbOpt(true)))
+	mux.Handle("POST", hardwareByIPPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+
+		var gr hardware.GetRequest
+		newReader, berr := utilities.IOReaderFactory(req.Body)
+		if berr != nil {
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+		}
+
+		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+		}
+
+		hw, err := client.ByIP(context.Background(), &hardware.GetRequest{Ip: gr.Ip})
+		if err != nil {
+			log.Fatal(err)
+		}
+		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		if err != nil {
+			log.Println(err) ///////
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+		}
+		w.Write(b)
+		w.Write([]byte("\n"))
+	})
+
+	hardwareByIDPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "hardware", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	mux.Handle("GET", hardwareByIDPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+
+		var gr hardware.GetRequest
+		val, ok := pathParams["id"]
+		if !ok {
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+		}
+
+		gr.Id, err = runtime.String(val)
+
+		if err != nil {
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error()))
+		}
+
+		hw, err := client.ByID(context.Background(), &hardware.GetRequest{Id: gr.Id})
+		if err != nil {
+			log.Fatal(err)
+		}
+		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		if err != nil {
+			log.Println(err) ///////
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+		}
+		w.Write(b)
+		w.Write([]byte("\n"))
+	})
+
+
 	hardwareAllPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "hardware"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", hardwareAllPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 
@@ -83,15 +164,5 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		}
 	})
 
-
-	// 	//pattern_HardwareService_Push_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "hardware"}, "", runtime.AssumeColonVerbOpt(true)))
-	//
-	//	pattern_HardwareService_ByMAC_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "hardware", "mac"}, "", runtime.AssumeColonVerbOpt(true)))
-	//
-	//	pattern_HardwareService_ByIP_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "hardware", "ip"}, "", runtime.AssumeColonVerbOpt(true)))
-	//
-	//	pattern_HardwareService_ByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "hardware", "id"}, "", runtime.AssumeColonVerbOpt(true)))
-	//
-	//	//pattern_HardwareService_All_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "hardware"}, "", runtime.AssumeColonVerbOpt(true)))
 	return nil
 }
