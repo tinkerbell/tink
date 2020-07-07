@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
@@ -12,8 +13,8 @@ type HardwareWrapper struct {
 }
 
 func (h HardwareWrapper) MarshalJSON() ([]byte, error) {
-	type hwWrapper HardwareWrapper // intermediary type to avoid infinite recursion
-	hw := make(map[string]interface{}) // map to hold metadata as a map (as opposed to string)
+	type hwWrapper HardwareWrapper                     // intermediary type to avoid infinite recursion
+	hw := make(map[string]interface{})                 // map to hold metadata as a map (as opposed to string)
 	hwByte, err := json.Marshal(hwWrapper{h.Hardware}) // marshal hardware h into []byte
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func (h HardwareWrapper) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	if h.Metadata != "" {
-		metadata := make(map[string]interface{}) // map to unmarshal metadata string into
+		metadata := make(map[string]interface{})            // map to unmarshal metadata string into
 		err = json.Unmarshal([]byte(h.Metadata), &metadata) // fill metadata map
 		if err != nil {
 			return nil, err
@@ -63,4 +64,3 @@ func (h *HardwareWrapper) UnmarshalJSON(b []byte) error {
 	*h = HardwareWrapper(w)
 	return nil
 }
-

@@ -9,6 +9,7 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 
 	"github.com/jedib0t/go-pretty/table"
+
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
