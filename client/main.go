@@ -77,7 +77,7 @@ func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 	return hardware.NewHardwareServiceClient(conn), nil
 }
 
-// TinkWorkflowClient creates a new workflow clients
+// TinkWorkflowClient creates a new workflow client
 func TinkWorkflowClient() (workflow.WorkflowSvcClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
