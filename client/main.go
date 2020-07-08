@@ -69,7 +69,7 @@ func Setup() {
 }
 
 // TinkerbellHWClient creates a new hardware client
-func TinkerbellHWClient() (hardware.HardwareServiceClient, error) {
+func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
 		log.Fatal(err)
@@ -78,7 +78,7 @@ func TinkerbellHWClient() (hardware.HardwareServiceClient, error) {
 }
 
 // TinkerbellWorkflowClient creates a new workflow clients
-func TinkerbellWorkflowClient() (workflow.WorkflowSvcClient, error) {
+func TinkWorkflowClient() (workflow.WorkflowSvcClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
 		log.Fatal(err)
