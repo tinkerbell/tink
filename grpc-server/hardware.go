@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -12,6 +13,11 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	conflictMACAddr = "conflicting hardware MAC address %v provided with hardware data/info"
+	duplicateMAC    = "Duplicate MAC address found"
 )
 
 func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.Empty, error) {
@@ -32,9 +38,11 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		return &hardware.Empty{}, err
 	}
 
-	// TODO: somewhere here validate json (if ip addr contains cidr, etc.)
-
-	logger.With("id", hw.Id).Info("data pushed")
+	// validate the hardware data to avoid duplicate mac address
+	err := s.validateHardwareData(ctx, hw)
+	if err != nil {
+		return &hardware.Empty{}, err
+	}
 
 	var fn func() error
 	msg := ""
@@ -67,6 +75,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		}
 		l.Error(err)
 	}
+	logger.With("id", hw.Id).Info("data pushed")
 
 	s.watchLock.RLock()
 	if ch := s.watch[hw.Id]; ch != nil {
@@ -284,4 +293,25 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 	s.watchLock.RUnlock()
 
 	return &hardware.Empty{}, err
+}
+
+func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware) error {
+	interfaces := hw.GetNetwork().GetInterfaces()
+	for i := range hw.GetNetwork().GetInterfaces() {
+		data, _ := db.GetByMAC(ctx, s.db, interfaces[i].GetDhcp().GetMac())
+		if data != "" {
+			logger.With("MAC", interfaces[i].GetDhcp().GetMac()).Info(duplicateMAC)
+			newhw := hardware.Hardware{}
+			err := json.Unmarshal([]byte(data), &newhw)
+			if err != nil {
+				logger.Error(err, "Failed to unmarshal hardware data")
+				return err
+			}
+			if newhw.Id == hw.Id {
+				return nil
+			}
+			return errors.New(fmt.Sprintf(conflictMACAddr, interfaces[i].GetDhcp().GetMac()))
+		}
+	}
+	return nil
 }
