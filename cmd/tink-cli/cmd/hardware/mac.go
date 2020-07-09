@@ -42,7 +42,7 @@ var macCmd = &cobra.Command{
 
 func addMacFlags() {
 	flags := macCmd.Flags()
-	flags.BoolVarP(&data, "details", "d", false, "Provide the complete hardware details in json format")
+	flags.BoolVarP(&data, "details", "d", false, "provide the complete hardware details in json format")
 }
 
 func init() {

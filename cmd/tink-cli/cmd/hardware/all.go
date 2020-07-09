@@ -12,7 +12,7 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
-// listCmd represents the all command
+// listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list all known hardware",
@@ -35,7 +35,7 @@ var listCmd = &cobra.Command{
 			}
 		}
 		if err != nil && err != io.EOF {
-			log.Println(err)
+			log.Fatal(err)
 		} else {
 			t.Render()
 		}

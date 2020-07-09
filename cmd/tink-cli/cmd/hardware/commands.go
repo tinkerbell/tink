@@ -46,7 +46,7 @@ func printOutput(data bool, hw *hardware.Hardware, input string) {
 	} else {
 		hwData, err := json.Marshal(hw)
 		if err != nil {
-			log.Println("Failed to marshal hardware data", err)
+			log.Fatal("Failed to marshal hardware data", err)
 		} else {
 			log.Println(string(hwData))
 		}
