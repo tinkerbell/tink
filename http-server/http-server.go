@@ -19,7 +19,6 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/tinkerbell/tink/protos/workflow"
 )
 
 var (
@@ -67,7 +66,7 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	if err != nil {
 		logger.Error(err)
 	}
-	err = workflow.RegisterWorkflowSvcHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
+	err = RegisterWorkflowSvcHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
 	if err != nil {
 		logger.Error(err)
 	}
