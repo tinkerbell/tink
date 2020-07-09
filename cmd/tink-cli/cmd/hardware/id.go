@@ -4,8 +4,11 @@ package hardware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+
+	"github.com/tinkerbell/tink/util"
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
@@ -26,12 +29,11 @@ var idCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			//b, err := json.Marshal(hw)
-			//if err != nil {
-			//	log.Fatal(err)
-			//}
-			s := formatHardwareForPrint(hw)
-			fmt.Println(s)
+			b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(string(b))
 		}
 	},
 }

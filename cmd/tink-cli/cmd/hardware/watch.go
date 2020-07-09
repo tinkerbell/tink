@@ -10,6 +10,8 @@ import (
 	"log"
 	"sync"
 
+	"github.com/tinkerbell/tink/util"
+
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/hardware"
@@ -36,7 +38,7 @@ var watchCmd = &cobra.Command{
 				err = nil
 				for hw, err = stream.Recv(); err == nil && hw != nil; hw, err = stream.Recv() {
 					stdoutLock.Lock()
-					b, err := json.Marshal(hw)
+					b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 					if err != nil {
 						log.Fatal(err)
 					}

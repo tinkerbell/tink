@@ -189,7 +189,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		if _, err := client.Delete(context.Background(), &dr); err != nil {
 			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
 		}
-		writeResponse(w,fmt.Sprintf("Hardware %v deleted successfully", dr.Id))
+		writeResponse(w, fmt.Sprintf("Hardware %v deleted successfully", dr.Id))
 	})
 
 	return nil

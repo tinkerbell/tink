@@ -3,6 +3,7 @@ package hardware
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tinkerbell/tink/util"
 	"log"
 	"os"
 
@@ -46,56 +47,10 @@ func printOutput(data bool, hw *hardware.Hardware, input string) {
 		}
 		t.Render()
 	} else {
-		hwData := formatHardwareForPrint(hw)
+		hwData, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		if err != nil {
+			log.Fatal("Failed to marshal hardware data: ", err)
+		}
 		log.Println(string(hwData))
 	}
-}
-
-// formatHardwareForPush formats a hardware string with its metadata field converted from map to string
-func formatHardwareForPush(data string) []byte {
-	hwJSON := make(map[string]interface{})
-	err := json.Unmarshal([]byte(data), &hwJSON)
-	if err != nil {
-		log.Println(err)
-	}
-
-	if _, ok := hwJSON["metadata"]; ok {
-		metadata, err := json.Marshal(hwJSON["metadata"])
-		if err != nil {
-			log.Println(err)
-		}
-		hwJSON["metadata"] = string(metadata)
-	}
-	b, err := json.Marshal(hwJSON)
-	if err != nil {
-		log.Println(err)
-	}
-	return b
-}
-
-// formatHardwareForPrint returns hardware as a string
-// converts its metadata field from a json formatted string to a map
-func formatHardwareForPrint(hw *hardware.Hardware) string {
-	hwJSON := make(map[string]interface{})
-	hwByte, err := json.Marshal(hw)
-	if err != nil {
-		log.Println(err)
-	}
-	err = json.Unmarshal(hwByte, &hwJSON) // create hardware
-	if err != nil {
-		log.Println(err)
-	}
-	if hw.Metadata != "" {
-		metadata := make(map[string]interface{})
-		err = json.Unmarshal([]byte(hw.Metadata), &metadata) // metadata is now a map
-		if err != nil {
-			log.Println(err)
-		}
-		hwJSON["metadata"] = metadata
-	}
-	b, err := json.Marshal(hwJSON)
-	if err != nil {
-		log.Fatal("Failed to marshal hardware data", err)
-	}
-	return string(b)
 }
