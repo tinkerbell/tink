@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -12,6 +13,11 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	conflictMACAddr = "conflicting hardware MAC address %v provided with hardware data/info"
+	duplicateMAC    = "Duplicate MAC address found"
 )
 
 func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.Empty, error) {
@@ -32,12 +38,11 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		return &hardware.Empty{}, err
 	}
 
-	// TODO: Add more validation for hardware data in the definition of below function if required
+	// validate the hardware data to avoid duplicate mac address
 	err := s.validateHardwareData(ctx, hw)
 	if err != nil {
 		return &hardware.Empty{}, err
 	}
-	logger.With("id", hw.Id).Info("data pushed")
 
 	var fn func() error
 	msg := ""
@@ -70,6 +75,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		}
 		l.Error(err)
 	}
+	logger.With("id", hw.Id).Info("data pushed")
 
 	s.watchLock.RLock()
 	if ch := s.watch[hw.Id]; ch != nil {
@@ -294,7 +300,7 @@ func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware
 	for i := range hw.GetNetwork().GetInterfaces() {
 		data, _ := db.GetByMAC(ctx, s.db, interfaces[i].GetDhcp().GetMac())
 		if data != "" {
-			logger.With("MAC", interfaces[i].GetDhcp().GetMac()).Info("Duplicate MAC address found")
+			logger.With("MAC", interfaces[i].GetDhcp().GetMac()).Info(duplicateMAC)
 			newhw := hardware.Hardware{}
 			err := json.Unmarshal([]byte(data), &newhw)
 			if err != nil {
@@ -304,7 +310,7 @@ func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware
 			if newhw.Id == hw.Id {
 				return nil
 			}
-			return errors.New("conflicting hardware MAC address " + interfaces[i].GetDhcp().GetMac() + " provided with hardware data/info")
+			return errors.New(fmt.Sprintf(conflictMACAddr, interfaces[i].GetDhcp().GetMac()))
 		}
 	}
 	return nil
