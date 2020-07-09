@@ -36,7 +36,11 @@ service HardwareService {
         };
 	};
 	rpc Watch(GetRequest) returns (stream Hardware);
-	rpc Delete(DeleteRequest) returns (Empty);
+	rpc Delete(DeleteRequest) returns (Empty) {
+    option (google.api.http) = {
+            delete: "/v1/hardware/{id}"
+        };
+  };
 }
 
 message PushRequest {
@@ -226,5 +230,5 @@ message Hardware {
 }
 
 message DeleteRequest {
-	string ID = 1;
+	string id = 1;
 }

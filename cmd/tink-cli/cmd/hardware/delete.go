@@ -21,7 +21,7 @@ var deleteCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, id := range args {
-			_, err := client.HardwareClient.Delete(context.Background(), &hardware.DeleteRequest{ID: id})
+			_, err := client.HardwareClient.Delete(context.Background(), &hardware.DeleteRequest{Id: id})
 			if err != nil {
 				log.Fatal(err)
 			}

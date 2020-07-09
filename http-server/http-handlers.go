@@ -171,6 +171,27 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		}
 	})
 
+	// hardware delete handler | DELETE /v1/hardware/{id}
+	hardwareDeletePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "hardware", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	mux.Handle("DELETE", hardwareDeletePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+
+		var dr hardware.DeleteRequest
+		val, ok := pathParams["id"]
+		if !ok {
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+		}
+
+		dr.Id, err = runtime.String(val)
+
+		if err != nil {
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
+		}
+		if _, err := client.Delete(context.Background(), &dr); err != nil {
+			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+		}
+		writeResponse(w,fmt.Sprintf("Hardware %v deleted successfully", dr.Id))
+	})
+
 	return nil
 }
 
@@ -234,6 +255,9 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		}
 
 		gr.Id, err = runtime.String(val)
+		if err != nil {
+
+		}
 
 		t, err := client.GetTemplate(context.Background(), &gr)
 		if err != nil {
