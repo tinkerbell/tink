@@ -1,11 +1,16 @@
 package hardware
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
+	"github.com/tinkerbell/tink/protos/hardware"
 )
 
 // SubCommands holds the sub commands for template command
@@ -22,4 +27,28 @@ func verifyUUIDs(args []string) error {
 		}
 	}
 	return nil
+}
+
+func printOutput(data bool, hw *hardware.Hardware, input string) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Field Name", "Value"})
+	if !data {
+		for _, iface := range hw.GetNetwork().GetInterfaces() {
+			if iface.Dhcp.Ip.Address == input || iface.Dhcp.Mac == input {
+				t.AppendRow(table.Row{"ID", hw.Id})
+				t.AppendRow(table.Row{"MAC Address", iface.Dhcp.Mac})
+				t.AppendRow(table.Row{"IP Address", iface.Dhcp.Ip.Address})
+				t.AppendRow(table.Row{"Hostname", iface.Dhcp.Hostname})
+			}
+		}
+		t.Render()
+	} else {
+		hwData, err := json.Marshal(hw)
+		if err != nil {
+			log.Fatal("Failed to marshal hardware data", err)
+		} else {
+			log.Println(string(hwData))
+		}
+	}
 }

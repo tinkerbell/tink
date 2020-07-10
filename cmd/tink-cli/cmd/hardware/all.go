@@ -2,41 +2,46 @@ package hardware
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"log"
+	"os"
 
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
-// allCmd represents the all command
-var allCmd = &cobra.Command{
-	Use:   "all",
-	Short: "get all known hardware for facility",
+// listCmd represents the list command
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "list all known hardware",
 	Run: func(cmd *cobra.Command, args []string) {
-		alls, err := client.HardwareClient.All(context.Background(), &hardware.Empty{})
+
+		t := table.NewWriter()
+		t.SetOutputMirror(os.Stdout)
+		t.AppendHeader(table.Row{"ID", "MAC Address", "IP address", "Hostname"})
+
+		list, err := client.HardwareClient.All(context.Background(), &hardware.Empty{})
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		var hw *hardware.Hardware
 		err = nil
-		for hw, err = alls.Recv(); err == nil && hw != nil; hw, err = alls.Recv() {
-			b, err := json.Marshal(hw)
-			if err != nil {
-				log.Println(err)
+		for hw, err = list.Recv(); err == nil && hw != nil; hw, err = list.Recv() {
+			for _, iface := range hw.GetNetwork().GetInterfaces() {
+				t.AppendRow(table.Row{hw.Id, iface.Dhcp.Mac, iface.Dhcp.Ip.Address, iface.Dhcp.Hostname})
 			}
-			fmt.Println(string(b))
 		}
 		if err != nil && err != io.EOF {
-			log.Println(err)
+			log.Fatal(err)
+		} else {
+			t.Render()
 		}
 	},
 }
 
 func init() {
-	SubCommands = append(SubCommands, allCmd)
+	SubCommands = append(SubCommands, listCmd)
 }

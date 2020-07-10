@@ -81,6 +81,7 @@ func SetupMetrics(facility string, logger log.Logger) {
 		{"method": "Ingest", "op": ""},
 		{"method": "Watch", "op": "get"},
 		{"method": "Watch", "op": "push"},
+		{"method": "Delete", "op": "delete"},
 	}
 	initCounterLabels(CacheErrors, labels)
 	initGaugeLabels(CacheInFlight, labels)

@@ -4,7 +4,6 @@ package hardware
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -33,15 +32,20 @@ var macCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			b, err := json.Marshal(hw)
-			if err != nil {
-				log.Fatal(err)
+			if hw.GetId() == "" {
+				log.Fatal("MAC address not found in the database ", mac)
 			}
-			fmt.Println(string(b))
+			printOutput(data, hw, mac)
 		}
 	},
 }
 
+func addMacFlags() {
+	flags := macCmd.Flags()
+	flags.BoolVarP(&data, "details", "d", false, "provide the complete hardware details in json format")
+}
+
 func init() {
+	addMacFlags()
 	SubCommands = append(SubCommands, macCmd)
 }

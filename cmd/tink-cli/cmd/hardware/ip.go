@@ -4,7 +4,6 @@ package hardware
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -13,6 +12,8 @@ import (
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/hardware"
 )
+
+var data bool
 
 // ipCmd represents the ip command
 var ipCmd = &cobra.Command{
@@ -33,15 +34,20 @@ var ipCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			b, err := json.Marshal(hw)
-			if err != nil {
-				log.Fatal(err)
+			if hw.GetId() == "" {
+				log.Fatal("IP address not found in the database ", ip)
 			}
-			fmt.Println(string(b))
+			printOutput(data, hw, ip)
 		}
 	},
 }
 
+func addIPFlags() {
+	flags := ipCmd.Flags()
+	flags.BoolVarP(&data, "details", "d", false, "provide the complete hardware details in json format")
+}
+
 func init() {
+	addIPFlags()
 	SubCommands = append(SubCommands, ipCmd)
 }
