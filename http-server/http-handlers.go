@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	tt "text/template"
 	"time"
@@ -31,14 +30,14 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				log.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+				logger.Info("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				log.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+				logger.Info("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
@@ -51,19 +50,19 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var hw util.HardwareWrapper
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&hw); err != nil && err != io.EOF {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		if _, err := client.Push(ctx, &hardware.PushRequest{Data: hw.Hardware}); err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
-			w.Write([]byte("\n"))
+			logger.Error(err)
+			writeResponse(w, err.Error())
 			return
 		}
-		writeResponse(w, "Hardware data pushed successfully")
+		writeResponse(w, `{"status": "ok", "msg": "Hardware data pushed successfully"}`)
 	})
 
 	// hardware mac handler | POST /v1/hardware/mac
@@ -73,23 +72,24 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var gr hardware.GetRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		hw, err := client.ByMAC(context.Background(), &hardware.GetRequest{Mac: gr.Mac})
 		if err != nil {
-			log.Fatal(err)
+			logger.Error(err)
+			writeResponse(w, err.Error())
+			return
 		}
 		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 		if err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+			writeResponse(w, err.Error())
 		}
-		w.Write(b)
-		w.Write([]byte("\n"))
+		writeResponse(w, string(b))
 	})
 
 	// hardware ip handler | POST /v1/hardware/ip
@@ -99,23 +99,24 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var gr hardware.GetRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		hw, err := client.ByIP(context.Background(), &hardware.GetRequest{Ip: gr.Ip})
 		if err != nil {
-			log.Fatal(err)
+			logger.Error(err)
+			writeResponse(w, err.Error())
+			return
 		}
 		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 		if err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+			writeResponse(w, err.Error())
 		}
-		w.Write(b)
-		w.Write([]byte("\n"))
+		writeResponse(w, string(b))
 	})
 
 	// hardware id handler | GET /v1/hardware/{id}
@@ -125,25 +126,26 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var gr hardware.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		if err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 		}
 
 		hw, err := client.ByID(context.Background(), &hardware.GetRequest{Id: gr.Id})
 		if err != nil {
-			log.Fatal(err)
+			logger.Error(err)
+			writeResponse(w, err.Error())
+			return
 		}
 		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 		if err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+			writeResponse(w, err.Error())
 		}
-		w.Write(b)
-		w.Write([]byte("\n"))
+		writeResponse(w, string(b))
 	})
 
 	// hardware all handler | GET /v1/hardware
@@ -152,6 +154,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 
 		alls, err := client.All(context.Background(), &hardware.Empty{})
 		if err != nil {
+			logger.Error(err)
 			writeResponse(w, err.Error())
 			return
 		}
@@ -161,13 +164,12 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		for hw, err = alls.Recv(); err == nil && hw != nil; hw, err = alls.Recv() {
 			b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 			if err != nil {
-				w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+				writeResponse(w, err.Error())
 			}
-			w.Write(b)
-			w.Write([]byte("\n"))
+			writeResponse(w, string(b))
 		}
 		if err != nil && err != io.EOF {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+			writeResponse(w, err.Error())
 		}
 	})
 
@@ -187,9 +189,11 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 		}
 		if _, err := client.Delete(context.Background(), &dr); err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+			logger.Error(err)
+			writeResponse(w, err.Error())
+			return
 		}
-		writeResponse(w, fmt.Sprintf("Hardware %v deleted successfully", dr.Id))
+		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Hardware %v deleted successfully"}`, dr.Id))
 	})
 
 	return nil
@@ -203,14 +207,14 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				log.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+				logger.Info("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				log.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+				logger.Info("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
@@ -223,24 +227,26 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var tmpl template.WorkflowTemplate
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&tmpl); err != nil && err != io.EOF {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
 		if tmpl.Data != "" {
 			if err := tryParseTemplate(tmpl.Data); err != nil {
-				w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+				logger.Error(err)
+				writeResponse(w, err.Error())
 				return
 			}
 			res, err := client.CreateTemplate(context.Background(), &tmpl)
 			if err != nil {
-				w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+				logger.Error(err)
+				writeResponse(w, err.Error())
 				return
 			}
-			w.Write([]byte("Created Template: " + res.Id + "\n"))
+			writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Created Template: %v"}`, res.Id))
 		}
 	})
 
@@ -251,16 +257,18 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var gr template.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 		}
 
 		gr.Id, err = runtime.String(val)
-		if err != nil {
 
+		if err != nil {
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 		}
 
 		t, err := client.GetTemplate(context.Background(), &gr)
 		if err != nil {
+			logger.Error(err)
 			writeResponse(w, err.Error())
 			return
 		}
@@ -274,15 +282,17 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var gr template.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		if _, err := client.DeleteTemplate(context.Background(), &gr); err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+			logger.Error(err)
+			writeResponse(w, err.Error())
+			return
 		}
-		w.Write([]byte("Template " + gr.Id + " deleted successfully\n"))
+		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
 	})
 
 	// template list handler | GET /v1/templates
@@ -301,6 +311,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		t.AppendHeader(table.Row{id, name, createdAt, updatedAt})
 		list, err := client.ListTemplates(context.Background(), &template.Empty{})
 		if err != nil {
+			logger.Error(err)
 			writeResponse(w, err.Error())
 			return
 		}
@@ -316,7 +327,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		}
 
 		if err != nil && err != io.EOF {
-			log.Fatal(err)
+			writeResponse(w, err.Error())
 		}
 		t.Render()
 	})
@@ -332,14 +343,14 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				log.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+				logger.Info("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				log.Printf("Failed to close conn to %s: %v", endpoint, cerr)
+				logger.Info("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
@@ -349,22 +360,23 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 	workflowCreatePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("POST", workflowCreatePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 
-		var gr workflow.GetRequest
+		var cr workflow.CreateRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
-		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", berr).Error()))
+		if err := json.NewDecoder(newReader()).Decode(&cr); err != nil && err != io.EOF {
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 		}
 
-		wf, err := client.GetWorkflow(context.Background(), &gr)
+		wf, err := client.CreateWorkflow(context.Background(), &cr)
 		if err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error())) ///////
+			logger.Error(err)
+			writeResponse(w, err.Error())
 			return
 		}
-		writeResponse(w, wf.Data)
+		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Created Workflow: %v"}`, wf.Id))
 	})
 
 	// workflow get handler | GET /v1/workflows/{id}
@@ -374,18 +386,19 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		if err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 		}
 
 		wf, err := client.GetWorkflow(context.Background(), &gr)
 		if err != nil {
-			writeResponse(w, err.Error()) /////
+			logger.Error(err)
+			writeResponse(w, err.Error())
 			return
 		}
 
@@ -399,29 +412,28 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		gr := workflow.GetRequest{}
 		val, ok := pathParams["id"]
 		if !ok {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		if _, err := client.DeleteWorkflow(context.Background(), &gr); err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "%v", err).Error()))
+			logger.Error(err)
+			writeResponse(w, err.Error())
+			return
 		}
-		writeResponse(w, fmt.Sprintf("Template %v deleted successfully", gr.Id))
-
+		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
 	})
 
 	// workflow list handler | GET /v1/workflows
 	workflowListPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", workflowListPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 
-		if err != nil {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error()))
-		}
-
 		list, err := client.ListWorkflows(context.Background(), &workflow.Empty{})
 		if err != nil {
+			logger.Error(err)
 			writeResponse(w, err.Error())
+			return
 		}
 
 		var wf *workflow.Workflow
@@ -429,7 +441,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		for wf, err = list.Recv(); err == nil && wf.Id != ""; wf, err = list.Recv() {
 			b, err := json.Marshal(wf)
 			if err != nil {
-				writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+				writeResponse(w, err.Error())
 			}
 			writeResponse(w, string(b))
 		}
@@ -446,19 +458,21 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		wf, err := client.GetWorkflowContext(context.Background(), &gr)
 		if err != nil {
+			logger.Error(err)
 			writeResponse(w, err.Error())
+			return
 		}
 		//wfProgress := calWorkflowProgress(wf.CurrentActionIndex, wf.TotalNumberOfActions, wf.CurrentActionState)
 		b, err := json.Marshal(wf)
 		if err != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+			writeResponse(w, err.Error())
 		}
 		writeResponse(w, string(b))
 	})
@@ -469,13 +483,14 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			w.Write([]byte(status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error()))
+			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		events, err := client.ShowWorkflowEvents(context.Background(), &gr)
 		if err != nil {
+			logger.Error(err)
 			writeResponse(w, err.Error())
 			return
 		}
@@ -507,6 +522,6 @@ func tryParseTemplate(data string) error {
 // writeResponse appends a new line after res
 func writeResponse(w http.ResponseWriter, res string) {
 	if _, err := w.Write([]byte(fmt.Sprintln(res))); err != nil {
-		logger.Error(err)
+		logger.Info(err)
 	}
 }
