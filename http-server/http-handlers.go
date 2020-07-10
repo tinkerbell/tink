@@ -9,6 +9,8 @@ import (
 	tt "text/template"
 	"time"
 
+	"github.com/golang/protobuf/jsonpb"
+
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -46,7 +48,6 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	// hardware push handler | POST /v1/hardware
 	hardwarePushPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "hardware"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("POST", hardwarePushPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var hw util.HardwareWrapper
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
@@ -68,7 +69,6 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	// hardware mac handler | POST /v1/hardware/mac
 	hardwareByMACPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "hardware", "mac"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("POST", hardwareByMACPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var gr hardware.GetRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
@@ -95,7 +95,6 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	// hardware ip handler | POST /v1/hardware/ip
 	hardwareByIPPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "hardware", "ip"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("POST", hardwareByIPPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var gr hardware.GetRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
@@ -122,7 +121,6 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	// hardware id handler | GET /v1/hardware/{id}
 	hardwareByIDPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "hardware", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", hardwareByIDPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var gr hardware.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
@@ -151,7 +149,6 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	// hardware all handler | GET /v1/hardware
 	hardwareAllPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "hardware"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", hardwareAllPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		alls, err := client.All(context.Background(), &hardware.Empty{})
 		if err != nil {
 			logger.Error(err)
@@ -176,7 +173,6 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	// hardware delete handler | DELETE /v1/hardware/{id}
 	hardwareDeletePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "hardware", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("DELETE", hardwareDeletePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var dr hardware.DeleteRequest
 		val, ok := pathParams["id"]
 		if !ok {
@@ -223,7 +219,6 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 	// template create handler | POST /v1/templates
 	templateCreatePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "templates"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("POST", templateCreatePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var tmpl template.WorkflowTemplate
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
@@ -253,7 +248,6 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 	// template get handler | GET /v1/templates/{id}
 	templateGetPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "templates", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", templateGetPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var gr template.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
@@ -278,7 +272,6 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 	// template delete handler | DELETE /v1/templates/{id}
 	templateDeletePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "templates", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("DELETE", templateDeletePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var gr template.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
@@ -359,7 +352,6 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 	// workflow create handler | POST /v1/workflows
 	workflowCreatePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("POST", workflowCreatePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var cr workflow.CreateRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
@@ -382,7 +374,6 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 	// workflow get handler | GET /v1/workflows/{id}
 	workflowGetPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "workflows", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", workflowGetPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
@@ -406,9 +397,8 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 	})
 
 	// workflow delete handler | DELETE /v1/workflows/{id}
-	hardwareByIPPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "workflows", "id"}, "", runtime.AssumeColonVerbOpt(true)))
-	mux.Handle("DELETE", hardwareByIPPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
+	workflowDeletePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "workflows", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	mux.Handle("DELETE", workflowDeletePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		gr := workflow.GetRequest{}
 		val, ok := pathParams["id"]
 		if !ok {
@@ -428,7 +418,6 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 	// workflow list handler | GET /v1/workflows
 	workflowListPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", workflowListPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		list, err := client.ListWorkflows(context.Background(), &workflow.Empty{})
 		if err != nil {
 			logger.Error(err)
@@ -454,7 +443,6 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 	// workflow state handler | GET /v1/workflows/{id}/state
 	workflowStatePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "workflows", "id", "state"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", workflowStatePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
@@ -469,8 +457,8 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			writeResponse(w, err.Error())
 			return
 		}
-		//wfProgress := calWorkflowProgress(wf.CurrentActionIndex, wf.TotalNumberOfActions, wf.CurrentActionState)
-		b, err := json.Marshal(wf)
+		m := jsonpb.Marshaler{OrigName: true, EmitDefaults: true}
+		b, err := m.MarshalToString(wf)
 		if err != nil {
 			writeResponse(w, err.Error())
 		}
@@ -497,7 +485,8 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var event *workflow.WorkflowActionStatus
 		err = nil
 		for event, err = events.Recv(); err == nil && event != nil; event, err = events.Recv() {
-			b, err := json.Marshal(event)
+			m := jsonpb.Marshaler{OrigName: true, EmitDefaults: true}
+			b, err := m.MarshalToString(event)
 			if err != nil {
 				writeResponse(w, err.Error())
 			}
