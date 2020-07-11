@@ -49,21 +49,26 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var hw util.HardwareWrapper
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 			return
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&hw); err != nil && err != io.EOF {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+			return
+		}
+
+		if hw.Id == "" {
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "id must be set to a UUID, got id: %v", hw.Id).Error())
 			return
 		}
 
 		if _, err := client.Push(ctx, &hardware.PushRequest{Data: hw.Hardware}); err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, `{"status": "ok", "msg": "Hardware data pushed successfully"}`)
+		writeResponse(w, http.StatusOK, `{"status": "ok", "msg": "Hardware data pushed successfully"}`)
 	})
 
 	// hardware mac handler | POST /v1/hardware/mac
@@ -72,26 +77,26 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var gr hardware.GetRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 			return
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
 
 		hw, err := client.ByMAC(context.Background(), &hardware.GetRequest{Mac: gr.Mac})
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 		if err != nil {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 		}
-		writeResponse(w, string(b))
+		writeResponse(w, http.StatusOK, string(b))
 	})
 
 	// hardware ip handler | POST /v1/hardware/ip
@@ -100,27 +105,27 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var gr hardware.GetRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 			return
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
 
 		hw, err := client.ByIP(context.Background(), &hardware.GetRequest{Ip: gr.Ip})
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 		if err != nil {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, string(b))
+		writeResponse(w, http.StatusOK, string(b))
 	})
 
 	// hardware id handler | GET /v1/hardware/{id}
@@ -129,29 +134,29 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var gr hardware.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		if err != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 			return
 		}
 
 		hw, err := client.ByID(context.Background(), &hardware.GetRequest{Id: gr.Id})
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 		if err != nil {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, string(b))
+		writeResponse(w, http.StatusOK, string(b))
 	})
 
 	// hardware all handler | GET /v1/hardware
@@ -160,7 +165,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		alls, err := client.All(context.Background(), &hardware.Empty{})
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -169,13 +174,13 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		for hw, err = alls.Recv(); err == nil && hw != nil; hw, err = alls.Recv() {
 			b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 			if err != nil {
-				writeResponse(w, err.Error())
+				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, string(b))
+			writeResponse(w, http.StatusOK, string(b))
 		}
 		if err != nil && err != io.EOF {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	})
@@ -186,22 +191,23 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var dr hardware.DeleteRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
 		dr.Id, err = runtime.String(val)
 
 		if err != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 			return
 		}
+
 		if _, err := client.Delete(context.Background(), &dr); err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Hardware %v deleted successfully"}`, dr.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Hardware %v deleted successfully"}`, dr.Id))
 	})
 
 	return nil
@@ -234,28 +240,28 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var tmpl template.WorkflowTemplate
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 			return
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&tmpl); err != nil && err != io.EOF {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
 
 		if tmpl.Data != "" {
 			if err := tryParseTemplate(tmpl.Data); err != nil {
 				logger.Error(err)
-				writeResponse(w, err.Error())
+				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			res, err := client.CreateTemplate(context.Background(), &tmpl)
 			if err != nil {
 				logger.Error(err)
-				writeResponse(w, err.Error())
+				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Created Template: %v"}`, res.Id))
+			writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Created Template: %v"}`, res.Id))
 		}
 	})
 
@@ -265,24 +271,24 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var gr template.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		if err != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 			return
 		}
 
 		t, err := client.GetTemplate(context.Background(), &gr)
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, t.Data)
+		writeResponse(w, http.StatusOK, t.Data)
 	})
 
 	// template delete handler | DELETE /v1/templates/{id}
@@ -291,18 +297,23 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var gr template.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
 		gr.Id, err = runtime.String(val)
 
-		if _, err := client.DeleteTemplate(context.Background(), &gr); err != nil {
-			logger.Error(err)
-			writeResponse(w, err.Error())
+		if err != nil {
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 			return
 		}
-		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
+
+		if _, err := client.DeleteTemplate(context.Background(), &gr); err != nil {
+			logger.Error(err)
+			writeResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
 	})
 
 	// template list handler | GET /v1/templates
@@ -311,7 +322,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		list, err := client.ListTemplates(context.Background(), &template.Empty{})
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -321,14 +332,14 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 			m := jsonpb.Marshaler{OrigName: true}
 			s, err := m.MarshalToString(tmp)
 			if err != nil {
-				writeResponse(w, err.Error())
+				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, s)
+			writeResponse(w, http.StatusOK, s)
 		}
 
 		if err != nil && err != io.EOF {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 		}
 	})
 
@@ -362,22 +373,22 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var cr workflow.CreateRequest
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
 			return
 		}
 
 		if err := json.NewDecoder(newReader()).Decode(&cr); err != nil && err != io.EOF {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "%v", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
 
 		wf, err := client.CreateWorkflow(context.Background(), &cr)
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Created Workflow: %v"}`, wf.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Created Workflow: %v"}`, wf.Id))
 	})
 
 	// workflow get handler | GET /v1/workflows/{id}
@@ -386,25 +397,25 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
 		gr.Id, err = runtime.String(val)
 
 		if err != nil {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 			return
 		}
 
 		wf, err := client.GetWorkflow(context.Background(), &gr)
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		writeResponse(w, wf.Data)
+		writeResponse(w, http.StatusOK, wf.Data)
 	})
 
 	// workflow delete handler | DELETE /v1/workflows/{id}
@@ -413,7 +424,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		gr := workflow.GetRequest{}
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
@@ -421,10 +432,10 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 
 		if _, err := client.DeleteWorkflow(context.Background(), &gr); err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
 	})
 
 	// workflow list handler | GET /v1/workflows
@@ -433,7 +444,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		list, err := client.ListWorkflows(context.Background(), &workflow.Empty{})
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -443,14 +454,14 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			m := jsonpb.Marshaler{OrigName: true}
 			s, err := m.MarshalToString(wf)
 			if err != nil {
-				writeResponse(w, err.Error())
+				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, s)
+			writeResponse(w, http.StatusOK, s)
 		}
 
 		if err != nil && err != io.EOF {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	})
@@ -461,25 +472,30 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
 		gr.Id, err = runtime.String(val)
 
+		if err != nil {
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
+			return
+		}
+
 		wfc, err := client.GetWorkflowContext(context.Background(), &gr)
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		m := jsonpb.Marshaler{OrigName: true, EmitDefaults: true}
 		s, err := m.MarshalToString(wfc)
 		if err != nil {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, s)
+		writeResponse(w, http.StatusOK, s)
 	})
 
 	// workflow events handler | GET /v1/workflows/{id}/events
@@ -488,16 +504,21 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var gr workflow.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
-			writeResponse(w, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id").Error())
 			return
 		}
 
 		gr.Id, err = runtime.String(val)
 
+		if err != nil {
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
+			return
+		}
+
 		events, err := client.ShowWorkflowEvents(context.Background(), &gr)
 		if err != nil {
 			logger.Error(err)
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		var event *workflow.WorkflowActionStatus
@@ -506,13 +527,13 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			m := jsonpb.Marshaler{OrigName: true, EmitDefaults: true}
 			s, err := m.MarshalToString(event)
 			if err != nil {
-				writeResponse(w, err.Error())
+				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, s)
+			writeResponse(w, http.StatusOK, s)
 		}
 		if err != nil && err != io.EOF {
-			writeResponse(w, err.Error())
+			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	})
@@ -529,7 +550,8 @@ func tryParseTemplate(data string) error {
 }
 
 // writeResponse appends a new line after res
-func writeResponse(w http.ResponseWriter, res string) {
+func writeResponse(w http.ResponseWriter, status int, res string) {
+	w.WriteHeader(status)
 	if _, err := w.Write([]byte(fmt.Sprintln(res))); err != nil {
 		logger.Info(err)
 	}
