@@ -7,11 +7,9 @@ import (
 	"io"
 	"net/http"
 	tt "text/template"
-	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 
-	"github.com/jedib0t/go-pretty/table"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 
@@ -310,17 +308,6 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 	// template list handler | GET /v1/templates
 	templateListPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "templates"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", templateListPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-
-		var (
-			id        = "Template ID"
-			name      = "Template Name"
-			createdAt = "Created At"
-			updatedAt = "Updated At"
-		)
-
-		t := table.NewWriter()
-		t.SetOutputMirror(w)
-		t.AppendHeader(table.Row{id, name, createdAt, updatedAt})
 		list, err := client.ListTemplates(context.Background(), &template.Empty{})
 		if err != nil {
 			logger.Error(err)
@@ -331,17 +318,18 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var tmp *template.WorkflowTemplate
 		err = nil
 		for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
-			cr := *tmp.CreatedAt
-			up := *tmp.UpdatedAt
-			t.AppendRows([]table.Row{
-				{tmp.Id, tmp.Name, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
-			})
+			m := jsonpb.Marshaler{OrigName: true}
+			s, err := m.MarshalToString(tmp)
+			if err != nil {
+				writeResponse(w, err.Error())
+				return
+			}
+			writeResponse(w, s)
 		}
 
 		if err != nil && err != io.EOF {
 			writeResponse(w, err.Error())
 		}
-		t.Render()
 	})
 
 	return nil
@@ -452,12 +440,13 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var wf *workflow.Workflow
 		err = nil
 		for wf, err = list.Recv(); err == nil && wf.Id != ""; wf, err = list.Recv() {
-			b, err := json.Marshal(wf)
+			m := jsonpb.Marshaler{OrigName: true}
+			s, err := m.MarshalToString(wf)
 			if err != nil {
 				writeResponse(w, err.Error())
 				return
 			}
-			writeResponse(w, string(b))
+			writeResponse(w, s)
 		}
 
 		if err != nil && err != io.EOF {
