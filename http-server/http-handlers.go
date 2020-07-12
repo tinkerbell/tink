@@ -68,7 +68,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, http.StatusOK, `{"status": "ok", "msg": "Hardware data pushed successfully"}`)
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "hardware data pushed successfully", "id": "%v"}`, hw.Id))
 	})
 
 	// hardware mac handler | POST /v1/hardware/mac
@@ -207,7 +207,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Hardware %v deleted successfully"}`, dr.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "hardware deleted successfully", "id": "%v"}`, dr.Id))
 	})
 
 	return nil
@@ -261,7 +261,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Created Template: %v"}`, res.Id))
+			writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "created template", "id": "%v"}`, res.Id))
 		}
 	})
 
@@ -313,7 +313,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "template deleted successfully", "id": "%v"}`, gr.Id))
 	})
 
 	// template list handler | GET /v1/templates
