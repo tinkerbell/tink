@@ -58,8 +58,8 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			return
 		}
 
-		if hw.Id == "" {
-			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "id must be set to a UUID, got id: %v", hw.Id).Error())
+		if hw.Hardware == nil || hw.Id == "" {
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "invalid hardware data, must contain an id").Error())
 			return
 		}
 

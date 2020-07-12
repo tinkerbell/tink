@@ -3,9 +3,10 @@ package hardware
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tinkerbell/tink/util"
 	"log"
 	"os"
+
+	"github.com/tinkerbell/tink/util"
 
 	"github.com/tinkerbell/tink/protos/hardware"
 
