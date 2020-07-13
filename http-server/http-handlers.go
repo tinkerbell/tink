@@ -261,7 +261,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "created template", "id": "%v"}`, res.Id))
+			writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "template created successfully", "id": "%v"}`, res.Id))
 		}
 	})
 
@@ -388,7 +388,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Created Workflow: %v"}`, wf.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "workflow created successfully", "id": "%v"}`, wf.Id))
 	})
 
 	// workflow get handler | GET /v1/workflows/{id}
@@ -435,7 +435,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "Template %v deleted successfully"}`, gr.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "workflow deleted successfully", "id": "%v"}`, gr.Id))
 	})
 
 	// workflow list handler | GET /v1/workflows
