@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/tinkerbell/tink/db"
@@ -33,7 +34,9 @@ func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest
 		if err != nil {
 			return nil, status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
 		}
-		wfContexts = append(wfContexts, wfContext)
+		if isApplicableToSend(context, wfContext, req.WorkerId, sdb) {
+			wfContexts = append(wfContexts, wfContext)
+		}
 	}
 
 	return &pb.WorkflowContextList{
@@ -159,4 +162,34 @@ func GetWorkflowDataVersion(context context.Context, workflowID string, sdb *sql
 		return &pb.GetWorkflowDataResponse{Version: version}, status.Errorf(codes.Unknown, err.Error())
 	}
 	return &pb.GetWorkflowDataResponse{Version: version}, nil
+}
+
+// The below function check whether a particular workflow context is applicable or needed to
+// be send to a worker based on the state of the current action and the targeted workerID.
+func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, workerID string, sdb *sql.DB) bool {
+	if wfContext.GetCurrentActionState() != pb.ActionState_ACTION_FAILED ||
+		wfContext.GetCurrentActionState() != pb.ActionState_ACTION_TIMEOUT {
+		actions, err := GetWorkflowActions(context, &pb.WorkflowActionsRequest{WorkflowId: wfContext.GetWorkflowId()}, sdb)
+		if err != nil {
+			return false
+		}
+		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions) {
+			log.Println("This workflow is completed ", wfContext.GetWorkflowId())
+		} else if int(wfContext.GetCurrentActionIndex()) == 0 {
+			if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
+				log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+				return true
+			}
+		} else {
+			if actions.ActionList[wfContext.GetCurrentActionIndex()+1].GetWorkerId() == workerID {
+				log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isLastAction(wfContext *pb.WorkflowContext, actions *pb.WorkflowActionList) bool {
+	return int(wfContext.GetCurrentActionIndex()) == len(actions.GetActionList())-1
 }

@@ -176,6 +176,7 @@ func processWorkflowActions(client pb.WorkflowSvcClient) error {
 					if rerr != nil {
 						exitWithGrpcError(rerr)
 					}
+					delete(workflowcontexts, wfID)
 					return err
 				}
 
@@ -193,6 +194,7 @@ func processWorkflowActions(client pb.WorkflowSvcClient) error {
 
 				if len(actions.GetActionList()) == actionIndex+1 {
 					log.Infoln("Reached to end of workflow")
+					delete(workflowcontexts, wfID)
 					turn = false
 					break
 				}
@@ -209,7 +211,7 @@ func processWorkflowActions(client pb.WorkflowSvcClient) error {
 }
 
 func fetchLatestContext(ctx context.Context, client pb.WorkflowSvcClient, workerID string) error {
-	log.Infof("Fetching latest context for worker %s\n", workerID)
+	log.Debugf("Fetching latest context for worker %s\n", workerID)
 	res, err := client.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
 	if err != nil {
 		return err
@@ -257,8 +259,8 @@ func reportActionStatus(ctx context.Context, client pb.WorkflowSvcClient, action
 	for r := 1; r <= retries; r++ {
 		_, err = client.ReportActionStatus(ctx, actionStatus)
 		if err != nil {
-			log.Println("Report action status to server failed as : ", err)
-			log.Printf("Retrying after %v seconds", retryInterval)
+			log.Errorln("Report action status to server failed as : ", err)
+			log.Errorf("Retrying after %v seconds", retryInterval)
 			<-time.After(retryInterval * time.Second)
 			continue
 		}
