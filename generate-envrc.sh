@@ -47,6 +47,8 @@ generate_envrc() (
 
 	validate_tinkerbell_network_interface "$tink_interface"
 
+	local tink_password
+	tink_password=$(generate_password)
 	local registry_password
 	registry_password=$(generate_password)
 	cat <<EOF
@@ -67,6 +69,10 @@ export TINKERBELL_HOST_IP=192.168.1.1
 
 # NGINX IP is used by provisioner to serve files required for iPXE boot
 export TINKERBELL_NGINX_IP=192.168.1.2
+
+# Tink server username and password
+export TINKERBELL_TINK_USERNAME=admin
+export TINKERBELL_TINK_PASSWORD="$tink_password"
 
 # Docker Registry's username and password
 export TINKERBELL_REGISTRY_USERNAME=admin
