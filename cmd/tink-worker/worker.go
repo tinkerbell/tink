@@ -42,7 +42,7 @@ type WorkflowMetadata struct {
 func processWorkflowActions(client pb.WorkflowSvcClient) error {
 	workerID := os.Getenv("WORKER_ID")
 	if workerID == "" {
-		return fmt.Errorf("required WORKER_NAME")
+		return fmt.Errorf("required WORKER_ID")
 	}
 	log = logger.WithField("worker_id", workerID)
 	ctx := context.Background()
