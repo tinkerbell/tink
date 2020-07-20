@@ -1,5 +1,11 @@
 ENV['VAGRANT_NO_PARALLEL'] = 'yes'
 
+# Returns true if `GUI` environment variable is set to a non-empty value.
+# Defaults to false
+def worker_gui_enabled?
+  ENV.fetch('VAGRANT_WORKER_GUI', '').empty?
+end
+
 Vagrant.configure('2') do |config|
 
   config.vm.define :provisioner do |provisioner|
@@ -50,7 +56,7 @@ Vagrant.configure('2') do |config|
       worker.vm.box = 'generic/alpine38'
       vb.memory = 4*1024
       vb.cpus = 1
-      vb.gui = true
+      vb.gui = worker_gui_enabled?
       vb.customize [
         'modifyvm', :id,
         '--nic1', 'none',
