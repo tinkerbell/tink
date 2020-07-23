@@ -2,6 +2,7 @@ package vagrant_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 	vagrant "github.com/tinkerbell/tink/test/_vagrant"
+	"github.com/tinkerbell/tink/util"
 )
 
 func TestVagrantSetupGuide(t *testing.T) {
@@ -162,37 +164,41 @@ tasks:
 }
 
 func registerHardware(ctx context.Context) error {
-	_, err := client.HardwareClient.Push(ctx, &hardware.PushRequest{
-		Data: &hardware.Hardware{
-			Id: "0eba0bf8-3772-4b4a-ab9f-6ebe93b90a94",
-			Metadata: &hardware.Hardware_Metadata{
-				Facility: &hardware.Hardware_Metadata_Facility{
-					FacilityCode: "onprem",
-				},
-				Instance: &hardware.Hardware_Metadata_Instance{},
-				State:    "",
-			},
-			Network: &hardware.Hardware_Network{
-				Interfaces: []*hardware.Hardware_Network_Interface{
-					{
-						Dhcp: &hardware.Hardware_DHCP{
-							Arch: "x86_64",
-							Ip: &hardware.Hardware_DHCP_IP{
-								Address: "192.168.1.5",
-								Gateway: "192.168.1.1",
-								Netmask: "255.255.255.248",
-							},
-							Mac:  "08:00:27:00:00:01",
-							Uefi: false,
-						},
-						Netboot: &hardware.Hardware_Netboot{
-							AllowPxe:      true,
-							AllowWorkflow: true,
-						},
-					},
-				},
-			},
-		},
-	})
+	data := []byte(`{
+  "id": "ce2e62ed-826f-4485-a39f-a82bb74338e2",
+  "metadata": {
+    "facility": {
+      "facility_code": "onprem"
+    },
+    "instance": {},
+    "state": ""
+  },
+  "network": {
+    "interfaces": [
+      {
+        "dhcp": {
+          "arch": "x86_64",
+          "ip": {
+            "address": "192.168.1.5",
+            "gateway": "192.168.1.1",
+            "netmask": "255.255.255.248"
+          },
+          "mac": "08:00:27:00:00:01",
+          "uefi": false
+        },
+        "netboot": {
+          "allow_pxe": true,
+          "allow_workflow": true
+        }
+      }
+    ]
+  }
+}`)
+	hw := util.HardwareWrapper{Hardware: &hardware.Hardware{}}
+	err := json.Unmarshal(data, &hw)
+	if err != nil {
+		return err
+	}
+	_, err = client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: hw.Hardware})
 	return err
 }
