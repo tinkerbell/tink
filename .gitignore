@@ -12,3 +12,5 @@ terraform.tfstate.backup
 
 # Vagrant
 **/.vagrant
+envrc
+deploy/state

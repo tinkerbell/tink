@@ -14,6 +14,10 @@ Vagrant.configure('2') do |config|
                         libvirt__forward_mode: 'none',
                         auto_config: false
 
+    provisioner.vm.network "forwarded_port", guest: 42113, host: 42113
+    provisioner.vm.network "forwarded_port", guest: 42114, host: 42114
+
+
     provisioner.vm.provider :libvirt do |lv, override|
       lv.memory = 2*1024
       lv.cpus = 2
