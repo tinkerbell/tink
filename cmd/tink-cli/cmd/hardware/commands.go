@@ -6,11 +6,15 @@ import (
 	"log"
 	"os"
 
+	"github.com/tinkerbell/tink/util"
+
+	"github.com/tinkerbell/tink/protos/hardware"
+
 	"github.com/jedib0t/go-pretty/table"
+
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/protos/hardware"
 )
 
 // SubCommands holds the sub commands for template command
@@ -44,11 +48,10 @@ func printOutput(data bool, hw *hardware.Hardware, input string) {
 		}
 		t.Render()
 	} else {
-		hwData, err := json.Marshal(hw)
+		hwData, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
 		if err != nil {
-			log.Fatal("Failed to marshal hardware data", err)
-		} else {
-			log.Println(string(hwData))
+			log.Fatal("Failed to marshal hardware data: ", err)
 		}
+		log.Println(string(hwData))
 	}
 }

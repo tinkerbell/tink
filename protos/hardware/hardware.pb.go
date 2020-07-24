@@ -6,12 +6,13 @@ package hardware
 import (
 	context "context"
 	fmt "fmt"
+	math "math"
+
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -151,17 +152,13 @@ func (m *GetRequest) GetId() string {
 }
 
 type Hardware struct {
-	OBSOLETE_JSON        string              `protobuf:"bytes,1,opt,name=OBSOLETE_JSON,json=OBSOLETEJSON,proto3" json:"OBSOLETE_JSON,omitempty"`
-	OBSOLETEDhcp         *Hardware_DHCP      `protobuf:"bytes,2,opt,name=OBSOLETE_dhcp,json=OBSOLETEDhcp,proto3" json:"OBSOLETE_dhcp,omitempty"`
-	OBSOLETENetboot      *Hardware_Netboot   `protobuf:"bytes,3,opt,name=OBSOLETE_netboot,json=OBSOLETENetboot,proto3" json:"OBSOLETE_netboot,omitempty"`
-	OBSOLETENetwork      []*Hardware_Network `protobuf:"bytes,4,rep,name=OBSOLETE_network,json=OBSOLETENetwork,proto3" json:"OBSOLETE_network,omitempty"`
-	Metadata             *Hardware_Metadata  `protobuf:"bytes,5,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Network              *Hardware_Network   `protobuf:"bytes,6,opt,name=network,proto3" json:"network,omitempty"`
-	Id                   string              `protobuf:"bytes,7,opt,name=id,proto3" json:"id,omitempty"`
-	Version              int64               `protobuf:"varint,8,opt,name=version,proto3" json:"version,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	Network              *Hardware_Network `protobuf:"bytes,6,opt,name=network,proto3" json:"network,omitempty"`
+	Id                   string            `protobuf:"bytes,7,opt,name=id,proto3" json:"id,omitempty"`
+	Version              int64             `protobuf:"varint,8,opt,name=version,proto3" json:"version,omitempty"`
+	Metadata             string            `protobuf:"bytes,9,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *Hardware) Reset()         { *m = Hardware{} }
@@ -189,41 +186,6 @@ func (m *Hardware) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Hardware proto.InternalMessageInfo
 
-func (m *Hardware) GetOBSOLETE_JSON() string {
-	if m != nil {
-		return m.OBSOLETE_JSON
-	}
-	return ""
-}
-
-func (m *Hardware) GetOBSOLETEDhcp() *Hardware_DHCP {
-	if m != nil {
-		return m.OBSOLETEDhcp
-	}
-	return nil
-}
-
-func (m *Hardware) GetOBSOLETENetboot() *Hardware_Netboot {
-	if m != nil {
-		return m.OBSOLETENetboot
-	}
-	return nil
-}
-
-func (m *Hardware) GetOBSOLETENetwork() []*Hardware_Network {
-	if m != nil {
-		return m.OBSOLETENetwork
-	}
-	return nil
-}
-
-func (m *Hardware) GetMetadata() *Hardware_Metadata {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
 func (m *Hardware) GetNetwork() *Hardware_Network {
 	if m != nil {
 		return m.Network
@@ -245,14 +207,19 @@ func (m *Hardware) GetVersion() int64 {
 	return 0
 }
 
+func (m *Hardware) GetMetadata() string {
+	if m != nil {
+		return m.Metadata
+	}
+	return ""
+}
+
 type Hardware_DHCP struct {
 	Mac                  string            `protobuf:"bytes,1,opt,name=mac,proto3" json:"mac,omitempty"`
-	OBSOLETEIp           string            `protobuf:"bytes,2,opt,name=OBSOLETE_ip,json=OBSOLETEIp,proto3" json:"OBSOLETE_ip,omitempty"`
 	Hostname             string            `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
 	LeaseTime            int64             `protobuf:"varint,4,opt,name=lease_time,json=leaseTime,proto3" json:"lease_time,omitempty"`
 	NameServers          []string          `protobuf:"bytes,5,rep,name=name_servers,json=nameServers,proto3" json:"name_servers,omitempty"`
 	TimeServers          []string          `protobuf:"bytes,6,rep,name=time_servers,json=timeServers,proto3" json:"time_servers,omitempty"`
-	OBSOLETEGateway      string            `protobuf:"bytes,7,opt,name=OBSOLETE_gateway,json=OBSOLETEGateway,proto3" json:"OBSOLETE_gateway,omitempty"`
 	Arch                 string            `protobuf:"bytes,8,opt,name=arch,proto3" json:"arch,omitempty"`
 	Uefi                 bool              `protobuf:"varint,9,opt,name=uefi,proto3" json:"uefi,omitempty"`
 	IfaceName            string            `protobuf:"bytes,10,opt,name=iface_name,json=ifaceName,proto3" json:"iface_name,omitempty"`
@@ -294,13 +261,6 @@ func (m *Hardware_DHCP) GetMac() string {
 	return ""
 }
 
-func (m *Hardware_DHCP) GetOBSOLETEIp() string {
-	if m != nil {
-		return m.OBSOLETEIp
-	}
-	return ""
-}
-
 func (m *Hardware_DHCP) GetHostname() string {
 	if m != nil {
 		return m.Hostname
@@ -327,13 +287,6 @@ func (m *Hardware_DHCP) GetTimeServers() []string {
 		return m.TimeServers
 	}
 	return nil
-}
-
-func (m *Hardware_DHCP) GetOBSOLETEGateway() string {
-	if m != nil {
-		return m.OBSOLETEGateway
-	}
-	return ""
 }
 
 func (m *Hardware_DHCP) GetArch() string {
@@ -428,14 +381,13 @@ func (m *Hardware_DHCP_IP) GetFamily() int64 {
 }
 
 type Hardware_Netboot struct {
-	AllowPxe             bool                           `protobuf:"varint,1,opt,name=allow_pxe,json=allowPxe,proto3" json:"allow_pxe,omitempty"`
-	AllowWorkflow        bool                           `protobuf:"varint,2,opt,name=allow_workflow,json=allowWorkflow,proto3" json:"allow_workflow,omitempty"`
-	Ipxe                 *Hardware_Netboot_IPXE         `protobuf:"bytes,3,opt,name=ipxe,proto3" json:"ipxe,omitempty"`
-	OBSOLETEBootstrapper *Hardware_Netboot_Bootstrapper `protobuf:"bytes,4,opt,name=OBSOLETE_bootstrapper,json=OBSOLETEBootstrapper,proto3" json:"OBSOLETE_bootstrapper,omitempty"`
-	Osie                 *Hardware_Netboot_Osie         `protobuf:"bytes,5,opt,name=osie,proto3" json:"osie,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
-	XXX_unrecognized     []byte                         `json:"-"`
-	XXX_sizecache        int32                          `json:"-"`
+	AllowPxe             bool                   `protobuf:"varint,1,opt,name=allow_pxe,json=allowPxe,proto3" json:"allow_pxe,omitempty"`
+	AllowWorkflow        bool                   `protobuf:"varint,2,opt,name=allow_workflow,json=allowWorkflow,proto3" json:"allow_workflow,omitempty"`
+	Ipxe                 *Hardware_Netboot_IPXE `protobuf:"bytes,3,opt,name=ipxe,proto3" json:"ipxe,omitempty"`
+	Osie                 *Hardware_Netboot_Osie `protobuf:"bytes,5,opt,name=osie,proto3" json:"osie,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *Hardware_Netboot) Reset()         { *m = Hardware_Netboot{} }
@@ -480,13 +432,6 @@ func (m *Hardware_Netboot) GetAllowWorkflow() bool {
 func (m *Hardware_Netboot) GetIpxe() *Hardware_Netboot_IPXE {
 	if m != nil {
 		return m.Ipxe
-	}
-	return nil
-}
-
-func (m *Hardware_Netboot) GetOBSOLETEBootstrapper() *Hardware_Netboot_Bootstrapper {
-	if m != nil {
-		return m.OBSOLETEBootstrapper
 	}
 	return nil
 }
@@ -545,37 +490,6 @@ func (m *Hardware_Netboot_IPXE) GetContents() string {
 	return ""
 }
 
-type Hardware_Netboot_Bootstrapper struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Netboot_Bootstrapper) Reset()         { *m = Hardware_Netboot_Bootstrapper{} }
-func (m *Hardware_Netboot_Bootstrapper) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Netboot_Bootstrapper) ProtoMessage()    {}
-func (*Hardware_Netboot_Bootstrapper) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 1, 1}
-}
-
-func (m *Hardware_Netboot_Bootstrapper) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Netboot_Bootstrapper.Unmarshal(m, b)
-}
-func (m *Hardware_Netboot_Bootstrapper) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Netboot_Bootstrapper.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Netboot_Bootstrapper) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Netboot_Bootstrapper.Merge(m, src)
-}
-func (m *Hardware_Netboot_Bootstrapper) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Netboot_Bootstrapper.Size(m)
-}
-func (m *Hardware_Netboot_Bootstrapper) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Netboot_Bootstrapper.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Netboot_Bootstrapper proto.InternalMessageInfo
-
 type Hardware_Netboot_Osie struct {
 	BaseUrl              string   `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
 	Kernel               string   `protobuf:"bytes,2,opt,name=kernel,proto3" json:"kernel,omitempty"`
@@ -589,7 +503,7 @@ func (m *Hardware_Netboot_Osie) Reset()         { *m = Hardware_Netboot_Osie{} }
 func (m *Hardware_Netboot_Osie) String() string { return proto.CompactTextString(m) }
 func (*Hardware_Netboot_Osie) ProtoMessage()    {}
 func (*Hardware_Netboot_Osie) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 1, 2}
+	return fileDescriptor_61ac56d7fc2e671f, []int{3, 1, 1}
 }
 
 func (m *Hardware_Netboot_Osie) XXX_Unmarshal(b []byte) error {
@@ -632,10 +546,7 @@ func (m *Hardware_Netboot_Osie) GetInitrd() string {
 }
 
 type Hardware_Network struct {
-	OBSOLETEDhcp         *Hardware_DHCP                `protobuf:"bytes,1,opt,name=OBSOLETE_dhcp,json=OBSOLETEDhcp,proto3" json:"OBSOLETE_dhcp,omitempty"`
-	OBSOLETENetboot      *Hardware_Netboot             `protobuf:"bytes,2,opt,name=OBSOLETE_netboot,json=OBSOLETENetboot,proto3" json:"OBSOLETE_netboot,omitempty"`
 	Interfaces           []*Hardware_Network_Interface `protobuf:"bytes,3,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
-	OBSOLETEDefault      *Hardware_Network_Interface   `protobuf:"bytes,4,opt,name=OBSOLETE_default,json=OBSOLETEDefault,proto3" json:"OBSOLETE_default,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                      `json:"-"`
 	XXX_unrecognized     []byte                        `json:"-"`
 	XXX_sizecache        int32                         `json:"-"`
@@ -666,30 +577,9 @@ func (m *Hardware_Network) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Hardware_Network proto.InternalMessageInfo
 
-func (m *Hardware_Network) GetOBSOLETEDhcp() *Hardware_DHCP {
-	if m != nil {
-		return m.OBSOLETEDhcp
-	}
-	return nil
-}
-
-func (m *Hardware_Network) GetOBSOLETENetboot() *Hardware_Netboot {
-	if m != nil {
-		return m.OBSOLETENetboot
-	}
-	return nil
-}
-
 func (m *Hardware_Network) GetInterfaces() []*Hardware_Network_Interface {
 	if m != nil {
 		return m.Interfaces
-	}
-	return nil
-}
-
-func (m *Hardware_Network) GetOBSOLETEDefault() *Hardware_Network_Interface {
-	if m != nil {
-		return m.OBSOLETEDefault
 	}
 	return nil
 }
@@ -741,1057 +631,8 @@ func (m *Hardware_Network_Interface) GetNetboot() *Hardware_Netboot {
 	return nil
 }
 
-type Hardware_Metadata struct {
-	State                string                          `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	BondingMode          int64                           `protobuf:"varint,2,opt,name=bonding_mode,json=bondingMode,proto3" json:"bonding_mode,omitempty"`
-	Manufacturer         *Hardware_Metadata_Manufacturer `protobuf:"bytes,3,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
-	Instance             *Hardware_Metadata_Instance     `protobuf:"bytes,4,opt,name=instance,proto3" json:"instance,omitempty"`
-	Custom               *Hardware_Metadata_Custom       `protobuf:"bytes,5,opt,name=custom,proto3" json:"custom,omitempty"`
-	Facility             *Hardware_Metadata_Facility     `protobuf:"bytes,6,opt,name=facility,proto3" json:"facility,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
-	XXX_unrecognized     []byte                          `json:"-"`
-	XXX_sizecache        int32                           `json:"-"`
-}
-
-func (m *Hardware_Metadata) Reset()         { *m = Hardware_Metadata{} }
-func (m *Hardware_Metadata) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata) ProtoMessage()    {}
-func (*Hardware_Metadata) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3}
-}
-
-func (m *Hardware_Metadata) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata.Merge(m, src)
-}
-func (m *Hardware_Metadata) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata.Size(m)
-}
-func (m *Hardware_Metadata) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata proto.InternalMessageInfo
-
-func (m *Hardware_Metadata) GetState() string {
-	if m != nil {
-		return m.State
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata) GetBondingMode() int64 {
-	if m != nil {
-		return m.BondingMode
-	}
-	return 0
-}
-
-func (m *Hardware_Metadata) GetManufacturer() *Hardware_Metadata_Manufacturer {
-	if m != nil {
-		return m.Manufacturer
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata) GetInstance() *Hardware_Metadata_Instance {
-	if m != nil {
-		return m.Instance
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata) GetCustom() *Hardware_Metadata_Custom {
-	if m != nil {
-		return m.Custom
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata) GetFacility() *Hardware_Metadata_Facility {
-	if m != nil {
-		return m.Facility
-	}
-	return nil
-}
-
-type Hardware_Metadata_Manufacturer struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Slug                 string   `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Manufacturer) Reset()         { *m = Hardware_Metadata_Manufacturer{} }
-func (m *Hardware_Metadata_Manufacturer) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Manufacturer) ProtoMessage()    {}
-func (*Hardware_Metadata_Manufacturer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 0}
-}
-
-func (m *Hardware_Metadata_Manufacturer) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Manufacturer.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Manufacturer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Manufacturer.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Manufacturer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Manufacturer.Merge(m, src)
-}
-func (m *Hardware_Metadata_Manufacturer) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Manufacturer.Size(m)
-}
-func (m *Hardware_Metadata_Manufacturer) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Manufacturer.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Manufacturer proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Manufacturer) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Manufacturer) GetSlug() string {
-	if m != nil {
-		return m.Slug
-	}
-	return ""
-}
-
-type Hardware_Metadata_Instance struct {
-	Id                     string                                      `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	State                  string                                      `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
-	Hostname               string                                      `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	AllowPxe               bool                                        `protobuf:"varint,4,opt,name=allow_pxe,json=allowPxe,proto3" json:"allow_pxe,omitempty"`
-	Rescue                 bool                                        `protobuf:"varint,5,opt,name=rescue,proto3" json:"rescue,omitempty"`
-	OperatingSystemVersion *Hardware_Metadata_Instance_OperatingSystem `protobuf:"bytes,6,opt,name=operating_system_version,json=operatingSystemVersion,proto3" json:"operating_system_version,omitempty"`
-	AlwaysPxe              bool                                        `protobuf:"varint,7,opt,name=always_pxe,json=alwaysPxe,proto3" json:"always_pxe,omitempty"`
-	IpxeScriptUrl          string                                      `protobuf:"bytes,8,opt,name=ipxe_script_url,json=ipxeScriptUrl,proto3" json:"ipxe_script_url,omitempty"`
-	Ips                    []*Hardware_Metadata_Instance_IP            `protobuf:"bytes,9,rep,name=ips,proto3" json:"ips,omitempty"`
-	Userdata               string                                      `protobuf:"bytes,10,opt,name=userdata,proto3" json:"userdata,omitempty"`
-	CryptedRootPassword    string                                      `protobuf:"bytes,11,opt,name=crypted_root_password,json=cryptedRootPassword,proto3" json:"crypted_root_password,omitempty"`
-	Tags                   []string                                    `protobuf:"bytes,12,rep,name=tags,proto3" json:"tags,omitempty"`
-	Storage                *Hardware_Metadata_Instance_Storage         `protobuf:"bytes,13,opt,name=storage,proto3" json:"storage,omitempty"`
-	SshKeys                []string                                    `protobuf:"bytes,14,rep,name=ssh_keys,json=sshKeys,proto3" json:"ssh_keys,omitempty"`
-	NetworkReady           bool                                        `protobuf:"varint,15,opt,name=network_ready,json=networkReady,proto3" json:"network_ready,omitempty"`
-	XXX_NoUnkeyedLiteral   struct{}                                    `json:"-"`
-	XXX_unrecognized       []byte                                      `json:"-"`
-	XXX_sizecache          int32                                       `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance) Reset()         { *m = Hardware_Metadata_Instance{} }
-func (m *Hardware_Metadata_Instance) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Instance) ProtoMessage()    {}
-func (*Hardware_Metadata_Instance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1}
-}
-
-func (m *Hardware_Metadata_Instance) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance.Size(m)
-}
-func (m *Hardware_Metadata_Instance) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance) GetState() string {
-	if m != nil {
-		return m.State
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance) GetHostname() string {
-	if m != nil {
-		return m.Hostname
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance) GetAllowPxe() bool {
-	if m != nil {
-		return m.AllowPxe
-	}
-	return false
-}
-
-func (m *Hardware_Metadata_Instance) GetRescue() bool {
-	if m != nil {
-		return m.Rescue
-	}
-	return false
-}
-
-func (m *Hardware_Metadata_Instance) GetOperatingSystemVersion() *Hardware_Metadata_Instance_OperatingSystem {
-	if m != nil {
-		return m.OperatingSystemVersion
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance) GetAlwaysPxe() bool {
-	if m != nil {
-		return m.AlwaysPxe
-	}
-	return false
-}
-
-func (m *Hardware_Metadata_Instance) GetIpxeScriptUrl() string {
-	if m != nil {
-		return m.IpxeScriptUrl
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance) GetIps() []*Hardware_Metadata_Instance_IP {
-	if m != nil {
-		return m.Ips
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance) GetUserdata() string {
-	if m != nil {
-		return m.Userdata
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance) GetCryptedRootPassword() string {
-	if m != nil {
-		return m.CryptedRootPassword
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance) GetTags() []string {
-	if m != nil {
-		return m.Tags
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance) GetStorage() *Hardware_Metadata_Instance_Storage {
-	if m != nil {
-		return m.Storage
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance) GetSshKeys() []string {
-	if m != nil {
-		return m.SshKeys
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance) GetNetworkReady() bool {
-	if m != nil {
-		return m.NetworkReady
-	}
-	return false
-}
-
-type Hardware_Metadata_Instance_OperatingSystem struct {
-	Slug                 string   `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
-	Distro               string   `protobuf:"bytes,2,opt,name=distro,proto3" json:"distro,omitempty"`
-	Version              string   `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
-	ImageTag             string   `protobuf:"bytes,4,opt,name=image_tag,json=imageTag,proto3" json:"image_tag,omitempty"`
-	OsSlug               string   `protobuf:"bytes,5,opt,name=os_slug,json=osSlug,proto3" json:"os_slug,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_OperatingSystem) Reset() {
-	*m = Hardware_Metadata_Instance_OperatingSystem{}
-}
-func (m *Hardware_Metadata_Instance_OperatingSystem) String() string {
-	return proto.CompactTextString(m)
-}
-func (*Hardware_Metadata_Instance_OperatingSystem) ProtoMessage() {}
-func (*Hardware_Metadata_Instance_OperatingSystem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 0}
-}
-
-func (m *Hardware_Metadata_Instance_OperatingSystem) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_OperatingSystem.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_OperatingSystem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_OperatingSystem.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_OperatingSystem) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_OperatingSystem.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_OperatingSystem) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_OperatingSystem.Size(m)
-}
-func (m *Hardware_Metadata_Instance_OperatingSystem) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_OperatingSystem.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_OperatingSystem proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_OperatingSystem) GetSlug() string {
-	if m != nil {
-		return m.Slug
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_OperatingSystem) GetDistro() string {
-	if m != nil {
-		return m.Distro
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_OperatingSystem) GetVersion() string {
-	if m != nil {
-		return m.Version
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_OperatingSystem) GetImageTag() string {
-	if m != nil {
-		return m.ImageTag
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_OperatingSystem) GetOsSlug() string {
-	if m != nil {
-		return m.OsSlug
-	}
-	return ""
-}
-
-type Hardware_Metadata_Instance_IP struct {
-	Address              string   `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Netmask              string   `protobuf:"bytes,2,opt,name=netmask,proto3" json:"netmask,omitempty"`
-	Gateway              string   `protobuf:"bytes,3,opt,name=gateway,proto3" json:"gateway,omitempty"`
-	Family               int64    `protobuf:"varint,4,opt,name=family,proto3" json:"family,omitempty"`
-	Public               bool     `protobuf:"varint,5,opt,name=public,proto3" json:"public,omitempty"`
-	Management           bool     `protobuf:"varint,6,opt,name=management,proto3" json:"management,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_IP) Reset()         { *m = Hardware_Metadata_Instance_IP{} }
-func (m *Hardware_Metadata_Instance_IP) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Instance_IP) ProtoMessage()    {}
-func (*Hardware_Metadata_Instance_IP) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 1}
-}
-
-func (m *Hardware_Metadata_Instance_IP) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_IP.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_IP) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_IP.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_IP) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_IP.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_IP) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_IP.Size(m)
-}
-func (m *Hardware_Metadata_Instance_IP) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_IP.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_IP proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_IP) GetAddress() string {
-	if m != nil {
-		return m.Address
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_IP) GetNetmask() string {
-	if m != nil {
-		return m.Netmask
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_IP) GetGateway() string {
-	if m != nil {
-		return m.Gateway
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_IP) GetFamily() int64 {
-	if m != nil {
-		return m.Family
-	}
-	return 0
-}
-
-func (m *Hardware_Metadata_Instance_IP) GetPublic() bool {
-	if m != nil {
-		return m.Public
-	}
-	return false
-}
-
-func (m *Hardware_Metadata_Instance_IP) GetManagement() bool {
-	if m != nil {
-		return m.Management
-	}
-	return false
-}
-
-type Hardware_Metadata_Instance_Storage struct {
-	OBSOLETEDisks        []string                                         `protobuf:"bytes,1,rep,name=OBSOLETE_disks,json=OBSOLETEDisks,proto3" json:"OBSOLETE_disks,omitempty"`
-	OBSOLETERaid         []string                                         `protobuf:"bytes,2,rep,name=OBSOLETE_raid,json=OBSOLETERaid,proto3" json:"OBSOLETE_raid,omitempty"`
-	OBSOLETEFilesystems  []string                                         `protobuf:"bytes,3,rep,name=OBSOLETE_filesystems,json=OBSOLETEFilesystems,proto3" json:"OBSOLETE_filesystems,omitempty"`
-	Disks                []*Hardware_Metadata_Instance_Storage_Disk       `protobuf:"bytes,4,rep,name=disks,proto3" json:"disks,omitempty"`
-	Raid                 []*Hardware_Metadata_Instance_Storage_RAID       `protobuf:"bytes,5,rep,name=raid,proto3" json:"raid,omitempty"`
-	Filesystems          []*Hardware_Metadata_Instance_Storage_Filesystem `protobuf:"bytes,6,rep,name=filesystems,proto3" json:"filesystems,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                                         `json:"-"`
-	XXX_unrecognized     []byte                                           `json:"-"`
-	XXX_sizecache        int32                                            `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage) Reset()         { *m = Hardware_Metadata_Instance_Storage{} }
-func (m *Hardware_Metadata_Instance_Storage) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Instance_Storage) ProtoMessage()    {}
-func (*Hardware_Metadata_Instance_Storage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2}
-}
-
-func (m *Hardware_Metadata_Instance_Storage) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage) GetOBSOLETEDisks() []string {
-	if m != nil {
-		return m.OBSOLETEDisks
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage) GetOBSOLETERaid() []string {
-	if m != nil {
-		return m.OBSOLETERaid
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage) GetOBSOLETEFilesystems() []string {
-	if m != nil {
-		return m.OBSOLETEFilesystems
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage) GetDisks() []*Hardware_Metadata_Instance_Storage_Disk {
-	if m != nil {
-		return m.Disks
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage) GetRaid() []*Hardware_Metadata_Instance_Storage_RAID {
-	if m != nil {
-		return m.Raid
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage) GetFilesystems() []*Hardware_Metadata_Instance_Storage_Filesystem {
-	if m != nil {
-		return m.Filesystems
-	}
-	return nil
-}
-
-type Hardware_Metadata_Instance_Storage_Disk struct {
-	Device               string                                               `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
-	WipeTable            bool                                                 `protobuf:"varint,2,opt,name=wipe_table,json=wipeTable,proto3" json:"wipe_table,omitempty"`
-	Partitions           []*Hardware_Metadata_Instance_Storage_Disk_Partition `protobuf:"bytes,3,rep,name=partitions,proto3" json:"partitions,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                                             `json:"-"`
-	XXX_unrecognized     []byte                                               `json:"-"`
-	XXX_sizecache        int32                                                `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk) Reset() {
-	*m = Hardware_Metadata_Instance_Storage_Disk{}
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Instance_Storage_Disk) ProtoMessage()    {}
-func (*Hardware_Metadata_Instance_Storage_Disk) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2, 0}
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage_Disk) GetDevice() string {
-	if m != nil {
-		return m.Device
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk) GetWipeTable() bool {
-	if m != nil {
-		return m.WipeTable
-	}
-	return false
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk) GetPartitions() []*Hardware_Metadata_Instance_Storage_Disk_Partition {
-	if m != nil {
-		return m.Partitions
-	}
-	return nil
-}
-
-type Hardware_Metadata_Instance_Storage_Disk_Partition struct {
-	Label                string   `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
-	Number               int64    `protobuf:"varint,2,opt,name=number,proto3" json:"number,omitempty"`
-	Size                 int64    `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
-	Start                int64    `protobuf:"varint,4,opt,name=start,proto3" json:"start,omitempty"`
-	TypeGuid             string   `protobuf:"bytes,5,opt,name=type_guid,json=typeGuid,proto3" json:"type_guid,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) Reset() {
-	*m = Hardware_Metadata_Instance_Storage_Disk_Partition{}
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) String() string {
-	return proto.CompactTextString(m)
-}
-func (*Hardware_Metadata_Instance_Storage_Disk_Partition) ProtoMessage() {}
-func (*Hardware_Metadata_Instance_Storage_Disk_Partition) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2, 0, 0}
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk_Partition.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk_Partition.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk_Partition.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk_Partition.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk_Partition.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage_Disk_Partition proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) GetLabel() string {
-	if m != nil {
-		return m.Label
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) GetNumber() int64 {
-	if m != nil {
-		return m.Number
-	}
-	return 0
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) GetSize() int64 {
-	if m != nil {
-		return m.Size
-	}
-	return 0
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) GetStart() int64 {
-	if m != nil {
-		return m.Start
-	}
-	return 0
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Disk_Partition) GetTypeGuid() string {
-	if m != nil {
-		return m.TypeGuid
-	}
-	return ""
-}
-
-type Hardware_Metadata_Instance_Storage_File struct {
-	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Contents             string   `protobuf:"bytes,2,opt,name=contents,proto3" json:"contents,omitempty"`
-	Mode                 int64    `protobuf:"varint,3,opt,name=mode,proto3" json:"mode,omitempty"`
-	Uid                  int64    `protobuf:"varint,4,opt,name=uid,proto3" json:"uid,omitempty"`
-	Gid                  int64    `protobuf:"varint,5,opt,name=gid,proto3" json:"gid,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage_File) Reset() {
-	*m = Hardware_Metadata_Instance_Storage_File{}
-}
-func (m *Hardware_Metadata_Instance_Storage_File) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Instance_Storage_File) ProtoMessage()    {}
-func (*Hardware_Metadata_Instance_Storage_File) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2, 1}
-}
-
-func (m *Hardware_Metadata_Instance_Storage_File) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_File.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage_File) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_File.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage_File) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_File.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage_File) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_File.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage_File) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_File.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage_File proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage_File) GetPath() string {
-	if m != nil {
-		return m.Path
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_File) GetContents() string {
-	if m != nil {
-		return m.Contents
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_File) GetMode() int64 {
-	if m != nil {
-		return m.Mode
-	}
-	return 0
-}
-
-func (m *Hardware_Metadata_Instance_Storage_File) GetUid() int64 {
-	if m != nil {
-		return m.Uid
-	}
-	return 0
-}
-
-func (m *Hardware_Metadata_Instance_Storage_File) GetGid() int64 {
-	if m != nil {
-		return m.Gid
-	}
-	return 0
-}
-
-type Hardware_Metadata_Instance_Storage_Mount struct {
-	Device               string                                                      `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
-	Format               string                                                      `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
-	Files                []*Hardware_Metadata_Instance_Storage_File                  `protobuf:"bytes,3,rep,name=files,proto3" json:"files,omitempty"`
-	Create               *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions `protobuf:"bytes,4,opt,name=create,proto3" json:"create,omitempty"`
-	Point                string                                                      `protobuf:"bytes,5,opt,name=point,proto3" json:"point,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                                                    `json:"-"`
-	XXX_unrecognized     []byte                                                      `json:"-"`
-	XXX_sizecache        int32                                                       `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount) Reset() {
-	*m = Hardware_Metadata_Instance_Storage_Mount{}
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Instance_Storage_Mount) ProtoMessage()    {}
-func (*Hardware_Metadata_Instance_Storage_Mount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2, 2}
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage_Mount) GetDevice() string {
-	if m != nil {
-		return m.Device
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount) GetFormat() string {
-	if m != nil {
-		return m.Format
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount) GetFiles() []*Hardware_Metadata_Instance_Storage_File {
-	if m != nil {
-		return m.Files
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount) GetCreate() *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions {
-	if m != nil {
-		return m.Create
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount) GetPoint() string {
-	if m != nil {
-		return m.Point
-	}
-	return ""
-}
-
-type Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions struct {
-	Force                bool     `protobuf:"varint,1,opt,name=force,proto3" json:"force,omitempty"`
-	Options              []string `protobuf:"bytes,2,rep,name=options,proto3" json:"options,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) Reset() {
-	*m = Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions{}
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) String() string {
-	return proto.CompactTextString(m)
-}
-func (*Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) ProtoMessage() {}
-func (*Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2, 2, 0}
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) GetForce() bool {
-	if m != nil {
-		return m.Force
-	}
-	return false
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions) GetOptions() []string {
-	if m != nil {
-		return m.Options
-	}
-	return nil
-}
-
-type Hardware_Metadata_Instance_Storage_Filesystem struct {
-	Mount                *Hardware_Metadata_Instance_Storage_Mount `protobuf:"bytes,1,opt,name=mount,proto3" json:"mount,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                                  `json:"-"`
-	XXX_unrecognized     []byte                                    `json:"-"`
-	XXX_sizecache        int32                                     `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) Reset() {
-	*m = Hardware_Metadata_Instance_Storage_Filesystem{}
-}
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) String() string {
-	return proto.CompactTextString(m)
-}
-func (*Hardware_Metadata_Instance_Storage_Filesystem) ProtoMessage() {}
-func (*Hardware_Metadata_Instance_Storage_Filesystem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2, 3}
-}
-
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Filesystem.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Filesystem.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Filesystem.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_Filesystem.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_Filesystem.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage_Filesystem proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage_Filesystem) GetMount() *Hardware_Metadata_Instance_Storage_Mount {
-	if m != nil {
-		return m.Mount
-	}
-	return nil
-}
-
-type Hardware_Metadata_Instance_Storage_RAID struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Level                string   `protobuf:"bytes,2,opt,name=level,proto3" json:"level,omitempty"`
-	Devices              []string `protobuf:"bytes,3,rep,name=devices,proto3" json:"devices,omitempty"`
-	Spare                int64    `protobuf:"varint,4,opt,name=spare,proto3" json:"spare,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Instance_Storage_RAID) Reset() {
-	*m = Hardware_Metadata_Instance_Storage_RAID{}
-}
-func (m *Hardware_Metadata_Instance_Storage_RAID) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Instance_Storage_RAID) ProtoMessage()    {}
-func (*Hardware_Metadata_Instance_Storage_RAID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 1, 2, 4}
-}
-
-func (m *Hardware_Metadata_Instance_Storage_RAID) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_RAID.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Instance_Storage_RAID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_RAID.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Instance_Storage_RAID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_RAID.Merge(m, src)
-}
-func (m *Hardware_Metadata_Instance_Storage_RAID) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Instance_Storage_RAID.Size(m)
-}
-func (m *Hardware_Metadata_Instance_Storage_RAID) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Instance_Storage_RAID.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Instance_Storage_RAID proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Instance_Storage_RAID) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_RAID) GetLevel() string {
-	if m != nil {
-		return m.Level
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Instance_Storage_RAID) GetDevices() []string {
-	if m != nil {
-		return m.Devices
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Instance_Storage_RAID) GetSpare() int64 {
-	if m != nil {
-		return m.Spare
-	}
-	return 0
-}
-
-type Hardware_Metadata_Custom struct {
-	PreinstalledOperatingSystemVersion *Hardware_Metadata_Instance_OperatingSystem `protobuf:"bytes,1,opt,name=preinstalled_operating_system_version,json=preinstalledOperatingSystemVersion,proto3" json:"preinstalled_operating_system_version,omitempty"`
-	PrivateSubnets                     []string                                    `protobuf:"bytes,2,rep,name=private_subnets,json=privateSubnets,proto3" json:"private_subnets,omitempty"`
-	XXX_NoUnkeyedLiteral               struct{}                                    `json:"-"`
-	XXX_unrecognized                   []byte                                      `json:"-"`
-	XXX_sizecache                      int32                                       `json:"-"`
-}
-
-func (m *Hardware_Metadata_Custom) Reset()         { *m = Hardware_Metadata_Custom{} }
-func (m *Hardware_Metadata_Custom) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Custom) ProtoMessage()    {}
-func (*Hardware_Metadata_Custom) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 2}
-}
-
-func (m *Hardware_Metadata_Custom) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Custom.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Custom) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Custom.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Custom) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Custom.Merge(m, src)
-}
-func (m *Hardware_Metadata_Custom) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Custom.Size(m)
-}
-func (m *Hardware_Metadata_Custom) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Custom.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Custom proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Custom) GetPreinstalledOperatingSystemVersion() *Hardware_Metadata_Instance_OperatingSystem {
-	if m != nil {
-		return m.PreinstalledOperatingSystemVersion
-	}
-	return nil
-}
-
-func (m *Hardware_Metadata_Custom) GetPrivateSubnets() []string {
-	if m != nil {
-		return m.PrivateSubnets
-	}
-	return nil
-}
-
-type Hardware_Metadata_Facility struct {
-	PlanSlug             string   `protobuf:"bytes,1,opt,name=plan_slug,json=planSlug,proto3" json:"plan_slug,omitempty"`
-	PlanVersionSlug      string   `protobuf:"bytes,2,opt,name=plan_version_slug,json=planVersionSlug,proto3" json:"plan_version_slug,omitempty"`
-	FacilityCode         string   `protobuf:"bytes,3,opt,name=facility_code,json=facilityCode,proto3" json:"facility_code,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Hardware_Metadata_Facility) Reset()         { *m = Hardware_Metadata_Facility{} }
-func (m *Hardware_Metadata_Facility) String() string { return proto.CompactTextString(m) }
-func (*Hardware_Metadata_Facility) ProtoMessage()    {}
-func (*Hardware_Metadata_Facility) Descriptor() ([]byte, []int) {
-	return fileDescriptor_61ac56d7fc2e671f, []int{3, 3, 3}
-}
-
-func (m *Hardware_Metadata_Facility) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Hardware_Metadata_Facility.Unmarshal(m, b)
-}
-func (m *Hardware_Metadata_Facility) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Hardware_Metadata_Facility.Marshal(b, m, deterministic)
-}
-func (m *Hardware_Metadata_Facility) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hardware_Metadata_Facility.Merge(m, src)
-}
-func (m *Hardware_Metadata_Facility) XXX_Size() int {
-	return xxx_messageInfo_Hardware_Metadata_Facility.Size(m)
-}
-func (m *Hardware_Metadata_Facility) XXX_DiscardUnknown() {
-	xxx_messageInfo_Hardware_Metadata_Facility.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Hardware_Metadata_Facility proto.InternalMessageInfo
-
-func (m *Hardware_Metadata_Facility) GetPlanSlug() string {
-	if m != nil {
-		return m.PlanSlug
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Facility) GetPlanVersionSlug() string {
-	if m != nil {
-		return m.PlanVersionSlug
-	}
-	return ""
-}
-
-func (m *Hardware_Metadata_Facility) GetFacilityCode() string {
-	if m != nil {
-		return m.FacilityCode
-	}
-	return ""
-}
-
 type DeleteRequest struct {
-	ID                   string   `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1822,9 +663,9 @@ func (m *DeleteRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_DeleteRequest proto.InternalMessageInfo
 
-func (m *DeleteRequest) GetID() string {
+func (m *DeleteRequest) GetId() string {
 	if m != nil {
-		return m.ID
+		return m.Id
 	}
 	return ""
 }
@@ -1838,25 +679,9 @@ func init() {
 	proto.RegisterType((*Hardware_DHCP_IP)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.DHCP.IP")
 	proto.RegisterType((*Hardware_Netboot)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot")
 	proto.RegisterType((*Hardware_Netboot_IPXE)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot.IPXE")
-	proto.RegisterType((*Hardware_Netboot_Bootstrapper)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot.Bootstrapper")
 	proto.RegisterType((*Hardware_Netboot_Osie)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot.Osie")
 	proto.RegisterType((*Hardware_Network)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Network")
 	proto.RegisterType((*Hardware_Network_Interface)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Network.Interface")
-	proto.RegisterType((*Hardware_Metadata)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata")
-	proto.RegisterType((*Hardware_Metadata_Manufacturer)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Manufacturer")
-	proto.RegisterType((*Hardware_Metadata_Instance)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance")
-	proto.RegisterType((*Hardware_Metadata_Instance_OperatingSystem)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.OperatingSystem")
-	proto.RegisterType((*Hardware_Metadata_Instance_IP)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.IP")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage_Disk)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage.Disk")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage_Disk_Partition)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage.Disk.Partition")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage_File)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage.File")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage_Mount)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage.Mount")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage_Mount_FilesystemOptions)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage.Mount.FilesystemOptions")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage_Filesystem)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage.Filesystem")
-	proto.RegisterType((*Hardware_Metadata_Instance_Storage_RAID)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Instance.Storage.RAID")
-	proto.RegisterType((*Hardware_Metadata_Custom)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Custom")
-	proto.RegisterType((*Hardware_Metadata_Facility)(nil), "github.com.tinkerbell.tink.protos.hardware.Hardware.Metadata.Facility")
 	proto.RegisterType((*DeleteRequest)(nil), "github.com.tinkerbell.tink.protos.hardware.DeleteRequest")
 }
 
@@ -1865,134 +690,64 @@ func init() {
 }
 
 var fileDescriptor_61ac56d7fc2e671f = []byte{
-	// 2017 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x58, 0x5b, 0x8f, 0x1c, 0x47,
-	0x15, 0x56, 0xcf, 0x65, 0x67, 0xe6, 0xcc, 0x5e, 0xec, 0xf2, 0x6d, 0xd2, 0x01, 0x62, 0x36, 0x0a,
-	0x18, 0x23, 0x8d, 0xe3, 0x25, 0x02, 0x81, 0x00, 0xc9, 0xf6, 0xfa, 0x32, 0x21, 0xeb, 0x1d, 0x6a,
-	0x1c, 0x9b, 0x70, 0x6b, 0x6a, 0xba, 0x6b, 0x66, 0x2a, 0xdb, 0xd3, 0xdd, 0xe9, 0xaa, 0xde, 0xf5,
-	0x10, 0x25, 0x42, 0x3c, 0xf0, 0x82, 0x10, 0x11, 0xf0, 0x0b, 0x78, 0xe3, 0x95, 0x3f, 0xc0, 0x4f,
-	0xe0, 0x21, 0xcf, 0xbc, 0x20, 0x2e, 0xbf, 0x80, 0x47, 0x24, 0x74, 0xea, 0xd2, 0xdb, 0x6b, 0x27,
-	0x11, 0xbb, 0xb3, 0xeb, 0xb7, 0x3a, 0x5f, 0x57, 0x7f, 0xe7, 0x9c, 0x3a, 0xe7, 0xd4, 0x39, 0xdd,
-	0x70, 0x65, 0xc6, 0xf2, 0xe8, 0x80, 0xe5, 0xfc, 0x86, 0x5b, 0xf4, 0xb3, 0x3c, 0x55, 0x29, 0xb9,
-	0x3e, 0x15, 0x6a, 0x56, 0x8c, 0xfb, 0x61, 0x3a, 0xef, 0x2b, 0x91, 0xec, 0xf1, 0x7c, 0xcc, 0xe3,
-	0x58, 0x2f, 0xcd, 0x0e, 0xd9, 0x77, 0x6f, 0xf8, 0x9f, 0x9b, 0xa6, 0xe9, 0x34, 0xe6, 0x37, 0x58,
-	0x26, 0x6e, 0xb0, 0x24, 0x49, 0x15, 0x53, 0x22, 0x4d, 0xa4, 0xd9, 0xb7, 0xf9, 0x04, 0xba, 0xc3,
-	0x42, 0xce, 0x28, 0x7f, 0xaf, 0xe0, 0x52, 0x91, 0x07, 0xd0, 0x88, 0x98, 0x62, 0x3d, 0xef, 0xaa,
-	0x77, 0xad, 0xbb, 0xf5, 0x46, 0xff, 0xff, 0xd7, 0xd3, 0x7f, 0x60, 0x17, 0x54, 0x33, 0x6c, 0xb6,
-	0xa0, 0x79, 0x77, 0x9e, 0xa9, 0xc5, 0xe6, 0x77, 0x01, 0xee, 0x73, 0xe5, 0x14, 0x9c, 0x83, 0xfa,
-	0x9c, 0x85, 0x9a, 0xbf, 0x43, 0x71, 0x49, 0xd6, 0xa1, 0x26, 0xb2, 0x5e, 0x4d, 0x03, 0x35, 0x91,
-	0x69, 0x39, 0xea, 0xd5, 0xad, 0x1c, 0x6d, 0xfe, 0xe7, 0xab, 0xd0, 0x76, 0xdc, 0xe4, 0x55, 0x58,
-	0xdb, 0xbd, 0x3d, 0xda, 0x7d, 0xeb, 0xee, 0xa3, 0xbb, 0xc1, 0x9b, 0xa3, 0xdd, 0x87, 0x96, 0x68,
-	0xd5, 0x81, 0x88, 0x91, 0x9f, 0x56, 0x36, 0x45, 0xb3, 0xd0, 0x90, 0x77, 0xb7, 0xbe, 0x79, 0x12,
-	0x6f, 0xfa, 0xdb, 0x0f, 0xee, 0x0c, 0x0f, 0xf9, 0xb7, 0x67, 0x61, 0x46, 0xa6, 0x70, 0xae, 0xe4,
-	0x4f, 0xb8, 0x1a, 0xa7, 0xa9, 0xd2, 0xf6, 0x76, 0xb7, 0xbe, 0x7d, 0x22, 0x15, 0x0f, 0x0d, 0x07,
-	0xdd, 0x70, 0xac, 0x16, 0x78, 0x56, 0xd1, 0x41, 0x9a, 0xef, 0xf5, 0x1a, 0x57, 0xeb, 0xcb, 0x28,
-	0x42, 0x8e, 0x23, 0x8a, 0x10, 0x20, 0xef, 0x40, 0x7b, 0xce, 0x15, 0xd3, 0xa1, 0x6f, 0x6a, 0x4f,
-	0xbe, 0x73, 0x22, 0x05, 0x3b, 0x96, 0x84, 0x96, 0x74, 0xe4, 0x31, 0xb4, 0x9c, 0xe9, 0x2b, 0xcb,
-	0x9d, 0x91, 0x36, 0xdd, 0x91, 0xd9, 0x34, 0x69, 0xb9, 0x34, 0x21, 0x3d, 0x68, 0xed, 0xf3, 0x5c,
-	0x8a, 0x34, 0xe9, 0xb5, 0xaf, 0x7a, 0xd7, 0xea, 0xd4, 0x89, 0xfe, 0xbf, 0xea, 0xd0, 0xc0, 0x28,
-	0x7e, 0x42, 0xee, 0xbd, 0x02, 0xdd, 0xf2, 0x80, 0xcb, 0x24, 0x04, 0x07, 0x0d, 0x32, 0xe2, 0x43,
-	0x7b, 0x96, 0x4a, 0x95, 0xb0, 0x39, 0xb7, 0x29, 0x59, 0xca, 0xe4, 0xf3, 0x00, 0x31, 0x67, 0x92,
-	0x07, 0x4a, 0xcc, 0x79, 0xaf, 0xa1, 0x95, 0x76, 0x34, 0xf2, 0x48, 0xcc, 0x39, 0xf9, 0x22, 0xac,
-	0xe2, 0xb6, 0x40, 0xf2, 0x1c, 0x2d, 0xe9, 0x35, 0xaf, 0xd6, 0xaf, 0x75, 0x68, 0x17, 0xb1, 0x91,
-	0x81, 0x70, 0x0b, 0xbe, 0x5b, 0x6e, 0x59, 0x31, 0x5b, 0x10, 0x73, 0x5b, 0xbe, 0x52, 0x49, 0x81,
-	0x29, 0x53, 0xfc, 0x80, 0x2d, 0xac, 0xd3, 0x65, 0x10, 0xef, 0x1b, 0x98, 0x10, 0x68, 0xb0, 0x3c,
-	0x9c, 0x69, 0xf7, 0x3b, 0x54, 0xaf, 0x11, 0x2b, 0xf8, 0x44, 0xf4, 0x3a, 0x57, 0xbd, 0x6b, 0x6d,
-	0xaa, 0xd7, 0x68, 0xb7, 0x98, 0xb0, 0x90, 0x07, 0xda, 0x2b, 0xd0, 0xbb, 0x3b, 0x1a, 0x79, 0x88,
-	0x6e, 0xbd, 0xa5, 0xeb, 0xb1, 0xbb, 0x44, 0xac, 0xf0, 0xb0, 0xfb, 0x83, 0x21, 0x56, 0xb3, 0xff,
-	0x2e, 0xd4, 0x06, 0x43, 0x0c, 0x0e, 0x8b, 0xa2, 0x9c, 0x4b, 0x69, 0x4f, 0xdf, 0x89, 0xf8, 0x24,
-	0xe1, 0x6a, 0xce, 0xe4, 0x9e, 0x3d, 0x7d, 0x27, 0xe2, 0x13, 0xe7, 0xb0, 0x39, 0x79, 0x27, 0x92,
-	0xcb, 0xb0, 0x32, 0x61, 0x73, 0x11, 0x2f, 0xec, 0xa1, 0x5b, 0xc9, 0xff, 0x43, 0x03, 0x5a, 0xae,
-	0x74, 0x5e, 0x86, 0x0e, 0x8b, 0xe3, 0xf4, 0x20, 0xc8, 0x9e, 0x72, 0xad, 0xb3, 0x4d, 0xdb, 0x1a,
-	0x18, 0x3e, 0xe5, 0xe4, 0x35, 0x58, 0x37, 0x0f, 0x31, 0x93, 0x26, 0x71, 0x7a, 0xa0, 0x75, 0xb7,
-	0xe9, 0x9a, 0x46, 0x9f, 0x58, 0x90, 0xbc, 0x0d, 0x0d, 0x81, 0xaf, 0x9b, 0xda, 0xbe, 0xb5, 0x4c,
-	0x6d, 0xf7, 0x07, 0xc3, 0x1f, 0xdc, 0xa5, 0x9a, 0x8e, 0x7c, 0x08, 0x97, 0xca, 0x90, 0xe2, 0x33,
-	0xa9, 0x72, 0x96, 0x65, 0x3c, 0xd7, 0xde, 0x74, 0xb7, 0x06, 0x4b, 0xe9, 0xb9, 0x5d, 0x21, 0xa4,
-	0x17, 0x9d, 0x9e, 0x2a, 0x8a, 0x6e, 0xa5, 0x52, 0x70, 0x5b, 0xe8, 0xcb, 0xb9, 0xb5, 0x2b, 0x05,
-	0xa7, 0x9a, 0xce, 0x7f, 0x03, 0x1a, 0xe8, 0x24, 0x56, 0x59, 0x91, 0xc7, 0xae, 0xca, 0x8a, 0x3c,
-	0xc6, 0x22, 0x0a, 0xd3, 0x44, 0xf1, 0x44, 0x49, 0x1b, 0xe4, 0x52, 0xf6, 0xd7, 0x61, 0xb5, 0x6a,
-	0x9c, 0xff, 0x7d, 0x68, 0x20, 0x27, 0x79, 0x09, 0xda, 0x63, 0xac, 0xad, 0x43, 0xaa, 0x16, 0xca,
-	0x6f, 0xe7, 0x31, 0x86, 0x7f, 0x8f, 0xe7, 0x09, 0x8f, 0x2d, 0x99, 0x95, 0x10, 0x17, 0x89, 0x50,
-	0xb9, 0x6b, 0x1e, 0x56, 0xf2, 0xff, 0x6e, 0xd2, 0x42, 0xdf, 0x1a, 0xcf, 0xb5, 0x06, 0xef, 0xec,
-	0x5b, 0x43, 0xed, 0x2c, 0x5a, 0xc3, 0x04, 0x40, 0x24, 0x8a, 0xe7, 0x58, 0xb6, 0xb2, 0x57, 0xd7,
-	0x4d, 0xe1, 0xde, 0x32, 0x37, 0x6b, 0x7f, 0xe0, 0xe8, 0x68, 0x85, 0x99, 0xbc, 0x57, 0x71, 0x28,
-	0xe2, 0x13, 0x56, 0xc4, 0xca, 0xe6, 0xe9, 0x69, 0x69, 0x2b, 0x5d, 0xdb, 0x36, 0xf4, 0xfe, 0x9f,
-	0x3d, 0xe8, 0x94, 0x8f, 0xc9, 0x0e, 0x34, 0x4e, 0x27, 0x50, 0x9a, 0xc6, 0xb6, 0xa3, 0x53, 0x8b,
-	0x8b, 0x23, 0xf3, 0xff, 0xea, 0x43, 0xdb, 0x75, 0x3f, 0x72, 0x11, 0x9a, 0x52, 0x31, 0xc5, 0x6d,
-	0xe6, 0x1a, 0x01, 0x6f, 0xfb, 0x71, 0x9a, 0x44, 0x22, 0x99, 0x06, 0xf3, 0x34, 0xe2, 0x5a, 0x7f,
-	0x9d, 0x76, 0x2d, 0xb6, 0x93, 0x46, 0x9c, 0x24, 0xb0, 0x3a, 0x67, 0x49, 0x31, 0x61, 0xa1, 0x2a,
-	0x72, 0x9e, 0xdb, 0x9b, 0xe7, 0xcd, 0xa5, 0x7a, 0x71, 0x7f, 0xa7, 0xc2, 0x48, 0x8f, 0xf0, 0x93,
-	0x31, 0xb4, 0x45, 0x22, 0x15, 0x4b, 0x42, 0xbe, 0x54, 0x54, 0x4b, 0x5d, 0x03, 0xcb, 0x46, 0x4b,
-	0x5e, 0xf2, 0x63, 0x58, 0x09, 0x0b, 0xa9, 0xd2, 0xb9, 0xbd, 0x70, 0xb6, 0x97, 0xd3, 0x70, 0x47,
-	0x73, 0x51, 0xcb, 0x89, 0x1e, 0x4c, 0x58, 0x28, 0x62, 0xa1, 0x16, 0x76, 0xbe, 0x58, 0xd2, 0x83,
-	0x7b, 0x96, 0x8d, 0x96, 0xbc, 0xfe, 0x16, 0xac, 0x56, 0xcf, 0xd0, 0x8e, 0x1e, 0x5e, 0x39, 0x7a,
-	0x10, 0x68, 0xc8, 0xb8, 0x98, 0xda, 0xeb, 0x48, 0xaf, 0xfd, 0x7f, 0x5e, 0x80, 0xb6, 0x3b, 0x8c,
-	0xe7, 0x5e, 0x28, 0xf3, 0xa3, 0x56, 0xcd, 0x8f, 0xcf, 0x9a, 0x35, 0x8e, 0xb4, 0xb3, 0xc6, 0x33,
-	0xed, 0xec, 0x32, 0xac, 0xe4, 0x5c, 0x86, 0x85, 0xb9, 0xd2, 0xdb, 0xd4, 0x4a, 0xe4, 0x23, 0x0f,
-	0x7a, 0x69, 0xc6, 0x73, 0xa6, 0x30, 0xe7, 0xe4, 0x42, 0x2a, 0x3e, 0x0f, 0xdc, 0x90, 0x64, 0x0e,
-	0xeb, 0xf1, 0xe9, 0x84, 0xbb, 0xbf, 0xeb, 0xd4, 0x8c, 0xb4, 0x16, 0x7a, 0x39, 0x3d, 0x0a, 0x3c,
-	0x36, 0x5a, 0x71, 0xf6, 0x60, 0xf1, 0x01, 0x5b, 0x48, 0xed, 0x48, 0x4b, 0x9b, 0xdb, 0x31, 0x08,
-	0x7a, 0xf2, 0x25, 0xd8, 0xc0, 0x16, 0x19, 0xc8, 0x30, 0x17, 0x99, 0xd2, 0x97, 0xbf, 0x99, 0x66,
-	0xd6, 0x10, 0x1e, 0x69, 0x14, 0x5b, 0xc0, 0x8f, 0xa0, 0x2e, 0x32, 0xd9, 0xeb, 0xe8, 0x6b, 0x6f,
-	0x70, 0x4a, 0x3e, 0x0c, 0x86, 0x14, 0x59, 0x31, 0x0e, 0x85, 0xe4, 0xb9, 0x1e, 0x86, 0xcd, 0x74,
-	0x54, 0xca, 0x64, 0x0b, 0x2e, 0x85, 0xf9, 0x22, 0x53, 0x3c, 0x0a, 0xf2, 0x34, 0x55, 0x41, 0xc6,
-	0xa4, 0x3c, 0x48, 0xf3, 0x48, 0xcf, 0x4b, 0x1d, 0x7a, 0xc1, 0x3e, 0xa4, 0x69, 0xaa, 0x86, 0xf6,
-	0x11, 0xa6, 0x87, 0x62, 0x53, 0xd9, 0x5b, 0xd5, 0xd3, 0x9d, 0x5e, 0x93, 0x19, 0xb4, 0xa4, 0x4a,
-	0x73, 0x36, 0xe5, 0xbd, 0x35, 0x1d, 0x88, 0x87, 0xa7, 0xe4, 0xc4, 0xc8, 0xb0, 0x52, 0x47, 0x8f,
-	0x8d, 0x54, 0xca, 0x59, 0xb0, 0xc7, 0x17, 0xb2, 0xb7, 0xae, 0x2d, 0x68, 0x49, 0x39, 0xfb, 0x1e,
-	0x5f, 0x48, 0xfc, 0x98, 0xb2, 0xd3, 0x74, 0x90, 0x73, 0x16, 0x2d, 0x7a, 0x1b, 0x3a, 0x1e, 0xab,
-	0x16, 0xa4, 0x88, 0xf9, 0xbf, 0xf1, 0x60, 0xe3, 0x99, 0xe8, 0x96, 0x09, 0xef, 0x1d, 0x26, 0x3c,
-	0x26, 0x61, 0x24, 0xa4, 0xca, 0x53, 0xd7, 0x95, 0x8d, 0x54, 0x9d, 0xcb, 0xed, 0x18, 0x67, 0x45,
-	0xcc, 0x69, 0x31, 0x67, 0x53, 0x1e, 0x28, 0x36, 0xd5, 0x39, 0xdd, 0xa1, 0x6d, 0x0d, 0x3c, 0x62,
-	0x53, 0x72, 0x05, 0x5a, 0xa9, 0x0c, 0xb4, 0x96, 0xa6, 0xe1, 0x4b, 0xe5, 0x08, 0x0b, 0xeb, 0x8f,
-	0xde, 0x8b, 0x9b, 0x28, 0x11, 0xcf, 0x8a, 0x71, 0x2c, 0x42, 0x57, 0x59, 0x46, 0x22, 0x5f, 0x00,
-	0x98, 0xb3, 0x84, 0x4d, 0xf9, 0x9c, 0x27, 0x4a, 0x97, 0x52, 0x9b, 0x56, 0x10, 0xff, 0xdf, 0x5d,
-	0x68, 0xd9, 0x48, 0xe0, 0xb0, 0x79, 0xd8, 0x41, 0x85, 0xdc, 0x43, 0x83, 0x31, 0x0c, 0xe5, 0x20,
-	0xb2, 0x8d, 0xe0, 0x91, 0x2f, 0xdb, 0x9c, 0x89, 0xa8, 0x57, 0xd3, 0xbb, 0xca, 0xf1, 0x82, 0x32,
-	0x11, 0x91, 0x9b, 0x50, 0x8e, 0x74, 0xc1, 0x44, 0xc4, 0xdc, 0xd4, 0xb4, 0xe9, 0xff, 0x1d, 0x7a,
-	0xc1, 0x3d, 0xbb, 0x77, 0xf8, 0x88, 0x08, 0x68, 0x1a, 0xad, 0xe6, 0xc3, 0x71, 0x74, 0xba, 0x79,
-	0xd6, 0x47, 0xe3, 0xa9, 0xd1, 0x40, 0xa6, 0xd0, 0xd0, 0x96, 0x37, 0xcf, 0x44, 0x13, 0xbd, 0x35,
-	0xd8, 0xa6, 0x5a, 0x01, 0x79, 0x1f, 0xba, 0x55, 0xef, 0x57, 0xb4, 0xbe, 0x77, 0x4e, 0x59, 0xdf,
-	0xe1, 0x21, 0xd2, 0xaa, 0x36, 0xff, 0x2f, 0x35, 0x68, 0xa0, 0xd7, 0x3a, 0xe3, 0xf9, 0xbe, 0x08,
-	0x5d, 0x9b, 0xb7, 0x12, 0xde, 0x71, 0x07, 0x22, 0xc3, 0xb4, 0x1e, 0xc7, 0xdc, 0x7e, 0x59, 0x74,
-	0x10, 0x79, 0x84, 0x00, 0xf9, 0x00, 0x20, 0x63, 0xb9, 0x12, 0xfa, 0x2f, 0x8c, 0x9d, 0xdc, 0x7e,
-	0x72, 0x06, 0x51, 0xe9, 0x0f, 0x9d, 0x16, 0x5a, 0x51, 0xe8, 0xff, 0xc2, 0x83, 0x4e, 0xf9, 0x04,
-	0x3b, 0x51, 0xcc, 0xc6, 0xdc, 0xcd, 0xd8, 0x46, 0x40, 0xcf, 0x92, 0x62, 0x3e, 0xe6, 0xb9, 0x9d,
-	0x51, 0xac, 0xa4, 0xeb, 0x5e, 0xfc, 0xdc, 0x74, 0xa7, 0x3a, 0xd5, 0x6b, 0xdb, 0xcb, 0x72, 0x65,
-	0x2b, 0xc7, 0x08, 0x58, 0xdb, 0x6a, 0x91, 0xf1, 0x60, 0x5a, 0xe8, 0x7c, 0xd0, 0xb5, 0x8d, 0xc0,
-	0xfd, 0x42, 0x44, 0x7e, 0x02, 0x0d, 0x3c, 0x5c, 0xa4, 0xcb, 0x98, 0x9a, 0xb9, 0x6b, 0x04, 0xd7,
-	0x9f, 0xf5, 0xad, 0x80, 0xfb, 0xf5, 0xe0, 0x64, 0xd5, 0xe3, 0x5a, 0x7f, 0x6d, 0x88, 0xc8, 0x2a,
-	0xc7, 0x25, 0x22, 0x53, 0xab, 0xb4, 0x4e, 0x71, 0xe9, 0xff, 0xb7, 0x06, 0xcd, 0x9d, 0xb4, 0x48,
-	0xd4, 0xa7, 0x86, 0x0c, 0xeb, 0x3f, 0xcd, 0xe7, 0x4c, 0xb9, 0xcb, 0xcb, 0x48, 0x58, 0x3c, 0x3a,
-	0xf4, 0x36, 0x4c, 0xa3, 0x33, 0x48, 0x31, 0x6a, 0x34, 0x90, 0x0f, 0x61, 0x25, 0xcc, 0x39, 0x0e,
-	0x05, 0x66, 0x10, 0x9b, 0x9c, 0xb2, 0x2e, 0x7d, 0x00, 0x95, 0xa4, 0xde, 0xcd, 0x74, 0x3e, 0x50,
-	0xab, 0x15, 0xe3, 0x98, 0xa5, 0x22, 0x51, 0x36, 0x5a, 0x46, 0xf0, 0xef, 0xc0, 0xf9, 0xe7, 0x5e,
-	0xc1, 0xad, 0x93, 0x34, 0x0f, 0xdd, 0x77, 0xb5, 0x11, 0xf0, 0x76, 0x4d, 0xcd, 0x06, 0x7b, 0x75,
-	0x39, 0xd1, 0x7f, 0x0a, 0x70, 0x48, 0x42, 0xde, 0x85, 0xe6, 0x1c, 0x6d, 0xb1, 0x13, 0xfd, 0xa3,
-	0xb3, 0xf0, 0x93, 0x1a, 0x15, 0xfe, 0xcf, 0xa0, 0x81, 0xd7, 0x06, 0x66, 0x8e, 0x1e, 0xab, 0x6c,
-	0xa6, 0xe9, 0x91, 0x0a, 0x53, 0x9f, 0xef, 0x97, 0x5f, 0x91, 0x46, 0x40, 0x2f, 0x4c, 0x4e, 0xb8,
-	0x4b, 0xd5, 0x89, 0x3a, 0xd1, 0x33, 0x96, 0xf3, 0x32, 0xd1, 0x51, 0xf0, 0xff, 0xe6, 0xc1, 0x8a,
-	0x19, 0x49, 0xc9, 0x9f, 0x3c, 0x78, 0x2d, 0xcb, 0xb9, 0x1e, 0x7c, 0xe3, 0x98, 0x47, 0xc1, 0xa7,
-	0xce, 0x5e, 0xde, 0x99, 0xce, 0x5e, 0x9b, 0x55, 0x23, 0x76, 0x3f, 0x79, 0x0e, 0xfb, 0x32, 0x6c,
-	0x64, 0xb9, 0xd8, 0x67, 0x8a, 0x07, 0xb2, 0x18, 0x27, 0x5c, 0xb9, 0xa0, 0xad, 0x5b, 0x78, 0x64,
-	0x50, 0xff, 0x29, 0xb4, 0xdd, 0x44, 0x8c, 0x45, 0x9d, 0xc5, 0x2c, 0x09, 0x2a, 0xbd, 0xbf, 0x8d,
-	0x00, 0xf6, 0x65, 0x72, 0x1d, 0xce, 0xeb, 0x87, 0xd6, 0xc7, 0xa0, 0x32, 0x11, 0x6f, 0xe0, 0x03,
-	0xab, 0x59, 0xef, 0x7d, 0x15, 0xd6, 0xdc, 0x70, 0x1d, 0x84, 0xae, 0xa2, 0x3b, 0x74, 0xd5, 0x81,
-	0x77, 0xd2, 0x88, 0x6f, 0xbe, 0x02, 0x6b, 0xdb, 0x3c, 0xe6, 0x8a, 0xbb, 0x5f, 0xc7, 0xeb, 0x50,
-	0x1b, 0x6c, 0xbb, 0x29, 0x7a, 0xb0, 0xbd, 0xf5, 0x71, 0x0b, 0x36, 0xdc, 0xb1, 0x8c, 0x78, 0xae,
-	0x0b, 0xf9, 0xd7, 0x1e, 0x34, 0x86, 0x85, 0x9c, 0x91, 0x6f, 0x1c, 0xe7, 0x70, 0x2b, 0x7f, 0xc0,
-	0xfd, 0x9b, 0xc7, 0x79, 0xd1, 0xfc, 0xe1, 0xbe, 0xf2, 0xcb, 0x8f, 0xff, 0xf1, 0xfb, 0xda, 0xf9,
-	0xcd, 0xd5, 0x1b, 0xfb, 0x37, 0xcb, 0x3f, 0xf5, 0xdf, 0xf2, 0xae, 0x93, 0xdf, 0x79, 0xd0, 0xbc,
-	0xbd, 0xd8, 0xb9, 0x75, 0x87, 0x7c, 0xfd, 0x38, 0xac, 0x87, 0xbf, 0xcb, 0xfd, 0x13, 0xfd, 0x81,
-	0xdf, 0x7c, 0x59, 0x1b, 0x74, 0x69, 0xf3, 0x5c, 0xd5, 0xa0, 0x1b, 0x73, 0x16, 0xa2, 0x51, 0x1f,
-	0x79, 0xd0, 0xb8, 0xbd, 0x18, 0x0c, 0x5f, 0xb0, 0x4d, 0xbe, 0xb6, 0xe9, 0xe2, 0xe6, 0xc6, 0x11,
-	0x9b, 0x44, 0x86, 0x26, 0xfd, 0xd6, 0x98, 0xb4, 0xfd, 0x82, 0x4d, 0x7a, 0x49, 0x9b, 0x74, 0x81,
-	0x9c, 0x3f, 0x62, 0xd2, 0xfb, 0x22, 0xfa, 0x80, 0xfc, 0xca, 0x83, 0xfa, 0xad, 0x38, 0x26, 0xc7,
-	0xcf, 0x86, 0x13, 0xda, 0x72, 0x51, 0xdb, 0xb2, 0x4e, 0x8e, 0xe4, 0xd0, 0xeb, 0x1e, 0x39, 0x80,
-	0xe6, 0x13, 0xa6, 0xc2, 0xd9, 0x8b, 0x3d, 0x9a, 0xd7, 0x3d, 0xb2, 0x0f, 0x2b, 0xa6, 0xfc, 0xc8,
-	0xb1, 0xfe, 0xb9, 0x1c, 0x29, 0xd9, 0x13, 0x14, 0xd3, 0x6d, 0xf8, 0x61, 0xdb, 0x21, 0xe3, 0x15,
-	0xbd, 0xe5, 0x6b, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff, 0x64, 0x79, 0xa2, 0x8c, 0x08, 0x1b, 0x00,
-	0x00,
+	// 907 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x55, 0xcd, 0x6e, 0x1c, 0x45,
+	0x10, 0xd6, 0xec, 0xcc, 0xee, 0xce, 0x96, 0x13, 0x67, 0xd2, 0x04, 0x32, 0x99, 0x80, 0x30, 0x23,
+	0x21, 0x59, 0x3e, 0xcc, 0x26, 0x26, 0x02, 0x81, 0x10, 0x92, 0x1d, 0x07, 0xbc, 0x16, 0x31, 0xcb,
+	0x40, 0x30, 0xe2, 0x62, 0xf5, 0xce, 0xf6, 0x7a, 0x1b, 0xcf, 0xcf, 0x32, 0xd3, 0x9b, 0xcd, 0x0a,
+	0x71, 0xe1, 0xc0, 0x01, 0x0e, 0xfc, 0xbd, 0x03, 0x0f, 0xc0, 0x05, 0xde, 0x83, 0x57, 0xe0, 0xce,
+	0x2b, 0xa0, 0xaa, 0xe9, 0xde, 0xd8, 0xc0, 0x81, 0x5d, 0x47, 0xbe, 0x75, 0x7d, 0x5d, 0xf5, 0xd5,
+	0xd7, 0xd5, 0xd5, 0xd5, 0x70, 0x73, 0xcc, 0xcb, 0xe1, 0x8c, 0x97, 0xa2, 0x6b, 0x16, 0xd1, 0xa4,
+	0x2c, 0x54, 0xc1, 0xb6, 0x4e, 0xa4, 0x1a, 0x4f, 0x07, 0x51, 0x52, 0x64, 0x91, 0x92, 0xf9, 0xa9,
+	0x28, 0x07, 0x22, 0x4d, 0x69, 0x59, 0x7b, 0x54, 0x91, 0x89, 0x08, 0x5e, 0x3c, 0x29, 0x8a, 0x93,
+	0x54, 0x74, 0xf9, 0x44, 0x76, 0x79, 0x9e, 0x17, 0x8a, 0x2b, 0x59, 0xe4, 0x55, 0xed, 0x17, 0x1e,
+	0xc1, 0x5a, 0x7f, 0x5a, 0x8d, 0x63, 0xf1, 0xc5, 0x54, 0x54, 0x8a, 0xed, 0x83, 0x33, 0xe4, 0x8a,
+	0xfb, 0xd6, 0x86, 0xb5, 0xb9, 0xb6, 0x7d, 0x2f, 0xfa, 0xff, 0x79, 0xa2, 0x7d, 0xbd, 0x88, 0x89,
+	0x21, 0x6c, 0x43, 0xf3, 0x41, 0x36, 0x51, 0xf3, 0xf0, 0x1d, 0x80, 0xf7, 0x84, 0x32, 0x09, 0x3c,
+	0xb0, 0x33, 0x9e, 0x10, 0x7f, 0x27, 0xc6, 0x25, 0x5b, 0x87, 0x86, 0x9c, 0xf8, 0x0d, 0x02, 0x1a,
+	0x72, 0x42, 0xf6, 0xd0, 0xb7, 0xb5, 0x3d, 0x0c, 0x7f, 0x03, 0x70, 0x0d, 0x37, 0xfb, 0x04, 0xda,
+	0xb9, 0x50, 0xb3, 0xa2, 0x3c, 0xf5, 0x5b, 0x24, 0xf1, 0xed, 0x55, 0x24, 0x46, 0x87, 0x35, 0x47,
+	0x6c, 0xc8, 0x74, 0xd2, 0xb6, 0x49, 0xca, 0x7c, 0x68, 0x3f, 0x16, 0x65, 0x25, 0x8b, 0xdc, 0x77,
+	0x37, 0xac, 0x4d, 0x3b, 0x36, 0x26, 0x0b, 0xc0, 0xcd, 0x84, 0xe2, 0x54, 0xa5, 0x0e, 0xf9, 0x2f,
+	0xec, 0xe0, 0x17, 0x1b, 0x9c, 0xbd, 0xfd, 0xfb, 0xfd, 0xff, 0x38, 0x65, 0x00, 0xee, 0xb8, 0xa8,
+	0x54, 0xce, 0x33, 0xa1, 0xcf, 0xb6, 0xb0, 0xd9, 0x4b, 0x00, 0xa9, 0xe0, 0x95, 0x38, 0x56, 0x32,
+	0x13, 0xbe, 0x43, 0xf9, 0x3a, 0x84, 0x7c, 0x2c, 0x33, 0xc1, 0x5e, 0x81, 0x2b, 0xe8, 0x76, 0x5c,
+	0x89, 0x12, 0x45, 0xf8, 0xcd, 0x0d, 0x7b, 0xb3, 0x13, 0xaf, 0x21, 0xf6, 0x51, 0x0d, 0xa1, 0x0b,
+	0xc6, 0x2e, 0x5c, 0x5a, 0xb5, 0x0b, 0x62, 0xc6, 0x85, 0x81, 0xc3, 0xcb, 0x64, 0x4c, 0xc7, 0xe9,
+	0xc4, 0xb4, 0x46, 0x6c, 0x2a, 0x46, 0x92, 0xce, 0xe1, 0xc6, 0xb4, 0x46, 0x31, 0x72, 0xc4, 0x13,
+	0x71, 0x4c, 0x52, 0x81, 0xbc, 0x3b, 0x84, 0x1c, 0xa2, 0xd6, 0xf7, 0xe9, 0xb6, 0xd6, 0x2e, 0x50,
+	0x7b, 0x2c, 0x50, 0xd4, 0xeb, 0xe3, 0x5d, 0x07, 0x9f, 0x43, 0xa3, 0xd7, 0xc7, 0x62, 0xf3, 0xe1,
+	0xb0, 0x14, 0x55, 0xa5, 0x2b, 0x66, 0x4c, 0xdc, 0xc9, 0x85, 0xca, 0x78, 0x75, 0xaa, 0x1b, 0xc4,
+	0x98, 0xb8, 0x73, 0xc2, 0x95, 0x98, 0xf1, 0xb9, 0x2e, 0xa7, 0x31, 0xd9, 0x0b, 0xd0, 0x1a, 0xf1,
+	0x4c, 0xa6, 0x73, 0x5d, 0x49, 0x6d, 0x1d, 0x38, 0x6e, 0xc3, 0xb3, 0x0f, 0x1c, 0xb7, 0xed, 0xb9,
+	0xc1, 0xb7, 0x36, 0xb4, 0x0f, 0x85, 0x1a, 0x14, 0x85, 0x62, 0xb7, 0xa1, 0xc3, 0xd3, 0xb4, 0x98,
+	0x1d, 0x4f, 0x9e, 0x08, 0xca, 0xef, 0xc6, 0x2e, 0x01, 0xfd, 0x27, 0x82, 0xbd, 0x0a, 0xeb, 0xf5,
+	0x26, 0x76, 0xc9, 0x28, 0x2d, 0x66, 0xa4, 0xc3, 0x8d, 0xaf, 0x12, 0x7a, 0xa4, 0x41, 0xf6, 0x08,
+	0x1c, 0x89, 0xe1, 0x36, 0xd5, 0x65, 0x67, 0xd5, 0x9e, 0x44, 0x3d, 0x51, 0xaf, 0xff, 0xe9, 0x83,
+	0x98, 0xe8, 0x90, 0xb6, 0xa8, 0xa4, 0xf0, 0x9b, 0xcf, 0x80, 0xf6, 0x83, 0x4a, 0x8a, 0x98, 0xe8,
+	0x82, 0x7b, 0xe0, 0x60, 0x12, 0xec, 0xd2, 0x69, 0x99, 0x9a, 0x2e, 0x9d, 0x96, 0x29, 0x76, 0x69,
+	0x52, 0xe4, 0x4a, 0xe4, 0xaa, 0xd2, 0x05, 0x5f, 0xd8, 0xc1, 0x87, 0xe0, 0x20, 0x07, 0xbb, 0x05,
+	0xee, 0x00, 0x9b, 0xf5, 0x69, 0x68, 0x1b, 0xed, 0x47, 0x65, 0x8a, 0xa5, 0x3f, 0x15, 0x65, 0x2e,
+	0x52, 0x1d, 0xac, 0x2d, 0xc4, 0x65, 0x2e, 0x55, 0x69, 0x9e, 0xb5, 0xb6, 0x0e, 0x1c, 0xd7, 0xf1,
+	0x9a, 0xc1, 0xef, 0x0d, 0xba, 0x0c, 0x7a, 0x87, 0x23, 0x00, 0x99, 0x2b, 0x51, 0x62, 0xbf, 0x55,
+	0xbe, 0xbd, 0x61, 0x6f, 0xae, 0x6d, 0xbf, 0x7b, 0x91, 0x27, 0x1e, 0xf5, 0x0c, 0x5d, 0x7c, 0x86,
+	0x39, 0xf8, 0xd5, 0x82, 0xce, 0x62, 0x87, 0x3d, 0x04, 0x67, 0x38, 0x4e, 0x26, 0x7a, 0xea, 0xbd,
+	0xb9, 0x72, 0x5b, 0xc7, 0x44, 0xa3, 0x87, 0x14, 0x56, 0x9d, 0xea, 0x70, 0x81, 0x21, 0x85, 0x1c,
+	0xb1, 0x21, 0x3b, 0x70, 0x5c, 0xcb, 0x6b, 0x2c, 0xfa, 0xd8, 0xf1, 0x9a, 0xff, 0x40, 0x6c, 0xcf,
+	0x59, 0xe0, 0x4d, 0xaf, 0x15, 0xbe, 0x0c, 0x57, 0xf7, 0x44, 0x2a, 0x94, 0x30, 0xc3, 0xb7, 0x9e,
+	0x72, 0x96, 0x99, 0x72, 0xdb, 0x7f, 0xb5, 0xe1, 0x9a, 0x49, 0x87, 0x73, 0x42, 0x26, 0x82, 0x7d,
+	0x67, 0x81, 0x83, 0x3f, 0x02, 0x7b, 0x63, 0x19, 0xd1, 0x67, 0xfe, 0x90, 0xe0, 0xee, 0x32, 0x81,
+	0xf5, 0x1f, 0x71, 0xf3, 0xeb, 0x3f, 0xfe, 0xfc, 0xb9, 0x71, 0x3d, 0xbc, 0xd2, 0x7d, 0x7c, 0x77,
+	0xf1, 0xd7, 0xbd, 0x65, 0x6d, 0xb1, 0x9f, 0x2c, 0x68, 0xee, 0xce, 0x1f, 0xee, 0xdc, 0x67, 0xaf,
+	0x2f, 0xc3, 0xfa, 0xf4, 0xc3, 0x09, 0x56, 0xfa, 0xc3, 0xc2, 0xdb, 0x24, 0xe8, 0xf9, 0xd0, 0x3b,
+	0x2b, 0xa8, 0x9b, 0xf1, 0x04, 0x45, 0xfd, 0x60, 0x81, 0xb3, 0x3b, 0xef, 0xf5, 0x2f, 0x59, 0x53,
+	0x40, 0x9a, 0x6e, 0x84, 0xd7, 0xce, 0x69, 0x92, 0x13, 0x94, 0xf4, 0x7d, 0x2d, 0x69, 0xef, 0x92,
+	0x25, 0xdd, 0x22, 0x49, 0xcf, 0xb1, 0xeb, 0xe7, 0x24, 0x7d, 0x29, 0x87, 0x5f, 0xb1, 0x6f, 0x2c,
+	0xb0, 0x77, 0xd2, 0x94, 0x2d, 0xdf, 0x0d, 0x2b, 0x6a, 0xb9, 0x41, 0x5a, 0xd6, 0xd9, 0xb9, 0x1e,
+	0xba, 0x63, 0xb1, 0x19, 0x34, 0x8f, 0xb8, 0x4a, 0xc6, 0x97, 0x5b, 0x9a, 0x3b, 0x16, 0xfb, 0xd1,
+	0x82, 0x56, 0xfd, 0xfe, 0xd8, 0x52, 0x23, 0xe5, 0xdc, 0x9b, 0x5d, 0xe5, 0x35, 0xe9, 0x5b, 0xd9,
+	0xfa, 0xf7, 0xad, 0xec, 0xc2, 0x67, 0xae, 0x01, 0x06, 0x2d, 0x8a, 0x7e, 0xed, 0xef, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0x15, 0xc5, 0x90, 0xef, 0x66, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.

@@ -38,7 +38,7 @@ message Empty {
 message WorkflowTemplate {
 	string id = 1;
 	string name = 2;
-	bytes OBSOLETE_data = 3; // obsolete
+	reserved 3; // obsolete data
 	google.protobuf.Timestamp createdAt = 4;
 	google.protobuf.Timestamp updatedAt = 5;
 	google.protobuf.Timestamp deletedAt = 6;
