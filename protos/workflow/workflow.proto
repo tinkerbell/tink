@@ -29,6 +29,7 @@ service WorkflowSvc {
             get: "/v1/workflows"
         };
     };
+
     rpc GetWorkflowContext(GetRequest) returns (WorkflowContext) {
         option (google.api.http) = {
             get: "/v1/workflows/{id}/state"
@@ -39,7 +40,7 @@ service WorkflowSvc {
             get: "/v1/workflows/{id}/events"
         };
     };
-    rpc GetWorkflowContexts(WorkflowContextRequest) returns (WorkflowContextList) {}
+    rpc GetWorkflowContexts(WorkflowContextRequest) returns (stream WorkflowContext) {}
     rpc GetWorkflowActions(WorkflowActionsRequest) returns (WorkflowActionList) {}
     rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}
     rpc GetWorkflowData(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}

@@ -46,25 +46,20 @@ func processWorkflowActions(client pb.WorkflowSvcClient) error {
 	}
 	log = logger.WithField("worker_id", workerID)
 	ctx := context.Background()
+	var err error
+	cli, err = initializeDockerClient()
+	if err != nil {
+		return err
+	}
 	for {
-		err := fetchLatestContext(ctx, client, workerID)
+		res, err := client.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
 		if err != nil {
-			return err
+			fmt.Println("failed to get context")
 		}
-
-		if allWorkflowsFinished() {
-			log.Infoln("All workflows finished")
-			return nil
-		}
-
-		cli, err = initializeDockerClient()
-		if err != nil {
-			return err
-		}
-
-		for wfID, wfContext := range workflowcontexts {
-			actions, ok := workflowactions[wfID]
-			if !ok {
+		for wfContext, err := res.Recv(); err == nil && wfContext != nil; wfContext, err = res.Recv() {
+			wfID := wfContext.GetWorkflowId()
+			actions, err := client.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfID})
+			if err != nil {
 				return fmt.Errorf("can't find actions for workflow %s", wfID)
 			}
 
@@ -121,9 +116,6 @@ func processWorkflowActions(client pb.WorkflowSvcClient) error {
 					}
 				}
 				log.Printf("Starting with action %s\n", actions.GetActionList()[actionIndex])
-			} else {
-				log.Infof("Sleep for %d seconds\n", retryInterval)
-				time.Sleep(retryInterval)
 			}
 
 			for turn {
@@ -207,39 +199,9 @@ func processWorkflowActions(client pb.WorkflowSvcClient) error {
 				}
 			}
 		}
+		// sleep for 3 seconds before asking for new workflows
+		time.Sleep(retryInterval * time.Second)
 	}
-}
-
-func fetchLatestContext(ctx context.Context, client pb.WorkflowSvcClient, workerID string) error {
-	log.Debugf("Fetching latest context for worker %s\n", workerID)
-	res, err := client.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
-	if err != nil {
-		return err
-	}
-	for _, wfContext := range res.GetWorkflowContexts() {
-		workflowcontexts[wfContext.WorkflowId] = wfContext
-		if _, ok := workflowactions[wfContext.WorkflowId]; !ok {
-			wfActions, err := client.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfContext.WorkflowId})
-			if err != nil {
-				return err
-			}
-			workflowactions[wfContext.WorkflowId] = wfActions
-		}
-	}
-	return nil
-}
-
-func allWorkflowsFinished() bool {
-	for wfID, wfContext := range workflowcontexts {
-		actions := workflowactions[wfID]
-		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_FAILED || wfContext.GetCurrentActionState() == pb.ActionState_ACTION_TIMEOUT {
-			continue
-		}
-		if !(wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions)) {
-			return false
-		}
-	}
-	return true
 }
 
 func exitWithGrpcError(err error) {

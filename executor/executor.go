@@ -18,30 +18,25 @@ var (
 )
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
-func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest, sdb *sql.DB) (*pb.WorkflowContextList, error) {
+func GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_GetWorkflowContextsServer, sdb *sql.DB) error {
 	if len(req.WorkerId) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "worker_id is invalid")
+		return status.Errorf(codes.InvalidArgument, "worker_id is invalid")
 	}
-	wfs, _ := db.GetfromWfWorkflowTable(context, sdb, req.WorkerId)
+	wfs, _ := db.GetfromWfWorkflowTable(sdb, req.WorkerId)
 	if wfs == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "worker not found for any workflows")
+		return status.Errorf(codes.InvalidArgument, "No workflow found for worker %s ", req.GetWorkerId())
 	}
-
-	wfContexts := []*pb.WorkflowContext{}
 
 	for _, wf := range wfs {
-		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
+		wfContext, err := db.GetWorkflowContexts(context.Background(), sdb, wf)
 		if err != nil {
-			return nil, status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
+			return status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
 		}
-		if isApplicableToSend(context, wfContext, req.WorkerId, sdb) {
-			wfContexts = append(wfContexts, wfContext)
+		if isApplicableToSend(context.Background(), wfContext, req.WorkerId, sdb) {
+			stream.Send(wfContext)
 		}
 	}
-
-	return &pb.WorkflowContextList{
-		WorkflowContexts: wfContexts,
-	}, nil
+	return nil
 }
 
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions
@@ -173,15 +168,18 @@ func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, 
 		if err != nil {
 			return false
 		}
-		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS && isLastAction(wfContext, actions) {
-			log.Println("This workflow is completed ", wfContext.GetWorkflowId())
-		} else if int(wfContext.GetCurrentActionIndex()) == 0 {
-			if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
-				log.Println("Send the workflow context ", wfContext.GetWorkflowId())
-				return true
+		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS {
+			if isLastAction(wfContext, actions) {
+				return false
+			}
+			if wfContext.GetCurrentActionIndex() == 0 {
+				if actions.ActionList[wfContext.GetCurrentActionIndex()+1].GetWorkerId() == workerID {
+					log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+					return true
+				}
 			}
 		} else {
-			if actions.ActionList[wfContext.GetCurrentActionIndex()+1].GetWorkerId() == workerID {
+			if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
 				log.Println("Send the workflow context ", wfContext.GetWorkflowId())
 				return true
 			}
