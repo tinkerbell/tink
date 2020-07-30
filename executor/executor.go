@@ -162,27 +162,28 @@ func GetWorkflowDataVersion(context context.Context, workflowID string, sdb *sql
 // The below function check whether a particular workflow context is applicable or needed to
 // be send to a worker based on the state of the current action and the targeted workerID.
 func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, workerID string, sdb *sql.DB) bool {
-	if wfContext.GetCurrentActionState() != pb.ActionState_ACTION_FAILED ||
-		wfContext.GetCurrentActionState() != pb.ActionState_ACTION_TIMEOUT {
-		actions, err := GetWorkflowActions(context, &pb.WorkflowActionsRequest{WorkflowId: wfContext.GetWorkflowId()}, sdb)
-		if err != nil {
+	if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_FAILED ||
+		wfContext.GetCurrentActionState() == pb.ActionState_ACTION_TIMEOUT {
+		return false
+	}
+	actions, err := GetWorkflowActions(context, &pb.WorkflowActionsRequest{WorkflowId: wfContext.GetWorkflowId()}, sdb)
+	if err != nil {
+		return false
+	}
+	if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS {
+		if isLastAction(wfContext, actions) {
 			return false
 		}
-		if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS {
-			if isLastAction(wfContext, actions) {
-				return false
-			}
-			if wfContext.GetCurrentActionIndex() == 0 {
-				if actions.ActionList[wfContext.GetCurrentActionIndex()+1].GetWorkerId() == workerID {
-					log.Println("Send the workflow context ", wfContext.GetWorkflowId())
-					return true
-				}
-			}
-		} else {
-			if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
+		if wfContext.GetCurrentActionIndex() == 0 {
+			if actions.ActionList[wfContext.GetCurrentActionIndex()+1].GetWorkerId() == workerID {
 				log.Println("Send the workflow context ", wfContext.GetWorkflowId())
 				return true
 			}
+		}
+	} else {
+		if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
+			log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+			return true
 		}
 	}
 	return false
