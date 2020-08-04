@@ -344,8 +344,8 @@ func GetWorkflowDataVersion(ctx context.Context, db *sql.DB, workflowID string) 
 	return getLatestVersionWfData(ctx, db, workflowID)
 }
 
-// GetfromWfWorkflowTable : gives you the current workflow
-func GetfromWfWorkflowTable(ctx context.Context, db *sql.DB, id string) ([]string, error) {
+// GetfromWfWorkflowTable : returns the list of workflows for a particular worker
+func GetfromWfWorkflowTable(db *sql.DB, id string) ([]string, error) {
 	rows, err := db.Query(`
 	SELECT workflow_id
 	FROM workflow_worker_map

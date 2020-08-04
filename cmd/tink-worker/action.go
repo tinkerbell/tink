@@ -33,7 +33,6 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	if err != nil {
 		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
 	}
-
 	id, err := createContainer(ctx, action, action.Command, wfID)
 	if err != nil {
 		return fmt.Sprintf("Failed to create container"), 1, errors.Wrap(err, "DOCKER CREATE")

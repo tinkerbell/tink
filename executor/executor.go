@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/tinkerbell/tink/db"
@@ -17,28 +18,25 @@ var (
 )
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
-func GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest, sdb *sql.DB) (*pb.WorkflowContextList, error) {
+func GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_GetWorkflowContextsServer, sdb *sql.DB) error {
 	if len(req.WorkerId) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "worker_id is invalid")
+		return status.Errorf(codes.InvalidArgument, "worker_id is invalid")
 	}
-	wfs, _ := db.GetfromWfWorkflowTable(context, sdb, req.WorkerId)
+	wfs, _ := db.GetfromWfWorkflowTable(sdb, req.WorkerId)
 	if wfs == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "worker not found for any workflows")
+		return status.Errorf(codes.InvalidArgument, "No workflow found for worker %s ", req.GetWorkerId())
 	}
-
-	wfContexts := []*pb.WorkflowContext{}
 
 	for _, wf := range wfs {
-		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
+		wfContext, err := db.GetWorkflowContexts(context.Background(), sdb, wf)
 		if err != nil {
-			return nil, status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
+			return status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
 		}
-		wfContexts = append(wfContexts, wfContext)
+		if isApplicableToSend(context.Background(), wfContext, req.WorkerId, sdb) {
+			stream.Send(wfContext)
+		}
 	}
-
-	return &pb.WorkflowContextList{
-		WorkflowContexts: wfContexts,
-	}, nil
+	return nil
 }
 
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions
@@ -159,4 +157,38 @@ func GetWorkflowDataVersion(context context.Context, workflowID string, sdb *sql
 		return &pb.GetWorkflowDataResponse{Version: version}, status.Errorf(codes.Unknown, err.Error())
 	}
 	return &pb.GetWorkflowDataResponse{Version: version}, nil
+}
+
+// The below function check whether a particular workflow context is applicable or needed to
+// be send to a worker based on the state of the current action and the targeted workerID.
+func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, workerID string, sdb *sql.DB) bool {
+	if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_FAILED ||
+		wfContext.GetCurrentActionState() == pb.ActionState_ACTION_TIMEOUT {
+		return false
+	}
+	actions, err := GetWorkflowActions(context, &pb.WorkflowActionsRequest{WorkflowId: wfContext.GetWorkflowId()}, sdb)
+	if err != nil {
+		return false
+	}
+	if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_SUCCESS {
+		if isLastAction(wfContext, actions) {
+			return false
+		}
+		if wfContext.GetCurrentActionIndex() == 0 {
+			if actions.ActionList[wfContext.GetCurrentActionIndex()+1].GetWorkerId() == workerID {
+				log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+				return true
+			}
+		}
+	} else {
+		if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
+			log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+			return true
+		}
+	}
+	return false
+}
+
+func isLastAction(wfContext *pb.WorkflowContext, actions *pb.WorkflowActionList) bool {
+	return int(wfContext.GetCurrentActionIndex()) == len(actions.GetActionList())-1
 }

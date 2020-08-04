@@ -8,8 +8,8 @@ import (
 )
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
-func (s *server) GetWorkflowContexts(context context.Context, req *pb.WorkflowContextRequest) (*pb.WorkflowContextList, error) {
-	return exec.GetWorkflowContexts(context, req, s.db)
+func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_GetWorkflowContextsServer) error {
+	return exec.GetWorkflowContexts(req, stream, s.db)
 }
 
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions
