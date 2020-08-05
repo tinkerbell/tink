@@ -55,14 +55,13 @@ services:
     image: quay.io/tinkerbell/tink-cli:latest
     restart: unless-stopped
     environment:
-      TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
-      TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
+      TINKERBELL_GRPC_AUTHORITY: tink-server:42113
+      TINKERBELL_CERT_URL: http://tink-server:42114/cert
     depends_on:
       tink-server:
         condition: service_healthy
       db:
         condition: service_healthy
-    network_mode: host
 
   registry:
     build:
@@ -86,13 +85,13 @@ services:
     volumes:
       - ./state/certs:/certs
       - ./state/registry:/var/lib/registry
-    network_mode: host
+    ports:
+      - 443:443
 
   boots:
     image: quay.io/tinkerbell/boots:latest
     restart: unless-stopped
-    network_mode: host
-    command: -dhcp-addr 0.0.0.0:67 -tftp-addr $TINKERBELL_HOST_IP:69 -http-addr $TINKERBELL_HOST_IP:80 -log-level DEBUG
+    command: -dhcp-addr 0.0.0.0:67 -tftp-addr 0.0.0.0:69 -http-addr 0.0.0.0:80 -log-level DEBUG
     environment:
       API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-ignored}
       API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
@@ -101,13 +100,13 @@ services:
       PACKET_VERSION: ${PACKET_VERSION:-ignored}
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
-      MIRROR_HOST: ${TINKERBELL_NGINX_IP:-127.0.0.1}
+      MIRROR_HOST: ${TINKERBELL_NGINX_IP:-127.0.0.1}:8090
       DNS_SERVERS: 8.8.8.8
       PUBLIC_IP: $TINKERBELL_HOST_IP
-      BOOTP_BIND: $TINKERBELL_HOST_IP:67
-      HTTP_BIND: $TINKERBELL_HOST_IP:80
-      SYSLOG_BIND: $TINKERBELL_HOST_IP:514
-      TFTP_BIND: $TINKERBELL_HOST_IP:69
+      BOOTP_BIND: 0.0.0.0:67
+      HTTP_BIND: 0.0.0.0:80
+      SYSLOG_BIND: 0.0.0.0:514
+      TFTP_BIND: 0.0.0.0:69
       DOCKER_REGISTRY: $TINKERBELL_HOST_IP
       REGISTRY_USERNAME: $TINKERBELL_REGISTRY_USERNAME
       REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
@@ -119,23 +118,22 @@ services:
       db:
         condition: service_healthy
     ports:
-      - $TINKERBELL_HOST_IP:80:80/tcp
-      - 67:67/udp
-      - 69:69/udp
+      - 0.0.0.0:80:80/tcp
+      - 0.0.0.0:67:67/udp
+      - 0.0.0.0:69:69/udp
 
   nginx:
     image: nginx:alpine
     restart: unless-stopped
     tty: true
     ports:
-      - $TINKERBELL_NGINX_IP:80:80/tcp
+      - $TINKERBELL_NGINX_IP:8090:80/tcp
     volumes:
       - ./state/webroot:/usr/share/nginx/html/
 
   hegel:
     image: quay.io/tinkerbell/hegel:latest
     restart: unless-stopped
-    network_mode: host
     environment:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
       ROLLBAR_DISABLE: 1
@@ -144,8 +142,8 @@ services:
       GRPC_PORT: 42115
       HEGEL_FACILITY: ${FACILITY:-onprem}
       HEGEL_USE_TLS: 0
-      TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
-      TINKERBELL_CERT_URL: http://127.0.0.1:42114/cert
+      TINKERBELL_GRPC_AUTHORITY: tink-server:42113
+      TINKERBELL_CERT_URL: http://tink-server:42114/cert
       DATA_MODEL_VERSION: 1
     depends_on:
       db:
