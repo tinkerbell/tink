@@ -33,7 +33,12 @@ func Execute() error {
 }
 
 func isHelpCommand() bool {
-	return len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-h" || os.Args[1] == "--help"))
+	for _, arg := range os.Args {
+		if arg == "-h" || arg == "--help" {
+			return true
+		}
+	}
+	return false
 }
 
 // initConfig reads in config file and ENV variables if set.
