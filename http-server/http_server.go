@@ -96,13 +96,15 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	}()
 	go func() {
 		<-ctx.Done()
-		srv.Shutdown(context.Background())
+		if err := srv.Shutdown(context.Background()); err != nil {
+			logger.Error(err)
+		}
 	}()
 }
 
 func versionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(gitRevJSON)
+	_, _ = w.Write(gitRevJSON)
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +124,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(b)
+	_, _ = w.Write(b)
 }
 
 func setupGitRevJSON() {
@@ -152,7 +154,7 @@ func BasicAuth(handler http.Handler) http.Handler {
 				subtle.ConstantTimeCompare([]byte(pass), []byte(authPassword)) != 1 {
 				w.Header().Set("WWW-Authenticate", `Basic realm="Tink Realm"`)
 				w.WriteHeader(401)
-				w.Write([]byte("401 Unauthorized\n"))
+				_, _ = w.Write([]byte("401 Unauthorized\n"))
 				return
 			}
 		}

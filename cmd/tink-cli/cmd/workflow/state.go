@@ -61,7 +61,7 @@ func calWorkflowProgress(cur int64, total int64, state workflow.ActionState) str
 	progress := (taskCompleted * 100) / total
 	perc := strconv.Itoa(int(progress)) + "%"
 
-	return fmt.Sprintf("%s", perc)
+	return perc
 }
 
 func init() {

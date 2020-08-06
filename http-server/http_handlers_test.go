@@ -81,6 +81,9 @@ func TestHardwarePushHandler(t *testing.T) {
 		grpcEndpoint := "localhost:42113"
 
 		err := RegisterHardwareServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, dialOpts)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		req, err := http.NewRequest("POST", "/v1/hardware", nil)
 		if err != nil {

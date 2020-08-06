@@ -26,7 +26,6 @@ const (
 
 var (
 	workflowcontexts = map[string]*pb.WorkflowContext{}
-	workflowactions  = map[string]*pb.WorkflowActionList{}
 	workflowDataSHA  = map[string]string{}
 )
 

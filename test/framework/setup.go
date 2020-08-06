@@ -157,5 +157,9 @@ func StartStack() error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
+	if err != nil {
+		logger.Errorln("failed to create worker Image")
+		return errors.Wrap(err, "worker image creation failed")
+	}
 	return nil
 }

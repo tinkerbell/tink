@@ -29,7 +29,9 @@ func GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_G
 			return status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
 		}
 		if isApplicableToSend(context.Background(), wfContext, req.WorkerId, sdb) {
-			stream.Send(wfContext)
+			if err := stream.Send(wfContext); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -140,12 +142,9 @@ func UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataReque
 	if len(wfID) == 0 {
 		return &pb.Empty{}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
 	}
-	index, ok := workflowData[wfID]
-	if ok {
-		index = index + 1
-	} else {
-		index = 1
-		workflowData[wfID] = index
+	_, ok := workflowData[wfID]
+	if !ok {
+		workflowData[wfID] = 1
 	}
 	err := db.InsertIntoWfDataTable(context, sdb, req)
 	if err != nil {

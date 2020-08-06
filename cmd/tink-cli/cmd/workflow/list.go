@@ -47,10 +47,9 @@ func listWorkflows(c *cobra.Command, t table.Writer) {
 	}
 
 	var wf *workflow.Workflow
-	err = nil
 	for wf, err = list.Recv(); err == nil && wf.Id != ""; wf, err = list.Recv() {
-		cr := *wf.CreatedAt
-		up := *wf.UpdatedAt
+		cr := wf.CreatedAt
+		up := wf.UpdatedAt
 		t.AppendRows([]table.Row{
 			{wf.Id, wf.Template, wf.Hardware, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
 		})

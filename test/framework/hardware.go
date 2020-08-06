@@ -33,7 +33,9 @@ func PushHardwareData(hwDataFiles []string) error {
 			return err
 		}
 		hw := hardware.Hardware{}
-		err = json.Unmarshal(data, &hw)
+		if err := json.Unmarshal(data, &hw); err != nil {
+			return err
+		}
 		_, err = client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: &hw})
 		if err != nil {
 			return err

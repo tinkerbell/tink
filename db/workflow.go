@@ -299,8 +299,6 @@ func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowData
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		logger.Error(err)
-	} else {
-		err = nil
 	}
 
 	return []byte{}, nil
@@ -332,8 +330,6 @@ func GetWorkflowMetadata(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDat
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		logger.Error(err)
-	} else {
-		err = nil
 	}
 
 	return []byte{}, nil
@@ -395,8 +391,6 @@ func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		logger.Error(err)
-	} else {
-		err = nil
 	}
 
 	return Workflow{}, nil
@@ -588,8 +582,6 @@ func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfID string) (*pb.Work
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from worflow_state")
 		logger.Error(err)
-	} else {
-		err = nil
 	}
 	return &pb.WorkflowContext{}, nil
 }
@@ -607,15 +599,15 @@ func GetWorkflowActions(ctx context.Context, db *sql.DB, wfID string) (*pb.Workf
 	err := row.Scan(&actionList)
 	if err == nil {
 		actions := []*pb.WorkflowAction{}
-		err = json.Unmarshal([]byte(actionList), &actions)
+		if err := json.Unmarshal([]byte(actionList), &actions); err != nil {
+			return nil, err
+		}
 		return &pb.WorkflowActionList{
 			ActionList: actions}, nil
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from worflow_state")
 		logger.Error(err)
-	} else {
-		err = nil
 	}
 	return &pb.WorkflowActionList{}, nil
 }

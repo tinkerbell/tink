@@ -28,7 +28,6 @@ var listCmd = &cobra.Command{
 		}
 
 		var hw *hardware.Hardware
-		err = nil
 		for hw, err = list.Recv(); err == nil && hw != nil; hw, err = list.Recv() {
 			for _, iface := range hw.GetNetwork().GetInterfaces() {
 				t.AppendRow(table.Row{hw.Id, iface.Dhcp.Mac, iface.Dhcp.Ip.Address, iface.Dhcp.Hostname})
