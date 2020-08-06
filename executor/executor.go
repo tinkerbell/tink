@@ -19,14 +19,10 @@ var (
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
 func GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_GetWorkflowContextsServer, sdb *sql.DB) error {
-	if len(req.WorkerId) == 0 {
-		return status.Errorf(codes.InvalidArgument, "worker_id is invalid")
+	wfs, err := getWorkflowsForWorker(sdb, req.WorkerId)
+	if err != nil {
+		return err
 	}
-	wfs, _ := db.GetfromWfWorkflowTable(sdb, req.WorkerId)
-	if wfs == nil {
-		return status.Errorf(codes.InvalidArgument, "No workflow found for worker %s ", req.GetWorkerId())
-	}
-
 	for _, wf := range wfs {
 		wfContext, err := db.GetWorkflowContexts(context.Background(), sdb, wf)
 		if err != nil {
@@ -37,6 +33,36 @@ func GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_G
 		}
 	}
 	return nil
+}
+
+// GetWorkflowContextList implements tinkerbell.GetWorkflowContextList
+func GetWorkflowContextList(context context.Context, req *pb.WorkflowContextRequest, sdb *sql.DB) (*pb.WorkflowContextList, error) {
+	wfs, err := getWorkflowsForWorker(sdb, req.WorkerId)
+	if err != nil {
+		return nil, err
+	}
+	wfContexts := []*pb.WorkflowContext{}
+	for _, wf := range wfs {
+		wfContext, err := db.GetWorkflowContexts(context, sdb, wf)
+		if err != nil {
+			return nil, status.Errorf(codes.Aborted, "Invalid workflow %s found for worker %s", wf, req.WorkerId)
+		}
+		wfContexts = append(wfContexts, wfContext)
+	}
+	return &pb.WorkflowContextList{
+		WorkflowContexts: wfContexts,
+	}, nil
+}
+
+func getWorkflowsForWorker(sdb *sql.DB, id string) ([]string, error) {
+	if len(id) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "worker_id is invalid")
+	}
+	wfs, _ := db.GetWorkflowsForWorker(sdb, id)
+	if wfs == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Worker not found for any workflows")
+	}
+	return wfs, nil
 }
 
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions

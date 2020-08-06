@@ -12,6 +12,11 @@ func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.W
 	return exec.GetWorkflowContexts(req, stream, s.db)
 }
 
+// GetWorkflowContextList implements tinkerbell.GetWorkflowContextList
+func (s *server) GetWorkflowContextList(context context.Context, req *pb.WorkflowContextRequest) (*pb.WorkflowContextList, error) {
+	return exec.GetWorkflowContextList(context, req, s.db)
+}
+
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions
 func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest) (*pb.WorkflowActionList, error) {
 	return exec.GetWorkflowActions(context, req, s.db)

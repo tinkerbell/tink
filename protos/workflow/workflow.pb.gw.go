@@ -282,7 +282,6 @@ func request_WorkflowSvc_ShowWorkflowEvents_0(ctx context.Context, marshaler run
 // RegisterWorkflowSvcHandlerServer registers the http handlers for service WorkflowSvc to "mux".
 // UnaryRPC     :call WorkflowSvcServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features (such as grpc.SendHeader, etc) to stop working. Consider using RegisterWorkflowSvcHandlerFromEndpoint instead.
 func RegisterWorkflowSvcHandlerServer(ctx context.Context, mux *runtime.ServeMux, server WorkflowSvcServer) error {
 
 	mux.Handle("POST", pattern_WorkflowSvc_CreateWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
