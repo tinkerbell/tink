@@ -241,7 +241,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.ShowWorkflowEvents(s.db, req.Id, func(w workflowpb.WorkflowActionStatus) error {
+	err := db.ShowWorkflowEvents(s.db, req.Id, func(w *workflowpb.WorkflowActionStatus) error {
 		wfs := &workflow.WorkflowActionStatus{
 			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,

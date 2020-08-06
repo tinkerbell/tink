@@ -132,7 +132,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	if err != nil {
 		return errors.Wrap(err, "Invalid Template")
 	}
-	var actionList []pb.WorkflowAction
+	var actionList []*pb.WorkflowAction
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wfymldata.Tasks {
 		taskEnvs := map[string]string{}
@@ -203,7 +203,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 				Environment: envs,
 				Volumes:     ac.Volumes,
 			}
-			actionList = append(actionList, action)
+			actionList = append(actionList, &action)
 		}
 	}
 	totalActions := int64(len(actionList))
@@ -637,7 +637,7 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 }
 
 // ShowWorkflowEvents returns all workflows
-func ShowWorkflowEvents(db *sql.DB, wfID string, fn func(wfs pb.WorkflowActionStatus) error) error {
+func ShowWorkflowEvents(db *sql.DB, wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error {
 	rows, err := db.Query(`
        SELECT worker_id, task_name, action_name, execution_time, message, status, created_at
 	   FROM workflow_event
@@ -667,7 +667,7 @@ func ShowWorkflowEvents(db *sql.DB, wfID string, fn func(wfs pb.WorkflowActionSt
 			return err
 		}
 		createdAt, _ := ptypes.TimestampProto(evTime)
-		wfs := pb.WorkflowActionStatus{
+		wfs := &pb.WorkflowActionStatus{
 			WorkerId:     id,
 			TaskName:     tName,
 			ActionName:   aName,
