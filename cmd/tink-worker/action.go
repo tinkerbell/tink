@@ -19,8 +19,6 @@ import (
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
-const workflowData = `/workflow/data:/workflow/data`
-
 var (
 	registry string
 	cli      *client.Client
@@ -35,7 +33,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	}
 	id, err := createContainer(ctx, action, action.Command, wfID)
 	if err != nil {
-		return fmt.Sprintf("Failed to create container"), 1, errors.Wrap(err, "DOCKER CREATE")
+		return "Failed to create container", 1, errors.Wrap(err, "DOCKER CREATE")
 	}
 	var timeCtx context.Context
 	var cancel context.CancelFunc
@@ -49,7 +47,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	//startedAt := time.Now()
 	err = runContainer(timeCtx, id)
 	if err != nil {
-		return fmt.Sprintf("Failed to run container"), 1, errors.Wrap(err, "DOCKER RUN")
+		return "Failed to run container", 1, errors.Wrap(err, "DOCKER RUN")
 	}
 
 	failedActionStatus := make(chan pb.ActionState)
@@ -63,11 +61,11 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 		if rerr != nil {
 			log.WithField("container_id", id).Errorln("Failed to remove container as ", rerr)
 		}
-		return fmt.Sprintf("Failed to wait for completion of action"), status, errors.Wrap(err, "DOCKER_WAIT")
+		return "Failed to wait for completion of action", status, errors.Wrap(err, "DOCKER_WAIT")
 	}
 	rerr := removeContainer(ctx, id)
 	if rerr != nil {
-		return fmt.Sprintf("Failed to remove container of action"), status, errors.Wrap(rerr, "DOCKER_REMOVE")
+		return "Failed to remove container of action", status, errors.Wrap(rerr, "DOCKER_REMOVE")
 	}
 	log.Infoln("Container removed with Status ", pb.ActionState(status))
 	if status != pb.ActionState_ACTION_SUCCESS {
@@ -117,7 +115,7 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 		}
 	}
 	log.Infoln("Action container exits with status code ", status)
-	return fmt.Sprintf("Successful Execution"), status, nil
+	return "Successful Execution", status, nil
 }
 
 func captureLogs(ctx context.Context, id string) {
@@ -161,7 +159,9 @@ func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 		return errors.Wrap(err, "DOCKER PULL")
 	}
 	defer out.Close()
-	io.Copy(os.Stdout, out)
+	if _, err := io.Copy(os.Stdout, out); err != nil {
+		return err
+	}
 	return nil
 }
 

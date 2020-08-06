@@ -113,7 +113,9 @@ func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardwar
 
 	metrics.CacheHits.With(labels).Inc()
 	hw := &hardware.Hardware{}
-	json.Unmarshal([]byte(j), hw)
+	if err := json.Unmarshal([]byte(j), hw); err != nil {
+		return nil, err
+	}
 	return hw, nil
 }
 
@@ -156,7 +158,9 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 	defer timer.ObserveDuration()
 	err := db.GetAll(s.db, func(j []byte) error {
 		hw := &hardware.Hardware{}
-		json.Unmarshal(j, hw)
+		if err := json.Unmarshal(j, hw); err != nil {
+			return err
+		}
 		return stream.Send(hw)
 	})
 	if err != nil {
@@ -214,7 +218,9 @@ func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_
 			}
 
 			hw.Reset()
-			json.Unmarshal([]byte(j), hw)
+			if err := json.Unmarshal([]byte(j), hw); err != nil {
+				return err
+			}
 			err := stream.Send(hw)
 			if err != nil {
 				metrics.CacheErrors.With(labels).Inc()

@@ -28,6 +28,9 @@ func CreateTemplate(tmpl string) (string, error) {
 	filePath := "data/template/" + tmpl
 	// Read Content of template
 	data, err := readTemplateData(filePath)
+	if err != nil {
+		return "", err
+	}
 	req := template.WorkflowTemplate{Name: ("test_" + tmpl), Data: data}
 	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
 	if err != nil {

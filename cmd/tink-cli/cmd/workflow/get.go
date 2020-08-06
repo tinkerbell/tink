@@ -14,7 +14,6 @@ var (
 	hID       = "Workflow ID"
 	hTemplate = "Template ID"
 	hDevice   = "Hardware device"
-	hState    = "State"
 )
 
 // getCmd represents the get subcommand for workflow command

@@ -49,10 +49,9 @@ func listTemplates(cmd *cobra.Command, t table.Writer) {
 	}
 
 	var tmp *template.WorkflowTemplate
-	err = nil
 	for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
-		cr := *tmp.CreatedAt
-		up := *tmp.UpdatedAt
+		cr := tmp.CreatedAt
+		up := tmp.UpdatedAt
 		t.AppendRows([]table.Row{
 			{tmp.Id, tmp.Name, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
 		})

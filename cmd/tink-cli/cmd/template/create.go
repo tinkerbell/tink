@@ -71,7 +71,7 @@ func addFlags() {
 	flags := createCmd.PersistentFlags()
 	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
 	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric)")
-	createCmd.MarkPersistentFlagRequired(fName)
+	_ = createCmd.MarkPersistentFlagRequired(fName)
 }
 
 func tryParseTemplate(data string) error {

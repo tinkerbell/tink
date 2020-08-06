@@ -60,8 +60,6 @@ func GetTemplate(ctx context.Context, db *sql.DB, id string) (string, string, er
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		logger.Error(err)
-	} else {
-		err = nil
 	}
 
 	return "", "", nil
