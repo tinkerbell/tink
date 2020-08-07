@@ -6,36 +6,58 @@ package github.com.tinkerbell.tink.protos.hardware;
 
 import "google/api/annotations.proto";
 
+// The HardwareService provides access to data describing the compute
+// and networking profiles of the hardware available to accept workflows.
+//
+// The API supports adding new entries. While the hardware data is essential,
+// not all of the properties are required for every workflow. The choice of
+// workflow predicates the level of hardware detail necessary.
+//
+// Read access to individual hardware profiles is provided through the unique
+// ID, MAC, and IP hardware properties.
 service HardwareService {
+	// Push adds a new Hardware profile to the data store.
 	rpc Push (PushRequest) returns (Empty) {
 		option (google.api.http) = {
             post: "/v1/hardware"
             body: "*"
         };
 	};
+
+	// ByMac returns the Hardware with the given hardware MAC Address.
 	rpc ByMAC(GetRequest) returns (Hardware) {
 		option (google.api.http) = {
             post: "/v1/hardware/mac"
             body: "*"
         };
 	};
+
+	// ByIP returns the Hardware with the given IP Address.
 	rpc ByIP(GetRequest) returns (Hardware) {
 		option (google.api.http) = {
             post: "/v1/hardware/ip"
             body: "*"
         };
 	};
+
+	// ByID returns the Hardware with the given ID.
 	rpc ByID(GetRequest) returns (Hardware) {
 		option (google.api.http) = {
             get: "/v1/hardware/{id}"
         };
 	};
+
+	// All returns all of the Hardware profiles.
 	rpc All(Empty) returns (stream Hardware) {
 		option (google.api.http) = {
             get: "/v1/hardware"
         };
 	};
+
+	// Watch watches for events on the given hardware and streams the matching Hardware.
 	rpc Watch(GetRequest) returns (stream Hardware);
+
+	// Delete deletes the given hardware from the data store.
 	rpc Delete(DeleteRequest) returns (Empty) {
     option (google.api.http) = {
             delete: "/v1/hardware/{id}"
