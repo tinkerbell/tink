@@ -1046,9 +1046,7 @@ func init() {
 	proto.RegisterType((*Metadata_Facility)(nil), "github.com.tinkerbell.tink.protos.packet.Metadata.Facility")
 }
 
-func init() {
-	proto.RegisterFile("packet/packet.proto", fileDescriptor_57dbb8dc3dbf2351)
-}
+func init() { proto.RegisterFile("packet/packet.proto", fileDescriptor_57dbb8dc3dbf2351) }
 
 var fileDescriptor_57dbb8dc3dbf2351 = []byte{
 	// 1185 bytes of a gzipped FileDescriptorProto

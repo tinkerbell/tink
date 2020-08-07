@@ -685,9 +685,7 @@ func init() {
 	proto.RegisterType((*DeleteRequest)(nil), "github.com.tinkerbell.tink.protos.hardware.DeleteRequest")
 }
 
-func init() {
-	proto.RegisterFile("hardware/hardware.proto", fileDescriptor_61ac56d7fc2e671f)
-}
+func init() { proto.RegisterFile("hardware/hardware.proto", fileDescriptor_61ac56d7fc2e671f) }
 
 var fileDescriptor_61ac56d7fc2e671f = []byte{
 	// 907 bytes of a gzipped FileDescriptorProto
@@ -752,30 +750,37 @@ var fileDescriptor_61ac56d7fc2e671f = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // HardwareServiceClient is the client API for HardwareService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type HardwareServiceClient interface {
+	// Push adds a new Hardware profile to the data store.
 	Push(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error)
+	// ByMac returns the Hardware with the given hardware MAC Address.
 	ByMAC(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error)
+	// ByIP returns the Hardware with the given IP Address.
 	ByIP(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error)
+	// ByID returns the Hardware with the given ID.
 	ByID(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error)
+	// All returns all of the Hardware profiles.
 	All(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error)
+	// Watch watches for events on the given hardware and streams the matching Hardware.
 	Watch(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_WatchClient, error)
+	// Delete deletes the given hardware from the data store.
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type hardwareServiceClient struct {
-	cc grpc.ClientConnInterface
+	cc *grpc.ClientConn
 }
 
-func NewHardwareServiceClient(cc grpc.ClientConnInterface) HardwareServiceClient {
+func NewHardwareServiceClient(cc *grpc.ClientConn) HardwareServiceClient {
 	return &hardwareServiceClient{cc}
 }
 
@@ -890,12 +895,19 @@ func (c *hardwareServiceClient) Delete(ctx context.Context, in *DeleteRequest, o
 
 // HardwareServiceServer is the server API for HardwareService service.
 type HardwareServiceServer interface {
+	// Push adds a new Hardware profile to the data store.
 	Push(context.Context, *PushRequest) (*Empty, error)
+	// ByMac returns the Hardware with the given hardware MAC Address.
 	ByMAC(context.Context, *GetRequest) (*Hardware, error)
+	// ByIP returns the Hardware with the given IP Address.
 	ByIP(context.Context, *GetRequest) (*Hardware, error)
+	// ByID returns the Hardware with the given ID.
 	ByID(context.Context, *GetRequest) (*Hardware, error)
+	// All returns all of the Hardware profiles.
 	All(*Empty, HardwareService_AllServer) error
+	// Watch watches for events on the given hardware and streams the matching Hardware.
 	Watch(*GetRequest, HardwareService_WatchServer) error
+	// Delete deletes the given hardware from the data store.
 	Delete(context.Context, *DeleteRequest) (*Empty, error)
 }
 
