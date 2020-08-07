@@ -58,17 +58,17 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: tink-cli
-        path: ./cmd/tink-cli/tink-cli
+        path: ./cmd/tink-cli
     - name: Download tink-server binary
       uses: actions/download-artifact@v2
       with:
         name: tink-server
-        path: ./cmd/tink-server/tink-server
+        path: ./cmd/tink-server
     - name: Download tink-worker binary
       uses: actions/download-artifact@v2
       with:
         name: tink-worker
-        path: ./cmd/tink-worker/tink-worker
+        path: ./cmd/tink-worker
     - name: set tink-worker permission
       run: chmod +x  ./cmd/tink-worker/tink-worker
     - name: set tink-cli permission
