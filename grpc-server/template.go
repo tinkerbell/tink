@@ -23,7 +23,7 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 	labels["op"] = "createtemplate"
 	msg = "creating a new Template"
 	id := uuid.NewV4()
-	fn := func() error { return db.CreateTemplate(ctx, s.db, in.Name, in.Data, id) }
+	fn := func() error { return s.db.CreateTemplate(ctx, in.Name, in.Data, id) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
@@ -55,7 +55,7 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 	labels["op"] = "get"
 	msg = "getting a template"
 
-	fn := func() (string, string, error) { return db.GetTemplate(ctx, s.db, in.Id) }
+	fn := func() (string, string, error) { return s.db.GetTemplate(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
@@ -84,7 +84,7 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 	msg := ""
 	labels["op"] = "delete"
 	msg = "deleting a template"
-	fn := func() error { return db.DeleteTemplate(ctx, s.db, in.Id) }
+	fn := func() error { return s.db.DeleteTemplate(ctx, in.Id) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
@@ -122,7 +122,7 @@ func (s *server) ListTemplates(_ *template.Empty, stream template.Template_ListT
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.ListTemplates(s.db, func(id, n string, crTime, upTime *timestamp.Timestamp) error {
+	err := s.db.ListTemplates(func(id, n string, crTime, upTime *timestamp.Timestamp) error {
 		return stream.Send(&template.WorkflowTemplate{Id: id, Name: n, CreatedAt: crTime, UpdatedAt: upTime})
 	})
 
@@ -145,7 +145,7 @@ func (s *server) UpdateTemplate(ctx context.Context, in *template.WorkflowTempla
 	msg := ""
 	labels["op"] = "updatetemplate"
 	msg = "updating a template"
-	fn := func() error { return db.UpdateTemplate(ctx, s.db, in.Name, in.Data, uuid.FromStringOrNil(in.Id)) }
+	fn := func() error { return s.db.UpdateTemplate(ctx, in.Name, in.Data, uuid.FromStringOrNil(in.Id)) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))

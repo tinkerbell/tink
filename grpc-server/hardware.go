@@ -53,7 +53,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 
 	labels["op"] = "insert"
 	msg = "inserting into DB"
-	fn = func() error { return db.InsertIntoDB(ctx, s.db, string(data)) }
+	fn = func() error { return s.db.InsertIntoDB(ctx, string(data)) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
@@ -121,20 +121,20 @@ func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardwar
 
 func (s *server) ByMAC(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByMAC", func() (string, error) {
-		return db.GetByMAC(ctx, s.db, in.Mac)
+		return s.db.GetByMAC(ctx, in.Mac)
 	})
 }
 
 func (s *server) ByIP(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByIP", func() (string, error) {
-		return db.GetByIP(ctx, s.db, in.Ip)
+		return s.db.GetByIP(ctx, in.Ip)
 	})
 }
 
 // ByID implements hardware.ByID
 func (s *server) ByID(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByID", func() (string, error) {
-		return db.GetByID(ctx, s.db, in.Id)
+		return s.db.GetByID(ctx, in.Id)
 	})
 }
 
@@ -156,7 +156,7 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.GetAll(s.db, func(j []byte) error {
+	err := s.db.GetAll(func(j []byte) error {
 		hw := &hardware.Hardware{}
 		if err := json.Unmarshal(j, hw); err != nil {
 			return err
@@ -264,7 +264,7 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 	var fn func() error
 	labels["op"] = "delete"
 	msg := "deleting into DB"
-	fn = func() error { return db.DeleteFromDB(ctx, s.db, in.Id) }
+	fn = func() error { return s.db.DeleteFromDB(ctx, in.Id) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
@@ -299,7 +299,7 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware) error {
 	interfaces := hw.GetNetwork().GetInterfaces()
 	for i := range hw.GetNetwork().GetInterfaces() {
-		data, _ := db.GetByMAC(ctx, s.db, interfaces[i].GetDhcp().GetMac())
+		data, _ := s.db.GetByMAC(ctx, interfaces[i].GetDhcp().GetMac())
 		if data != "" {
 			logger.With("MAC", interfaces[i].GetDhcp().GetMac()).Info(duplicateMAC)
 			newhw := hardware.Hardware{}
