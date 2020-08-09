@@ -65,18 +65,18 @@ var (
 )
 
 // CreateWorkflow creates a new workflow
-func CreateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, data string, id uuid.UUID) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id uuid.UUID) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	err = insertActionList(ctx, db, data, id, tx)
+	err = insertActionList(ctx, d.instance, data, id, tx)
 	if err != nil {
 		return errors.Wrap(err, "Failed to insert in workflow_state")
 
 	}
-	err = insertInWorkflow(ctx, db, wf, tx)
+	err = insertInWorkflow(ctx, d.instance, wf, tx)
 	if err != nil {
 		return errors.Wrap(err, "Failed to workflow")
 
@@ -229,15 +229,15 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 }
 
 // InsertIntoWfDataTable : Insert ephemeral data in workflow_data table
-func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkflowDataRequest) error {
-	version, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
+func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
+	version, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowID())
 	if err != nil {
 		return err
 	}
 
 	//increment version
 	version = version + 1
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -274,10 +274,10 @@ func InsertIntoWfDataTable(ctx context.Context, db *sql.DB, req *pb.UpdateWorkfl
 }
 
 // GetfromWfDataTable : Give you the ephemeral data from workflow_data table
-func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+func (d TinkDB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 	version := req.GetVersion()
 	if req.Version == 0 {
-		v, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
+		v, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowID())
 		if err != nil {
 			return []byte(""), err
 		}
@@ -289,7 +289,7 @@ func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowData
 	WHERE
 		workflow_id = $1 AND version = $2
 	`
-	row := db.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
+	row := d.instance.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
 	buf := []byte{}
 	err := row.Scan(&buf)
 	if err == nil {
@@ -305,10 +305,10 @@ func GetfromWfDataTable(ctx context.Context, db *sql.DB, req *pb.GetWorkflowData
 }
 
 // GetWorkflowMetadata returns metadata wrt to the ephemeral data of a workflow
-func GetWorkflowMetadata(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+func (d TinkDB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 	version := req.GetVersion()
 	if req.Version == 0 {
-		v, err := getLatestVersionWfData(ctx, db, req.GetWorkflowID())
+		v, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowID())
 		if err != nil {
 			return []byte(""), err
 		}
@@ -320,7 +320,7 @@ func GetWorkflowMetadata(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDat
 	WHERE
 		workflow_id = $1 AND version = $2
 	`
-	row := db.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
+	row := d.instance.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
 	buf := []byte{}
 	err := row.Scan(&buf)
 	if err == nil {
@@ -336,13 +336,13 @@ func GetWorkflowMetadata(ctx context.Context, db *sql.DB, req *pb.GetWorkflowDat
 }
 
 // GetWorkflowDataVersion returns the latest version of data for a workflow
-func GetWorkflowDataVersion(ctx context.Context, db *sql.DB, workflowID string) (int32, error) {
-	return getLatestVersionWfData(ctx, db, workflowID)
+func (d TinkDB) GetWorkflowDataVersion(ctx context.Context, workflowID string) (int32, error) {
+	return getLatestVersionWfData(ctx, d.instance, workflowID)
 }
 
 // GetWorkflowsForWorker : returns the list of workflows for a particular worker
-func GetWorkflowsForWorker(db *sql.DB, id string) ([]string, error) {
-	rows, err := db.Query(`
+func (d TinkDB) GetWorkflowsForWorker(id string) ([]string, error) {
+	rows, err := d.instance.Query(`
 	SELECT workflow_id
 	FROM workflow_worker_map
 	WHERE
@@ -372,7 +372,7 @@ func GetWorkflowsForWorker(db *sql.DB, id string) ([]string, error) {
 }
 
 // GetWorkflow returns a workflow
-func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
+func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 	query := `
 	SELECT template, devices
 	FROM workflow
@@ -381,7 +381,7 @@ func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
 	AND
 		deleted_at IS NULL;
 	`
-	row := db.QueryRowContext(ctx, query, id)
+	row := d.instance.QueryRowContext(ctx, query, id)
 	var tmp, tar string
 	err := row.Scan(&tmp, &tar)
 	if err == nil {
@@ -397,8 +397,8 @@ func GetWorkflow(ctx context.Context, db *sql.DB, id string) (Workflow, error) {
 }
 
 // DeleteWorkflow deletes a workflow
-func DeleteWorkflow(ctx context.Context, db *sql.DB, id string, state int32) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, state int32) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -440,8 +440,8 @@ func DeleteWorkflow(ctx context.Context, db *sql.DB, id string, state int32) err
 }
 
 // ListWorkflows returns all workflows
-func ListWorkflows(db *sql.DB, fn func(wf Workflow) error) error {
-	rows, err := db.Query(`
+func (d TinkDB) ListWorkflows(fn func(wf Workflow) error) error {
+	rows, err := d.instance.Query(`
 	SELECT id, template, devices, created_at, updated_at
 	FROM workflow
 	WHERE
@@ -486,8 +486,8 @@ func ListWorkflows(db *sql.DB, fn func(wf Workflow) error) error {
 }
 
 // UpdateWorkflow updates a given workflow
-func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) UpdateWorkflow(ctx context.Context, wf Workflow, state int32) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -530,8 +530,8 @@ func UpdateWorkflow(ctx context.Context, db *sql.DB, wf Workflow, state int32) e
 }
 
 // UpdateWorkflowState : update the current workflow state
-func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.WorkflowContext) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) UpdateWorkflowState(ctx context.Context, wfContext *pb.WorkflowContext) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -557,14 +557,14 @@ func UpdateWorkflowState(ctx context.Context, db *sql.DB, wfContext *pb.Workflow
 }
 
 // GetWorkflowContexts : gives you the current workflow context
-func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfID string) (*pb.WorkflowContext, error) {
+func (d TinkDB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 	query := `
 	SELECT current_worker, current_task_name, current_action_name, current_action_index, current_action_state, total_number_of_actions
 	FROM workflow_state
 	WHERE
 		workflow_id = $1;
 	`
-	row := db.QueryRowContext(ctx, query, wfID)
+	row := d.instance.QueryRowContext(ctx, query, wfID)
 	var cw, ct, ca string
 	var cai, tact int64
 	var cas pb.ActionState
@@ -587,14 +587,14 @@ func GetWorkflowContexts(ctx context.Context, db *sql.DB, wfID string) (*pb.Work
 }
 
 // GetWorkflowActions : gives you the action list of workflow
-func GetWorkflowActions(ctx context.Context, db *sql.DB, wfID string) (*pb.WorkflowActionList, error) {
+func (d TinkDB) GetWorkflowActions(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
 	query := `
 	SELECT action_list
 	FROM workflow_state
 	WHERE
 		workflow_id = $1;
 	`
-	row := db.QueryRowContext(ctx, query, wfID)
+	row := d.instance.QueryRowContext(ctx, query, wfID)
 	var actionList string
 	err := row.Scan(&actionList)
 	if err == nil {
@@ -613,8 +613,8 @@ func GetWorkflowActions(ctx context.Context, db *sql.DB, wfID string) (*pb.Workf
 }
 
 // InsertIntoWorkflowEventTable : insert workflow event table
-func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -637,8 +637,8 @@ func InsertIntoWorkflowEventTable(ctx context.Context, db *sql.DB, wfEvent *pb.W
 }
 
 // ShowWorkflowEvents returns all workflows
-func ShowWorkflowEvents(db *sql.DB, wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error {
-	rows, err := db.Query(`
+func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error {
+	rows, err := d.instance.Query(`
        SELECT worker_id, task_name, action_name, execution_time, message, status, created_at
 	   FROM workflow_event
 	   WHERE
