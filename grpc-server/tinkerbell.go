@@ -2,8 +2,6 @@ package grpcserver
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/tinkerbell/tink/db"
@@ -14,6 +12,19 @@ import (
 
 var workflowData = make(map[string]int)
 
+const (
+	errInvalidWorkerID       = "invalid worker id"
+	errInvalidWorkflowID     = "invalid workflow id"
+	errInvalidTaskName       = "invalid task name"
+	errInvalidActionName     = "invalid action name"
+	errInvalidTaskReported   = "reported task name does not match the current action details"
+	errInvalidActionReported = "reported action name does not match the current action details"
+
+	msgReceivedStatus   = "received action status: %s"
+	msgCurrentWfContext = "current workflow context: %s"
+	msgSendWfContext    = "send workflow context: %s"
+)
+
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
 func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_GetWorkflowContextsServer) error {
 	wfs, err := getWorkflowsForWorker(s.db, req.WorkerId)
@@ -23,7 +34,7 @@ func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.W
 	for _, wf := range wfs {
 		wfContext, err := s.db.GetWorkflowContexts(context.Background(), wf)
 		if err != nil {
-			return status.Errorf(codes.Aborted, "invalid workflow %s found for worker %s", wf, req.WorkerId)
+			return status.Errorf(codes.Aborted, err.Error())
 		}
 		if isApplicableToSend(context.Background(), wfContext, req.WorkerId, s.db) {
 			if err := stream.Send(wfContext); err != nil {
@@ -44,7 +55,7 @@ func (s *server) GetWorkflowContextList(context context.Context, req *pb.Workflo
 	for _, wf := range wfs {
 		wfContext, err := s.db.GetWorkflowContexts(context, wf)
 		if err != nil {
-			return nil, status.Errorf(codes.Aborted, "Invalid workflow %s found for worker %s", wf, req.WorkerId)
+			return nil, status.Errorf(codes.Aborted, err.Error())
 		}
 		wfContexts = append(wfContexts, wfContext)
 	}
@@ -57,7 +68,7 @@ func (s *server) GetWorkflowContextList(context context.Context, req *pb.Workflo
 func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest) (*pb.WorkflowActionList, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 	return getWorkflowActions(context, s.db, wfID)
 }
@@ -66,26 +77,26 @@ func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowAct
 func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*pb.Empty, error) {
 	wfID := req.GetWorkflowId()
 	if len(wfID) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 	if len(req.GetTaskName()) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "task_name is invalid")
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidTaskName)
 	}
 	if len(req.GetActionName()) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "action_name is invalid")
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidActionName)
 	}
-	fmt.Printf("Received action status: %s\n", req)
+
+	logger.Info(msgReceivedStatus, req)
+
 	wfContext, err := s.db.GetWorkflowContexts(context, wfID)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "workflow context not found for workflow %s", wfID)
+		return nil, status.Errorf(codes.Aborted, err.Error())
 	}
 	wfActions, err := s.db.GetWorkflowActions(context, wfID)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "workflow actions not found for workflow %s", wfID)
+		return nil, status.Errorf(codes.Aborted, err.Error())
 	}
 
-	// We need bunch of checks here considering
-	// Considering concurrency and network latencies & accuracy for proceeding of WF
 	actionIndex := wfContext.GetCurrentActionIndex()
 	if req.GetActionStatus() == pb.ActionState_ACTION_IN_PROGRESS {
 		if wfContext.GetCurrentAction() != "" {
@@ -94,10 +105,10 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 	}
 	action := wfActions.ActionList[actionIndex]
 	if action.GetTaskName() != req.GetTaskName() {
-		return nil, status.Errorf(codes.FailedPrecondition, "reported task name not matching in actions info")
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidTaskReported)
 	}
 	if action.GetName() != req.GetActionName() {
-		return nil, status.Errorf(codes.FailedPrecondition, "reported action name not matching in actions info")
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidActionReported)
 	}
 	wfContext.CurrentWorker = action.GetWorkerId()
 	wfContext.CurrentTask = req.GetTaskName()
@@ -106,15 +117,16 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 	wfContext.CurrentActionIndex = actionIndex
 	err = s.db.UpdateWorkflowState(context, wfContext)
 	if err != nil {
-		return &pb.Empty{}, fmt.Errorf("failed to update the workflow_state table. Error : %s", err)
+		return &pb.Empty{}, status.Errorf(codes.Aborted, err.Error())
 	}
+
 	// TODO the below "time" would be a part of the request which is coming form worker.
 	time := time.Now()
 	err = s.db.InsertIntoWorkflowEventTable(context, req, time)
 	if err != nil {
-		return &pb.Empty{}, fmt.Errorf("failed to update the workflow_event table. Error : %s", err)
+		return &pb.Empty{}, status.Error(codes.Aborted, err.Error())
 	}
-	fmt.Printf("Current context %s\n", wfContext)
+	logger.Info(msgCurrentWfContext, wfContext)
 	return &pb.Empty{}, nil
 }
 
@@ -122,7 +134,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataRequest) (*pb.Empty, error) {
 	wfID := req.GetWorkflowID()
 	if len(wfID) == 0 {
-		return &pb.Empty{}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
+		return &pb.Empty{}, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 	_, ok := workflowData[wfID]
 	if !ok {
@@ -130,7 +142,7 @@ func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkf
 	}
 	err := s.db.InsertIntoWfDataTable(context, req)
 	if err != nil {
-		return &pb.Empty{}, status.Errorf(codes.Unknown, err.Error())
+		return &pb.Empty{}, status.Errorf(codes.Aborted, err.Error())
 	}
 	return &pb.Empty{}, nil
 }
@@ -139,11 +151,11 @@ func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkf
 func (s *server) GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
 	wfID := req.GetWorkflowID()
 	if len(wfID) == 0 {
-		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
+		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 	data, err := s.db.GetfromWfDataTable(context, req)
 	if err != nil {
-		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Unknown, err.Error())
+		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Aborted, err.Error())
 	}
 	return &pb.GetWorkflowDataResponse{Data: data}, nil
 }
@@ -152,7 +164,7 @@ func (s *server) GetWorkflowData(context context.Context, req *pb.GetWorkflowDat
 func (s *server) GetWorkflowMetadata(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
 	data, err := s.db.GetWorkflowMetadata(context, req)
 	if err != nil {
-		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Unknown, err.Error())
+		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.Aborted, err.Error())
 	}
 	return &pb.GetWorkflowDataResponse{Data: data}, nil
 }
@@ -161,18 +173,18 @@ func (s *server) GetWorkflowMetadata(context context.Context, req *pb.GetWorkflo
 func (s *server) GetWorkflowDataVersion(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
 	version, err := s.db.GetWorkflowDataVersion(context, req.WorkflowID)
 	if err != nil {
-		return &pb.GetWorkflowDataResponse{Version: version}, status.Errorf(codes.Unknown, err.Error())
+		return &pb.GetWorkflowDataResponse{Version: version}, status.Errorf(codes.Aborted, err.Error())
 	}
 	return &pb.GetWorkflowDataResponse{Version: version}, nil
 }
 
 func getWorkflowsForWorker(db db.Database, id string) ([]string, error) {
 	if len(id) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "worker_id is invalid")
+		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkerID)
 	}
-	wfs, _ := db.GetWorkflowsForWorker(id)
-	if wfs == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Worker not found for any workflows")
+	wfs, err := db.GetWorkflowsForWorker(id)
+	if err != nil {
+		return nil, status.Errorf(codes.Aborted, err.Error())
 	}
 	return wfs, nil
 }
@@ -180,7 +192,7 @@ func getWorkflowsForWorker(db db.Database, id string) ([]string, error) {
 func getWorkflowActions(context context.Context, db db.Database, wfID string) (*pb.WorkflowActionList, error) {
 	actions, err := db.GetWorkflowActions(context, wfID)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "workflow_id is invalid")
+		return nil, status.Errorf(codes.Aborted, errInvalidWorkflowID)
 	}
 	return actions, nil
 }
@@ -202,13 +214,13 @@ func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, 
 		}
 		if wfContext.GetCurrentActionIndex() == 0 {
 			if actions.ActionList[wfContext.GetCurrentActionIndex()+1].GetWorkerId() == workerID {
-				log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+				logger.Info(msgSendWfContext, wfContext.GetWorkflowId())
 				return true
 			}
 		}
 	} else {
 		if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
-			log.Println("Send the workflow context ", wfContext.GetWorkflowId())
+			logger.Info(msgSendWfContext, wfContext.GetWorkflowId())
 			return true
 		}
 	}
