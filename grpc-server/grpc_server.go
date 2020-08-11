@@ -50,9 +50,9 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 	}
 	logger = log
 	metrics.SetupMetrics(facility, logger)
-	instance := db.Connect(logger)
+	tinkDB := db.Connect(logger)
 	server := &server{
-		db:      instance,
+		db:      tinkDB,
 		dbReady: true,
 	}
 	if cert := os.Getenv("TINKERBELL_TLS_CERT"); cert != "" {

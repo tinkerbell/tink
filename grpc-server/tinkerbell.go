@@ -130,7 +130,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 	return &pb.Empty{}, nil
 }
 
-// Update Workflow Ephemeral Data
+// UpdateWorkflowData updates workflow ephemeral data
 func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataRequest) (*pb.Empty, error) {
 	wfID := req.GetWorkflowID()
 	if len(wfID) == 0 {
@@ -147,7 +147,7 @@ func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkf
 	return &pb.Empty{}, nil
 }
 
-// Get Workflow Ephemeral Data
+// GetWorkflowData gets the ephemeral data for a workflow
 func (s *server) GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
 	wfID := req.GetWorkflowID()
 	if len(wfID) == 0 {
@@ -197,8 +197,8 @@ func getWorkflowActions(context context.Context, db db.Database, wfID string) (*
 	return actions, nil
 }
 
-// The below function check whether a particular workflow context is applicable or needed to
-// be send to a worker based on the state of the current action and the targeted workerID.
+// isApplicableToSend checks if a particular workflow context is applicable or if it is needed to
+// be sent to a worker based on the state of the current action and the targeted workerID
 func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, workerID string, db db.Database) bool {
 	if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_FAILED ||
 		wfContext.GetCurrentActionState() == pb.ActionState_ACTION_TIMEOUT {
@@ -218,11 +218,10 @@ func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, 
 				return true
 			}
 		}
-	} else {
-		if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
-			logger.Info(msgSendWfContext, wfContext.GetWorkflowId())
-			return true
-		}
+	} else if actions.ActionList[wfContext.GetCurrentActionIndex()].GetWorkerId() == workerID {
+		logger.Info(msgSendWfContext, wfContext.GetWorkflowId())
+		return true
+
 	}
 	return false
 }
