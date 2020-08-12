@@ -12,8 +12,8 @@ import (
 )
 
 // CreateTemplate creates a new workflow template
-func CreateTemplate(ctx context.Context, db *sql.DB, name string, data string, id uuid.UUID) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -40,7 +40,7 @@ func CreateTemplate(ctx context.Context, db *sql.DB, name string, data string, i
 }
 
 // GetTemplate returns a workflow template
-func GetTemplate(ctx context.Context, db *sql.DB, id string) (string, string, error) {
+func (d TinkDB) GetTemplate(ctx context.Context, id string) (string, string, error) {
 	query := `
 	SELECT name, data
 	FROM template
@@ -49,7 +49,7 @@ func GetTemplate(ctx context.Context, db *sql.DB, id string) (string, string, er
 	AND
 		deleted_at IS NULL
 	`
-	row := db.QueryRowContext(ctx, query, id)
+	row := d.instance.QueryRowContext(ctx, query, id)
 	name := []byte{}
 	data := []byte{}
 	err := row.Scan(&name, &data)
@@ -66,8 +66,8 @@ func GetTemplate(ctx context.Context, db *sql.DB, id string) (string, string, er
 }
 
 // DeleteTemplate deletes a workflow template
-func DeleteTemplate(ctx context.Context, db *sql.DB, name string) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) DeleteTemplate(ctx context.Context, name string) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -91,8 +91,8 @@ func DeleteTemplate(ctx context.Context, db *sql.DB, name string) error {
 }
 
 // ListTemplates returns all saved templates
-func ListTemplates(db *sql.DB, fn func(id, n string, in, del *timestamp.Timestamp) error) error {
-	rows, err := db.Query(`
+func (d TinkDB) ListTemplates(fn func(id, n string, in, del *timestamp.Timestamp) error) error {
+	rows, err := d.instance.Query(`
 	SELECT id, name, created_at, updated_at
 	FROM template
 	WHERE
@@ -135,32 +135,32 @@ func ListTemplates(db *sql.DB, fn func(id, n string, in, del *timestamp.Timestam
 }
 
 // UpdateTemplate update a given template
-func UpdateTemplate(ctx context.Context, db *sql.DB, name string, data string, id uuid.UUID) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
 	if data == "" && name != "" {
 		_, err = tx.Exec(`
-		UPDATE template 
-		SET 
+		UPDATE template
+		SET
 			updated_at = NOW(), name = $2
-		WHERE 
+		WHERE
 			id = $1;`, id, name)
 	} else if data != "" && name == "" {
 		_, err = tx.Exec(`
-		UPDATE template 
-		SET 
+		UPDATE template
+		SET
 			updated_at = NOW(), data = $2
-		WHERE 
+		WHERE
 			id = $1;`, id, data)
 	} else {
 		_, err = tx.Exec(`
-		UPDATE template 
-		SET 
+		UPDATE template
+		SET
 			updated_at = NOW(), name = $2, data = $3
-		WHERE 
+		WHERE
 			id = $1;
 		`, id, name, data)
 	}

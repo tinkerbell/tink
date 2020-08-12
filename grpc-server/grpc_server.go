@@ -3,7 +3,6 @@ package grpcserver
 import (
 	"context"
 	"crypto/tls"
-	"database/sql"
 	"io/ioutil"
 	"net"
 	"os"
@@ -33,7 +32,7 @@ type server struct {
 	cert []byte
 	modT time.Time
 
-	db   *sql.DB
+	db   db.Database
 	quit <-chan struct{}
 
 	dbLock  sync.RWMutex
@@ -51,9 +50,9 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<
 	}
 	logger = log
 	metrics.SetupMetrics(facility, logger)
-	db := db.ConnectDB(logger)
+	tinkDB := db.Connect(logger)
 	server := &server{
-		db:      db,
+		db:      tinkDB,
 		dbReady: true,
 	}
 	if cert := os.Getenv("TINKERBELL_TLS_CERT"); cert != "" {

@@ -9,8 +9,8 @@ import (
 )
 
 // DeleteFromDB : delete data from hardware table
-func DeleteFromDB(ctx context.Context, db *sql.DB, id string) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -35,8 +35,8 @@ func DeleteFromDB(ctx context.Context, db *sql.DB, id string) error {
 }
 
 // InsertIntoDB : insert data into hardware table
-func InsertIntoDB(ctx context.Context, db *sql.DB, data string) error {
-	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+func (d TinkDB) InsertIntoDB(ctx context.Context, data string) error {
+	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
@@ -63,7 +63,7 @@ func InsertIntoDB(ctx context.Context, db *sql.DB, data string) error {
 }
 
 // GetByMAC : get data by machine mac
-func GetByMAC(ctx context.Context, db *sql.DB, mac string) (string, error) {
+func (d TinkDB) GetByMAC(ctx context.Context, mac string) (string, error) {
 	arg := `
 	{
 		"network": {
@@ -86,11 +86,11 @@ func GetByMAC(ctx context.Context, db *sql.DB, mac string) (string, error) {
 		data @> $1
 	`
 
-	return get(ctx, db, query, arg)
+	return get(ctx, d.instance, query, arg)
 }
 
 // GetByIP : get data by machine ip
-func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
+func (d TinkDB) GetByIP(ctx context.Context, ip string) (string, error) {
 	instance := `
 	{
 	  "instance": {
@@ -130,11 +130,11 @@ func GetByIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
 	)
 	`
 
-	return get(ctx, db, query, instance, hardwareOrManagement)
+	return get(ctx, d.instance, query, instance, hardwareOrManagement)
 }
 
 // GetByID : get data by machine id
-func GetByID(ctx context.Context, db *sql.DB, id string) (string, error) {
+func (d TinkDB) GetByID(ctx context.Context, id string) (string, error) {
 	arg := id
 
 	query := `
@@ -145,12 +145,12 @@ func GetByID(ctx context.Context, db *sql.DB, id string) (string, error) {
 	AND
 		id = $1
 	`
-	return get(ctx, db, query, arg)
+	return get(ctx, d.instance, query, arg)
 }
 
 // GetAll : get data for all machine
-func GetAll(db *sql.DB, fn func([]byte) error) error {
-	rows, err := db.Query(`
+func (d TinkDB) GetAll(fn func([]byte) error) error {
+	rows, err := d.instance.Query(`
 	SELECT data
 	FROM hardware
 	WHERE

@@ -3,7 +3,6 @@ package grpcserver
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"text/template"
@@ -47,7 +46,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create Yaml")
 		}
-		err = db.CreateWorkflow(ctx, s.db, wf, data, id)
+		err = s.db.CreateWorkflow(ctx, wf, data, id)
 		if err != nil {
 			return err
 		}
@@ -84,7 +83,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	labels["op"] = "get"
 	msg = "getting a workflow"
 
-	fn := func() (db.Workflow, error) { return db.GetWorkflow(ctx, s.db, in.Id) }
+	fn := func() (db.Workflow, error) { return s.db.GetWorkflow(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
@@ -126,7 +125,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 	msg = "deleting a workflow"
 	fn := func() error {
 		// update only if not in running state
-		return db.DeleteWorkflow(ctx, s.db, in.Id, workflow.State_value[workflow.State_RUNNING.String()])
+		return s.db.DeleteWorkflow(ctx, in.Id, workflow.State_value[workflow.State_RUNNING.String()])
 	}
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -165,7 +164,7 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowSvc_Li
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.ListWorkflows(s.db, func(w db.Workflow) error {
+	err := s.db.ListWorkflows(func(w db.Workflow) error {
 		wf := &workflowpb.Workflow{
 			Id:        w.ID,
 			Template:  w.Template,
@@ -195,7 +194,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	labels["op"] = "get"
 	msg = "getting a workflow"
 
-	fn := func() (*workflowpb.WorkflowContext, error) { return db.GetWorkflowContexts(ctx, s.db, in.Id) }
+	fn := func() (*workflowpb.WorkflowContext, error) { return s.db.GetWorkflowContexts(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
@@ -241,7 +240,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := db.ShowWorkflowEvents(s.db, req.Id, func(w *workflowpb.WorkflowActionStatus) error {
+	err := s.db.ShowWorkflowEvents(req.Id, func(w *workflowpb.WorkflowActionStatus) error {
 		wfs := &workflow.WorkflowActionStatus{
 			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,
@@ -263,8 +262,8 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	return nil
 }
 
-func createYaml(ctx context.Context, sqlDB *sql.DB, temp string, devices string) (string, error) {
-	_, tempData, err := db.GetTemplate(ctx, sqlDB, temp)
+func createYaml(ctx context.Context, db db.Database, temp string, devices string) (string, error) {
+	_, tempData, err := db.GetTemplate(ctx, temp)
 	if err != nil {
 		return "", err
 	}
