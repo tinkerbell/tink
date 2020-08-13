@@ -14,6 +14,7 @@ import (
 
 const (
 	invalidID            = "d699-4e9f-a29c-a5890ccbd"
+	workflowForErr       = "1effe50d-3f21-4083-afa4-0e1620087d99"
 	firstWorkflowID      = "5a6d7564-d699-4e9f-a29c-a5890ccbd768"
 	secondWorkflowID     = "5711afcf-ea0b-4055-b4d6-9f88080f7afc"
 	workerWithNoWorkflow = "4ebf0efa-b913-45a1-a9bf-c59829cb53a9"
@@ -24,9 +25,12 @@ const (
 	taskName             = "ubuntu-provisioning"
 )
 
-var testServer = &server{
-	db: mock.DB{},
-}
+var (
+	testServer = &server{
+		db: mock.DB{},
+	}
+	wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
+)
 
 func TestMain(m *testing.M) {
 	os.Setenv("PACKET_ENV", "test")
@@ -203,43 +207,85 @@ func TestReportActionStatus(t *testing.T) {
 	}
 }
 
-func TestGetWorkflowData(t *testing.T) {
+func TestUpdateWorkflowData(t *testing.T) {
 	testCases := []struct {
-		name          string
-		req           *pb.GetWorkflowDataRequest
-		data          []byte
-		expectedError bool
+		name, workflowID string
+		data, metadata   []byte
+		expectedError    bool
 	}{
 		{
 			name:          "empty workflow id",
-			req:           &pb.GetWorkflowDataRequest{WorkflowID: ""},
+			expectedError: true,
+		},
+		{
+			name:       "add new workflow data",
+			workflowID: firstWorkflowID,
+			data:       wfData,
+		},
+		{
+			name:       "update workflow data",
+			workflowID: secondWorkflowID,
+			data:       wfData,
+		},
+		{
+			name:       "db failure",
+			workflowID: workflowForErr,
+			data:       wfData,
+		},
+	}
+	workflowData[secondWorkflowID] = 1
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			res, err := testServer.UpdateWorkflowData(
+				context.TODO(), &pb.UpdateWorkflowDataRequest{
+					WorkflowID: test.workflowID,
+					Data:       test.data,
+					Metadata:   test.metadata,
+				})
+			if err != nil && test.expectedError {
+				assert.Error(t, err)
+				assert.Empty(t, res)
+			}
+		})
+	}
+}
+
+func TestGetWorkflowData(t *testing.T) {
+	testCases := []struct {
+		name, workflowID string
+		data             []byte
+		expectedError    bool
+	}{
+		{
+			name:          "empty workflow id",
 			data:          []byte{},
 			expectedError: true,
 		},
 		{
 			name:          "invalid  workflow id",
-			req:           &pb.GetWorkflowDataRequest{WorkflowID: invalidID},
+			workflowID:    invalidID,
 			data:          []byte{},
 			expectedError: true,
 		},
 		{
 			name:          "workflow id with no data",
-			req:           &pb.GetWorkflowDataRequest{WorkflowID: secondWorkflowID},
+			workflowID:    secondWorkflowID,
 			data:          []byte{},
 			expectedError: false,
 		},
 		{
 			name:          "workflow id with data",
-			req:           &pb.GetWorkflowDataRequest{WorkflowID: firstWorkflowID},
-			data:          []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}"),
+			workflowID:    firstWorkflowID,
+			data:          wfData,
 			expectedError: false,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.GetWorkflowData(context.TODO(), test.req)
-
+			res, err := testServer.GetWorkflowData(
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: test.workflowID},
+			)
 			if err != nil && test.expectedError {
 				assert.Error(t, err)
 				assert.Equal(t, test.data, res.Data)
@@ -284,6 +330,32 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, test.res, res)
+		})
+	}
+}
+
+func TestIsLastAction(t *testing.T) {
+	testCases := []struct {
+		name, workflowID string
+		isLastAction     bool
+	}{
+		{
+			name:         "not the last action",
+			workflowID:   firstWorkflowID,
+			isLastAction: false,
+		},
+		{
+			name:         "is the last action",
+			workflowID:   secondWorkflowID,
+			isLastAction: true,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			wfContext, _ := testServer.db.GetWorkflowContexts(context.TODO(), test.workflowID)
+			actions, _ := testServer.db.GetWorkflowActions(context.TODO(), test.workflowID)
+			res := isLastAction(wfContext, actions)
+			assert.Equal(t, test.isLastAction, res)
 		})
 	}
 }

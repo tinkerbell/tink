@@ -12,6 +12,7 @@ import (
 
 const (
 	invalidID          = "d699-4e9f-a29c-a5890ccbd"
+	workflowForErr     = "1effe50d-3f21-4083-afa4-0e1620087d99"
 	firstWorkflowID    = "5a6d7564-d699-4e9f-a29c-a5890ccbd768"
 	secondWorkflowID   = "5711afcf-ea0b-4055-b4d6-9f88080f7afc"
 	workerWithWorkflow = "20fd5833-118f-4115-bd7b-1cf94d0f5727"
@@ -32,6 +33,9 @@ func (d DB) CreateWorkflow(ctx context.Context, wf db.Workflow, data string, id 
 
 // InsertIntoWfDataTable : Insert ephemeral data in workflow_data table
 func (d DB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
+	if req.WorkflowID == workflowForErr {
+		return errors.New("INSERT Into workflow_data")
+	}
 	return nil
 }
 
