@@ -11,10 +11,18 @@ import (
 )
 
 const (
-	workflowWithNoData = "5a6d7564-d699-4e9f-a29c-a5890ccbd768"
-	workflowWithData   = "5711afcf-ea0b-4055-b4d6-9f88080f7afc"
+	invalidID          = "d699-4e9f-a29c-a5890ccbd"
+	firstWorkflowID    = "5a6d7564-d699-4e9f-a29c-a5890ccbd768"
+	secondWorkflowID   = "5711afcf-ea0b-4055-b4d6-9f88080f7afc"
 	workerWithWorkflow = "20fd5833-118f-4115-bd7b-1cf94d0f5727"
 	workerForErrCases  = "b6e1a7ba-3a68-4695-9846-c5fb1eee8bee"
+	firstActionName    = "disk-wipe"
+	secondActionName   = "install-rootfs"
+	taskName           = "ubuntu-provisioning"
+)
+
+var (
+	volumes = []string{"/dev:/dev", "/dev/console:/dev/console", "/lib/firmware:/lib/firmware:ro"}
 )
 
 // CreateWorkflow creates a new workflow
@@ -29,7 +37,7 @@ func (d DB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflowDat
 
 // GetfromWfDataTable : Give you the ephemeral data from workflow_data table
 func (d DB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
-	if req.WorkflowID == workflowWithData {
+	if req.WorkflowID == firstWorkflowID {
 		return []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}"), nil
 	}
 	return []byte{}, nil
@@ -48,7 +56,7 @@ func (d DB) GetWorkflowDataVersion(ctx context.Context, workflowID string) (int3
 // GetWorkflowsForWorker : returns the list of workflows for a particular worker
 func (d DB) GetWorkflowsForWorker(id string) ([]string, error) {
 	if id == workerWithWorkflow {
-		return []string{workflowWithNoData, workflowWithData}, nil
+		return []string{firstWorkflowID, secondWorkflowID}, nil
 	} else if id == workerForErrCases {
 		return nil, errors.New("SELECT from worflow_worker_map")
 	}
@@ -82,33 +90,75 @@ func (d DB) UpdateWorkflowState(ctx context.Context, wfContext *pb.WorkflowConte
 
 // GetWorkflowContexts : gives you the current workflow context
 func (d DB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
-	if wfID == workflowWithData {
+	if wfID == secondWorkflowID {
 		return &pb.WorkflowContext{
-			WorkflowId:           workflowWithData,
-			TotalNumberOfActions: 2,
-			CurrentAction:        "first_action",
-			CurrentActionIndex:   1,
+			WorkflowId:           secondWorkflowID,
+			TotalNumberOfActions: 1,
+			CurrentAction:        "",
+			CurrentActionIndex:   0,
 			CurrentActionState:   pb.ActionState_ACTION_PENDING,
-			CurrentTask:          "first_task",
+			CurrentTask:          "",
+			CurrentWorker:        "",
+		}, nil
+	}
+	if wfID == firstWorkflowID {
+		return &pb.WorkflowContext{
+			WorkflowId:           firstWorkflowID,
+			TotalNumberOfActions: 3,
+			CurrentAction:        secondActionName,
+			CurrentActionIndex:   0,
+			CurrentActionState:   pb.ActionState_ACTION_PENDING,
+			CurrentTask:          taskName,
 			CurrentWorker:        workerWithWorkflow,
 		}, nil
 	}
-	if wfID == workflowWithNoData {
-		return &pb.WorkflowContext{
-			WorkflowId:           workflowWithNoData,
-			TotalNumberOfActions: 3,
-			CurrentAction:        "second_action",
-			CurrentActionIndex:   3,
-			CurrentActionState:   pb.ActionState_ACTION_PENDING,
-			CurrentTask:          "second_task",
-			CurrentWorker:        workerWithWorkflow,
-		}, nil
+	if wfID == invalidID {
+		return nil, errors.New("SELECT from worflow_state")
 	}
 	return nil, nil
 }
 
 // GetWorkflowActions : gives you the action list of workflow
 func (d DB) GetWorkflowActions(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+	if wfID == invalidID {
+		return nil, errors.New("SELECT from worflow_state")
+	}
+	if wfID == secondWorkflowID {
+		return &pb.WorkflowActionList{
+			ActionList: []*pb.WorkflowAction{
+				{
+					WorkerId: workerWithWorkflow,
+					Image:    secondActionName,
+					Name:     secondActionName,
+					Timeout:  int64(90),
+					TaskName: taskName,
+					Volumes:  volumes,
+				},
+			},
+		}, nil
+	}
+	if wfID == firstWorkflowID {
+		return &pb.WorkflowActionList{
+			ActionList: []*pb.WorkflowAction{
+				{
+					WorkerId: workerWithWorkflow,
+					Image:    firstActionName,
+					Name:     firstActionName,
+					Timeout:  int64(90),
+					TaskName: taskName,
+					Volumes:  volumes,
+				},
+				{
+					WorkerId: workerWithWorkflow,
+					Image:    secondActionName,
+					Name:     secondActionName,
+					Timeout:  int64(90),
+					TaskName: taskName,
+					Volumes:  volumes,
+				},
+			},
+		}, nil
+	}
 	return nil, nil
 }
 
