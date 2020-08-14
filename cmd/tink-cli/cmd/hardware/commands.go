@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/tinkerbell/tink/util"
+	"github.com/tinkerbell/tink/pkg"
 
 	"github.com/tinkerbell/tink/protos/hardware"
 
@@ -48,7 +48,7 @@ func printOutput(data bool, hw *hardware.Hardware, input string) {
 		}
 		t.Render()
 	} else {
-		hwData, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		hwData, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
 		if err != nil {
 			log.Fatal("Failed to marshal hardware data: ", err)
 		}

@@ -17,7 +17,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 	"github.com/tinkerbell/tink/protos/hardware"
-	"github.com/tinkerbell/tink/util"
+	"github.com/tinkerbell/tink/pkg"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -47,7 +47,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	// hardware push handler | POST /v1/hardware
 	hardwarePushPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "hardware"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("POST", hardwarePushPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		var hw util.HardwareWrapper
+		var hw pkg.HardwareWrapper
 		newReader, berr := utilities.IOReaderFactory(req.Body)
 		if berr != nil {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", berr).Error())
@@ -93,7 +93,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		b, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
 		if err != nil {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 		}
@@ -121,7 +121,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		b, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
 		if err != nil {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -152,7 +152,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+		b, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
 		if err != nil {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -173,7 +173,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		var hw *hardware.Hardware
 		err = nil
 		for hw, err = alls.Recv(); err == nil && hw != nil; hw, err = alls.Recv() {
-			b, err := json.Marshal(util.HardwareWrapper{Hardware: hw})
+			b, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
