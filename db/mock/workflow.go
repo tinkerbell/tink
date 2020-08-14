@@ -2,6 +2,7 @@ package mock
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -49,12 +50,39 @@ func (d DB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataReque
 
 // GetWorkflowMetadata returns metadata wrt to the ephemeral data of a workflow
 func (d DB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+	if req.WorkflowID == workflowForErr {
+		return []byte{}, errors.New("SELECT from workflow_data")
+	}
+	if req.WorkflowID == secondWorkflowID {
+		type workflowMetadata struct {
+			WorkerID  string    `json:"worker-id"`
+			Action    string    `json:"action-name"`
+			Task      string    `json:"task-name"`
+			UpdatedAt time.Time `json:"updated-at"`
+			SHA       string    `json:"sha256"`
+		}
+
+		meta, _ := json.Marshal(workflowMetadata{
+			WorkerID:  workerWithWorkflow,
+			Action:    secondActionName,
+			Task:      taskName,
+			UpdatedAt: time.Now(),
+			SHA:       "fcbf74596047b6d3e746702ccc2c697d87817371918a5042805c8c7c75b2cb5f",
+		})
+		return []byte(meta), nil
+	}
 	return []byte{}, nil
 }
 
 // GetWorkflowDataVersion returns the latest version of data for a workflow
 func (d DB) GetWorkflowDataVersion(ctx context.Context, workflowID string) (int32, error) {
-	return int32(0), nil
+	if workflowID == workflowForErr {
+		return -1, errors.New("SELECT from workflow_data")
+	}
+	if workflowID == firstWorkflowID {
+		return 2, nil
+	}
+	return 0, nil
 }
 
 // GetWorkflowsForWorker : returns the list of workflows for a particular worker

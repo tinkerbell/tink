@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -228,7 +229,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 			data:       wfData,
 		},
 		{
-			name:       "db failure",
+			name:       "database failure",
 			workflowID: workflowForErr,
 			data:       wfData,
 		},
@@ -330,6 +331,140 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, test.res, res)
+		})
+	}
+}
+
+func TestGetWorkflowMetadata(t *testing.T) {
+	testCases := []struct {
+		name, workflowID string
+		data             []byte
+		expectedError    bool
+	}{
+		{
+			name:          "database failure",
+			workflowID:    workflowForErr,
+			data:          []byte{},
+			expectedError: true,
+		},
+		{
+			name:       "workflow with no metadata",
+			workflowID: firstWorkflowID,
+			data:       []byte{},
+		},
+		{
+			name:       "workflow with metadata",
+			workflowID: secondWorkflowID,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			res, err := testServer.GetWorkflowMetadata(
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: test.workflowID},
+			)
+			if err != nil && test.expectedError {
+				assert.Error(t, err)
+				assert.Equal(t, test.data, res.Data)
+				return
+			}
+			if err == nil && test.workflowID == firstWorkflowID {
+				assert.NoError(t, err)
+				assert.Equal(t, test.data, res.Data)
+				return
+			}
+			assert.NoError(t, err)
+			assert.NotNil(t, res.Data)
+
+			var meta map[string]string
+			_ = json.Unmarshal(res.Data, &meta)
+			assert.Equal(t, workerWithWorkflow, meta["worker-id"])
+			assert.Equal(t, secondActionName, meta["action-name"])
+			assert.Equal(t, taskName, meta["task-name"])
+		})
+	}
+}
+
+func TestGetWorkflowDataVersion(t *testing.T) {
+	testCases := []struct {
+		name, workflowID string
+		version          int32
+		expectedError    bool
+	}{
+		{
+			name:          "database failure",
+			workflowID:    workflowForErr,
+			version:       -1,
+			expectedError: true,
+		},
+		{
+			name:       "workflow with no data",
+			workflowID: secondWorkflowID,
+		},
+		{
+			name:       "workflow with data",
+			version:    2,
+			workflowID: firstWorkflowID,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			res, err := testServer.GetWorkflowDataVersion(
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: test.workflowID},
+			)
+			if err != nil && test.expectedError {
+				assert.Error(t, err)
+				assert.Equal(t, test.version, res.Version)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, test.version, res.Version)
+		})
+	}
+}
+
+func TestIsApplicableToSend(t *testing.T) {
+	testCases := []struct {
+		name, workerID, workflowID string
+		actionState                pb.ActionState
+		isApplicable               bool
+	}{
+		{
+			name:        "workflow in failed state",
+			workflowID:  firstWorkflowID,
+			actionState: pb.ActionState_ACTION_FAILED,
+		},
+		{
+			name:        "workflow in timeout state",
+			workflowID:  firstWorkflowID,
+			actionState: pb.ActionState_ACTION_TIMEOUT,
+		},
+		{
+			name:        "is last action with success state",
+			workflowID:  secondWorkflowID,
+			actionState: pb.ActionState_ACTION_SUCCESS,
+		},
+		{
+			name:         "with success state but not the last action",
+			workflowID:   firstWorkflowID,
+			actionState:  pb.ActionState_ACTION_SUCCESS,
+			workerID:     workerWithWorkflow,
+			isApplicable: true,
+		},
+		{
+			name:         "not the last action",
+			workflowID:   firstWorkflowID,
+			workerID:     workerWithWorkflow,
+			isApplicable: true,
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			wfContext, _ := testServer.db.GetWorkflowContexts(context.TODO(), test.workflowID)
+			wfContext.CurrentActionState = test.actionState
+			res := isApplicableToSend(
+				context.TODO(), wfContext, test.workerID, testServer.db,
+			)
+			assert.Equal(t, test.isApplicable, res)
 		})
 	}
 }
