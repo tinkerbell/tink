@@ -328,7 +328,7 @@ func (d TinkDB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowData
 	}
 
 	if err != sql.ErrNoRows {
-		err = errors.Wrap(err, "SELECT")
+		err = errors.Wrap(err, "SELECT from workflow_data")
 		logger.Error(err)
 	}
 

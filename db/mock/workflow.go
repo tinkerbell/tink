@@ -2,11 +2,29 @@ package mock
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/tinkerbell/tink/db"
 	pb "github.com/tinkerbell/tink/protos/workflow"
+)
+
+const (
+	invalidID          = "d699-4e9f-a29c-a5890ccbd"
+	workflowForErr     = "1effe50d-3f21-4083-afa4-0e1620087d99"
+	firstWorkflowID    = "5a6d7564-d699-4e9f-a29c-a5890ccbd768"
+	secondWorkflowID   = "5711afcf-ea0b-4055-b4d6-9f88080f7afc"
+	workerWithWorkflow = "20fd5833-118f-4115-bd7b-1cf94d0f5727"
+	workerForErrCases  = "b6e1a7ba-3a68-4695-9846-c5fb1eee8bee"
+	firstActionName    = "disk-wipe"
+	secondActionName   = "install-rootfs"
+	taskName           = "ubuntu-provisioning"
+)
+
+var (
+	volumes = []string{"/dev:/dev", "/dev/console:/dev/console", "/lib/firmware:/lib/firmware:ro"}
 )
 
 // CreateWorkflow creates a new workflow
@@ -16,12 +34,15 @@ func (d DB) CreateWorkflow(ctx context.Context, wf db.Workflow, data string, id 
 
 // InsertIntoWfDataTable : Insert ephemeral data in workflow_data table
 func (d DB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
+	if req.WorkflowID == workflowForErr {
+		return errors.New("INSERT Into workflow_data")
+	}
 	return nil
 }
 
 // GetfromWfDataTable : Give you the ephemeral data from workflow_data table
 func (d DB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
-	if req.WorkflowID == "5711afcf-ea0b-4055-b4d6-9f88080f7afc" {
+	if req.WorkflowID == firstWorkflowID {
 		return []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}"), nil
 	}
 	return []byte{}, nil
@@ -29,17 +50,49 @@ func (d DB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataReque
 
 // GetWorkflowMetadata returns metadata wrt to the ephemeral data of a workflow
 func (d DB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+	if req.WorkflowID == workflowForErr {
+		return []byte{}, errors.New("SELECT from workflow_data")
+	}
+	if req.WorkflowID == secondWorkflowID {
+		type workflowMetadata struct {
+			WorkerID  string    `json:"worker-id"`
+			Action    string    `json:"action-name"`
+			Task      string    `json:"task-name"`
+			UpdatedAt time.Time `json:"updated-at"`
+			SHA       string    `json:"sha256"`
+		}
+
+		meta, _ := json.Marshal(workflowMetadata{
+			WorkerID:  workerWithWorkflow,
+			Action:    secondActionName,
+			Task:      taskName,
+			UpdatedAt: time.Now(),
+			SHA:       "fcbf74596047b6d3e746702ccc2c697d87817371918a5042805c8c7c75b2cb5f",
+		})
+		return []byte(meta), nil
+	}
 	return []byte{}, nil
 }
 
 // GetWorkflowDataVersion returns the latest version of data for a workflow
 func (d DB) GetWorkflowDataVersion(ctx context.Context, workflowID string) (int32, error) {
-	return int32(0), nil
+	if workflowID == workflowForErr {
+		return -1, errors.New("SELECT from workflow_data")
+	}
+	if workflowID == firstWorkflowID {
+		return 2, nil
+	}
+	return 0, nil
 }
 
 // GetWorkflowsForWorker : returns the list of workflows for a particular worker
 func (d DB) GetWorkflowsForWorker(id string) ([]string, error) {
-	return []string{}, nil
+	if id == workerWithWorkflow {
+		return []string{firstWorkflowID, secondWorkflowID}, nil
+	} else if id == workerForErrCases {
+		return nil, errors.New("SELECT from worflow_worker_map")
+	}
+	return nil, nil
 }
 
 // GetWorkflow returns a workflow
@@ -69,11 +122,75 @@ func (d DB) UpdateWorkflowState(ctx context.Context, wfContext *pb.WorkflowConte
 
 // GetWorkflowContexts : gives you the current workflow context
 func (d DB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+	if wfID == secondWorkflowID {
+		return &pb.WorkflowContext{
+			WorkflowId:           secondWorkflowID,
+			TotalNumberOfActions: 1,
+			CurrentAction:        "",
+			CurrentActionIndex:   0,
+			CurrentActionState:   pb.ActionState_ACTION_PENDING,
+			CurrentTask:          "",
+			CurrentWorker:        "",
+		}, nil
+	}
+	if wfID == firstWorkflowID {
+		return &pb.WorkflowContext{
+			WorkflowId:           firstWorkflowID,
+			TotalNumberOfActions: 3,
+			CurrentAction:        secondActionName,
+			CurrentActionIndex:   0,
+			CurrentActionState:   pb.ActionState_ACTION_PENDING,
+			CurrentTask:          taskName,
+			CurrentWorker:        workerWithWorkflow,
+		}, nil
+	}
+	if wfID == invalidID {
+		return nil, errors.New("SELECT from worflow_state")
+	}
 	return nil, nil
 }
 
 // GetWorkflowActions : gives you the action list of workflow
 func (d DB) GetWorkflowActions(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+	if wfID == invalidID {
+		return nil, errors.New("SELECT from worflow_state")
+	}
+	if wfID == secondWorkflowID {
+		return &pb.WorkflowActionList{
+			ActionList: []*pb.WorkflowAction{
+				{
+					WorkerId: workerWithWorkflow,
+					Image:    secondActionName,
+					Name:     secondActionName,
+					Timeout:  int64(90),
+					TaskName: taskName,
+					Volumes:  volumes,
+				},
+			},
+		}, nil
+	}
+	if wfID == firstWorkflowID {
+		return &pb.WorkflowActionList{
+			ActionList: []*pb.WorkflowAction{
+				{
+					WorkerId: workerWithWorkflow,
+					Image:    firstActionName,
+					Name:     firstActionName,
+					Timeout:  int64(90),
+					TaskName: taskName,
+					Volumes:  volumes,
+				},
+				{
+					WorkerId: workerWithWorkflow,
+					Image:    secondActionName,
+					Name:     secondActionName,
+					Timeout:  int64(90),
+					TaskName: taskName,
+					Volumes:  volumes,
+				},
+			},
+		}, nil
+	}
 	return nil, nil
 }
 
