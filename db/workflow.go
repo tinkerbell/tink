@@ -11,45 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/distribution/reference"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
+	"github.com/tinkerbell/tink/pkg"
 	pb "github.com/tinkerbell/tink/protos/workflow"
-	"gopkg.in/yaml.v2"
-)
-
-type (
-	// Workflow holds details about the workflow to be executed
-	wfYamlstruct struct {
-		Version       string `yaml:"version"`
-		Name          string `yaml:"name"`
-		ID            string `yaml:"id"`
-		GlobalTimeout int    `yaml:"global_timeout"`
-		Tasks         []task `yaml:"tasks"`
-	}
-
-	// Task represents a task to be performed in a worflow
-	task struct {
-		Name        string            `yaml:"name"`
-		WorkerAddr  string            `yaml:"worker"`
-		Actions     []action          `yaml:"actions"`
-		Volumes     []string          `yaml:"volumes"`
-		Environment map[string]string `yaml:"environment"`
-	}
-
-	// Action is the basic executional unit for a workflow
-	action struct {
-		Name        string            `yaml:"name"`
-		Image       string            `yaml:"image"`
-		Timeout     int64             `yaml:"timeout"`
-		Command     []string          `yaml:"command"`
-		OnTimeout   []string          `yaml:"on-timeout"`
-		OnFailure   []string          `yaml:"on-failure"`
-		Volumes     []string          `yaml:"volumes,omitempty"`
-		Environment map[string]string `yaml:"environment,omitempty"`
-	}
 )
 
 // Workflow represents a workflow instance in database
@@ -124,17 +91,17 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, wo
 
 // Insert actions in the workflow_state table
 func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID, tx *sql.Tx) error {
-	wfymldata, err := parseYaml([]byte(yamlData))
+	wf, err := pkg.ParseYAML([]byte(yamlData))
 	if err != nil {
 		return err
 	}
-	err = validateTemplateValues(wfymldata.Tasks)
+	err = pkg.ValidateTemplate(wf)
 	if err != nil {
 		return errors.Wrap(err, "Invalid Template")
 	}
 	var actionList []*pb.WorkflowAction
 	var uniqueWorkerID uuid.UUID
-	for _, task := range wfymldata.Tasks {
+	for _, task := range wf.Tasks {
 		taskEnvs := map[string]string{}
 		taskVolumes := map[string]string{}
 		for _, vol := range task.Volumes {
@@ -704,15 +671,6 @@ func getLatestVersionWfData(ctx context.Context, db *sql.DB, wfID string) (int32
 	return version, nil
 }
 
-func parseYaml(ymlContent []byte) (*wfYamlstruct, error) {
-	var workflow = wfYamlstruct{}
-	err := yaml.UnmarshalStrict(ymlContent, &workflow)
-	if err != nil {
-		return &wfYamlstruct{}, err
-	}
-	return &workflow, nil
-}
-
 func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, error) {
 	arg := `
 	{
@@ -794,55 +752,6 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 
 	}
 	return getWorkerIDbyMac(ctx, db, addr)
-}
-
-func isValidLength(name string) error {
-	if len(name) > 200 {
-		return fmt.Errorf("Task/Action Name %s in the Template as more than 200 characters", name)
-	}
-	return nil
-}
-
-func isValidImageName(name string) error {
-	_, err := reference.ParseNormalizedNamed(name)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return nil
-}
-
-func validateTemplateValues(tasks []task) error {
-	taskNameMap := make(map[string]struct{})
-	for _, task := range tasks {
-		err := isValidLength(task.Name)
-		if err != nil {
-			return err
-		}
-		_, ok := taskNameMap[task.Name]
-		if ok {
-			return fmt.Errorf("provided template has duplicate task name \"%s\"", task.Name)
-		}
-		taskNameMap[task.Name] = struct{}{}
-		actionNameMap := make(map[string]struct{})
-		for _, action := range task.Actions {
-			err := isValidLength(action.Name)
-			if err != nil {
-				return err
-			}
-			err = isValidImageName(action.Image)
-			if err != nil {
-				return fmt.Errorf("invalid Image name %s", action.Image)
-			}
-
-			_, ok := actionNameMap[action.Name]
-			if ok {
-				return fmt.Errorf("provided template has duplicate action name \"%s\" in task \"%s\"", action.Name, task.Name)
-			}
-			actionNameMap[action.Name] = struct{}{}
-		}
-	}
-	return nil
 }
 
 func init() {
