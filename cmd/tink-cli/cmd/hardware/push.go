@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tinkerbell/tink/util"
+	"github.com/tinkerbell/tink/pkg"
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
@@ -54,7 +54,7 @@ tink hardware push --file /tmp/data.json`,
 			log.Fatalf("invalid json, ID is required: %s", data)
 		}
 
-		var hw util.HardwareWrapper
+		var hw pkg.HardwareWrapper
 		err := json.Unmarshal([]byte(data), &hw)
 		if err != nil {
 			log.Fatal(err)

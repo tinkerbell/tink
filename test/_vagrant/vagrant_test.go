@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/pkg"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 	vagrant "github.com/tinkerbell/tink/test/_vagrant"
-	"github.com/tinkerbell/tink/util"
 )
 
 func TestVagrantSetupGuide(t *testing.T) {
@@ -194,7 +194,7 @@ func registerHardware(ctx context.Context) error {
     ]
   }
 }`)
-	hw := util.HardwareWrapper{Hardware: &hardware.Hardware{}}
+	hw := pkg.HardwareWrapper{Hardware: &hardware.Hardware{}}
 	err := json.Unmarshal(data, &hw)
 	if err != nil {
 		return err
