@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,8 +12,9 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "tink",
-	Short: "tinkerbell CLI",
+	Use:               "tink",
+	Short:             "tinkerbell CLI",
+	PersistentPreRunE: setupClient,
 }
 
 func init() {
@@ -22,23 +22,15 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "facility", "f", "", "used to build grpc and http urls")
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() error {
-	if !isHelpCommand() {
-		client.Setup()
-	}
-
-	return rootCmd.Execute()
+func setupClient(_ *cobra.Command, _ []string) error {
+	return client.Setup()
 }
 
-func isHelpCommand() bool {
-	for _, arg := range os.Args {
-		if arg == "-h" || arg == "--help" {
-			return true
-		}
-	}
-	return false
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute(version string) error {
+	rootCmd.Version = version
+	return rootCmd.Execute()
 }
 
 // initConfig reads in config file and ENV variables if set.

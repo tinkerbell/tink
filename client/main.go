@@ -58,14 +58,15 @@ func GetConnection() (*grpc.ClientConn, error) {
 }
 
 // Setup : create a connection to server
-func Setup() {
+func Setup() error {
 	conn, err := GetConnection()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	TemplateClient = template.NewTemplateClient(conn)
 	WorkflowClient = workflow.NewWorkflowSvcClient(conn)
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
+	return nil
 }
 
 // TinkHardwareClient creates a new hardware client

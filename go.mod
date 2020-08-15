@@ -12,14 +12,12 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/go-openapi/strfmt v0.19.3 // indirect
-	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20160910222444-6b7015e65d36
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
-	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/kr/pretty v0.2.0 // indirect
@@ -36,17 +34,12 @@ require (
 	github.com/rollbar/rollbar-go v1.0.2 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.1
-	github.com/spf13/afero v1.1.1 // indirect
-	github.com/spf13/cast v1.2.0 // indirect
-	github.com/spf13/cobra v0.0.3
-	github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec // indirect
-	github.com/spf13/pflag v1.0.1 // indirect
-	github.com/spf13/viper v1.0.2
+	github.com/spf13/cobra v1.0.0
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.3.0
 	go.mongodb.org/mongo-driver v1.1.2 // indirect
-	go.uber.org/atomic v1.2.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
-	go.uber.org/zap v1.7.1 // indirect
+	go.uber.org/zap v1.10.0
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
 	golang.org/x/text v0.3.2 // indirect
