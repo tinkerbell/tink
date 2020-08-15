@@ -30,6 +30,7 @@ var (
 )
 
 func main() {
+	initializeLogger()
 	logger.Debug("Starting version " + version)
 	setupRetry()
 	if setupErr := client.Setup(); setupErr != nil {
