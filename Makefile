@@ -26,7 +26,7 @@ run: ${binaries}
 	docker-compose up --build tinkerbell boots
 test:
 	go clean -testcache
-	go test ./test -v
+	go test ./... -v
 
 verify:
 	goimports -d .
