@@ -85,6 +85,24 @@ builds:
         goarch: arm64
       - goos: darwin
         goarch: arm
+dockers:
+- image_templates:
+  - 'displague/tink-server:{{ .Tag }}'
+  - 'displague/tink-server:v{{ .Major }}.{{ .Minor }}'
+  - 'displague/tink-server:latest'
+  dockerfile: ./cmd/tink-server/Dockerfile
+  binaries:
+  - tink-server
+  build_flag_templates:
+  - "--pull"
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.name={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
+  - "--label=repository=http://github.com/tinkerbell/tink"
+  - "--label=homepage=https://tinkerbell.org"
+  - "--label=maintainer=Tinkerbell Team <hello@tinkerbell.org>"
 archives:
   - format: binary
     name_template: "{{ .Binary }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
