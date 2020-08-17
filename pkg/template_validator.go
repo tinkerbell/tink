@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	errEmptyName           = "task/action name cannot be empty: %v"
 	errInvalidLength       = "task/action name cannot have more than 200 characters: %v"
 	errDuplicateTaskName   = "two tasks in a template cannot have same name: %v"
 	errInvalidActionImage  = "invalid action image: %v"
@@ -60,6 +61,9 @@ func ValidateTemplate(wf *Workflow) error {
 }
 
 func hasValidLength(name string) error {
+	if name == "" {
+		return fmt.Errorf(errEmptyName, name)
+	}
 	if len(name) > 200 {
 		return fmt.Errorf(errInvalidLength, name)
 	}
@@ -69,7 +73,6 @@ func hasValidLength(name string) error {
 func isValidImageName(name string) error {
 	_, err := reference.ParseNormalizedNamed(name)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	return nil
