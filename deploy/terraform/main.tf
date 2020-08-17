@@ -20,6 +20,9 @@ resource "packet_device" "tink-provisioner" {
   billing_cycle    = "hourly"
   project_id       = var.project_id
   network_type     = "hybrid"
+  user_data        = "${file("install_package.sh")}"
+}
+
 }
 
 # Create a device and add it to tf_project_1
