@@ -1,4 +1,21 @@
 package mock
 
+import (
+	"context"
+	"time"
+
+	pb "github.com/tinkerbell/tink/protos/workflow"
+)
+
 // DB is the mocked implementation of Database interface
-type DB struct{}
+type DB struct {
+	GetfromWfDataTableFunc           func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error)
+	InsertIntoWfDataTableFunc        func(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error
+	GetWorkflowMetadataFunc          func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error)
+	GetWorkflowDataVersionFunc       func(ctx context.Context, workflowID string) (int32, error)
+	GetWorkflowsForWorkerFunc        func(id string) ([]string, error)
+	GetWorkflowContextsFunc          func(ctx context.Context, wfID string) (*pb.WorkflowContext, error)
+	GetWorkflowActionsFunc           func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error)
+	UpdateWorkflowStateFunc          func(ctx context.Context, wfContext *pb.WorkflowContext) error
+	InsertIntoWorkflowEventTableFunc func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error
+}
