@@ -5,8 +5,8 @@ services:
     restart: unless-stopped
     environment:
       FACILITY: ${FACILITY:-onprem}
-      PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      TINKERBELL_ENV: ${TINKERBELL_ENV:-testing}
+      TINKERBELL_VERSION: ${TINKERBELL_VERSION:-ignored}
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       PGDATABASE: tinkerbell

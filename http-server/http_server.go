@@ -77,7 +77,7 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	http.Handle("/metrics", promhttp.Handler())
 	setupGitRevJSON()
 	http.HandleFunc("/version", versionHandler)
-	http.HandleFunc("/_packet/healthcheck", healthCheckHandler)
+	http.HandleFunc("/healthz", healthCheckHandler)
 	http.Handle("/", BasicAuth(mux))
 
 	if httpListenAddr == "" {

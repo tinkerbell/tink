@@ -9,8 +9,8 @@ services:
     build: .
     environment:
       FACILITY: ${FACILITY:-lab1}
-      PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
+      TINKERBELL_ENV: ${TINKERBELL_ENV:-testing}
+      TINKERBELL_VERSION: ${TINKERBELL_VERSION:-5efab5ef3a42cb88f2d54f4ed3201c2dd6797b7d}
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-9b78d0ad01d1467aa92c49c3a349b79d}
       ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-0}
       PGDATABASE: tinkerbell

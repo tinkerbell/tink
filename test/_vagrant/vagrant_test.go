@@ -56,7 +56,7 @@ func TestVagrantSetupGuide(t *testing.T) {
 	}
 
 	for ii := 0; ii < 5; ii++ {
-		resp, err := http.Get("http://localhost:42114/_packet/healthcheck")
+		resp, err := http.Get("http://localhost:42114/healthz")
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if err != nil {
 				t.Logf("err tinkerbell healthcheck... retrying: %s", err)
