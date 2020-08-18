@@ -18,7 +18,7 @@ import (
 	"github.com/tinkerbell/tink/util"
 )
 
-func TestSuccess(t *testing.T) {
+func TestVagrantSetupGuide(t *testing.T) {
 	ctx := context.Background()
 
 	machine, err := vagrant.Up(ctx,
@@ -134,7 +134,7 @@ func TestSuccess(t *testing.T) {
 	}
 	t.Fatal("Workflow never got to a complite state or it didn't make it on time (10m)")
 }
-func TestTimeout(t *testing.T) {
+func TestOneTimeoutWorkflow(t *testing.T) {
 	ctx := context.Background()
 
 	machine, err := vagrant.Up(ctx,
@@ -268,7 +268,7 @@ func TestTimeout(t *testing.T) {
 	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
 }
 
-func TestFailed(t *testing.T) {
+func TestOneFailedWorkflow(t *testing.T) {
 	ctx := context.Background()
 
 	machine, err := vagrant.Up(ctx,
