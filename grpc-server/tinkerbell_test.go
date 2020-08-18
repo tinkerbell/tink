@@ -34,8 +34,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	os.Setenv("TINKERBELL_ENV", "test")
-	os.Setenv("TINKERBELL_VERSION", "ignored")
+	os.Setenv("PACKET_ENV", "test")
+	os.Setenv("PACKET_VERSION", "ignored")
 	os.Setenv("ROLLBAR_TOKEN", "ignored")
 
 	l, _, _ := log.Init("github.com/tinkerbell/tink")
