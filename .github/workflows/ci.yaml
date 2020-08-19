@@ -23,8 +23,10 @@ jobs:
       uses: golangci/golangci-lint-action@v1
       with:
         version: v1.30
-    - name: go vet
-      run: go test ./...
+    - name: go test
+      run: go test -coverprofile=coverage.txt ./...
+    - name: upload codecov
+      run: bash <(curl -s https://codecov.io/bash)
     - name: Build binaries
       run: make
     - name: Upload tink-server binary
