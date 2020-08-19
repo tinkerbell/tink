@@ -555,6 +555,149 @@ func TestTwoSuccessfulWorkflows(t *testing.T) {
 	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
 }
 
+func TestOneFailedAndOneSuccessWorkflow(t *testing.T) {
+	ctx := context.Background()
+
+	machine, err := vagrant.Up(ctx,
+		vagrant.WithLogger(t.Logf),
+		vagrant.WithMachineName("provisioner"),
+		vagrant.WithWorkdir("../../deploy/vagrant"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		err := machine.Destroy(ctx)
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	_, err = machine.Exec(ctx, "cd /vagrant/deploy && source ../envrc && docker-compose up -d")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = machine.Exec(ctx, "docker pull hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = machine.Exec(ctx, "docker tag hello-world 192.168.1.1/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = machine.Exec(ctx, "docker push 192.168.1.1/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for ii := 0; ii < 5; ii++ {
+		resp, err := http.Get("http://localhost:42114/_packet/healthcheck")
+		if err != nil || resp.StatusCode != http.StatusOK {
+			if err != nil {
+				t.Logf("err tinkerbell healthcheck... retrying: %s", err)
+			} else {
+				t.Logf("err tinkerbell healthcheck... expected status code 200 got %d retrying", resp.StatusCode)
+			}
+			time.Sleep(10 * time.Second)
+		}
+	}
+
+	t.Log("Tinkerbell is up and running")
+
+	os.Setenv("TINKERBELL_CERT_URL", "http://127.0.0.1:42114/cert")
+	os.Setenv("TINKERBELL_GRPC_AUTHORITY", "127.0.0.1:42113")
+	client.Setup()
+	_, err = client.HardwareClient.All(ctx, &hardware.Empty{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hwDataFile := "data.json"
+
+	err = registerHardwares(ctx, hwDataFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	templateID, err := registerTemplates(ctx, "hello-world.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("templateID: %s", templateID)
+
+	firstWorkflowID, err := createWorkflow(ctx, templateID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("First WorkflowID: %s", firstWorkflowID)
+
+	templateID, err = registerTemplates(ctx, "failedWorkflow.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("templateID: %s", templateID)
+
+	secondWorkflowID, err := createWorkflow(ctx, templateID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("Second WorkflowID: %s", secondWorkflowID)
+
+	os.Setenv("VAGRANT_WORKER_GUI", "false")
+	worker, err := vagrant.Up(ctx,
+		vagrant.WithLogger(t.Logf),
+		vagrant.WithMachineName("worker"),
+		vagrant.WithWorkdir("../../deploy/vagrant"),
+		vagrant.RunAsync(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		err := worker.Destroy(ctx)
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	for iii := 0; iii < 30; iii++ {
+		events, err := client.WorkflowClient.ShowWorkflowEvents(ctx, &workflow.GetRequest{
+			Id: firstWorkflowID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for event, err := events.Recv(); err == nil && event != nil; event, err = events.Recv() {
+			if event.ActionName == "hello_world" && event.ActionStatus == workflow.ActionState_ACTION_SUCCESS {
+				t.Logf("action %s SUCCESSFUL as expected", event.ActionName)
+			}
+		}
+
+		events, err = client.WorkflowClient.ShowWorkflowEvents(ctx, &workflow.GetRequest{
+			Id: secondWorkflowID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for event, err := events.Recv(); err == nil && event != nil; event, err = events.Recv() {
+			if event.ActionName == "sleep-till-timeout" && event.ActionStatus == workflow.ActionState_ACTION_FAILED {
+				t.Logf("action %s FAILED as expected", event.ActionName)
+				return
+			}
+		}
+		time.Sleep(5 * time.Second)
+	}
+	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
+}
+
 func createWorkflow(ctx context.Context, templateID string) (string, error) {
 	res, err := client.WorkflowClient.CreateWorkflow(ctx, &workflow.CreateRequest{
 		Template: templateID,
