@@ -90,7 +90,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidActionName)
 	}
 
-	logger.Info(msgReceivedStatus, req)
+	logger.Info(msgReceivedStatus, req.GetActionStatus())
 
 	wfContext, err := s.db.GetWorkflowContexts(context, wfID)
 	if err != nil {
