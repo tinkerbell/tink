@@ -5,33 +5,32 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/packethost/pkg/log"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/db/mock"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
 const (
-	invalidID            = "d699-4e9f-a29c-a5890ccbd"
-	workflowForErr       = "1effe50d-3f21-4083-afa4-0e1620087d99"
-	firstWorkflowID      = "5a6d7564-d699-4e9f-a29c-a5890ccbd768"
-	secondWorkflowID     = "5711afcf-ea0b-4055-b4d6-9f88080f7afc"
-	workerWithNoWorkflow = "4ebf0efa-b913-45a1-a9bf-c59829cb53a9"
-	workerWithWorkflow   = "20fd5833-118f-4115-bd7b-1cf94d0f5727"
-	workerForErrCases    = "b6e1a7ba-3a68-4695-9846-c5fb1eee8bee"
-	firstActionName      = "disk-wipe"
-	secondActionName     = "install-rootfs"
-	taskName             = "ubuntu-provisioning"
+	workflowID = "5a6d7564-d699-4e9f-a29c-a5890ccbd768"
+	workerID   = "20fd5833-118f-4115-bd7b-1cf94d0f5727"
+	invalidID  = "d699-4e9f-a29c-a5890ccbd"
+	actionName = "install-rootfs"
+	taskName   = "ubuntu-provisioning"
 )
 
-var (
-	testServer = &server{
-		db: mock.DB{},
+var wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
+
+func testServer(db db.Database) *server {
+	return &server{
+		db: db,
 	}
-	wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
-)
+}
 
 func TestMain(m *testing.M) {
 	os.Setenv("PACKET_ENV", "test")
@@ -45,76 +44,170 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetWorkflowContextList(t *testing.T) {
-	testCases := []struct {
-		name          string
-		workerID      string
-		expectedError bool
+	type (
+		args struct {
+			db       mock.DB
+			workerID string
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "empty workflow id",
-			expectedError: true,
+		"empty worker id": {
+			args: args{
+				db: mock.DB{},
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:          "database failure",
-			expectedError: true,
-			workerID:      workerForErrCases,
+		"database failure": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+						return []string{workflowID}, nil
+					},
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return nil, errors.New("SELECT from worflow_state")
+					},
+				},
+				workerID: workerID,
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:     "no workflows found",
-			workerID: workerWithNoWorkflow,
+		"no workflows found": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+						return nil, nil
+					},
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return nil, nil
+					},
+				},
+				workerID: workerID,
+			},
+			want: want{
+				expectedError: false,
+			},
 		},
-		{
-			name:     "workflows found for worker",
-			workerID: workerWithWorkflow,
+		"workflows found": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+						return []string{workflowID}, nil
+					},
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+				},
+				workerID: workerID,
+			},
+			want: want{
+				expectedError: false,
+			},
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.GetWorkflowContextList(
-				context.TODO(), &pb.WorkflowContextRequest{WorkerId: test.workerID},
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := s.GetWorkflowContextList(
+				context.TODO(), &pb.WorkflowContextRequest{WorkerId: tc.args.workerID},
 			)
-			if err != nil && test.expectedError {
+			if err != nil {
 				assert.Error(t, err)
 				assert.Nil(t, res)
+				assert.True(t, tc.want.expectedError)
+				return
+			}
+			if err == nil && res == nil {
+				assert.False(t, tc.want.expectedError)
 				return
 			}
 			assert.NoError(t, err)
-			if test.workerID == workerWithNoWorkflow {
-				assert.Nil(t, res)
-				return
-			}
 			assert.NotNil(t, res)
-			assert.Len(t, res.WorkflowContexts, 2)
+			assert.Len(t, res.WorkflowContexts, 1)
 		})
 	}
 }
 
 func TestGetWorkflowActions(t *testing.T) {
-	testCases := []struct {
-		name          string
-		workflowID    string
-		expectedError bool
+	type (
+		args struct {
+			db         mock.DB
+			workflowID string
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "empty workflow id",
-			expectedError: true,
+		"empty workflow id": {
+			args: args{
+				db: mock.DB{},
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:          "invalid  workflow id",
-			workflowID:    invalidID,
-			expectedError: true,
+		"database failure": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return nil, errors.New("SELECT from worflow_state")
+					},
+				},
+				workflowID: invalidID,
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:       "getting actions",
-			workflowID: secondWorkflowID,
+		"getting actions": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+				workflowID: workflowID,
+			},
+			want: want{
+				expectedError: false,
+			},
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.GetWorkflowActions(
-				context.TODO(), &pb.WorkflowActionsRequest{WorkflowId: test.workflowID},
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := s.GetWorkflowActions(
+				context.TODO(), &pb.WorkflowActionsRequest{WorkflowId: tc.args.workflowID},
 			)
-			if err != nil && test.expectedError {
+			if err != nil {
+				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
 				assert.Nil(t, res)
 				return
@@ -122,84 +215,348 @@ func TestGetWorkflowActions(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, res)
 			assert.Len(t, res.ActionList, 1)
-			assert.Len(t, res.ActionList[0].Volumes, 3)
-			assert.Equal(t, res.ActionList[0].Name, secondActionName)
 		})
 	}
 }
 
 func TestReportActionStatus(t *testing.T) {
-	type req struct {
-		workflowID, taskName, actionName, workerID string
-		actionState                                pb.ActionState
-	}
-	testCases := []struct {
-		req
-		name          string
-		expectedError bool
+	type (
+		args struct {
+			db                                         mock.DB
+			workflowID, taskName, actionName, workerID string
+			actionState                                pb.ActionState
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "empty workflow id",
-			expectedError: true,
-			req: req{
+		"empty workflow id": {
+			args: args{
+				db:         mock.DB{},
 				taskName:   taskName,
-				actionName: firstActionName,
+				actionName: actionName,
+			},
+			want: want{
+				expectedError: true,
 			},
 		},
-		{
-			name:          "empty task name",
-			expectedError: true,
-			req: req{
-				workflowID: firstWorkflowID,
-				actionName: firstActionName,
+		"empty task name": {
+			args: args{
+				db:         mock.DB{},
+				workflowID: workflowID,
+				actionName: actionName,
+			},
+			want: want{
+				expectedError: true,
 			},
 		},
-		{
-			name:          "empty action name",
-			expectedError: true,
-			req: req{
-				workflowID: firstWorkflowID,
+		"empty action name": {
+			args: args{
+				db:         mock.DB{},
 				taskName:   taskName,
+				workflowID: workflowID,
+			},
+			want: want{
+				expectedError: true,
 			},
 		},
-		{
-			name:          "error fetching workflow context",
-			expectedError: true,
-			req: req{
-				workflowID:  invalidID,
-				workerID:    workerWithWorkflow,
+		"error getting workflow context": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return nil, errors.New("SELECT from worflow_state")
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
 				taskName:    taskName,
-				actionName:  firstActionName,
+				actionName:  actionName,
 				actionState: pb.ActionState_ACTION_PENDING,
 			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name: "fetch workflow context",
-			req: req{
-				workflowID:  firstWorkflowID,
-				workerID:    workerWithWorkflow,
+		"failed getting actions for context": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return nil, errors.New("SELECT from worflow_state")
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
 				taskName:    taskName,
-				actionName:  secondActionName,
+				actionName:  actionName,
 				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
+		"success reporting status": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+					UpdateWorkflowStateFunc: func(ctx context.Context, wfContext *pb.WorkflowContext) error {
+						return nil
+					},
+					InsertIntoWorkflowEventTableFunc: func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
+						return nil
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    taskName,
+				actionName:  actionName,
+				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+		"report status for second action": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionIndex:   0,
+							CurrentAction:        "disk-wipe",
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    "disk-wipe",
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+					UpdateWorkflowStateFunc: func(ctx context.Context, wfContext *pb.WorkflowContext) error {
+						return nil
+					},
+					InsertIntoWorkflowEventTableFunc: func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
+						return nil
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    taskName,
+				actionName:  actionName,
+				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+		"reporting different action name": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    taskName,
+				actionName:  "different-action-name",
+				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
+		"reporting different task name": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    "different-task-name",
+				actionName:  taskName,
+				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
+		"failed to update workflow state": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+					UpdateWorkflowStateFunc: func(ctx context.Context, wfContext *pb.WorkflowContext) error {
+						return errors.New("INSERT in to workflow_state")
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    taskName,
+				actionName:  actionName,
+				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
+		"failed to update workflow events": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+					UpdateWorkflowStateFunc: func(ctx context.Context, wfContext *pb.WorkflowContext) error {
+						return nil
+					},
+					InsertIntoWorkflowEventTableFunc: func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
+						return errors.New("INSERT in to workflow_event")
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    taskName,
+				actionName:  actionName,
+				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+			},
+			want: want{
+				expectedError: true,
 			},
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.ReportActionStatus(context.TODO(),
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := s.ReportActionStatus(context.TODO(),
 				&pb.WorkflowActionStatus{
-					WorkflowId:   test.req.workflowID,
-					ActionName:   test.req.actionName,
-					TaskName:     test.req.taskName,
-					WorkerId:     test.req.workerID,
-					ActionStatus: test.req.actionState,
+					WorkflowId:   tc.args.workflowID,
+					ActionName:   tc.args.actionName,
+					TaskName:     tc.args.taskName,
+					WorkerId:     tc.args.workerID,
+					ActionStatus: tc.args.actionState,
 					Seconds:      0,
 				},
 			)
-
-			if err != nil && test.expectedError {
+			if err != nil {
+				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
-				assert.Nil(t, res)
+				assert.Empty(t, res)
 				return
 			}
 			assert.NoError(t, err)
@@ -209,41 +566,67 @@ func TestReportActionStatus(t *testing.T) {
 }
 
 func TestUpdateWorkflowData(t *testing.T) {
-	testCases := []struct {
-		name, workflowID string
-		data, metadata   []byte
-		expectedError    bool
+	type (
+		args struct {
+			db         mock.DB
+			data       []byte
+			workflowID string
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "empty workflow id",
-			expectedError: true,
+		"empty workflow id": {
+			args: args{
+				db: mock.DB{},
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:       "add new workflow data",
-			workflowID: firstWorkflowID,
-			data:       wfData,
+		"database failure": {
+			args: args{
+				db: mock.DB{
+					InsertIntoWfDataTableFunc: func(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
+						return errors.New("INSERT Into workflow_data")
+					},
+				},
+				workflowID: workflowID,
+				data:       wfData,
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:       "update workflow data",
-			workflowID: secondWorkflowID,
-			data:       wfData,
-		},
-		{
-			name:       "database failure",
-			workflowID: workflowForErr,
-			data:       wfData,
+		"add new data": {
+			args: args{
+				db: mock.DB{
+					InsertIntoWfDataTableFunc: func(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
+						return nil
+					},
+				},
+				workflowID: workflowID,
+				data:       wfData,
+			},
+			want: want{
+				expectedError: false,
+			},
 		},
 	}
-	workflowData[secondWorkflowID] = 1
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.UpdateWorkflowData(
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := s.UpdateWorkflowData(
 				context.TODO(), &pb.UpdateWorkflowDataRequest{
-					WorkflowID: test.workflowID,
-					Data:       test.data,
-					Metadata:   test.metadata,
+					WorkflowID: tc.args.workflowID,
+					Data:       tc.args.data,
 				})
-			if err != nil && test.expectedError {
+			if err != nil {
+				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
 				assert.Empty(t, res)
 			}
@@ -252,124 +635,259 @@ func TestUpdateWorkflowData(t *testing.T) {
 }
 
 func TestGetWorkflowData(t *testing.T) {
-	testCases := []struct {
-		name, workflowID string
-		data             []byte
-		expectedError    bool
+	type (
+		args struct {
+			db         mock.DB
+			workflowID string
+		}
+		want struct {
+			expectedError bool
+			data          []byte
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "empty workflow id",
-			data:          []byte{},
-			expectedError: true,
+		"empty workflow id": {
+			args: args{
+				db: mock.DB{
+					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+						return []byte{}, nil
+					},
+				},
+				workflowID: "",
+			},
+			want: want{
+				expectedError: true,
+				data:          []byte{},
+			},
 		},
-		{
-			name:          "invalid  workflow id",
-			workflowID:    invalidID,
-			data:          []byte{},
-			expectedError: true,
+		"invalid workflow id": {
+			args: args{
+				db: mock.DB{
+					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+						return []byte{}, errors.New("invalid uuid")
+					},
+				},
+				workflowID: "d699-4e9f-a29c-a5890ccbd",
+			},
+			want: want{
+				expectedError: true,
+				data:          []byte{},
+			},
 		},
-		{
-			name:          "workflow id with no data",
-			workflowID:    secondWorkflowID,
-			data:          []byte{},
-			expectedError: false,
+		"no workflow data": {
+			args: args{
+				db: mock.DB{
+					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+						return []byte{}, nil
+					},
+				},
+				workflowID: workflowID,
+			},
+			want: want{
+				data: []byte{},
+			},
 		},
-		{
-			name:          "workflow id with data",
-			workflowID:    firstWorkflowID,
-			data:          wfData,
-			expectedError: false,
+		"workflow data": {
+			args: args{
+				db: mock.DB{
+					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+						return wfData, nil
+					},
+				},
+				workflowID: workflowID,
+			},
+			want: want{
+				data: wfData,
+			},
 		},
 	}
-
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.GetWorkflowData(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: test.workflowID},
+	for name, tc := range testCases {
+		s := testServer(tc.args.db)
+		t.Run(name, func(t *testing.T) {
+			res, err := s.GetWorkflowData(
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: tc.args.workflowID},
 			)
-			if err != nil && test.expectedError {
+			if err != nil {
+				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
-				assert.Equal(t, test.data, res.Data)
+				assert.Equal(t, tc.want.data, res.Data)
 				return
 			}
 			assert.NoError(t, err)
 			assert.NotNil(t, res.Data)
-			assert.Equal(t, test.data, res.Data)
+			assert.Equal(t, tc.want.data, res.Data)
 		})
 	}
 }
 
 func TestGetWorkflowsForWorker(t *testing.T) {
-	testCases := []struct {
-		name          string
-		workerID      string
-		res           []string
-		expectedError bool
+	type (
+		args struct {
+			db       mock.DB
+			workerID string
+		}
+		want struct {
+			data          []string
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "empty workflow id",
-			expectedError: true,
+		"empty workflow id": {
+			args: args{
+				db:       mock.DB{},
+				workerID: "",
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:     "no workflows found",
-			workerID: workerWithNoWorkflow,
+		"database failure": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+						return nil, errors.New("database failed")
+					},
+				},
+				workerID: workerID,
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:     "workflows found for worker",
-			workerID: workerWithWorkflow,
-			res:      []string{firstWorkflowID, secondWorkflowID},
+		"no workflows found": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+						return nil, nil
+					},
+				},
+				workerID: workerID,
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+		"workflows found": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+						return []string{workflowID}, nil
+					},
+				},
+				workerID: workerID,
+			},
+			want: want{
+				data: []string{workflowID},
+			},
 		},
 	}
 
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := getWorkflowsForWorker(testServer.db, test.workerID)
-			if err != nil && test.expectedError {
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := getWorkflowsForWorker(s.db, tc.args.workerID)
+			if err != nil {
+				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
 				assert.Nil(t, res)
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, test.res, res)
+			assert.Equal(t, tc.want.data, res)
 		})
 	}
 }
 
 func TestGetWorkflowMetadata(t *testing.T) {
-	testCases := []struct {
-		name, workflowID string
-		data             []byte
-		expectedError    bool
+	type (
+		args struct {
+			db         mock.DB
+			workflowID string
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "database failure",
-			workflowID:    workflowForErr,
-			data:          []byte{},
-			expectedError: true,
+		"database failure": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowMetadataFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+						return []byte{}, errors.New("SELECT from workflow_data")
+					},
+				},
+				workflowID: workflowID,
+			},
+			want: want{
+				expectedError: true,
+			},
 		},
-		{
-			name:       "workflow with no metadata",
-			workflowID: firstWorkflowID,
-			data:       []byte{},
+		"no metadata": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowMetadataFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+						return []byte{}, nil
+					},
+				},
+				workflowID: workflowID,
+			},
+			want: want{
+				expectedError: false,
+			},
 		},
-		{
-			name:       "workflow with metadata",
-			workflowID: secondWorkflowID,
+		"metadata": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowMetadataFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
+						type workflowMetadata struct {
+							WorkerID  string    `json:"worker-id"`
+							Action    string    `json:"action-name"`
+							Task      string    `json:"task-name"`
+							UpdatedAt time.Time `json:"updated-at"`
+							SHA       string    `json:"sha256"`
+						}
+
+						meta, _ := json.Marshal(workflowMetadata{
+							WorkerID:  workerID,
+							Action:    actionName,
+							Task:      taskName,
+							UpdatedAt: time.Now(),
+							SHA:       "fcbf74596047b6d3e746702ccc2c697d87817371918a5042805c8c7c75b2cb5f",
+						})
+						return []byte(meta), nil
+					},
+				},
+				workflowID: workflowID,
+			},
+			want: want{
+				expectedError: false,
+			},
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.GetWorkflowMetadata(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: test.workflowID},
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := s.GetWorkflowMetadata(
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: tc.args.workflowID},
 			)
-			if err != nil && test.expectedError {
+			if err != nil {
+				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
-				assert.Equal(t, test.data, res.Data)
+				assert.Empty(t, res.Data)
 				return
 			}
-			if err == nil && test.workflowID == firstWorkflowID {
-				assert.NoError(t, err)
-				assert.Equal(t, test.data, res.Data)
+			if err == nil && len(res.Data) == 0 {
+				assert.False(t, tc.want.expectedError)
+				assert.Empty(t, res.Data)
 				return
 			}
 			assert.NoError(t, err)
@@ -377,120 +895,364 @@ func TestGetWorkflowMetadata(t *testing.T) {
 
 			var meta map[string]string
 			_ = json.Unmarshal(res.Data, &meta)
-			assert.Equal(t, workerWithWorkflow, meta["worker-id"])
-			assert.Equal(t, secondActionName, meta["action-name"])
+			assert.Equal(t, workerID, meta["worker-id"])
+			assert.Equal(t, actionName, meta["action-name"])
 			assert.Equal(t, taskName, meta["task-name"])
 		})
 	}
 }
 
 func TestGetWorkflowDataVersion(t *testing.T) {
-	testCases := []struct {
-		name, workflowID string
-		version          int32
-		expectedError    bool
+	type (
+		args struct {
+			db mock.DB
+		}
+		want struct {
+			version       int32
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:          "database failure",
-			workflowID:    workflowForErr,
-			version:       -1,
-			expectedError: true,
+		"database failure": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowDataVersionFunc: func(ctx context.Context, workflowID string) (int32, error) {
+						return -1, errors.New("SELECT from workflow_data")
+					},
+				},
+			},
+			want: want{
+				version:       -1,
+				expectedError: true,
+			},
 		},
-		{
-			name:       "workflow with no data",
-			workflowID: secondWorkflowID,
-		},
-		{
-			name:       "workflow with data",
-			version:    2,
-			workflowID: firstWorkflowID,
+		"success": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowDataVersionFunc: func(ctx context.Context, workflowID string) (int32, error) {
+						return 2, nil
+					},
+				},
+			},
+			want: want{
+				version:       2,
+				expectedError: false,
+			},
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			res, err := testServer.GetWorkflowDataVersion(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: test.workflowID},
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := s.GetWorkflowDataVersion(
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: workflowID},
 			)
-			if err != nil && test.expectedError {
+			assert.Equal(t, tc.want.version, res.Version)
+			if err != nil {
+				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
-				assert.Equal(t, test.version, res.Version)
 				return
 			}
 			assert.NoError(t, err)
-			assert.Equal(t, test.version, res.Version)
 		})
 	}
 }
 
 func TestIsApplicableToSend(t *testing.T) {
-	testCases := []struct {
-		name, workerID, workflowID string
-		actionState                pb.ActionState
-		isApplicable               bool
+	type (
+		args struct {
+			db mock.DB
+		}
+		want struct {
+			isApplicable bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:        "workflow in failed state",
-			workflowID:  firstWorkflowID,
-			actionState: pb.ActionState_ACTION_FAILED,
+		"failed state": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_FAILED,
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isApplicable: false,
+			},
 		},
-		{
-			name:        "workflow in timeout state",
-			workflowID:  firstWorkflowID,
-			actionState: pb.ActionState_ACTION_TIMEOUT,
+		"timeout state": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_FAILED,
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isApplicable: false,
+			},
 		},
-		{
-			name:        "is last action with success state",
-			workflowID:  secondWorkflowID,
-			actionState: pb.ActionState_ACTION_SUCCESS,
+		"failed to get actions": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return nil, errors.New("SELECT from worflow_state")
+					},
+				},
+			},
+			want: want{
+				isApplicable: false,
+			},
 		},
-		{
-			name:         "with success state but not the last action",
-			workflowID:   firstWorkflowID,
-			actionState:  pb.ActionState_ACTION_SUCCESS,
-			workerID:     workerWithWorkflow,
-			isApplicable: true,
+		"is last action and success state": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isApplicable: false,
+			},
 		},
-		{
-			name:         "not the last action",
-			workflowID:   firstWorkflowID,
-			workerID:     workerWithWorkflow,
-			isApplicable: true,
+		"in-progress last action for different worker": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_IN_PROGRESS,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: "c160ee99-a969-49d3-8415-3dbceeff54fd",
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isApplicable: false,
+			},
+		},
+		"success state and not the last action": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    "disk-wipe",
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isApplicable: true,
+			},
+		},
+		"not the last action": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_IN_PROGRESS,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    "disk-wipe",
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isApplicable: true,
+			},
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			wfContext, _ := testServer.db.GetWorkflowContexts(context.TODO(), test.workflowID)
-			wfContext.CurrentActionState = test.actionState
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			wfContext, _ := s.db.GetWorkflowContexts(context.TODO(), workflowID)
 			res := isApplicableToSend(
-				context.TODO(), wfContext, test.workerID, testServer.db,
+				context.TODO(), wfContext, workerID, s.db,
 			)
-			assert.Equal(t, test.isApplicable, res)
+			assert.Equal(t, tc.want.isApplicable, res)
 		})
 	}
 }
 
 func TestIsLastAction(t *testing.T) {
-	testCases := []struct {
-		name, workflowID string
-		isLastAction     bool
+	type (
+		args struct {
+			db mock.DB
+		}
+		want struct {
+			isLastAction bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
 	}{
-		{
-			name:         "not the last action",
-			workflowID:   firstWorkflowID,
-			isLastAction: false,
+		"is not last": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    "disk-wipe",
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isLastAction: false,
+			},
 		},
-		{
-			name:         "is the last action",
-			workflowID:   secondWorkflowID,
-			isLastAction: true,
+		"is last": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 1,
+							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+				},
+			},
+			want: want{
+				isLastAction: true,
+			},
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			wfContext, _ := testServer.db.GetWorkflowContexts(context.TODO(), test.workflowID)
-			actions, _ := testServer.db.GetWorkflowActions(context.TODO(), test.workflowID)
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			wfContext, _ := s.db.GetWorkflowContexts(context.TODO(), workflowID)
+			actions, _ := s.db.GetWorkflowActions(context.TODO(), workflowID)
 			res := isLastAction(wfContext, actions)
-			assert.Equal(t, test.isLastAction, res)
+			assert.Equal(t, tc.want.isLastAction, res)
 		})
 	}
 }
