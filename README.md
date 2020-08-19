@@ -1,6 +1,7 @@
 # Tinkerbell
 
 [![Build Status](https://cloud.drone.io/api/badges/tinkerbell/tink/status.svg)](https://cloud.drone.io/tinkerbell/tink)
+[![codecov](https://codecov.io/gh/tinkerbell/tink/branch/master/graph/badge.svg)](https://codecov.io/gh/tinkerbell/tink)
 
 It is comprised of following five major components:
 
