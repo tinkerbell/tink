@@ -11,15 +11,23 @@ import (
 	httpServer "github.com/tinkerbell/tink/http-server"
 )
 
-var logger log.Logger
+var (
+	// version is set at build time
+	version = "devel"
+
+	logger log.Logger
+)
 
 func main() {
 	log, cleanup, err := log.Init("github.com/tinkerbell/tink")
+
 	if err != nil {
 		panic(err)
 	}
 	logger = log
 	defer cleanup()
+
+	log.Info("starting version " + version)
 
 	ctx, closer := context.WithCancel(context.Background())
 	errCh := make(chan error, 2)

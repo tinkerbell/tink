@@ -22,11 +22,20 @@ var (
 	retries       int
 )
 
-var logger = logrus.New()
+var (
+	// version is set at build time
+	version = "devel"
+
+	logger = logrus.New()
+)
 
 func main() {
+	initializeLogger()
+	logger.Debug("Starting version " + version)
 	setupRetry()
-	client.Setup()
+	if setupErr := client.Setup(); setupErr != nil {
+		logger.Fatalln(setupErr)
+	}
 	conn, err := tryClientConnection()
 	if err != nil {
 		logger.Fatalln(err)

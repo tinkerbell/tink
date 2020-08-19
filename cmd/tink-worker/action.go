@@ -276,6 +276,12 @@ func initializeDockerClient() (*client.Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "DOCKER CLIENT")
 	}
+
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	return c, nil
+}
+
+func initializeLogger() {
 	level := os.Getenv("WORKER_LOG_LEVEL")
 	if level != "" {
 		switch strings.ToLower(level) {
@@ -301,6 +307,4 @@ func initializeDockerClient() (*client.Client, error) {
 		logger.SetLevel(logrus.InfoLevel)
 		logger.Warningln("Variable WORKER_LOG_LEVEL is not set. Default is Info")
 	}
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	return c, nil
 }
