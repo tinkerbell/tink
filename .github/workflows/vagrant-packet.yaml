@@ -14,4 +14,4 @@ jobs:
     - name: Vagrant Test
       run: |
         export VAGRANT_DEFAULT_PROVIDER="virtualbox"
-        go test -v ./test/_vagrant
+        go test --timeout 1h -v ./test/_vagrant
