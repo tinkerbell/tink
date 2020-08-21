@@ -132,7 +132,7 @@ func TestVagrantSetupGuide(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (10m)")
+	t.Fatal("Workflow never got to a complete state or it didn't make it on time (10m)")
 }
 func TestOneTimeoutWorkflow(t *testing.T) {
 	ctx := context.Background()
@@ -263,9 +263,9 @@ func TestOneTimeoutWorkflow(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
+	t.Fatal("Workflow never got to a complete state or it didn't make it on time (10m)")
 }
 
 func TestOneFailedWorkflow(t *testing.T) {
@@ -397,9 +397,9 @@ func TestOneFailedWorkflow(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
+	t.Fatal("Workflow never got to a complete state or it didn't make it on time (10m)")
 }
 
 func TestTwoSuccessfulWorkflows(t *testing.T) {
@@ -550,9 +550,9 @@ func TestTwoSuccessfulWorkflows(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
+	t.Fatal("Workflow never got to a complete state or it didn't make it on time (10m)")
 }
 
 func TestOneFailedAndOneSuccessWorkflow(t *testing.T) {
@@ -584,12 +584,25 @@ func TestOneFailedAndOneSuccessWorkflow(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	_, err = machine.Exec(ctx, "docker pull bash")
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, err = machine.Exec(ctx, "docker tag hello-world 192.168.1.1/hello-world")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	_, err = machine.Exec(ctx, "docker tag bash 192.168.1.1/bash")
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, err = machine.Exec(ctx, "docker push 192.168.1.1/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = machine.Exec(ctx, "docker push 192.168.1.1/bash")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -693,9 +706,9 @@ func TestOneFailedAndOneSuccessWorkflow(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
+	t.Fatal("Workflow never got to a complete state or it didn't make it on time (10m)")
 }
 
 func TestOneTimeoutAndOneSuccessWorkflow(t *testing.T) {
@@ -727,12 +740,25 @@ func TestOneTimeoutAndOneSuccessWorkflow(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	_, err = machine.Exec(ctx, "docker pull bash")
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, err = machine.Exec(ctx, "docker tag hello-world 192.168.1.1/hello-world")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	_, err = machine.Exec(ctx, "docker tag bash 192.168.1.1/bash")
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, err = machine.Exec(ctx, "docker push 192.168.1.1/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = machine.Exec(ctx, "docker push 192.168.1.1/bash")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -836,9 +862,9 @@ func TestOneTimeoutAndOneSuccessWorkflow(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
+	t.Fatal("Workflow never got to a complete state or it didn't make it on time (10m)")
 }
 
 func createWorkflow(ctx context.Context, templateID string) (string, error) {
