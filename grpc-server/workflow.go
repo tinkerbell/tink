@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -34,7 +34,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	labels["op"] = "createworkflow"
 	msg = "creating a new workflow"
 	id := uuid.NewV4()
-	//var data string
 	fn := func() error {
 		wf := db.Workflow{
 			ID:       id.String(),
@@ -59,7 +58,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 
 	logger.Info(msg)
 	err := fn()
-	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -69,6 +67,8 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		l.Error(err)
 		return &workflow.CreateResponse{}, err
 	}
+	l := logger.With("workflowID", id.String())
+	l.Info("done " + msg)
 	return &workflow.CreateResponse{Id: id.String()}, err
 }
 
@@ -90,7 +90,6 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 
 	logger.Info(msg)
 	w, err := fn()
-	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -110,6 +109,8 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 		State:    state[w.State],
 		Data:     yamlData,
 	}
+	l := logger.With("workflowID", w.ID)
+	l.Info("done " + msg)
 	return wf, err
 }
 
@@ -122,6 +123,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 
 	msg := ""
 	labels["op"] = "delete"
+	l := logger.With("workflowID", in.GetId())
 	msg = "deleting a workflow"
 	fn := func() error {
 		// update only if not in running state
@@ -132,9 +134,8 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	logger.Info(msg)
+	l.Info(msg)
 	err := fn()
-	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -143,6 +144,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 		}
 		l.Error(err)
 	}
+	l.Info("done " + msg)
 	return &workflow.Empty{}, err
 }
 
@@ -201,7 +203,6 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 
 	logger.Info(msg)
 	w, err := fn()
-	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -219,6 +220,16 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 		CurrentActionState:   workflow.ActionState(w.CurrentActionState),
 		TotalNumberOfActions: w.TotalNumberOfActions,
 	}
+	l := logger.With(
+		"workflowID", wf.GetWorkflowId(),
+		"currentWorker", wf.GetCurrentWorker(),
+		"currentTask", wf.GetCurrentTask(),
+		"currentAction", wf.GetCurrentAction(),
+		"currentActionIndex", strconv.FormatInt(wf.GetCurrentActionIndex(), 10),
+		"currentActionState", wf.GetCurrentActionState(),
+		"totalNumberOfActions", wf.GetTotalNumberOfActions(),
+	)
+	l.Info("done " + msg)
 	return wf, err
 }
 
@@ -257,7 +268,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 		metrics.CacheErrors.With(labels).Inc()
 		return err
 	}
-	logger.Info("Done Listing workflows Events")
+	logger.Info("done listing workflows events")
 	metrics.CacheHits.With(labels).Inc()
 	return nil
 }
@@ -290,6 +301,5 @@ func renderTemplate(tempData string, devices []byte) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	fmt.Println(buf.String())
 	return buf.String(), nil
 }

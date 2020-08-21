@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/tinkerbell/tink/db"
@@ -22,7 +23,7 @@ const (
 	errInvalidActionReported = "reported action name does not match the current action details"
 
 	msgReceivedStatus   = "received action status: %s"
-	msgCurrentWfContext = "current workflow context: %s"
+	msgCurrentWfContext = "current workflow context"
 	msgSendWfContext    = "send workflow context: %s"
 )
 
@@ -91,7 +92,8 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidActionName)
 	}
 
-	logger.Info(fmt.Sprintf(msgReceivedStatus, req.GetActionStatus()))
+	l := logger.With("actionName", req.GetActionName(), "workflowID", req.GetWorkflowId())
+	l.Info(fmt.Sprintf(msgReceivedStatus, req.GetActionStatus()))
 
 	wfContext, err := s.db.GetWorkflowContexts(context, wfID)
 	if err != nil {
@@ -131,7 +133,17 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 	if err != nil {
 		return &pb.Empty{}, status.Error(codes.Aborted, err.Error())
 	}
-	logger.Info(fmt.Sprintf(msgCurrentWfContext, wfContext))
+
+	l = logger.With(
+		"workflowID", wfContext.GetWorkflowId(),
+		"currentWorker", wfContext.GetCurrentWorker(),
+		"currentTask", wfContext.GetCurrentTask(),
+		"currentAction", wfContext.GetCurrentAction(),
+		"currentActionIndex", strconv.FormatInt(wfContext.GetCurrentActionIndex(), 10),
+		"currentActionState", wfContext.GetCurrentActionState(),
+		"totalNumberOfActions", wfContext.GetTotalNumberOfActions(),
+	)
+	l.Info(msgCurrentWfContext)
 	return &pb.Empty{}, nil
 }
 
