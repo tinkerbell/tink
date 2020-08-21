@@ -126,9 +126,9 @@ func TestVagrantSetupGuide(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (5m)")
+	t.Fatal("Workflow never got to a complite state or it didn't make it on time (10m)")
 }
 
 func createWorkflow(ctx context.Context, templateID string) (string, error) {
