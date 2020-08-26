@@ -23,8 +23,6 @@ resource "packet_device" "tink-provisioner" {
   user_data        = "${file("install_package.sh")}"
 }
 
-}
-
 # Create a device and add it to tf_project_1
 resource "packet_device" "tink-worker" {
   hostname         = "tink-worker"
