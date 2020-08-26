@@ -485,6 +485,14 @@ whats_next() (
 	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )
 
+confiure_rsyslog_logging() (
+        sudo cat rsyslog.conf >>/etc/rsyslog.conf
+        sudo cat rsyslog_docker_daemon.conf >/etc/rsyslog.d/docker_daemon.conf
+        sudo cat rsyslog_docker_container.conf >/etc/rsyslog.d/docker_container.conf
+        sudo service rsyslog restart
+				sudo service docker restart
+)
+
 do_setup() (
 	# perform some very rudimentary platform detection
 	lsb_dist=$(get_distribution)
@@ -505,6 +513,7 @@ do_setup() (
 
 	setup_osie
 	generate_certificates
+	confiure_rsyslog_logging
 	setup_docker_registry
 
 	echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"

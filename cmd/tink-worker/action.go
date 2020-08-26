@@ -186,10 +186,18 @@ func createContainer(ctx context.Context, l log.Logger, action *pb.WorkflowActio
 		config.Cmd = cmd
 	}
 
+	logConfig := &container.LogConfig{
+		Type: os.Getenv("LOG_DRIVER"),
+		Config: map[string]string{
+			os.Getenv("LOG_SERVER_ADDRESS_TYPE"): os.Getenv("LOG_SERVER_ADDRESS"),
+			"tag":                                os.Getenv("LOG_TAG"),
+		},
+	}
 	wfDir := dataDir + string(os.PathSeparator) + wfID
 	hostConfig := &container.HostConfig{
 		Privileged: true,
 		Binds:      []string{wfDir + ":/workflow"},
+		LogConfig:  *logConfig,
 	}
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 	l.With("command", cmd).Info("creating container")

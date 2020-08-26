@@ -80,6 +80,13 @@ export TINKERBELL_REGISTRY_PASSWORD="$registry_password"
 
 # Legacy options, to be deleted:
 export FACILITY=onprem
+export ROLLBAR_TOKEN=ignored
+export ROLLBAR_DISABLE=1
+
+# logging details
+export LOG_DRIVER=syslog
+export LOG_OPT_SERVER_ADDRESS=tcp://192.168.1.1:514
+export LOG_OPT_TAG=Tinkerbell/{{.Name}}
 EOF
 )
 
