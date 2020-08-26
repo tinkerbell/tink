@@ -127,6 +127,11 @@ services:
       TINKERBELL_CERT_URL: http://$TINKERBELL_HOST_IP:42114/cert
       ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
       DATA_MODEL_VERSION: 1
+      LOG_DRIVER: ${LOG_DRIVER}
+      LOG_SERVER_ADDRESS: ${LOG_SERVER_ADDRESS}
+      LOG_SERVER_ADDRESS_TYPE: ${LOG_SERVER_ADDRESS_TYPE}
+      LOG_TAG: ${LOG_TAG}
+
     depends_on:
       db:
         condition: service_healthy
@@ -171,7 +176,7 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        ${LOG_SERVER_ADDRESS_TYPE}: ${LOG_SERVER_ADDRESS}
+        syslog-address: ${LOG_SERVER_ADDRESS}
         tag: ${LOG_TAG}
 
 volumes:
