@@ -8,33 +8,42 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
 var (
 	registry string
 	cli      *client.Client
-	log      *logrus.Entry
 )
 
-func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) (string, pb.ActionState, error) {
-	log = logger.WithFields(logrus.Fields{"workflow_id": wfID, "worker_id": action.GetWorkerId()})
+const (
+	errCreateContainer = "failed to create container"
+	errRemoveContainer = "failed to remove container"
+	errFailedToWait    = "failed to wait for completion of action"
+	errFailedToRunCmd  = "failed to run on-timeout command"
+
+	infoWaitFinished = "wait finished for failed or timeout container"
+)
+
+func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) (pb.ActionState, error) {
+	l := logger.With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
 	err := pullActionImage(ctx, action)
 	if err != nil {
-		return fmt.Sprintf("Failed to pull Image : %s", action.GetImage()), 1, errors.Wrap(err, "DOCKER PULL")
+		return pb.ActionState_ACTION_IN_PROGRESS, errors.Wrap(err, "DOCKER PULL")
 	}
-	id, err := createContainer(ctx, action, action.Command, wfID)
+	id, err := createContainer(ctx, l, action, action.Command, wfID)
 	if err != nil {
-		return "Failed to create container", 1, errors.Wrap(err, "DOCKER CREATE")
+		return pb.ActionState_ACTION_IN_PROGRESS, errors.Wrap(err, "DOCKER CREATE")
 	}
+	l.With("containerID", id, "command", action.GetOnTimeout()).Info("container created")
+
 	var timeCtx context.Context
 	var cancel context.CancelFunc
 	if action.Timeout > 0 {
@@ -43,11 +52,9 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 		timeCtx, cancel = context.WithTimeout(context.Background(), 1*time.Hour)
 	}
 	defer cancel()
-	//run container with timeout context
-	//startedAt := time.Now()
-	err = runContainer(timeCtx, id)
+	err = startContainer(timeCtx, l, id)
 	if err != nil {
-		return "Failed to run container", 1, errors.Wrap(err, "DOCKER RUN")
+		return pb.ActionState_ACTION_IN_PROGRESS, errors.Wrap(err, "DOCKER RUN")
 	}
 
 	failedActionStatus := make(chan pb.ActionState)
@@ -57,64 +64,67 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 
 	status, err := waitContainer(timeCtx, id)
 	if err != nil {
-		if err != nil {
-			log.WithField("container_id", id).Errorln("Failed to remove container as ", err)
+		rerr := removeContainer(ctx, l, id)
+		if rerr != nil {
+			rerr = errors.Wrap(rerr, errRemoveContainer)
+			l.With("containerID", id).Error(rerr)
+			return status, rerr
 		}
-		return "Failed to wait for completion of action", status, errors.Wrap(err, "DOCKER_WAIT")
+		return status, errors.Wrap(err, "DOCKER_WAIT")
 	}
-	rerr := removeContainer(ctx, id)
+	rerr := removeContainer(ctx, l, id)
 	if rerr != nil {
-		return "Failed to remove container of action", status, errors.Wrap(rerr, "DOCKER_REMOVE")
+		return status, errors.Wrap(rerr, "DOCKER_REMOVE")
 	}
-	log.Infoln("Container removed with Status ", pb.ActionState(status))
+	l.With("status", status.String()).Info("container removed")
 	if status != pb.ActionState_ACTION_SUCCESS {
 		if status == pb.ActionState_ACTION_TIMEOUT && action.OnTimeout != nil {
-			id, err = createContainer(ctx, action, action.OnTimeout, wfID)
+			id, err = createContainer(ctx, l, action, action.OnTimeout, wfID)
 			if err != nil {
-				log.Errorln("Failed to create container for on-timeout command: ", err)
+				l.Error(errors.Wrap(err, errCreateContainer))
 			}
-			log.Infoln("Container created with on-timeout command : ", action.OnTimeout)
+			l.With("containerID", id, "status", status.String(), "command", action.GetOnTimeout()).Info("container created")
 			failedActionStatus := make(chan pb.ActionState)
 			go captureLogs(ctx, id)
 			go waitFailedContainer(ctx, id, failedActionStatus)
-			err = runContainer(ctx, id)
+			err = startContainer(ctx, l, id)
 			if err != nil {
-				log.Errorln("Failed to run on-timeout command: ", err)
+				l.Error(errors.Wrap(err, errFailedToRunCmd))
 			}
 			onTimeoutStatus := <-failedActionStatus
-			log.Infoln("On-Timeout Container status : ", onTimeoutStatus)
+			l.With("status", onTimeoutStatus).Info("action timeout")
 		} else {
 			if action.OnFailure != nil {
-				id, err = createContainer(ctx, action, action.OnFailure, wfID)
+				id, err = createContainer(ctx, l, action, action.OnFailure, wfID)
 				if err != nil {
-					log.Errorln("Failed to create on-failure command: ", err)
+					l.Error(errors.Wrap(err, errFailedToRunCmd))
 				}
-				log.Infoln("Container created with on-failure command : ", action.OnFailure)
+				l.With("containerID", id, "actionStatus", status.String(), "command", action.GetOnFailure()).Info("container created")
 				go captureLogs(ctx, id)
 				go waitFailedContainer(ctx, id, failedActionStatus)
-				err = runContainer(ctx, id)
+				err = startContainer(ctx, l, id)
 				if err != nil {
-					log.Errorln("Failed to run on-failure command: ", err)
+					l.Error(errors.Wrap(err, errFailedToRunCmd))
 				}
 				onFailureStatus := <-failedActionStatus
-				log.Infoln("on-failure Container status : ", onFailureStatus)
+				l.With("status", onFailureStatus).Info("action failed")
 			}
 		}
-		log.Infoln("Wait finished for failed or timeout container")
+		l.Info(infoWaitFinished)
 		if err != nil {
-			rerr := removeContainer(ctx, id)
+			rerr := removeContainer(ctx, l, id)
 			if rerr != nil {
-				log.Errorln("Failed to remove container as ", rerr)
+				l.Error(errors.Wrap(rerr, errRemoveContainer))
 			}
-			log.Infoln("Failed to wait for container : ", err)
+			l.Error(errors.Wrap(err, errFailedToWait))
 		}
-		rerr = removeContainer(ctx, id)
+		rerr = removeContainer(ctx, l, id)
 		if rerr != nil {
-			log.Errorln("Failed to remove container as ", rerr)
+			l.Error(errors.Wrap(rerr, errRemoveContainer))
 		}
 	}
-	log.Infoln("Action container exits with status code ", status)
-	return "Successful Execution", status, nil
+	l.With("status", status).Info("action container exited")
+	return status, nil
 }
 
 func captureLogs(ctx context.Context, id string) {
@@ -164,7 +174,7 @@ func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
 	return nil
 }
 
-func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []string, wfID string) (string, error) {
+func createContainer(ctx context.Context, l log.Logger, action *pb.WorkflowAction, cmd []string, wfID string) (string, error) {
 	config := &container.Config{
 		Image:        registry + "/" + action.GetImage(),
 		AttachStdout: true,
@@ -172,7 +182,6 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 		Tty:          true,
 		Env:          action.GetEnvironment(),
 	}
-
 	if cmd != nil {
 		config.Cmd = cmd
 	}
@@ -183,8 +192,7 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 		Binds:      []string{wfDir + ":/workflow"},
 	}
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
-
-	log.Infoln("Starting the container with cmd", cmd)
+	l.With("command", cmd).Info("creating container")
 	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
@@ -192,8 +200,8 @@ func createContainer(ctx context.Context, action *pb.WorkflowAction, cmd []strin
 	return resp.ID, nil
 }
 
-func runContainer(ctx context.Context, id string) error {
-	log.Debugln("run Container with ID : ", id)
+func startContainer(ctx context.Context, l log.Logger, id string) error {
+	l.With("containerID", id).Debug("starting container")
 	err := cli.ContainerStart(ctx, id, types.ContainerStartOptions{})
 	if err != nil {
 		return errors.Wrap(err, "DOCKER START")
@@ -226,30 +234,29 @@ func waitContainer(ctx context.Context, id string) (pb.ActionState, error) {
 
 func waitFailedContainer(ctx context.Context, id string, failedActionStatus chan pb.ActionState) {
 	// send API call to wait for the container completion
-	log.Debugln("Starting Container wait for id : ", id)
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 
 	select {
 	case status := <-wait:
-		log.Infoln("Container with id ", id, "finished with status code : ", status.StatusCode)
 		if status.StatusCode == 0 {
 			failedActionStatus <- pb.ActionState_ACTION_SUCCESS
 		}
 		failedActionStatus <- pb.ActionState_ACTION_FAILED
 	case err := <-errC:
-		log.Errorln("Container wait failed for id : ", id, " Error : ", err)
+		logger.Error(err)
 		failedActionStatus <- pb.ActionState_ACTION_FAILED
 	}
 }
 
-func removeContainer(ctx context.Context, id string) error {
+func removeContainer(ctx context.Context, l log.Logger, id string) error {
 	// create options for removing container
 	opts := types.ContainerRemoveOptions{
 		Force:         true,
 		RemoveLinks:   false,
 		RemoveVolumes: true,
 	}
-	log.Debugln("Start removing container ", id)
+	l.With("containerID", id).Info("removing container")
+
 	// send API call to remove the container
 	err := cli.ContainerRemove(ctx, id, opts)
 	if err != nil {
@@ -267,35 +274,5 @@ func initializeDockerClient() (*client.Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "DOCKER CLIENT")
 	}
-
-	logger.SetFormatter(&logrus.JSONFormatter{})
 	return c, nil
-}
-
-func initializeLogger() {
-	level := os.Getenv("WORKER_LOG_LEVEL")
-	if level != "" {
-		switch strings.ToLower(level) {
-		case "panic":
-			logger.SetLevel(logrus.PanicLevel)
-		case "fatal":
-			logger.SetLevel(logrus.FatalLevel)
-		case "error":
-			logger.SetLevel(logrus.ErrorLevel)
-		case "warn", "warning":
-			logger.SetLevel(logrus.WarnLevel)
-		case "info":
-			logger.SetLevel(logrus.InfoLevel)
-		case "debug":
-			logger.SetLevel(logrus.DebugLevel)
-		case "trace":
-			logger.SetLevel(logrus.TraceLevel)
-		default:
-			logger.SetLevel(logrus.InfoLevel)
-			logger.Warningln("Invalid value for WORKER_LOG_LEVEL", level, " .Setting it to default(Info)")
-		}
-	} else {
-		logger.SetLevel(logrus.InfoLevel)
-		logger.Warningln("Variable WORKER_LOG_LEVEL is not set. Default is Info")
-	}
 }
