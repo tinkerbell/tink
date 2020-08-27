@@ -55,11 +55,10 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	//capturing logs of action container in a go-routine
 	go captureLogs(ctx, id)
 
-	status, err, werr := waitContainer(timeCtx, id)
-	if werr != nil {
-		rerr := removeContainer(ctx, id)
-		if rerr != nil {
-			log.WithField("container_id", id).Errorln("Failed to remove container as ", rerr)
+	status, err := waitContainer(timeCtx, id)
+	if err != nil {
+		if err != nil {
+			log.WithField("container_id", id).Errorln("Failed to remove container as ", err)
 		}
 		return "Failed to wait for completion of action", status, errors.Wrap(err, "DOCKER_WAIT")
 	}
@@ -202,34 +201,26 @@ func runContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-func waitContainer(ctx context.Context, id string) (pb.ActionState, error, error) {
+func waitContainer(ctx context.Context, id string) (pb.ActionState, error) {
 	// Inspect whether the container is in running state
-	inspect, err := cli.ContainerInspect(ctx, id)
+	_, err := cli.ContainerInspect(ctx, id)
 	if err != nil {
-		log.Debugln("Container does not exists")
-		return pb.ActionState_ACTION_FAILED, nil, nil
+		return pb.ActionState_ACTION_FAILED, nil
 	}
-	if inspect.ContainerJSONBase.State.Running {
-		log.Debugln("Container with id : ", id, " is in running state")
-		//return pb.ActionState_ACTION_FAILED, nil, nil
-	}
+
 	// send API call to wait for the container completion
-	log.Debugln("Starting Container wait for id : ", id)
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 
 	select {
 	case status := <-wait:
-		log.Infoln("Container with id ", id, "finished with status code : ", status.StatusCode)
 		if status.StatusCode == 0 {
-			return pb.ActionState_ACTION_SUCCESS, nil, nil
+			return pb.ActionState_ACTION_SUCCESS, nil
 		}
-		return pb.ActionState_ACTION_FAILED, nil, nil
+		return pb.ActionState_ACTION_FAILED, nil
 	case err := <-errC:
-		log.Errorln("Container wait failed for id : ", id, " Error : ", err)
-		return pb.ActionState_ACTION_FAILED, nil, err
+		return pb.ActionState_ACTION_FAILED, err
 	case <-ctx.Done():
-		log.Errorln("Container wait for id : ", id, " is timedout Error : ", err)
-		return pb.ActionState_ACTION_TIMEOUT, ctx.Err(), nil
+		return pb.ActionState_ACTION_TIMEOUT, ctx.Err()
 	}
 }
 
