@@ -9,7 +9,6 @@ import (
 const (
 	validTemplate = `version: "0.1"
 name: hello_world_workflow
-global_timeout: 600
 tasks:
   - name: "hello world"
     worker: "{{.device_1}}"
@@ -20,7 +19,6 @@ tasks:
 
 	invalidTemplate = `version: "0.1"
 name: hello_world_workflow
-global_timeout: 600
 tasks:
   - name: "hello world"
     worker: "{{.device_1}}"
@@ -145,7 +143,6 @@ func withDuplicateActionName() workflowModifier {
 func workflow(m ...workflowModifier) *Workflow {
 	wf := &Workflow{
 		ID:            "ce2e62ed-826f-4485-a39f-a82bb74338e2",
-		GlobalTimeout: 900,
 		Name:          "ubuntu-provisioning",
 		Tasks: []Task{
 			{

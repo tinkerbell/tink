@@ -1,6 +1,5 @@
 version: '0.1'
 name: packet_osie_provision
-global_timeout: 600
 tasks:
 - name: "run_one_worker"
   worker: "{{.device_1}}"
