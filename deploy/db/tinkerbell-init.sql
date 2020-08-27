@@ -13,7 +13,7 @@ CREATE INDEX IF NOT EXISTS idxgin_type ON hardware USING GIN (data JSONB_PATH_OP
 
 CREATE TABLE IF NOT EXISTS template (
         id UUID UNIQUE NOT NULL
-        , name VARCHAR(200) NOT NULL
+        , name VARCHAR(200) UNIQUE NOT NULL
         , created_at TIMESTAMPTZ
         , updated_at TIMESTAMPTZ
         , deleted_at TIMESTAMPTZ
