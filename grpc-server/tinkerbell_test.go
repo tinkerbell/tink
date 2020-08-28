@@ -13,6 +13,7 @@ import (
 
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/db/mock"
+	"github.com/tinkerbell/tink/metrics"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -39,7 +40,7 @@ func TestMain(m *testing.M) {
 
 	l, _, _ := log.Init("github.com/tinkerbell/tink")
 	logger = l.Package("grpcserver")
-
+	metrics.SetupMetrics("onprem", logger)
 	os.Exit(m.Run())
 }
 
