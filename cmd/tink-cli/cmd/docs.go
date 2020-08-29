@@ -14,7 +14,7 @@ var (
 // docsCmd returns the generate command that, when run, generates
 // documentation
 func docsCmd(name string) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:       "docs [markdown|man]",
 		Short:     "Generate documentation",
 		Hidden:    true,
@@ -37,10 +37,12 @@ func docsCmd(name string) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().StringVarP(&docsPath, "path", "p", "", "Path where documentation will be generated")
+	return cmd
 }
 
 func init() {
 	docsCmd := docsCmd(rootCmd.CalledAs())
-	docsCmd.Flags().StringVarP(&docsPath, "path", "p", "", "Path where documentation will be generated")
+
 	rootCmd.AddCommand(docsCmd)
 }
