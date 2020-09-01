@@ -486,15 +486,15 @@ whats_next() (
 )
 
 confiure_rsyslog_logging() (
-       echo "$INFO configuring rsyslog for centralized logging"
-       tee -a /etc/rsyslog.conf <rsyslog.conf >/dev/null
-       sudo cp rsyslog_docker_daemon.conf /etc/rsyslog.d/.
-       sudo cp rsyslog_docker_container.conf /etc/rsyslog.d/.
-       sudo cp rsyslog_log_rotation.conf /etc/logrotate.d/.
-       sudo service rsyslog restart
-       sudo service docker restart
-       echo "$INFO waiting 30 seconds for service restart"
-       sleep 30
+	echo "$INFO configuring rsyslog for centralized logging"
+	tee -a /etc/rsyslog.conf <rsyslog.conf >/dev/null
+	sudo cp rsyslog_docker_daemon.conf /etc/rsyslog.d/.
+	sudo cp rsyslog_docker_container.conf /etc/rsyslog.d/.
+	sudo cp rsyslog_log_rotation.conf /etc/logrotate.d/.
+	sudo service rsyslog restart
+	sudo service docker restart
+	echo "$INFO waiting 30 seconds for service restart"
+	sleep 30
 )
 
 do_setup() (
