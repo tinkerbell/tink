@@ -33,11 +33,12 @@ tasks:
       timeout: 60`
 )
 
-func TestDuplicateTemplateName(t *testing.T) {
+func TestCreateTemplate(t *testing.T) {
 	type (
 		args struct {
-			db   mock.DB
-			name string
+			db        mock.DB
+			name      []string
+			templates []string
 		}
 		want struct {
 			expectedError bool
@@ -47,10 +48,33 @@ func TestDuplicateTemplateName(t *testing.T) {
 		args args
 		want want
 	}{
-		"test_1": {
+		"SuccessfullTemplateCreation": {
 			args: args{
-				db:   mock.DB{},
-				name: "template_1",
+				db:        mock.DB{},
+				name:      []string{"template_1"},
+				templates: []string{template1},
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+
+		"SuccessfullMultipleTemplateCreation": {
+			args: args{
+				db:        mock.DB{},
+				name:      []string{"template_1", "template_2"},
+				templates: []string{template1, template2},
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+
+		"FailedMultipleTemplateCreationWithSameName": {
+			args: args{
+				db:        mock.DB{},
+				name:      []string{"template_1", "template_1"},
+				templates: []string{template1, template2},
 			},
 			want: want{
 				expectedError: true,
@@ -60,15 +84,23 @@ func TestDuplicateTemplateName(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name, Data: template1})
+			tc.args.db.ClearTemplateDB()
+			index := 0
+			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
 			assert.Nil(t, err)
 			assert.NotNil(t, res)
-			if err == nil {
-				_, err = s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name, Data: template2})
+			if err == nil && len(tc.args.templates) > 1 {
+				index++
+				_, err = s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
+			} else {
+				return
 			}
 			if err != nil {
 				assert.Error(t, err)
 				assert.True(t, tc.want.expectedError)
+			} else {
+				assert.Nil(t, err)
+				assert.False(t, tc.want.expectedError)
 			}
 		})
 	}
