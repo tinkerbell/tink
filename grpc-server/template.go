@@ -31,7 +31,6 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 
 	logger.Info(msg)
 	err := fn()
-	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -41,6 +40,7 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 		l.Error(err)
 		return &template.CreateResponse{}, err
 	}
+	logger.Info("done " + msg)
 	return &template.CreateResponse{Id: id.String()}, err
 }
 
