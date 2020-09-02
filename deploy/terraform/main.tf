@@ -21,6 +21,18 @@ resource "packet_device" "tink-provisioner" {
   project_id       = var.project_id
   network_type     = "hybrid"
   user_data        = "${file("install_package.sh")}"
+
+  provisioner "file" {
+    source      = "./../../../tink"
+    destination = "/root/"
+
+    connection {
+      type     = "ssh"
+      user     = "${var.ssh_user}"
+      host     = "${packet_device.tink-provisioner.network[0].address}"
+      private_key = file("${var.ssh_private_key}")
+    }
+  }
 }
 
 # Create a device and add it to tf_project_1
