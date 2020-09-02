@@ -8,6 +8,11 @@ variable "project_id" {
   type        = string
 }
 
+variable "worker_count" {
+  description = "Number of Workers"
+  type        = number
+  default     = 1
+}
 variable "facility" {
   description = "Packet facility to provision in"
   type        = string
@@ -24,10 +29,4 @@ variable "ssh_user" {
   description = "Username that will be used to transfer file from your local environment to the provisioner"
   type        = string
   default     = "root"
-}
-
-variable "ssh_private_key" {
-  description = "privatekey that will be used to transfer file from your local environment to the provisioner via ssh"
-  type        = string
-  default     = "~/.ssh/id_rsa"
 }

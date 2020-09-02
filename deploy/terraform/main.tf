@@ -10,14 +10,14 @@ provider "packet" {
 }
 
 # Create a new VLAN in datacenter "ewr1"
-resource "packet_vlan" "provisioning-vlan" {
-  description = "provisioning-vlan"
+resource "packet_vlan" "provisioning_vlan" {
+  description = "provisioning_vlan"
   facility    = var.facility
   project_id  = var.project_id
 }
 
 # Create a device and add it to tf_project_1
-resource "packet_device" "tink-provisioner" {
+resource "packet_device" "tink_provisioner" {
   hostname         = "tink-provisioner"
   plan             = var.device_type
   facilities       = [var.facility]
@@ -25,28 +25,31 @@ resource "packet_device" "tink-provisioner" {
   billing_cycle    = "hourly"
   project_id       = var.project_id
   user_data        = file("install_package.sh")
+}
+
+resource "null_resource" "tink_directory" {
+  connection {
+    type = "ssh"
+    user = var.ssh_user
+    host = packet_device.tink_provisioner.network[0].address
+  }
 
   provisioner "file" {
     source      = "./../../../tink"
     destination = "/root/"
-
-    connection {
-      type        = "ssh"
-      user        = var.ssh_user
-      host        = packet_device.tink-provisioner.network[0].address
-      private_key = file(var.ssh_private_key)
-    }
   }
 }
 
-resource "packet_device_network_type" "tink-provisioner-network-type" {
-  device_id = packet_device.tink-provisioner.id
+resource "packet_device_network_type" "tink_provisioner_network_type" {
+  device_id = packet_device.tink_provisioner.id
   type      = "hybrid"
 }
 
 # Create a device and add it to tf_project_1
-resource "packet_device" "tink-worker" {
-  hostname         = "tink-worker"
+resource "packet_device" "tink_worker" {
+  count = var.worker_count
+
+  hostname         = "tink-worker-${count.index}"
   plan             = var.device_type
   facilities       = [var.facility]
   operating_system = "custom_ipxe"
@@ -56,21 +59,25 @@ resource "packet_device" "tink-worker" {
   project_id       = var.project_id
 }
 
-resource "packet_device_network_type" "tink-worker-network-type" {
-  device_id = packet_device.tink-worker.id
+resource "packet_device_network_type" "tink_worker_network_type" {
+  count = var.worker_count
+
+  device_id = packet_device.tink_worker[count.index].id
   type      = "layer2-individual"
 }
 
 # Attach VLAN to provisioner
 resource "packet_port_vlan_attachment" "provisioner" {
-  device_id = packet_device.tink-provisioner.id
+  device_id = packet_device.tink_provisioner.id
   port_name = "eth1"
-  vlan_vnid = packet_vlan.provisioning-vlan.vxlan
+  vlan_vnid = packet_vlan.provisioning_vlan.vxlan
 }
 
 # Attach VLAN to worker
 resource "packet_port_vlan_attachment" "worker" {
-  device_id = packet_device.tink-worker.id
+  count = var.worker_count
+
+  device_id = packet_device.tink_worker[count.index].id
   port_name = "eth0"
-  vlan_vnid = packet_vlan.provisioning-vlan.vxlan
+  vlan_vnid = packet_vlan.provisioning_vlan.vxlan
 }
