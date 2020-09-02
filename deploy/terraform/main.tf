@@ -1,7 +1,12 @@
 # Configure the Packet Provider.
+terraform {
+  required_providers {
+    packet = "~> 3.0.1"
+  }
+}
+
 provider "packet" {
   auth_token = var.packet_api_token
-  version    = "~> 2.9"
 }
 
 # Create a new VLAN in datacenter "ewr1"
@@ -19,20 +24,24 @@ resource "packet_device" "tink-provisioner" {
   operating_system = "ubuntu_18_04"
   billing_cycle    = "hourly"
   project_id       = var.project_id
-  network_type     = "hybrid"
-  user_data        = "${file("install_package.sh")}"
+  user_data        = file("install_package.sh")
 
   provisioner "file" {
     source      = "./../../../tink"
     destination = "/root/"
 
     connection {
-      type     = "ssh"
-      user     = "${var.ssh_user}"
-      host     = "${packet_device.tink-provisioner.network[0].address}"
-      private_key = file("${var.ssh_private_key}")
+      type        = "ssh"
+      user        = var.ssh_user
+      host        = packet_device.tink-provisioner.network[0].address
+      private_key = file(var.ssh_private_key)
     }
   }
+}
+
+resource "packet_device_network_type" "tink-provisioner-network-type" {
+  device_id = packet_device.tink-provisioner.id
+  type      = "hybrid"
 }
 
 # Create a device and add it to tf_project_1
@@ -45,7 +54,11 @@ resource "packet_device" "tink-worker" {
   always_pxe       = "true"
   billing_cycle    = "hourly"
   project_id       = var.project_id
-  network_type     = "layer2-individual"
+}
+
+resource "packet_device_network_type" "tink-worker-network-type" {
+  device_id = packet_device.tink-worker.id
+  type      = "layer2-individual"
 }
 
 # Attach VLAN to provisioner
@@ -60,16 +73,4 @@ resource "packet_port_vlan_attachment" "worker" {
   device_id = packet_device.tink-worker.id
   port_name = "eth0"
   vlan_vnid = packet_vlan.provisioning-vlan.vxlan
-}
-
-output "provisioner_dns_name" {
-  value = "${split("-", packet_device.tink-provisioner.id)[0]}.packethost.net"
-}
-
-output "provisioner_ip" {
-  value = "${packet_device.tink-provisioner.network[0].address}"
-}
-
-output "worker_mac_addr" {
-  value = "${packet_device.tink-worker.ports[1].mac}"
 }
