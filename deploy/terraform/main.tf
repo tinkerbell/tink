@@ -38,6 +38,12 @@ resource "null_resource" "tink_directory" {
     source      = "./../../../tink"
     destination = "/root/"
   }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x tink/generate-envrc.sh tink/setup.sh tink/deploy/tls/*.sh"
+    ]
+  }
 }
 
 resource "packet_device_network_type" "tink_provisioner_network_type" {
