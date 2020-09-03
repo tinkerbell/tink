@@ -1,7 +1,13 @@
 # Configure the Packet Provider.
 terraform {
   required_providers {
-    packet = "~> 3.0.1"
+    packet = {
+      source  = "packethost/packet"
+      version = "~> 3.0.1"
+    }
+    null = {
+      source = "hashicorp/null"
+    }
   }
 }
 
@@ -74,16 +80,16 @@ resource "packet_device_network_type" "tink_worker_network_type" {
 
 # Attach VLAN to provisioner
 resource "packet_port_vlan_attachment" "provisioner" {
-  depends_on = [ packet_device_network_type.tink_provisioner_network_type ]
-  device_id = packet_device.tink_provisioner.id
-  port_name = "eth1"
-  vlan_vnid = packet_vlan.provisioning_vlan.vxlan
+  depends_on = [packet_device_network_type.tink_provisioner_network_type]
+  device_id  = packet_device.tink_provisioner.id
+  port_name  = "eth1"
+  vlan_vnid  = packet_vlan.provisioning_vlan.vxlan
 }
 
 # Attach VLAN to worker
 resource "packet_port_vlan_attachment" "worker" {
-  count = var.worker_count
-  depends_on = [ packet_device_network_type.tink_worker_network_type ]
+  count      = var.worker_count
+  depends_on = [packet_device_network_type.tink_worker_network_type]
 
   device_id = packet_device.tink_worker[count.index].id
   port_name = "eth0"
