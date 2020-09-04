@@ -80,8 +80,6 @@ export TINKERBELL_REGISTRY_PASSWORD="$registry_password"
 
 # Legacy options, to be deleted:
 export FACILITY=onprem
-export ROLLBAR_TOKEN=ignored
-export ROLLBAR_DISABLE=1
 EOF
 )
 

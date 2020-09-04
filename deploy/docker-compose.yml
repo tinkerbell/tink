@@ -5,10 +5,6 @@ services:
     restart: unless-stopped
     environment:
       FACILITY: ${FACILITY:-onprem}
-      PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-ignored}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       PGDATABASE: tinkerbell
       PGHOST: db
       PGPASSWORD: tinkerbell
@@ -97,10 +93,6 @@ services:
       API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-ignored}
       API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
       FACILITY_CODE: ${FACILITY:-onprem}
-      PACKET_ENV: ${PACKET_ENV:-testing}
-      PACKET_VERSION: ${PACKET_VERSION:-ignored}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       MIRROR_HOST: ${TINKERBELL_NGINX_IP:-127.0.0.1}
       DNS_SERVERS: 8.8.8.8
       PUBLIC_IP: $TINKERBELL_HOST_IP
@@ -137,10 +129,6 @@ services:
     restart: unless-stopped
     network_mode: host
     environment:
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN-ignored}
-      ROLLBAR_DISABLE: 1
-      PACKET_ENV: testing
-      PACKET_VERSION: ${PACKET_VERSION:-ignored}
       GRPC_PORT: 42115
       HEGEL_FACILITY: ${FACILITY:-onprem}
       HEGEL_USE_TLS: 0
