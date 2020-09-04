@@ -34,7 +34,7 @@ var (
 )
 
 func main() {
-	log, cleanup, err := log.Init(serviceKey)
+	log, err := log.Init(serviceKey)
 	if err != nil {
 		panic(err)
 	}
