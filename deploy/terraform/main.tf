@@ -40,14 +40,30 @@ resource "null_resource" "tink_directory" {
     host = packet_device.tink_provisioner.network[0].address
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir -p /root/tink/deploy"
+    ]
+  }
+
   provisioner "file" {
-    source      = "./../../../tink"
-    destination = "/root/"
+    source      = "../../setup.sh"
+    destination = "/root/tink/setup.sh"
+  }
+
+  provisioner "file" {
+    source      = "../../generate-envrc.sh"
+    destination = "/root/tink/generate-envrc.sh"
+  }
+
+  provisioner "file" {
+    source      = "../../deploy"
+    destination = "/root/tink"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x tink/generate-envrc.sh tink/setup.sh tink/deploy/tls/*.sh"
+      "chmod +x /root/tink/*.sh /root/tink/deploy/tls/*.sh"
     ]
   }
 }
@@ -109,7 +125,9 @@ data "template_file" "worker_hardware_data" {
 }
 
 resource "null_resource" "hardware_data" {
-  count = var.worker_count
+  count      = var.worker_count
+  depends_on = [null_resource.tink_directory]
+
   connection {
     type = "ssh"
     user = var.ssh_user
