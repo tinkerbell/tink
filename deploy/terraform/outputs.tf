@@ -7,5 +7,9 @@ output "provisioner_ip" {
 }
 
 output "worker_mac_addr" {
-  value = packet_device.tink_worker[0].ports[1].mac
+  value = formatlist("%s", packet_device.tink_worker[*].ports[1].mac)
+}
+
+output "worker_sos" {
+  value = formatlist("%s@sos.%s.packet.net", packet_device.tink_worker[*].id, packet_device.tink_worker[*].deployed_facility)
 }

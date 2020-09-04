@@ -95,3 +95,29 @@ resource "packet_port_vlan_attachment" "worker" {
   port_name = "eth0"
   vlan_vnid = packet_vlan.provisioning_vlan.vxlan
 }
+
+data "template_file" "worker_hardware_data" {
+  count    = var.worker_count
+  template = file("${path.module}/hardware_data.tpl")
+  vars = {
+    id            = packet_device.tink_worker[count.index].id
+    facility_code = packet_device.tink_worker[count.index].deployed_facility
+    plan_slug     = packet_device.tink_worker[count.index].plan
+    address       = "192.168.1.${count.index + 5}"
+    mac           = packet_device.tink_worker[count.index].ports[1].mac
+  }
+}
+
+resource "null_resource" "hardware_data" {
+  count = var.worker_count
+  connection {
+    type = "ssh"
+    user = var.ssh_user
+    host = packet_device.tink_provisioner.network[0].address
+  }
+
+  provisioner "file" {
+    content     = data.template_file.worker_hardware_data[count.index].rendered
+    destination = "/root/tink/deploy/hardware-data-${count.index}.json"
+  }
+}
