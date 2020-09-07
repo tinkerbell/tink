@@ -15,6 +15,7 @@ var rootCmd = &cobra.Command{
 	Use:               "tink",
 	Short:             "tinkerbell CLI",
 	PersistentPreRunE: setupClient,
+	DisableAutoGenTag: true,
 }
 
 func init() {

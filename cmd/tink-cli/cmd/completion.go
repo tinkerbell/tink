@@ -32,10 +32,9 @@ func completionCmd(name string) *cobra.Command {
 	# To load completions for each session, execute once:
 	$ tink-cli completion fish > ~/.config/fish/completions/tink-cli.fish
 	`,
-		DisableFlagsInUseLine: true,
-		Hidden:                true,
-		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
-		Args:                  cobra.ExactValidArgs(1),
+		Hidden:    true,
+		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
+		Args:      cobra.ExactValidArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch args[0] {
 			case "bash":
