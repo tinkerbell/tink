@@ -28,6 +28,16 @@ tasks:
   - name: "hello_world"
       image: hello-world
       timeout: 60`
+
+	withoutTimeoutTemplate = `version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world"
+    worker: "{{.device_1}}"
+    actions:
+    - name: "hello_world"
+      image: hello-world`
 )
 
 func TestParseYAML(t *testing.T) {
@@ -43,6 +53,11 @@ func TestParseYAML(t *testing.T) {
 		{
 			name:          "invalid template",
 			content:       []byte(invalidTemplate),
+			expectedError: true,
+		},
+		{
+			name:          "without action timeout template",
+			content:       []byte(withoutTimeoutTemplate),
 			expectedError: true,
 		},
 	}
@@ -98,6 +113,11 @@ func TestValidateTemplate(t *testing.T) {
 			expectedError: true,
 		},
 		{
+			name:          "without action timeout",
+			wf:            workflow(withoutTimeoutInAction()),
+			expectedError: true,
+		},
+		{
 			name: "valid task name",
 			wf:   workflow(),
 		},
@@ -140,6 +160,10 @@ func withInvalidActionImage() workflowModifier {
 
 func withDuplicateActionName() workflowModifier {
 	return func(wf *Workflow) { wf.Tasks[0].Actions = append(wf.Tasks[0].Actions, wf.Tasks[0].Actions[0]) }
+}
+
+func withoutTimeoutInAction() workflowModifier {
+	return func(wf *Workflow) { wf.Tasks[0].Actions[0].Timeout = 0 }
 }
 
 func workflow(m ...workflowModifier) *Workflow {

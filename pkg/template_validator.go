@@ -13,6 +13,7 @@ const (
 	errDuplicateTaskName   = "two tasks in a template cannot have same name: %v"
 	errInvalidActionImage  = "invalid action image: %v"
 	errDuplicateActionName = "two actions in a task cannot have same name: %v"
+	errNoTimeout           = "action %v has no timeout field or 0 timeout"
 )
 
 // ParseYAML parses the template yaml content
@@ -50,6 +51,10 @@ func ValidateTemplate(wf *Workflow) error {
 				return fmt.Errorf(errInvalidActionImage, action.Image)
 			}
 
+			err = hasValidTimeout(action.Timeout, action.Name)
+			if err != nil {
+				return err
+			}
 			_, ok := actionNameMap[action.Name]
 			if ok {
 				return fmt.Errorf(errDuplicateActionName, action.Name)
@@ -76,4 +81,11 @@ func isValidImageName(name string) error {
 		return err
 	}
 	return nil
+}
+
+func hasValidTimeout(timeout int64, name string) error {
+	if timeout > 0 {
+		return nil
+	}
+	return fmt.Errorf(errNoTimeout, name)
 }

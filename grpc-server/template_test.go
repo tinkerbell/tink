@@ -22,15 +22,25 @@ tasks:
       timeout: 60`
 
 	template2 = `version: "0.1"
-name: hello_world_workflow
+name: hello_world_again_workflow
 global_timeout: 600
 tasks:
   - name: "hello world again"
-    worker: "{{.device_1}}"
+    worker: "{{.device_2}}"
     actions:
-  	- name: "hello_world_again"
+    - name: "hello_world_again"
       image: hello-world
       timeout: 60`
+
+	noTimeoutTemplate = `version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "Invalid Template"
+    worker: "{{.device_3}}"
+    actions:
+    - name: "action_without_timeout"
+      image: hello-world`
 )
 
 func TestCreateTemplate(t *testing.T) {
@@ -80,6 +90,17 @@ func TestCreateTemplate(t *testing.T) {
 				expectedError: true,
 			},
 		},
+
+		"TemplateWithNoTimeout": {
+			args: args{
+				db:        mock.DB{},
+				name:      []string{"noTimeoutTemplate"},
+				templates: []string{noTimeoutTemplate},
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -87,6 +108,10 @@ func TestCreateTemplate(t *testing.T) {
 			tc.args.db.ClearTemplateDB()
 			index := 0
 			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
+			if name == "TemplateWithNoTimeout" {
+				assert.True(t, tc.want.expectedError)
+				return
+			}
 			assert.Nil(t, err)
 			assert.NotNil(t, res)
 			if err == nil && len(tc.args.templates) > 1 {

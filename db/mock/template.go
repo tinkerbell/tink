@@ -3,9 +3,11 @@ package mock
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
+	"github.com/tinkerbell/tink/pkg"
 )
 
 type template struct {
@@ -32,6 +34,17 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 			data: data,
 		}
 	}
+	wf, err := pkg.ParseYAML([]byte(data))
+	if err != nil {
+		fmt.Println("Could not parse Yaml")
+		return err
+	}
+	err = pkg.ValidateTemplate(wf)
+	if err != nil {
+		fmt.Println("Invalid Yaml")
+		return err
+	}
+
 	return nil
 }
 
