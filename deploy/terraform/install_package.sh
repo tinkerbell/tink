@@ -13,9 +13,10 @@ declare -a YUM_LIST=("https://download.docker.com/linux/centos/7/x86_64/stable/P
 	"docker-ce"
 	"docker-ce-cli"
 	"epel-release"
+	"pass"
 	"python3")
 declare -a APT_LIST=("docker"
-	"docker-compose")
+	"docker-compose" "pass")
 
 add_yum_repo() (
 	$YUM_CONFIG_MGR --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -34,7 +35,6 @@ update_apt() (
 restart_docker_service() (
 	service docker restart
 )
-
 install_yum_packages() (
 	$YUM_INSTALL "${YUM_LIST[@]}" -y
 )
