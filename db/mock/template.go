@@ -8,30 +8,26 @@ import (
 	"github.com/google/uuid"
 )
 
-type template struct {
-	id   uuid.UUID
-	data string
+type Template struct {
+	ID   uuid.UUID
+	Data string
 }
-
-var templateDB = map[string]interface{}{}
 
 // CreateTemplate creates a new workflow template
 func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
-	if len(templateDB) > 0 {
-		if _, ok := templateDB[name]; ok {
-			return errors.New("Template name already exist in the database")
-		}
-		templateDB[name] = template{
-			id:   id,
-			data: data,
-		}
-
-	} else {
-		templateDB[name] = template{
-			id:   id,
-			data: data,
-		}
+	if d.TemplateDB == nil {
+		d.TemplateDB = make(map[string]interface{})
 	}
+
+	if _, ok := d.TemplateDB[name]; ok {
+		return errors.New("Template name already exist in the database")
+	}
+
+	d.TemplateDB[name] = Template{
+		ID:   id,
+		Data: data,
+	}
+
 	return nil
 }
 
@@ -42,12 +38,10 @@ func (d DB) GetTemplate(ctx context.Context, id string) (string, string, error) 
 
 // DeleteTemplate deletes a workflow template
 func (d DB) DeleteTemplate(ctx context.Context, name string) error {
-	if len(templateDB) > 0 {
-		if _, ok := templateDB[name]; !ok {
-			return errors.New("Template name does not exist")
-		}
-		delete(templateDB, name)
+	if d.TemplateDB != nil {
+		delete(d.TemplateDB, name)
 	}
+
 	return nil
 }
 
@@ -63,7 +57,5 @@ func (d DB) UpdateTemplate(ctx context.Context, name string, data string, id uui
 
 // ClearTemplateDB clear all the templates
 func (d DB) ClearTemplateDB() {
-	for name := range templateDB {
-		delete(templateDB, name)
-	}
+	d.TemplateDB = make(map[string]interface{})
 }

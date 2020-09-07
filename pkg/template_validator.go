@@ -1,18 +1,17 @@
 package pkg
 
 import (
-	"fmt"
-
 	"github.com/docker/distribution/reference"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 const (
-	errEmptyName           = "task/action name cannot be empty: %v"
-	errInvalidLength       = "task/action name cannot have more than 200 characters: %v"
-	errDuplicateTaskName   = "two tasks in a template cannot have same name: %v"
-	errInvalidActionImage  = "invalid action image: %v"
-	errDuplicateActionName = "two actions in a task cannot have same name: %v"
+	errEmptyName           = "task/action name cannot be empty: "
+	errInvalidLength       = "task/action name cannot have more than 200 characters: "
+	errDuplicateTaskName   = "two tasks in a template cannot have same name: "
+	errInvalidActionImage  = "invalid action image: "
+	errDuplicateActionName = "two actions in a task cannot have same name: "
 )
 
 // ParseYAML parses the template yaml content
@@ -30,29 +29,34 @@ func ParseYAML(yamlContent []byte) (*Workflow, error) {
 func ValidateTemplate(wf *Workflow) error {
 	taskNameMap := make(map[string]struct{})
 	for _, task := range wf.Tasks {
-		err := hasValidLength(task.Name)
-		if err != nil {
-			return err
+		if hasEmptyName(task.Name) {
+			return errors.New(errEmptyName + task.Name)
+		}
+		if !hasValidLength(task.Name) {
+			return errors.New(errInvalidLength + task.Name)
 		}
 		_, ok := taskNameMap[task.Name]
 		if ok {
-			return fmt.Errorf(errDuplicateTaskName, task.Name)
+			return errors.New(errDuplicateTaskName + task.Name)
 		}
 		taskNameMap[task.Name] = struct{}{}
 		actionNameMap := make(map[string]struct{})
 		for _, action := range task.Actions {
-			err := hasValidLength(action.Name)
-			if err != nil {
-				return err
+			if hasEmptyName(action.Name) {
+				return errors.New(errEmptyName + action.Name)
 			}
-			err = isValidImageName(action.Image)
-			if err != nil {
-				return fmt.Errorf(errInvalidActionImage, action.Image)
+
+			if !hasValidLength(action.Name) {
+				return errors.New(errInvalidLength + action.Name)
+			}
+
+			if !hasValidImageName(action.Image) {
+				return errors.New(errInvalidActionImage + action.Image)
 			}
 
 			_, ok := actionNameMap[action.Name]
 			if ok {
-				return fmt.Errorf(errDuplicateActionName, action.Name)
+				return errors.New(errDuplicateActionName + action.Name)
 			}
 			actionNameMap[action.Name] = struct{}{}
 		}
@@ -60,20 +64,14 @@ func ValidateTemplate(wf *Workflow) error {
 	return nil
 }
 
-func hasValidLength(name string) error {
-	if name == "" {
-		return fmt.Errorf(errEmptyName, name)
-	}
-	if len(name) > 200 {
-		return fmt.Errorf(errInvalidLength, name)
-	}
-	return nil
+func hasEmptyName(name string) bool {
+	return name == ""
+}
+func hasValidLength(name string) bool {
+	return len(name) < 200
 }
 
-func isValidImageName(name string) error {
+func hasValidImageName(name string) bool {
 	_, err := reference.ParseNormalizedNamed(name)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err == nil
 }

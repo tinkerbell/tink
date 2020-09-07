@@ -43,15 +43,13 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 		return pb.ActionState_ACTION_IN_PROGRESS, errors.Wrap(err, "DOCKER CREATE")
 	}
 	l.With("containerID", id, "command", action.GetOnTimeout()).Info("container created")
-
-	var timeCtx context.Context
-	var cancel context.CancelFunc
+	// Setting time context for action
+	timeCtx := ctx
 	if action.Timeout > 0 {
-		timeCtx, cancel = context.WithTimeout(context.Background(), time.Duration(action.Timeout)*time.Second)
-	} else {
-		timeCtx, cancel = context.WithTimeout(context.Background(), 1*time.Hour)
+		var cancel context.CancelFunc
+		timeCtx, cancel = context.WithTimeout(ctx, time.Duration(action.Timeout)*time.Second)
+		defer cancel()
 	}
-	defer cancel()
 	err = startContainer(timeCtx, l, id)
 	if err != nil {
 		return pb.ActionState_ACTION_IN_PROGRESS, errors.Wrap(err, "DOCKER RUN")
