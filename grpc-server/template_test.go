@@ -22,13 +22,13 @@ tasks:
       timeout: 60`
 
 	template2 = `version: "0.1"
-name: hello_world_workflow
+name: hello_world_again_workflow
 global_timeout: 600
 tasks:
   - name: "hello world again"
-    worker: "{{.device_1}}"
+    worker: "{{.device_2}}"
     actions:
-  	- name: "hello_world_again"
+    - name: "hello_world_again"
       image: hello-world
       timeout: 60`
 )
@@ -36,9 +36,9 @@ tasks:
 func TestCreateTemplate(t *testing.T) {
 	type (
 		args struct {
-			db        mock.DB
-			name      []string
-			templates []string
+			db       mock.DB
+			name     string
+			template string
 		}
 		want struct {
 			expectedError bool
@@ -50,9 +50,11 @@ func TestCreateTemplate(t *testing.T) {
 	}{
 		"SuccessfullTemplateCreation": {
 			args: args{
-				db:        mock.DB{},
-				name:      []string{"template_1"},
-				templates: []string{template1},
+				db: mock.DB{
+					TemplateDB: make(map[string]interface{}),
+				},
+				name:     "template_1",
+				template: template1,
 			},
 			want: want{
 				expectedError: false,
@@ -61,9 +63,13 @@ func TestCreateTemplate(t *testing.T) {
 
 		"SuccessfullMultipleTemplateCreation": {
 			args: args{
-				db:        mock.DB{},
-				name:      []string{"template_1", "template_2"},
-				templates: []string{template1, template2},
+				db: mock.DB{
+					TemplateDB: map[string]interface{}{
+						"template_1": template1,
+					},
+				},
+				name:     "template_2",
+				template: template2,
 			},
 			want: want{
 				expectedError: false,
@@ -72,35 +78,31 @@ func TestCreateTemplate(t *testing.T) {
 
 		"FailedMultipleTemplateCreationWithSameName": {
 			args: args{
-				db:        mock.DB{},
-				name:      []string{"template_1", "template_1"},
-				templates: []string{template1, template2},
+				db: mock.DB{
+					TemplateDB: map[string]interface{}{
+						"template_1": template1,
+					},
+				},
+				name:     "template_1",
+				template: template2,
 			},
 			want: want{
 				expectedError: true,
 			},
 		},
 	}
-	for name, tc := range testCases {
+
+	for name := range testCases {
+		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			s := testServer(tc.args.db)
-			tc.args.db.ClearTemplateDB()
-			index := 0
-			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
-			assert.Nil(t, err)
-			assert.NotNil(t, res)
-			if err == nil && len(tc.args.templates) > 1 {
-				index++
-				_, err = s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
-			} else {
-				return
-			}
-			if err != nil {
+			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name, Data: tc.args.template})
+			if tc.want.expectedError {
 				assert.Error(t, err)
-				assert.True(t, tc.want.expectedError)
 			} else {
 				assert.Nil(t, err)
-				assert.False(t, tc.want.expectedError)
+				assert.NotEmpty(t, res)
 			}
 		})
 	}
