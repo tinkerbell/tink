@@ -59,9 +59,6 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 
 	failedActionStatus := make(chan pb.ActionState)
 
-	//capturing logs of action container in a go-routine
-	go captureLogs(ctx, id)
-
 	status, err := waitContainer(timeCtx, id)
 	if err != nil {
 		rerr := removeContainer(ctx, l, id)
