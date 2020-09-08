@@ -1,19 +1,19 @@
 package pkg
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/docker/distribution/reference"
 	"gopkg.in/yaml.v2"
 )
 
 const (
-	errEmptyName           = "task/action name cannot be empty: %v"
-	errInvalidLength       = "task/action name cannot have more than 200 characters: %v"
-	errDuplicateTaskName   = "two tasks in a template cannot have same name: %v"
-	errInvalidActionImage  = "invalid action image: %v"
-	errDuplicateActionName = "two actions in a task cannot have same name: %v"
-	errNoTimeout           = "action %v has no timeout field or 0 timeout"
+	errEmptyName           = "task/action name cannot be empty: "
+	errInvalidLength       = "task/action name cannot have more than 200 characters: "
+	errDuplicateTaskName   = "two tasks in a template cannot have same name: "
+	errInvalidActionImage  = "invalid action image: "
+	errDuplicateActionName = "two actions in a task cannot have same name: "
+	errNoTimeout           = "No timeout field or 0 timeout specified for action: "
 )
 
 // ParseYAML parses the template yaml content
@@ -37,7 +37,7 @@ func ValidateTemplate(wf *Workflow) error {
 		}
 		_, ok := taskNameMap[task.Name]
 		if ok {
-			return fmt.Errorf(errDuplicateTaskName, task.Name)
+			return errors.New(errDuplicateTaskName + task.Name)
 		}
 		taskNameMap[task.Name] = struct{}{}
 		actionNameMap := make(map[string]struct{})
@@ -48,7 +48,7 @@ func ValidateTemplate(wf *Workflow) error {
 			}
 			err = isValidImageName(action.Image)
 			if err != nil {
-				return fmt.Errorf(errInvalidActionImage, action.Image)
+				return errors.New(errInvalidActionImage + action.Image)
 			}
 
 			err = hasValidTimeout(action.Timeout, action.Name)
@@ -57,7 +57,7 @@ func ValidateTemplate(wf *Workflow) error {
 			}
 			_, ok := actionNameMap[action.Name]
 			if ok {
-				return fmt.Errorf(errDuplicateActionName, action.Name)
+				return errors.New(errDuplicateActionName + action.Name)
 			}
 			actionNameMap[action.Name] = struct{}{}
 		}
@@ -67,10 +67,10 @@ func ValidateTemplate(wf *Workflow) error {
 
 func hasValidLength(name string) error {
 	if name == "" {
-		return fmt.Errorf(errEmptyName, name)
+		return errors.New(errEmptyName + name)
 	}
 	if len(name) > 200 {
-		return fmt.Errorf(errInvalidLength, name)
+		return errors.New(errInvalidLength + name)
 	}
 	return nil
 }
@@ -87,5 +87,5 @@ func hasValidTimeout(timeout int64, name string) error {
 	if timeout > 0 {
 		return nil
 	}
-	return fmt.Errorf(errNoTimeout, name)
+	return errors.New(errNoTimeout + name)
 }

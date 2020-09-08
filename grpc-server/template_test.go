@@ -2,10 +2,14 @@ package grpcserver
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tinkerbell/tink/db/mock"
+	"github.com/tinkerbell/tink/pkg"
 	pb "github.com/tinkerbell/tink/protos/template"
 )
 
@@ -43,6 +47,20 @@ tasks:
       image: hello-world`
 )
 
+type templates struct {
+	id   uuid.UUID
+	data string
+}
+
+var templateDB = map[string]interface{}{}
+
+// ClearTemplateDB clear all the templates
+func clearTemplateDB() {
+	for name := range templateDB {
+		delete(templateDB, name)
+	}
+}
+
 func TestCreateTemplate(t *testing.T) {
 	type (
 		args struct {
@@ -60,7 +78,26 @@ func TestCreateTemplate(t *testing.T) {
 	}{
 		"SuccessfullTemplateCreation": {
 			args: args{
-				db:        mock.DB{},
+				db: mock.DB{
+					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
+						if len(templateDB) > 0 {
+							if _, ok := templateDB[name]; ok {
+								return errors.New("Template name already exist in the database")
+							}
+							templateDB[name] = templates{
+								id:   id,
+								data: data,
+							}
+							return nil
+
+						}
+						templateDB[name] = templates{
+							id:   id,
+							data: data,
+						}
+						return nil
+					},
+				},
 				name:      []string{"template_1"},
 				templates: []string{template1},
 			},
@@ -71,7 +108,26 @@ func TestCreateTemplate(t *testing.T) {
 
 		"SuccessfullMultipleTemplateCreation": {
 			args: args{
-				db:        mock.DB{},
+				db: mock.DB{
+					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
+						if len(templateDB) > 0 {
+							if _, ok := templateDB[name]; ok {
+								return fmt.Errorf("Template name already exist in the database")
+							}
+							templateDB[name] = templates{
+								id:   id,
+								data: data,
+							}
+							return nil
+
+						}
+						templateDB[name] = templates{
+							id:   id,
+							data: data,
+						}
+						return nil
+					},
+				},
 				name:      []string{"template_1", "template_2"},
 				templates: []string{template1, template2},
 			},
@@ -82,7 +138,26 @@ func TestCreateTemplate(t *testing.T) {
 
 		"FailedMultipleTemplateCreationWithSameName": {
 			args: args{
-				db:        mock.DB{},
+				db: mock.DB{
+					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
+						if len(templateDB) > 0 {
+							if _, ok := templateDB[name]; ok {
+								return errors.New("Template name already exist in the database")
+							}
+							templateDB[name] = templates{
+								id:   id,
+								data: data,
+							}
+							return nil
+
+						}
+						templateDB[name] = templates{
+							id:   id,
+							data: data,
+						}
+						return nil
+					},
+				},
 				name:      []string{"template_1", "template_1"},
 				templates: []string{template1, template2},
 			},
@@ -93,7 +168,19 @@ func TestCreateTemplate(t *testing.T) {
 
 		"TemplateWithNoTimeout": {
 			args: args{
-				db:        mock.DB{},
+				db: mock.DB{
+					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
+						wf, err := pkg.ParseYAML([]byte(data))
+						if err != nil {
+							return err
+						}
+						err = pkg.ValidateTemplate(wf)
+						if err != nil {
+							return err
+						}
+						return nil
+					},
+				},
 				name:      []string{"noTimeoutTemplate"},
 				templates: []string{noTimeoutTemplate},
 			},
@@ -105,7 +192,7 @@ func TestCreateTemplate(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			tc.args.db.ClearTemplateDB()
+			clearTemplateDB()
 			index := 0
 			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
 			if name == "TemplateWithNoTimeout" {
@@ -116,15 +203,17 @@ func TestCreateTemplate(t *testing.T) {
 			assert.NotNil(t, res)
 			if err == nil && len(tc.args.templates) > 1 {
 				index++
-				_, err = s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
+				res, err = s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
 			} else {
 				return
 			}
 			if err != nil {
 				assert.Error(t, err)
+				assert.Empty(t, res)
 				assert.True(t, tc.want.expectedError)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, res)
 				assert.False(t, tc.want.expectedError)
 			}
 		})
