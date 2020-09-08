@@ -37,30 +37,28 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	if err != nil {
 		return &workflow.CreateResponse{}, err
 	}
-	fn := func() error {
-		wf := db.Workflow{
-			ID:       id.String(),
-			Template: in.Template,
-			Hardware: in.Hardware,
-			State:    workflow.State_value[workflow.State_PENDING.String()],
-		}
-		data, err := createYaml(ctx, s.db, in.Template, in.Hardware)
-		if err != nil {
-			return errors.Wrap(err, "Failed to create Yaml")
-		}
-		err = s.db.CreateWorkflow(ctx, wf, data, id)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err = fn()
+
+	data, err := createYaml(ctx, s.db, in.Template, in.Hardware)
+	if err != nil {
+		metrics.CacheErrors.With(labels).Inc()
+		err = errors.Wrap(err, "failed to create Yaml")
+		logger.Error(err)
+		return &workflow.CreateResponse{}, err
+	}
+
+	wf := db.Workflow{
+		ID:       id.String(),
+		Template: in.Template,
+		Hardware: in.Hardware,
+		State:    workflow.State_value[workflow.State_PENDING.String()],
+	}
+	err = s.db.CreateWorkflow(ctx, wf, data, id)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -70,6 +68,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		l.Error(err)
 		return &workflow.CreateResponse{}, err
 	}
+
 	l := logger.With("workflowID", id.String())
 	l.Info("done " + msg)
 	return &workflow.CreateResponse{Id: id.String()}, err
@@ -85,13 +84,12 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	const msg = "getting a workflow"
 	labels["op"] = "get"
 
-	fn := func() (db.Workflow, error) { return s.db.GetWorkflow(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	w, err := fn()
+	w, err := s.db.GetWorkflow(ctx, in.Id)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -126,17 +124,13 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 	const msg = "deleting a workflow"
 	labels["op"] = "delete"
 	l := logger.With("workflowID", in.GetId())
-	fn := func() error {
-		// update only if not in running state
-		return s.db.DeleteWorkflow(ctx, in.Id, workflow.State_value[workflow.State_RUNNING.String()])
-	}
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	l.Info(msg)
-	err := fn()
+	err := s.db.DeleteWorkflow(ctx, in.Id, workflow.State_value[workflow.State_RUNNING.String()])
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -196,13 +190,12 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	const msg = "getting a workflow"
 	labels["op"] = "get"
 
-	fn := func() (*workflowpb.WorkflowContext, error) { return s.db.GetWorkflowContexts(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	w, err := fn()
+	w, err := s.db.GetWorkflowContexts(ctx, in.Id)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger

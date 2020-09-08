@@ -44,7 +44,6 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		return &hardware.Empty{}, err
 	}
 
-	var fn func() error
 	const msg = "inserting into DB"
 	data, err := json.Marshal(hw)
 	if err != nil {
@@ -52,14 +51,13 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	}
 
 	labels["op"] = "insert"
-	fn = func() error { return s.db.InsertIntoDB(ctx, string(data)) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err = fn()
+	err = s.db.InsertIntoDB(ctx, string(data))
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -260,17 +258,15 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 
 	logger.With("id", in.Id).Info("data deleted")
 
-	var fn func() error
 	labels["op"] = "delete"
 	const msg = "deleting into DB"
-	fn = func() error { return s.db.DeleteFromDB(ctx, in.Id) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := fn()
+	err := s.db.DeleteFromDB(ctx, in.Id)
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
