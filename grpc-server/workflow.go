@@ -30,9 +30,9 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	labels := prometheus.Labels{"method": "CreateWorkflow", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
-	msg := ""
+
+	const msg = "creating a new workflow"
 	labels["op"] = "createworkflow"
-	msg = "creating a new workflow"
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return &workflow.CreateResponse{}, err
@@ -82,9 +82,8 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	msg := ""
+	const msg = "getting a workflow"
 	labels["op"] = "get"
-	msg = "getting a workflow"
 
 	fn := func() (db.Workflow, error) { return s.db.GetWorkflow(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
@@ -124,10 +123,9 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	msg := ""
+	const msg = "deleting a workflow"
 	labels["op"] = "delete"
 	l := logger.With("workflowID", in.GetId())
-	msg = "deleting a workflow"
 	fn := func() error {
 		// update only if not in running state
 		return s.db.DeleteWorkflow(ctx, in.Id, workflow.State_value[workflow.State_RUNNING.String()])
@@ -195,9 +193,8 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	msg := ""
+	const msg = "getting a workflow"
 	labels["op"] = "get"
-	msg = "getting a workflow"
 
 	fn := func() (*workflowpb.WorkflowContext, error) { return s.db.GetWorkflowContexts(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()

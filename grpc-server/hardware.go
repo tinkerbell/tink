@@ -45,14 +45,13 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	}
 
 	var fn func() error
-	msg := ""
+	const msg = "inserting into DB"
 	data, err := json.Marshal(hw)
 	if err != nil {
 		logger.Error(err)
 	}
 
 	labels["op"] = "insert"
-	msg = "inserting into DB"
 	fn = func() error { return s.db.InsertIntoDB(ctx, string(data)) }
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -263,7 +262,7 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 
 	var fn func() error
 	labels["op"] = "delete"
-	msg := "deleting into DB"
+	const msg = "deleting into DB"
 	fn = func() error { return s.db.DeleteFromDB(ctx, in.Id) }
 
 	metrics.CacheTotals.With(labels).Inc()
