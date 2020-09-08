@@ -198,7 +198,7 @@ func createContainer(ctx context.Context, l log.Logger, action *pb.WorkflowActio
 	}
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 	l.With("command", cmd).Info("creating container")
-	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())
+	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName() + "_" + wfID)
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
 	}
