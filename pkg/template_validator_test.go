@@ -98,11 +98,6 @@ func TestValidateTemplate(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			name:          "no action timeout",
-			wf:            workflow(withNoActionTimeout()),
-			expectedError: true,
-		},
-		{
 			name: "valid task name",
 			wf:   workflow(),
 		},
@@ -145,10 +140,6 @@ func withInvalidActionImage() workflowModifier {
 
 func withDuplicateActionName() workflowModifier {
 	return func(wf *Workflow) { wf.Tasks[0].Actions = append(wf.Tasks[0].Actions, wf.Tasks[0].Actions[0]) }
-}
-
-func withNoActionTimeout() workflowModifier {
-	return func(wf *Workflow) { wf.Tasks[0].Actions[0].Timeout = 0 }
 }
 
 func workflow(m ...workflowModifier) *Workflow {

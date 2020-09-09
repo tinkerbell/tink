@@ -4,12 +4,7 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
-<<<<<<< HEAD
 	"github.com/google/uuid"
-	"github.com/tinkerbell/tink/pkg"
-=======
-	uuid "github.com/satori/go.uuid"
->>>>>>> Incorporating review comments
 )
 
 // CreateTemplate creates a new workflow template

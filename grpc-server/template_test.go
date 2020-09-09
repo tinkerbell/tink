@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/tinkerbell/tink/db/mock"
-	"github.com/tinkerbell/tink/pkg"
 	pb "github.com/tinkerbell/tink/protos/template"
 )
 
@@ -165,29 +164,6 @@ func TestCreateTemplate(t *testing.T) {
 				expectedError: true,
 			},
 		},
-
-		"TemplateWithNoTimeout": {
-			args: args{
-				db: mock.DB{
-					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
-						wf, err := pkg.ParseYAML([]byte(data))
-						if err != nil {
-							return err
-						}
-						err = pkg.ValidateTemplate(wf)
-						if err != nil {
-							return err
-						}
-						return nil
-					},
-				},
-				name:      []string{"noTimeoutTemplate"},
-				templates: []string{noTimeoutTemplate},
-			},
-			want: want{
-				expectedError: true,
-			},
-		},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -195,10 +171,6 @@ func TestCreateTemplate(t *testing.T) {
 			clearTemplateDB()
 			index := 0
 			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
-			if name == "TemplateWithNoTimeout" {
-				assert.True(t, tc.want.expectedError)
-				return
-			}
 			assert.Nil(t, err)
 			assert.NotNil(t, res)
 			if err == nil && len(tc.args.templates) > 1 {
