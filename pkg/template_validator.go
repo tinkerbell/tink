@@ -31,9 +31,11 @@ func ParseYAML(yamlContent []byte) (*Workflow, error) {
 func ValidateTemplate(wf *Workflow) error {
 	taskNameMap := make(map[string]struct{})
 	for _, task := range wf.Tasks {
-		err := hasValidLength(task.Name)
-		if err != nil {
-			return err
+		if hasEmptyName(task.Name) {
+			return errors.New(errEmptyName + "task name")
+		}
+		if !hasValidLength(task.Name) {
+			return errors.New(errInvalidLength + task.Name)
 		}
 		_, ok := taskNameMap[task.Name]
 		if ok {
@@ -42,18 +44,20 @@ func ValidateTemplate(wf *Workflow) error {
 		taskNameMap[task.Name] = struct{}{}
 		actionNameMap := make(map[string]struct{})
 		for _, action := range task.Actions {
-			err := hasValidLength(action.Name)
-			if err != nil {
-				return err
+			if hasEmptyName(action.Name) {
+				return errors.New(errEmptyName + "action name")
 			}
-			err = isValidImageName(action.Image)
-			if err != nil {
+
+			if !hasValidLength(action.Name) {
+				return errors.New(errInvalidLength + action.Name)
+			}
+
+			if !hasValidImageName(action.Image) {
 				return errors.New(errInvalidActionImage + action.Image)
 			}
 
-			err = hasValidTimeout(action.Timeout, action.Name)
-			if err != nil {
-				return err
+			if !hasValidTimeout(action.Timeout) {
+				return errors.New(errNoTimeout + action.Name)
 			}
 			_, ok := actionNameMap[action.Name]
 			if ok {
@@ -65,27 +69,18 @@ func ValidateTemplate(wf *Workflow) error {
 	return nil
 }
 
-func hasValidLength(name string) error {
-	if name == "" {
-		return errors.New(errEmptyName + name)
-	}
-	if len(name) > 200 {
-		return errors.New(errInvalidLength + name)
-	}
-	return nil
+func hasEmptyName(name string) bool {
+	return name == ""
+}
+func hasValidLength(name string) bool {
+	return len(name) < 200
 }
 
-func isValidImageName(name string) error {
+func hasValidImageName(name string) bool {
 	_, err := reference.ParseNormalizedNamed(name)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err == nil
 }
 
-func hasValidTimeout(timeout int64, name string) error {
-	if timeout > 0 {
-		return nil
-	}
-	return errors.New(errNoTimeout + name)
+func hasValidTimeout(timeout int64) bool {
+	return timeout > 0
 }
