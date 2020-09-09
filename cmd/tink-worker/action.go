@@ -48,11 +48,18 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	var cancel context.CancelFunc
 	if action.Timeout > 0 {
 		timeCtx, cancel = context.WithTimeout(context.Background(), time.Duration(action.Timeout)*time.Second)
+		defer cancel()
 	} else {
-		timeCtx, cancel = context.WithTimeout(context.Background(), 1*time.Hour)
+		timeCtx = ctx
 	}
+<<<<<<< HEAD
 	defer cancel()
 	err = startContainer(timeCtx, l, id)
+=======
+	//run container with timeout context
+	//startedAt := time.Now()
+	err = runContainer(timeCtx, id)
+>>>>>>> Making the worker wait in case of no timeout or 0 timeout provided for an action
 	if err != nil {
 		return pb.ActionState_ACTION_IN_PROGRESS, errors.Wrap(err, "DOCKER RUN")
 	}

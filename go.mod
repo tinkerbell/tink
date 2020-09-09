@@ -31,7 +31,6 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 =======
 	github.com/rollbar/rollbar-go v1.0.2 // indirect
-	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.1
 >>>>>>> Incorporating review comments
 	github.com/spf13/cobra v1.0.0

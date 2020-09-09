@@ -34,16 +34,6 @@ tasks:
     - name: "hello_world_again"
       image: hello-world
       timeout: 60`
-
-	noTimeoutTemplate = `version: "0.1"
-name: hello_world_workflow
-global_timeout: 600
-tasks:
-  - name: "Invalid Template"
-    worker: "{{.device_3}}"
-    actions:
-    - name: "action_without_timeout"
-      image: hello-world`
 )
 
 type templates struct {

@@ -98,6 +98,11 @@ func TestValidateTemplate(t *testing.T) {
 			expectedError: true,
 		},
 		{
+			name:          "long action name",
+			wf:            workflow(withLongActionName()),
+			expectedError: true,
+		},
+		{
 			name: "valid task name",
 			wf:   workflow(),
 		},
@@ -119,6 +124,12 @@ type workflowModifier func(*Workflow)
 func withLongTaskName() workflowModifier {
 	return func(wf *Workflow) {
 		wf.Tasks[0].Name = "this task has a very long name to test whether we recevice an error or not if a task has very long name, one that would probably go beyond the limit of not having a task name with more than two hundred characters"
+	}
+}
+
+func withLongActionName() workflowModifier {
+	return func(wf *Workflow) {
+		wf.Tasks[0].Actions[0].Name = "this action has a very long name to test whether we recevice an error or not if an action has very long name, one that would probably go beyond the limit of not having an action name with more than two hundred characters"
 	}
 }
 
