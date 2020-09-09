@@ -19,18 +19,16 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	msg := ""
+	const msg = "creating a new Template"
 	labels["op"] = "createtemplate"
-	msg = "creating a new Template"
 	id, _ := uuid.NewUUID()
-	fn := func() error { return s.db.CreateTemplate(ctx, in.Name, in.Data, id) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := fn()
+	err := s.db.CreateTemplate(ctx, in.Name, in.Data, id)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -51,17 +49,15 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	msg := ""
+	const msg = "getting a template"
 	labels["op"] = "get"
-	msg = "getting a template"
 
-	fn := func() (string, string, error) { return s.db.GetTemplate(ctx, in.Id) }
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	n, d, err := fn()
+	n, d, err := s.db.GetTemplate(ctx, in.Id)
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -81,17 +77,15 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	msg := ""
+	const msg = "deleting a template"
 	labels["op"] = "delete"
-	msg = "deleting a template"
-	fn := func() error { return s.db.DeleteTemplate(ctx, in.Id) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := fn()
+	err := s.db.DeleteTemplate(ctx, in.Id)
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -142,17 +136,15 @@ func (s *server) UpdateTemplate(ctx context.Context, in *template.WorkflowTempla
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	msg := ""
+	const msg = "updating a template"
 	labels["op"] = "updatetemplate"
-	msg = "updating a template"
-	fn := func() error { return s.db.UpdateTemplate(ctx, in.Name, in.Data, uuid.MustParse(in.Id)) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := fn()
+	err := s.db.UpdateTemplate(ctx, in.Name, in.Data, uuid.MustParse(in.Id))
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
