@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -21,7 +21,7 @@ var deleteCmd = &cobra.Command{
 			return fmt.Errorf("%v requires an argument", c.UseLine())
 		}
 		for _, arg := range args {
-			if _, err := uuid.FromString(arg); err != nil {
+			if _, err := uuid.Parse(arg); err != nil {
 				return fmt.Errorf("invalid uuid: %s", arg)
 			}
 		}

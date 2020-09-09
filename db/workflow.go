@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/tinkerbell/tink/pkg"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
@@ -118,7 +118,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		} else if workerID == "" {
 			return fmt.Errorf("hardware mentioned with reference %s not found", task.WorkerAddr)
 		}
-		workerUID, err := uuid.FromString(workerID)
+		workerUID, err := uuid.Parse(workerID)
 		if err != nil {
 			return err
 		}

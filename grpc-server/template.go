@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	uuid "github.com/satori/go.uuid"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/metrics"
 	"github.com/tinkerbell/tink/protos/template"
@@ -22,7 +22,7 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 	msg := ""
 	labels["op"] = "createtemplate"
 	msg = "creating a new Template"
-	id := uuid.NewV4()
+	id, _ := uuid.NewUUID()
 	fn := func() error { return s.db.CreateTemplate(ctx, in.Name, in.Data, id) }
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -145,7 +145,7 @@ func (s *server) UpdateTemplate(ctx context.Context, in *template.WorkflowTempla
 	msg := ""
 	labels["op"] = "updatetemplate"
 	msg = "updating a template"
-	fn := func() error { return s.db.UpdateTemplate(ctx, in.Name, in.Data, uuid.FromStringOrNil(in.Id)) }
+	fn := func() error { return s.db.UpdateTemplate(ctx, in.Name, in.Data, uuid.MustParse(in.Id)) }
 
 	metrics.CacheTotals.With(labels).Inc()
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))

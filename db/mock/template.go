@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 type template struct {
