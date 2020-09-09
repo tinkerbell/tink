@@ -12,8 +12,8 @@ import (
 
 	"github.com/jedib0t/go-pretty/table"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +26,7 @@ func verifyUUIDs(args []string) error {
 		return errors.New("requires at least one id")
 	}
 	for _, arg := range args {
-		if _, err := uuid.FromString(arg); err != nil {
+		if _, err := uuid.Parse(arg); err != nil {
 			return fmt.Errorf("invalid uuid: %s", arg)
 		}
 	}

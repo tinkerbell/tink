@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/template"
@@ -31,7 +31,7 @@ var updateCmd = &cobra.Command{
 			return fmt.Errorf("%v requires argument", c.UseLine())
 		}
 		for _, arg := range args {
-			if _, err := uuid.FromString(arg); err != nil {
+			if _, err := uuid.Parse(arg); err != nil {
 				return fmt.Errorf("invalid uuid: %s", arg)
 			}
 		}

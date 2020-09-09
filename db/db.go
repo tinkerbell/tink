@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/tinkerbell/tink/db"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )

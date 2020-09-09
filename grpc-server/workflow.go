@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"text/template"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	uuid "github.com/satori/go.uuid"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/metrics"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -33,7 +33,10 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	msg := ""
 	labels["op"] = "createworkflow"
 	msg = "creating a new workflow"
-	id := uuid.NewV4()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return &workflow.CreateResponse{}, err
+	}
 	fn := func() error {
 		wf := db.Workflow{
 			ID:       id.String(),
@@ -57,7 +60,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := fn()
+	err = fn()
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
