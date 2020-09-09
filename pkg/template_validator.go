@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	errEmptyName           = "task/action name cannot be empty: %v"
 	errInvalidLength       = "task/action name cannot have more than 200 characters: %v"
 	errDuplicateTaskName   = "two tasks in a template cannot have same name: %v"
 	errInvalidActionImage  = "invalid action image: %v"
@@ -30,28 +29,22 @@ func ParseYAML(yamlContent []byte) (*Workflow, error) {
 func ValidateTemplate(wf *Workflow) error {
 	taskNameMap := make(map[string]struct{})
 	for _, task := range wf.Tasks {
-		err := hasValidLength(task.Name)
-		if err != nil {
-			return err
+		if !hasValidLength(task.Name) {
+			return fmt.Errorf(errInvalidLength, task.Name)
 		}
-		_, ok := taskNameMap[task.Name]
-		if ok {
+		if _, taskAlreadyExists := taskNameMap[task.Name]; taskAlreadyExists {
 			return fmt.Errorf(errDuplicateTaskName, task.Name)
 		}
 		taskNameMap[task.Name] = struct{}{}
 		actionNameMap := make(map[string]struct{})
 		for _, action := range task.Actions {
-			err := hasValidLength(action.Name)
-			if err != nil {
-				return err
+			if !hasValidLength(action.Name) {
+				return fmt.Errorf(errInvalidLength, action.Name)
 			}
-			err = isValidImageName(action.Image)
-			if err != nil {
+			if !hasValidImageName(action.Image) {
 				return fmt.Errorf(errInvalidActionImage, action.Image)
 			}
-
-			_, ok := actionNameMap[action.Name]
-			if ok {
+			if _, actionAlreadyExists := actionNameMap[action.Name]; actionAlreadyExists {
 				return fmt.Errorf(errDuplicateActionName, action.Name)
 			}
 			actionNameMap[action.Name] = struct{}{}
@@ -60,20 +53,11 @@ func ValidateTemplate(wf *Workflow) error {
 	return nil
 }
 
-func hasValidLength(name string) error {
-	if name == "" {
-		return fmt.Errorf(errEmptyName, name)
-	}
-	if len(name) > 200 {
-		return fmt.Errorf(errInvalidLength, name)
-	}
-	return nil
+func hasValidLength(name string) bool {
+	return name != "" && len(name) <= 200
 }
 
-func isValidImageName(name string) error {
+func hasValidImageName(name string) bool {
 	_, err := reference.ParseNormalizedNamed(name)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err == nil
 }
