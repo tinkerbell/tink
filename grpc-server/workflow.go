@@ -33,7 +33,10 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	msg := ""
 	labels["op"] = "createworkflow"
 	msg = "creating a new workflow"
-	id, _ := uuid.NewUUID()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return &workflow.CreateResponse{}, err
+	}
 	fn := func() error {
 		wf := db.Workflow{
 			ID:       id.String(),
@@ -57,7 +60,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := fn()
+	err = fn()
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
