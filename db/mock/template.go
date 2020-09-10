@@ -37,7 +37,7 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 
 // GetTemplate returns a workflow template
 func (d DB) GetTemplate(ctx context.Context, id string) (string, string, error) {
-	return "", "", nil
+	return d.GetTemplateFunc(ctx, id)
 }
 
 // DeleteTemplate deletes a workflow template
