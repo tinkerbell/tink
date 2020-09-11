@@ -186,8 +186,8 @@ func createContainer(ctx context.Context, l log.Logger, action *pb.WorkflowActio
 	logConfig := &container.LogConfig{
 		Type: os.Getenv("LOG_DRIVER"),
 		Config: map[string]string{
-			os.Getenv("LOG_SERVER_ADDRESS_TYPE"): os.Getenv("LOG_SERVER_ADDRESS"),
-			"tag":                                os.Getenv("LOG_TAG"),
+			os.Getenv("LOG_OPT_SERVER_ADDRESS_TYPE"): os.Getenv("LOG_OPT_SERVER_ADDRESS"),
+			"tag":                                    os.Getenv("LOG_OPT_TAG"),
 		},
 	}
 	wfDir := dataDir + string(os.PathSeparator) + wfID

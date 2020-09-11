@@ -31,8 +31,8 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        syslog-address: ${LOG_SERVER_ADDRESS}
-        tag: ${LOG_TAG}
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   db:
     image: postgres:10-alpine
@@ -54,8 +54,8 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        syslog-address: ${LOG_SERVER_ADDRESS}
-        tag: ${LOG_TAG}
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   tink-cli:
     image: quay.io/tinkerbell/tink-cli:latest
@@ -72,8 +72,8 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        syslog-address: ${LOG_SERVER_ADDRESS}
-        tag: ${LOG_TAG}
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   registry:
     build:
@@ -101,8 +101,8 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        syslog-address: ${LOG_SERVER_ADDRESS}
-        tag: ${LOG_TAG}
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   boots:
     image: quay.io/tinkerbell/boots:latest
@@ -128,9 +128,9 @@ services:
       ELASTIC_SEARCH_URL: $TINKERBELL_HOST_IP:9200
       DATA_MODEL_VERSION: 1
       LOG_DRIVER: ${LOG_DRIVER}
-      LOG_SERVER_ADDRESS: ${LOG_SERVER_ADDRESS}
-      LOG_SERVER_ADDRESS_TYPE: ${LOG_SERVER_ADDRESS_TYPE}
-      LOG_TAG: ${LOG_TAG}
+      LOG_OPT_SERVER_ADDRESS: ${LOG_OPT_SERVER_ADDRESS}
+      LOG_OPT_SERVER_ADDRESS_TYPE: ${LOG_OPT_SERVER_ADDRESS_TYPE}
+      LOG_OPT_TAG: ${LOG_OPT_TAG}
 
     depends_on:
       db:
@@ -142,8 +142,8 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        syslog-address: ${LOG_SERVER_ADDRESS}
-        tag: ${LOG_TAG}
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   nginx:
     image: nginx:alpine
@@ -156,8 +156,8 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        syslog-address: ${LOG_SERVER_ADDRESS}
-        tag: ${LOG_TAG}
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   hegel:
     image: quay.io/tinkerbell/hegel:latest
@@ -176,8 +176,8 @@ services:
     logging:
       driver: ${LOG_DRIVER}
       options:
-        syslog-address: ${LOG_SERVER_ADDRESS}
-        tag: ${LOG_TAG}
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
 volumes:
   postgres_data:
