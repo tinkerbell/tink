@@ -485,7 +485,7 @@ whats_next() (
 	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )
 
-confiure_rsyslog_logging() (
+configure_rsyslog_logging() (
 	echo "$INFO configuring rsyslog for centralized logging"
 	tee -a /etc/rsyslog.conf <rsyslog.conf >/dev/null
 	cp rsyslog_docker_daemon.conf /etc/rsyslog.d/.
@@ -517,7 +517,7 @@ do_setup() (
 
 	setup_osie
 	generate_certificates
-	confiure_rsyslog_logging
+	configure_rsyslog_logging
 	setup_docker_registry
 
 	echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"

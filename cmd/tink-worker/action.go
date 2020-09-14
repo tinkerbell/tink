@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"time"
@@ -82,7 +80,6 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 			}
 			l.With("containerID", id, "status", status.String(), "command", action.GetOnTimeout()).Info("container created")
 			failedActionStatus := make(chan pb.ActionState)
-			go captureLogs(ctx, id)
 			go waitFailedContainer(ctx, id, failedActionStatus)
 			err = startContainer(ctx, l, id)
 			if err != nil {
@@ -97,7 +94,6 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 					l.Error(errors.Wrap(err, errFailedToRunCmd))
 				}
 				l.With("containerID", id, "actionStatus", status.String(), "command", action.GetOnFailure()).Info("container created")
-				go captureLogs(ctx, id)
 				go waitFailedContainer(ctx, id, failedActionStatus)
 				err = startContainer(ctx, l, id)
 				if err != nil {
@@ -122,24 +118,6 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	}
 	l.With("status", status).Info("action container exited")
 	return status, nil
-}
-
-func captureLogs(ctx context.Context, id string) {
-	reader, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Follow:     true,
-		Timestamps: false,
-	})
-	if err != nil {
-		panic(err)
-	}
-	defer reader.Close()
-
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
-	}
 }
 
 func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
@@ -186,8 +164,8 @@ func createContainer(ctx context.Context, l log.Logger, action *pb.WorkflowActio
 	logConfig := &container.LogConfig{
 		Type: os.Getenv("LOG_DRIVER"),
 		Config: map[string]string{
-			os.Getenv("LOG_OPT_SERVER_ADDRESS_TYPE"): os.Getenv("LOG_OPT_SERVER_ADDRESS"),
-			"tag":                                    os.Getenv("LOG_OPT_TAG"),
+			os.Getenv("LOG_DRIVER") + "-address": os.Getenv("LOG_OPT_SERVER_ADDRESS"),
+			"tag":                                os.Getenv("LOG_OPT_TAG"),
 		},
 	}
 	wfDir := dataDir + string(os.PathSeparator) + wfID
