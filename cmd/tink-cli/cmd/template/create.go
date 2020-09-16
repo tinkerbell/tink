@@ -43,7 +43,7 @@ cat /tmp/example.tmpl | tink template create -n example`,
 		} else {
 			f, err := os.Open(filePath)
 			if err != nil {
-				log.Println(err)
+				log.Fatal(err)
 			}
 			reader = f
 		}
@@ -51,8 +51,7 @@ cat /tmp/example.tmpl | tink template create -n example`,
 		data := readAll(reader)
 		if data != nil {
 			if err := tryParseTemplate(string(data)); err != nil {
-				log.Println(err)
-				return
+				log.Fatal(err)
 			}
 			createTemplate(data)
 		}
@@ -62,7 +61,7 @@ cat /tmp/example.tmpl | tink template create -n example`,
 func readAll(reader io.Reader) []byte {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 	return data
 }
@@ -86,8 +85,7 @@ func createTemplate(data []byte) {
 	req := template.WorkflowTemplate{Name: templateName, Data: string(data)}
 	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatal(err)
 	}
 	fmt.Println("Created Template: ", res.Id)
 }
