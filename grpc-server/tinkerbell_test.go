@@ -34,11 +34,8 @@ func testServer(db db.Database) *server {
 }
 
 func TestMain(m *testing.M) {
-	os.Setenv("PACKET_ENV", "test")
-	os.Setenv("PACKET_VERSION", "ignored")
-	os.Setenv("ROLLBAR_TOKEN", "ignored")
 
-	l, _, _ := log.Init("github.com/tinkerbell/tink")
+	l, _ := log.Init("github.com/tinkerbell/tink")
 	logger = l.Package("grpcserver")
 	metrics.SetupMetrics("onprem", logger)
 	os.Exit(m.Run())

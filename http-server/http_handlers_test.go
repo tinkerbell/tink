@@ -53,12 +53,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 }
 
 func TestMain(m *testing.M) {
-	os.Setenv("PACKET_ENV", "test")
-	os.Setenv("PACKET_VERSION", "ignored")
-	os.Setenv("ROLLBAR_TOKEN", "ignored")
-
-	logger, _, _ = log.Init("github.com/tinkerbell/tink")
-
+	logger, _ = log.Init("github.com/tinkerbell/tink")
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
 	hardware.RegisterHardwareServiceServer(s, &server{})
@@ -67,7 +62,6 @@ func TestMain(m *testing.M) {
 			logger.Info("Server exited with error: %v", err)
 		}
 	}()
-
 	os.Exit(m.Run())
 }
 

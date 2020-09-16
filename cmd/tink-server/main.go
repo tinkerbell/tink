@@ -19,14 +19,13 @@ var (
 )
 
 func main() {
-	log, cleanup, err := log.Init("github.com/tinkerbell/tink")
+	log, err := log.Init("github.com/tinkerbell/tink")
 
 	if err != nil {
 		panic(err)
 	}
 	logger = log
-	defer cleanup()
-
+	defer logger.Close()
 	log.Info("starting version " + version)
 
 	ctx, closer := context.WithCancel(context.Background())
