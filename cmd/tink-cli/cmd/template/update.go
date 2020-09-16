@@ -52,8 +52,7 @@ func updateTemplate(id string) {
 		data := readTemplateData()
 		if data != "" {
 			if err := tryParseTemplate(data); err != nil {
-				log.Println(err)
-				return
+				log.Fatal(err)
 			}
 			req.Data = data
 		}
@@ -72,13 +71,13 @@ func updateTemplate(id string) {
 func readTemplateData() string {
 	f, err := os.Open(filePath)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 	return string(data)
 }
