@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,14 +30,25 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	// must be a copy so deferred cacheInFlight.Dec matches the Inc
 	labels = prometheus.Labels{"method": "Push", "op": ""}
 
-	hw := in.Data
-	if hw.Id == "" {
+	hw := in.GetData()
+	if hw == nil {
+		err := errors.New("expected data not to be nil")
+		logger.Error(err)
+		return &hardware.Empty{}, err
+	}
+
+	// we know hw is non-nil at this point, since we returned early above
+	// if it was nil
+	if hw.GetId() == "" {
 		metrics.CacheTotals.With(labels).Inc()
 		metrics.CacheErrors.With(labels).Inc()
 		err := errors.New("id must be set to a UUID, got id: " + hw.Id)
 		logger.Error(err)
 		return &hardware.Empty{}, err
 	}
+
+	// normalize data prior to storing in the database
+	normalizeHardwareData(hw)
 
 	// validate the hardware data to avoid duplicate mac address
 	err := s.validateHardwareData(ctx, hw)
@@ -292,22 +304,35 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 }
 
 func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware) error {
-	interfaces := hw.GetNetwork().GetInterfaces()
-	for i := range hw.GetNetwork().GetInterfaces() {
-		data, _ := s.db.GetByMAC(ctx, interfaces[i].GetDhcp().GetMac())
-		if data != "" {
-			logger.With("MAC", interfaces[i].GetDhcp().GetMac()).Info(duplicateMAC)
+	for _, iface := range hw.GetNetwork().GetInterfaces() {
+		mac := iface.GetDhcp().GetMac()
+
+		if data, _ := s.db.GetByMAC(ctx, mac); data != "" {
+			logger.With("MAC", mac).Info(duplicateMAC)
+
 			newhw := hardware.Hardware{}
-			err := json.Unmarshal([]byte(data), &newhw)
-			if err != nil {
+			if err := json.Unmarshal([]byte(data), &newhw); err != nil {
 				logger.Error(err, "Failed to unmarshal hardware data")
 				return err
 			}
+
 			if newhw.Id == hw.Id {
 				return nil
 			}
-			return errors.New(fmt.Sprintf(conflictMACAddr, interfaces[i].GetDhcp().GetMac()))
+
+			return fmt.Errorf(conflictMACAddr, mac)
 		}
 	}
+
 	return nil
+}
+
+func normalizeHardwareData(hw *hardware.Hardware) {
+	// Ensure MAC is stored as lowercase
+	for _, iface := range hw.GetNetwork().GetInterfaces() {
+		dhcp := iface.GetDhcp()
+		if mac := dhcp.GetMac(); mac != "" {
+			dhcp.Mac = strings.ToLower(mac)
+		}
+	}
 }
