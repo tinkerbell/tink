@@ -17,6 +17,8 @@ services:
       TINK_AUTH_USERNAME: ${TINKERBELL_TINK_USERNAME}
       TINK_AUTH_PASSWORD: ${TINKERBELL_TINK_PASSWORD}
     depends_on:
+      tink-server-migration:
+        condition: service_started
       db:
         condition: service_healthy
     healthcheck:
@@ -30,15 +32,36 @@ services:
       - 42113:42113/tcp
       - 42114:42114/tcp
 
+  tink-server-migration:
+    build:
+      context: ../cmd/tink-server
+    restart: on-failure
+    environment:
+      ONLY_MIGRATION: "true"
+      FACILITY: ${FACILITY:-onprem}
+      PGDATABASE: tinkerbell
+      PGHOST: db
+      PGPASSWORD: tinkerbell
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: tinkerbell
+      TINKERBELL_GRPC_AUTHORITY: :42113
+      TINKERBELL_HTTP_AUTHORITY: :42114
+      TINK_AUTH_USERNAME: ${TINKERBELL_TINK_USERNAME}
+      TINK_AUTH_PASSWORD: ${TINKERBELL_TINK_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./state/certs:/certs/${FACILITY:-onprem}
+
   db:
     image: postgres:10-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: tinkerbell
       POSTGRES_PASSWORD: tinkerbell
       POSTGRES_USER: tinkerbell
     volumes:
-      - ./db/tinkerbell-init.sql:/docker-entrypoint-initdb.d/tinkerbell-init.sql:ro
       - postgres_data:/var/lib/postgresql/data:rw
     ports:
       - 5432:5432

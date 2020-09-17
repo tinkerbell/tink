@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/packethost/pkg/log"
+	"github.com/tinkerbell/tink/db"
 	rpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
 )
@@ -20,7 +21,6 @@ var (
 
 func main() {
 	log, err := log.Init("github.com/tinkerbell/tink")
-
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +32,30 @@ func main() {
 	errCh := make(chan error, 2)
 	facility := os.Getenv("FACILITY")
 
-	cert, modT := rpcServer.SetupGRPC(ctx, logger, facility, errCh)
+	tinkDB := db.Connect(logger)
+
+	_, onlyMigration := os.LookupEnv("ONLY_MIGRATION")
+	if onlyMigration {
+		logger.Info("Applying migrations. This process will end when migrations will take place.")
+		numAppliedMigrations, err := tinkDB.Migrate()
+		if err != nil {
+			log.Fatal(err)
+			panic(err)
+		}
+		log.With("num_applied_migrations", numAppliedMigrations).Info("Migrations applied successfully")
+		os.Exit(0)
+	}
+
+	numAvailableMigrations, err := tinkDB.CheckRequiredMigrations()
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+	if numAvailableMigrations != 0 {
+		log.Info("Your database schema is not up to date. Please apply migrations running tink-server with env var ONLY_MIGRATION set.")
+	}
+
+	cert, modT := rpcServer.SetupGRPC(ctx, logger, facility, tinkDB, errCh)
 	httpServer.SetupHTTP(ctx, logger, cert, modT, errCh)
 
 	sigs := make(chan os.Signal, 1)
@@ -49,12 +72,12 @@ func main() {
 	// wait for grpc server to shutdown
 	err = <-errCh
 	if err != nil {
-		logger.Error(err)
+		log.Fatal(err)
 		panic(err)
 	}
 	err = <-errCh
 	if err != nil {
-		logger.Error(err)
+		log.Fatal(err)
 		panic(err)
 	}
 }

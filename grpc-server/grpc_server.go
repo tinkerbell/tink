@@ -43,16 +43,15 @@ type server struct {
 }
 
 // SetupGRPC setup and return a gRPC server
-func SetupGRPC(ctx context.Context, log log.Logger, facility string, errCh chan<- error) ([]byte, time.Time) {
+func SetupGRPC(ctx context.Context, log log.Logger, facility string, db *db.TinkDB, errCh chan<- error) ([]byte, time.Time) {
 	params := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 	}
 	logger = log
 	metrics.SetupMetrics(facility, logger)
-	tinkDB := db.Connect(logger)
 	server := &server{
-		db:      tinkDB,
+		db:      db,
 		dbReady: true,
 	}
 	if cert := os.Getenv("TINKERBELL_TLS_CERT"); cert != "" {

@@ -10,6 +10,8 @@ import (
 	"github.com/lib/pq"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
+	migrate "github.com/rubenv/sql-migrate"
+	"github.com/tinkerbell/tink/db/migration"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -71,6 +73,19 @@ func Connect(lg log.Logger) *TinkDB {
 		panic(err)
 	}
 	return &TinkDB{instance: db}
+}
+
+func (t *TinkDB) Migrate() (int, error) {
+	return migrate.Exec(t.instance, "postgres", migration.GetMigrations(), migrate.Up)
+}
+
+func (t *TinkDB) CheckRequiredMigrations() (int, error) {
+	migrations := migration.GetMigrations().Migrations
+	records, err := migrate.GetMigrationRecords(t.instance, "postgres")
+	if err != nil {
+		return 0, err
+	}
+	return len(migrations) - len(records), nil
 }
 
 // Error returns the underlying cause for error
