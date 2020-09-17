@@ -28,6 +28,11 @@ services:
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
+    logging:
+      driver: ${LOG_DRIVER}
+      options:
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   db:
     image: postgres:10-alpine
@@ -46,6 +51,11 @@ services:
       interval: 1s
       timeout: 1s
       retries: 30
+    logging:
+      driver: ${LOG_DRIVER}
+      options:
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   tink-cli:
     image: quay.io/tinkerbell/tink-cli:latest
@@ -59,6 +69,11 @@ services:
       db:
         condition: service_healthy
     network_mode: host
+    logging:
+      driver: ${LOG_DRIVER}
+      options:
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   registry:
     build:
@@ -83,6 +98,11 @@ services:
       - ./state/certs:/certs
       - ./state/registry:/var/lib/registry
     network_mode: host
+    logging:
+      driver: ${LOG_DRIVER}
+      options:
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   boots:
     image: quay.io/tinkerbell/boots:latest
@@ -111,6 +131,7 @@ services:
       LOG_DRIVER: ${LOG_DRIVER}
       LOG_OPT_SERVER_ADDRESS: ${LOG_OPT_SERVER_ADDRESS}
       LOG_OPT_TAG: ${LOG_OPT_TAG}
+
     depends_on:
       db:
         condition: service_healthy
@@ -118,6 +139,11 @@ services:
       - $TINKERBELL_HOST_IP:80:80/tcp
       - 67:67/udp
       - 69:69/udp
+    logging:
+      driver: ${LOG_DRIVER}
+      options:
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   nginx:
     image: nginx:alpine
@@ -127,6 +153,11 @@ services:
       - $TINKERBELL_NGINX_IP:80:80/tcp
     volumes:
       - ./state/webroot:/usr/share/nginx/html/
+    logging:
+      driver: ${LOG_DRIVER}
+      options:
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
   hegel:
     image: quay.io/tinkerbell/hegel:latest
@@ -142,6 +173,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      driver: ${LOG_DRIVER}
+      options:
+        syslog-address: ${LOG_OPT_SERVER_ADDRESS}
+        tag: ${LOG_OPT_TAG}
 
 volumes:
   postgres_data:

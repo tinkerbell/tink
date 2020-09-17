@@ -83,7 +83,8 @@ export FACILITY=onprem
 export ROLLBAR_TOKEN=ignored
 export ROLLBAR_DISABLE=1
 
-# logging details
+# centralized logging details
+export CENTRALIZED_LOGGING=disable
 export LOG_DRIVER=syslog
 export LOG_OPT_SERVER_ADDRESS=tcp://192.168.1.1:514
 export LOG_OPT_TAG=Tinkerbell/{{.Name}}

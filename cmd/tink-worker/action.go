@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -57,6 +59,10 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 
 	failedActionStatus := make(chan pb.ActionState)
 
+	if os.Getenv("CENTRALIZED_LOGGING") != "enable" {
+		//capturing logs of action container in a go-routine
+		go captureLogs(ctx, id)
+	}
 	status, err := waitContainer(timeCtx, id)
 	if err != nil {
 		rerr := removeContainer(ctx, l, id)
@@ -80,6 +86,10 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 			}
 			l.With("containerID", id, "status", status.String(), "command", action.GetOnTimeout()).Info("container created")
 			failedActionStatus := make(chan pb.ActionState)
+			if os.Getenv("CENTRALIZED_LOGGING") != "enable" {
+				//capturing logs of action container in a go-routine
+				go captureLogs(ctx, id)
+			}
 			go waitFailedContainer(ctx, id, failedActionStatus)
 			err = startContainer(ctx, l, id)
 			if err != nil {
@@ -94,6 +104,10 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 					l.Error(errors.Wrap(err, errFailedToRunCmd))
 				}
 				l.With("containerID", id, "actionStatus", status.String(), "command", action.GetOnFailure()).Info("container created")
+				if os.Getenv("CENTRALIZED_LOGGING") != "enable" {
+					//capturing logs of action container in a go-routine
+					go captureLogs(ctx, id)
+				}
 				go waitFailedContainer(ctx, id, failedActionStatus)
 				err = startContainer(ctx, l, id)
 				if err != nil {
@@ -118,6 +132,24 @@ func executeAction(ctx context.Context, action *pb.WorkflowAction, wfID string) 
 	}
 	l.With("status", status).Info("action container exited")
 	return status, nil
+}
+
+func captureLogs(ctx context.Context, id string) {
+	reader, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Timestamps: false,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer reader.Close()
+
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
 }
 
 func pullActionImage(ctx context.Context, action *pb.WorkflowAction) error {
@@ -160,23 +192,24 @@ func createContainer(ctx context.Context, l log.Logger, action *pb.WorkflowActio
 	if cmd != nil {
 		config.Cmd = cmd
 	}
-
-	logConfig := &container.LogConfig{
-		Type: os.Getenv("LOG_DRIVER"),
-		Config: map[string]string{
-			os.Getenv("LOG_DRIVER") + "-address": os.Getenv("LOG_OPT_SERVER_ADDRESS"),
-			"tag":                                os.Getenv("LOG_OPT_TAG"),
-		},
+	hostConfig := &container.HostConfig{}
+	if os.Getenv("CENTRALIZED_LOGGING") == "enable" {
+		logConfig := &container.LogConfig{
+			Type: os.Getenv("LOG_DRIVER"),
+			Config: map[string]string{
+				os.Getenv("LOG_DRIVER") + "-address": os.Getenv("LOG_OPT_SERVER_ADDRESS"),
+				"tag":                                os.Getenv("LOG_OPT_TAG"),
+			},
+		}
+		hostConfig.LogConfig = *logConfig
 	}
 	wfDir := dataDir + string(os.PathSeparator) + wfID
-	hostConfig := &container.HostConfig{
-		Privileged: true,
-		Binds:      []string{wfDir + ":/workflow"},
-		LogConfig:  *logConfig,
-	}
+	hostConfig.Privileged = true
+	hostConfig.Binds = []string{wfDir + ":/workflow"}
+
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 	l.With("command", cmd).Info("creating container")
-	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName() + "_" + wfID)
+	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, action.GetName()+"_"+wfID)
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
 	}
