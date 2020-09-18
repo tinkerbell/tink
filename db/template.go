@@ -56,13 +56,11 @@ func (d TinkDB) GetTemplate(ctx context.Context, id string) (string, string, err
 	if err == nil {
 		return string(name), string(data), nil
 	}
-
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		logger.Error(err)
 	}
-
-	return "", "", nil
+	return "", "", err
 }
 
 // DeleteTemplate deletes a workflow template

@@ -24,6 +24,11 @@ var state = map[int32]workflow.State{
 	4: workflow.State_SUCCESS,
 }
 
+const (
+	errFailedToGetTemplate = "failed to get template with ID: %s"
+	errTemplateParsing     = "failed to parse template with ID: %s"
+)
+
 // CreateWorkflow implements workflow.CreateWorkflow
 func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest) (*workflow.CreateResponse, error) {
 	logger.Info("createworkflow")
@@ -47,7 +52,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	data, err := createYaml(ctx, s.db, in.Template, in.Hardware)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
-		err = errors.Wrap(err, "failed to create Yaml")
 		logger.Error(err)
 		return &workflow.CreateResponse{}, err
 	}
@@ -269,22 +273,24 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 func createYaml(ctx context.Context, db db.Database, temp string, devices string) (string, error) {
 	_, tempData, err := db.GetTemplate(ctx, temp)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, errFailedToGetTemplate, temp)
 	}
-	return renderTemplate(string(tempData), []byte(devices))
+	return renderTemplate(temp, tempData, []byte(devices))
 }
 
-func renderTemplate(tempData string, devices []byte) (string, error) {
+func renderTemplate(templateID, tempData string, devices []byte) (string, error) {
 	var hardware map[string]interface{}
 	err := json.Unmarshal(devices, &hardware)
 	if err != nil {
+		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		logger.Error(err)
-		return "", nil
+		return "", err
 	}
 
 	t := template.New("workflow-template")
 	_, err = t.Parse(string(tempData))
 	if err != nil {
+		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		logger.Error(err)
 		return "", nil
 	}
@@ -292,7 +298,9 @@ func renderTemplate(tempData string, devices []byte) (string, error) {
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, hardware)
 	if err != nil {
-		return "", nil
+		err = errors.Wrapf(err, errTemplateParsing, templateID)
+		logger.Error(err)
+		return "", err
 	}
 	return buf.String(), nil
 }
