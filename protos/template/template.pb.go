@@ -222,9 +222,7 @@ func init() {
 	proto.RegisterType((*GetRequest)(nil), "github.com.tinkerbell.tink.protos.template.GetRequest")
 }
 
-func init() {
-	proto.RegisterFile("template/template.proto", fileDescriptor_dca67df6b60706ce)
-}
+func init() { proto.RegisterFile("template/template.proto", fileDescriptor_dca67df6b60706ce) }
 
 var fileDescriptor_dca67df6b60706ce = []byte{
 	// 431 bytes of a gzipped FileDescriptorProto
@@ -259,11 +257,11 @@ var fileDescriptor_dca67df6b60706ce = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // TemplateClient is the client API for Template service.
 //
@@ -277,10 +275,10 @@ type TemplateClient interface {
 }
 
 type templateClient struct {
-	cc grpc.ClientConnInterface
+	cc *grpc.ClientConn
 }
 
-func NewTemplateClient(cc grpc.ClientConnInterface) TemplateClient {
+func NewTemplateClient(cc *grpc.ClientConn) TemplateClient {
 	return &templateClient{cc}
 }
 
