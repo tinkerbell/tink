@@ -27,12 +27,7 @@ require (
 	github.com/packethost/pkg v0.0.0-20200903155310-0433e0605550
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0
-<<<<<<< HEAD
 	github.com/sirupsen/logrus v1.4.2
-=======
-	github.com/rollbar/rollbar-go v1.0.2 // indirect
-	github.com/sirupsen/logrus v1.4.1
->>>>>>> Incorporating review comments
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.3.0
