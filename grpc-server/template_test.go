@@ -45,9 +45,7 @@ var templateDB = map[string]interface{}{}
 
 // ClearTemplateDB clear all the templates
 func clearTemplateDB() {
-	for name := range templateDB {
-		delete(templateDB, name)
-	}
+	templateDB = map[string]interface{}{}
 }
 
 func TestCreateTemplate(t *testing.T) {
@@ -69,17 +67,6 @@ func TestCreateTemplate(t *testing.T) {
 			args: args{
 				db: mock.DB{
 					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
-						if len(templateDB) > 0 {
-							if _, ok := templateDB[name]; ok {
-								return errors.New("Template name already exist in the database")
-							}
-							templateDB[name] = templates{
-								id:   id,
-								data: data,
-							}
-							return nil
-
-						}
 						templateDB[name] = templates{
 							id:   id,
 							data: data,
