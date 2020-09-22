@@ -93,6 +93,7 @@ func TestCreateWorkflow(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			s := testServer(tc.args.db)
 			res, err := s.CreateWorkflow(context.TODO(), &workflow.CreateRequest{
 				Hardware: tc.args.wfHardware,

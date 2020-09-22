@@ -2,11 +2,8 @@ package grpcserver
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/tinkerbell/tink/db/mock"
 	pb "github.com/tinkerbell/tink/protos/template"
@@ -36,24 +33,12 @@ tasks:
       timeout: 60`
 )
 
-type templates struct {
-	id   uuid.UUID
-	data string
-}
-
-var templateDB = map[string]interface{}{}
-
-// ClearTemplateDB clear all the templates
-func clearTemplateDB() {
-	templateDB = map[string]interface{}{}
-}
-
 func TestCreateTemplate(t *testing.T) {
 	type (
 		args struct {
-			db        mock.DB
-			name      []string
-			templates []string
+			db       mock.DB
+			name     string
+			template string
 		}
 		want struct {
 			expectedError bool
@@ -66,16 +51,10 @@ func TestCreateTemplate(t *testing.T) {
 		"SuccessfullTemplateCreation": {
 			args: args{
 				db: mock.DB{
-					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
-						templateDB[name] = templates{
-							id:   id,
-							data: data,
-						}
-						return nil
-					},
+					TemplateDB: make(map[string]interface{}),
 				},
-				name:      []string{"template_1"},
-				templates: []string{template1},
+				name:     "template_1",
+				template: template1,
 			},
 			want: want{
 				expectedError: false,
@@ -85,27 +64,12 @@ func TestCreateTemplate(t *testing.T) {
 		"SuccessfullMultipleTemplateCreation": {
 			args: args{
 				db: mock.DB{
-					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
-						if len(templateDB) > 0 {
-							if _, ok := templateDB[name]; ok {
-								return fmt.Errorf("Template name already exist in the database")
-							}
-							templateDB[name] = templates{
-								id:   id,
-								data: data,
-							}
-							return nil
-
-						}
-						templateDB[name] = templates{
-							id:   id,
-							data: data,
-						}
-						return nil
+					TemplateDB: map[string]interface{}{
+						"template_1": template1,
 					},
 				},
-				name:      []string{"template_1", "template_2"},
-				templates: []string{template1, template2},
+				name:     "template_2",
+				template: template2,
 			},
 			want: want{
 				expectedError: false,
@@ -115,55 +79,30 @@ func TestCreateTemplate(t *testing.T) {
 		"FailedMultipleTemplateCreationWithSameName": {
 			args: args{
 				db: mock.DB{
-					CreateTemplateFunc: func(ctx context.Context, name string, data string, id uuid.UUID) error {
-						if len(templateDB) > 0 {
-							if _, ok := templateDB[name]; ok {
-								return errors.New("Template name already exist in the database")
-							}
-							templateDB[name] = templates{
-								id:   id,
-								data: data,
-							}
-							return nil
-
-						}
-						templateDB[name] = templates{
-							id:   id,
-							data: data,
-						}
-						return nil
+					TemplateDB: map[string]interface{}{
+						"template_1": template1,
 					},
 				},
-				name:      []string{"template_1", "template_1"},
-				templates: []string{template1, template2},
+				name:     "template_1",
+				template: template2,
 			},
 			want: want{
 				expectedError: true,
 			},
 		},
 	}
-	for name, tc := range testCases {
+
+	for name := range testCases {
+		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			clearTemplateDB()
-			index := 0
-			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
-			assert.Nil(t, err)
-			assert.NotNil(t, res)
-			if err == nil && len(tc.args.templates) > 1 {
-				index++
-				res, err = s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name[index], Data: tc.args.templates[index]})
-			} else {
-				return
-			}
-			if err != nil {
+
+			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name, Data: tc.args.template})
+			if tc.want.expectedError {
 				assert.Error(t, err)
-				assert.Empty(t, res)
-				assert.True(t, tc.want.expectedError)
 			} else {
-				assert.NoError(t, err)
+				assert.Nil(t, err)
 				assert.NotEmpty(t, res)
-				assert.False(t, tc.want.expectedError)
 			}
 		})
 	}
