@@ -16,12 +16,12 @@ setup_docker() (
 		gnupg-agent \
 		software-properties-common
 
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
+	curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg |
 		sudo apt-key add -
 
 	local repo
 	repo=$(
-		printf "deb [arch=amd64] https://download.docker.com/linux/ubuntu %s stable" \
+		printf "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") %s stable" \
 			"$(lsb_release -cs)"
 	)
 	sudo add-apt-repository "$repo"
@@ -32,13 +32,13 @@ setup_docker() (
 
 setup_docker_compose() (
 	# from https://docs.docker.com/compose/install/
-	DOCKER_COMPOSE_DOWNLOAD_LINK=${DOCKER_COMPOSE_DOWNLOAD_LINK:-https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)}  # If variable not set or null, use default.
-	"${OSIE_DOWNLOAD_LINK}"
-	sudo curl -L \
+	local DOCKER_COMPOSE_DOWNLOAD_LINK=${DOCKER_COMPOSE_DOWNLOAD_LINK:-"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"}  # If variable not set or null, use default.
+	sudo curl -C - -SLR --progress-bar \
 		"${DOCKER_COMPOSE_DOWNLOAD_LINK}" \
 		-o /usr/local/bin/docker-compose
 
 	sudo chmod +x /usr/local/bin/docker-compose
+	docker-compose version
 )
 
 make_certs_writable() (
