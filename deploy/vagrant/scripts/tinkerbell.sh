@@ -16,11 +16,13 @@ setup_docker() (
 		gnupg-agent \
 		software-properties-common
 
+	# shellcheck disable=SC1091
 	curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg |
 		sudo apt-key add -
 
 	local repo
 	repo=$(
+		# shellcheck disable=SC1091
 		printf "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") %s stable" \
 			"$(lsb_release -cs)"
 	)
@@ -32,7 +34,7 @@ setup_docker() (
 
 setup_docker_compose() (
 	# from https://docs.docker.com/compose/install/
-	local DOCKER_COMPOSE_DOWNLOAD_LINK=${DOCKER_COMPOSE_DOWNLOAD_LINK:-"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"}  # If variable not set or null, use default.
+	local DOCKER_COMPOSE_DOWNLOAD_LINK=${DOCKER_COMPOSE_DOWNLOAD_LINK:-"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"} # If variable not set or null, use default.
 	sudo curl -C - -SLR --progress-bar \
 		"${DOCKER_COMPOSE_DOWNLOAD_LINK}" \
 		-o /usr/local/bin/docker-compose
