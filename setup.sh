@@ -257,7 +257,7 @@ setup_osie() (
 		pushd "$SCRATCH"
 
 		if [ -z "${TB_OSIE_TAR:-}" ]; then
-			local OSIE_DOWNLOAD_LINK=${OSIE_DOWNLOAD_LINK:-"https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz"}  # If variable not set or null, use default.
+			local OSIE_DOWNLOAD_LINK=${OSIE_DOWNLOAD_LINK:-"https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz"} # If variable not set or null, use default.
 			curl -C - -SLR --progress-bar "${OSIE_DOWNLOAD_LINK}" -o ./osie.tar.gz
 			tar -zxf osie.tar.gz
 		else
