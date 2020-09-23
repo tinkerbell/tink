@@ -32,8 +32,10 @@ setup_docker() (
 
 setup_docker_compose() (
 	# from https://docs.docker.com/compose/install/
+	DOCKER_COMPOSE_DOWNLOAD_LINK=${DOCKER_COMPOSE_DOWNLOAD_LINK:-https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)}  # If variable not set or null, use default.
+	"${OSIE_DOWNLOAD_LINK}"
 	sudo curl -L \
-		"https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" \
+		"${DOCKER_COMPOSE_DOWNLOAD_LINK}" \
 		-o /usr/local/bin/docker-compose
 
 	sudo chmod +x /usr/local/bin/docker-compose
