@@ -40,8 +40,10 @@ setup_docker() (
 		gnupg-agent \
 		software-properties-common
 
-	local lsb_dist=$(get_distribution)
-	local lsb_version=$(get_distro_version)
+	local lsb_dist
+	lsb_dist="$(get_distribution)"
+	local lsb_version
+	lsb_version="$(get_distro_version)"
 	curl -fsSL "https://download.docker.com/linux/$lsb_dist/gpg" |
 		sudo apt-key add -
 
