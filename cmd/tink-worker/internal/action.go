@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	errContextClosed   = "failed to wait for container, context closed"
 	errCreateContainer = "failed to create container"
 	errFailedToWait    = "failed to wait for completion of action"
 	errFailedToRunCmd  = "failed to run on-timeout command"

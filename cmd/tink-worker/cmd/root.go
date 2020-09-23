@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -19,42 +18,36 @@ import (
 )
 
 const (
-	retryIntervalDefault        = 3
-	retryCountDefault           = 3
-	defaultMaxFileSize    int64 = 10485760 //10MB ~= 10485760Bytes
+	defaultRetryInterval        = 3
+	defaultRetryCount           = 3
+	defaultMaxFileSize    int64 = 10 * 1024 * 1024 //10MB
 	defaultTimeoutMinutes       = 60
 )
 
 // NewRootCommand creates a new Tink Worker Cobra root command
 func NewRootCommand(version string, logger log.Logger) *cobra.Command {
-	must := func(err error) {
-		if err != nil {
-			logger.Fatal(err)
-		}
-	}
-
 	rootCmd := &cobra.Command{
 		Use:     "tink-worker",
 		Short:   "Tink Worker",
 		Version: version,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			viper, err := createViper()
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			viper, err := createViper(logger)
 			if err != nil {
 				return err
 			}
 			return applyViper(viper, cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			retryInterval, _ := cmd.PersistentFlags().GetDuration("retry-interval")
-			retries, _ := cmd.PersistentFlags().GetInt("retries")
+			retryInterval, _ := cmd.Flags().GetDuration("retry-interval")
+			retries, _ := cmd.Flags().GetInt("retries")
 			// TODO(displague) is log-level no longer useful?
-			// logLevel, _ := cmd.PersistentFlags().GetString("log-level")
-			workerID, _ := cmd.PersistentFlags().GetString("id")
-			maxFileSize, _ := cmd.PersistentFlags().GetInt64("max-file-size")
-			timeOut, _ := cmd.PersistentFlags().GetDuration("timeout")
-			user, _ := cmd.PersistentFlags().GetString("registry-username")
-			pwd, _ := cmd.PersistentFlags().GetString("registry-password")
-			registry, _ := cmd.PersistentFlags().GetString("docker-registry")
+			// logLevel, _ := cmd.Flags().GetString("log-level")
+			workerID, _ := cmd.Flags().GetString("id")
+			maxFileSize, _ := cmd.Flags().GetInt64("max-file-size")
+			timeOut, _ := cmd.Flags().GetDuration("timeout")
+			user, _ := cmd.Flags().GetString("registry-username")
+			pwd, _ := cmd.Flags().GetString("registry-password")
+			registry, _ := cmd.Flags().GetString("docker-registry")
 
 			logger.With("version", version).Info("starting")
 			if setupErr := client.Setup(); setupErr != nil {
@@ -85,27 +78,33 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 		},
 	}
 
-	rootCmd.PersistentFlags().Duration("retry-interval", retryIntervalDefault, "Retry interval in seconds")
+	rootCmd.Flags().Duration("retry-interval", defaultRetryInterval, "Retry interval in seconds")
 
-	rootCmd.PersistentFlags().Duration("timeout", time.Duration(defaultTimeoutMinutes*time.Minute), "Max duration to wait for worker to complete")
+	rootCmd.Flags().Duration("timeout", time.Duration(defaultTimeoutMinutes*time.Minute), "Max duration to wait for worker to complete")
 
-	rootCmd.PersistentFlags().Int("max-retry", retryCountDefault, "Maximum number of retries to attempt")
+	rootCmd.Flags().Int("max-retry", defaultRetryCount, "Maximum number of retries to attempt")
 
-	rootCmd.PersistentFlags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes")
+	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes")
 
-	// rootCmd.PersistentFlags().String("log-level", "info", "Sets the worker log level (panic, fatal, error, warn, info, debug, trace)")
+	// rootCmd.Flags().String("log-level", "info", "Sets the worker log level (panic, fatal, error, warn, info, debug, trace)")
 
-	rootCmd.PersistentFlags().StringP("id", "i", "", "Sets the worker id")
-	must(rootCmd.MarkPersistentFlagRequired("id"))
+	must := func(err error) {
+		if err != nil {
+			logger.Fatal(err)
+		}
+	}
 
-	rootCmd.PersistentFlags().StringP("docker-registry", "r", "", "Sets the Docker registry")
-	must(rootCmd.MarkPersistentFlagRequired("docker-registry"))
+	rootCmd.Flags().StringP("id", "i", "", "Sets the worker id")
+	must(rootCmd.MarkFlagRequired("id"))
 
-	rootCmd.PersistentFlags().StringP("registry-username", "u", "", "Sets the registry username")
-	must(rootCmd.MarkPersistentFlagRequired("registry-username"))
+	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry")
+	must(rootCmd.MarkFlagRequired("docker-registry"))
 
-	rootCmd.PersistentFlags().StringP("registry-password", "p", "", "Sets the registry-password")
-	must(rootCmd.MarkPersistentFlagRequired("registry-password"))
+	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username")
+	must(rootCmd.MarkFlagRequired("registry-username"))
+
+	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password")
+	must(rootCmd.MarkFlagRequired("registry-password"))
 
 	return rootCmd
 }
@@ -113,22 +112,23 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 // createViper creates a Viper object configured to read in configuration files
 // (from various paths with content type specific filename extensions) and load
 // environment variables that start with TINK_WORKER.
-func createViper() (*viper.Viper, error) {
+func createViper(logger log.Logger) (*viper.Viper, error) {
 	v := viper.New()
 	v.AutomaticEnv()
 	v.SetConfigName("tink-worker")
 	v.AddConfigPath("/etc/tinkerbell")
 	v.AddConfigPath(".")
-	v.SetEnvPrefix("TINK_WORKER")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// If a config file is found, read it in.
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			logger.With("configFile", v.ConfigFileUsed()).Error(err, "could not load config file")
 			return nil, err
 		}
+		logger.Info("no config file found")
 	} else {
-		fmt.Fprintln(os.Stderr, "Using config file:", v.ConfigFileUsed())
+		logger.With("configFile", v.ConfigFileUsed()).Info("loaded config file")
 	}
 
 	return v, nil
@@ -137,7 +137,7 @@ func createViper() (*viper.Viper, error) {
 func applyViper(v *viper.Viper, cmd *cobra.Command) error {
 	errors := []error{}
 
-	cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {

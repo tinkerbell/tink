@@ -98,8 +98,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	l := w.logger.With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
 
 	cli := w.registryClient
-	err := w.regConn.pullImage(ctx, cli, action.GetImage())
-	if err != nil {
+	if err := w.regConn.pullImage(ctx, cli, action.GetImage()); err != nil {
 		return pb.ActionState_ACTION_IN_PROGRESS, errors.Wrap(err, "DOCKER PULL")
 	}
 	id, err := w.createContainer(ctx, action.Command, wfID, action)
