@@ -2,7 +2,7 @@ version: "2.1"
 services:
   tink-server:
     build:
-      context: ./cmd/tink-server
+      context: ../cmd/tink-server
     restart: unless-stopped
     environment:
       FACILITY: ${FACILITY:-onprem}
@@ -50,7 +50,7 @@ services:
 
   tink-cli:
     build:
-      context: ./cmd/tink-cli
+      context: ../cmd/tink-cli
     restart: unless-stopped
     environment:
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
