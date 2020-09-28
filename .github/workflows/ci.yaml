@@ -20,9 +20,9 @@ jobs:
     - name: go vet
       run: go vet ./...
     - name: golangci-lint
-      uses: golangci/golangci-lint-action@v1
+      uses: golangci/golangci-lint-action@v2
       with:
-        version: v1.30
+        version: v1.31
     - name: go test
       run: go test -coverprofile=coverage.txt ./...
     - name: upload codecov
