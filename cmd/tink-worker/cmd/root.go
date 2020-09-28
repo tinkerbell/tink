@@ -78,13 +78,13 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 		},
 	}
 
-	rootCmd.Flags().Duration("retry-interval", defaultRetryInterval, "Retry interval in seconds")
+	rootCmd.Flags().Duration("retry-interval", defaultRetryInterval, "Retry interval in seconds (RETRY_INTERVAL)")
 
-	rootCmd.Flags().Duration("timeout", time.Duration(defaultTimeoutMinutes*time.Minute), "Max duration to wait for worker to complete")
+	rootCmd.Flags().Duration("timeout", time.Duration(defaultTimeoutMinutes*time.Minute), "Max duration to wait for worker to complete (TIMEOUT)")
 
-	rootCmd.Flags().Int("max-retry", defaultRetryCount, "Maximum number of retries to attempt")
+	rootCmd.Flags().Int("max-retry", defaultRetryCount, "Maximum number of retries to attempt (MAX_RETRY)")
 
-	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes")
+	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes (MAX_FILE_SIZE)")
 
 	// rootCmd.Flags().String("log-level", "info", "Sets the worker log level (panic, fatal, error, warn, info, debug, trace)")
 
@@ -94,24 +94,24 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 		}
 	}
 
-	rootCmd.Flags().StringP("id", "i", "", "Sets the worker id")
+	rootCmd.Flags().StringP("id", "i", "", "Sets the worker id (ID)")
 	must(rootCmd.MarkFlagRequired("id"))
 
-	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry")
+	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry (DOCKER_REGISTRY)")
 	must(rootCmd.MarkFlagRequired("docker-registry"))
 
-	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username")
+	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username (REGISTRY_USERNAME)")
 	must(rootCmd.MarkFlagRequired("registry-username"))
 
-	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password")
+	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password (REGISTRY_PASSWORD)")
 	must(rootCmd.MarkFlagRequired("registry-password"))
 
 	return rootCmd
 }
 
 // createViper creates a Viper object configured to read in configuration files
-// (from various paths with content type specific filename extensions) and load
-// environment variables that start with TINK_WORKER.
+// (from various paths with content type specific filename extensions) and loads
+// environment variables.
 func createViper(logger log.Logger) (*viper.Viper, error) {
 	v := viper.New()
 	v.AutomaticEnv()
