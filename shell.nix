@@ -19,6 +19,5 @@ mkShell {
     pythonPackages.codespell
     shfmt
     shellcheck
-    terraform
   ];
 }
