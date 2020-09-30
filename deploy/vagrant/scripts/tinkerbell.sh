@@ -25,11 +25,13 @@ ensure_os_packages_exists() (
 
 setup_docker() (
 	# steps from https://docs.docker.com/engine/install/ubuntu/
-	sudo apt-get install -y \
+
+	ensure_os_packages_exists \
 		apt-transport-https \
 		ca-certificates \
 		gnupg-agent \
-		software-properties-common
+		software-properties-common \
+		;
 
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
 		sudo apt-key add -
@@ -41,8 +43,11 @@ setup_docker() (
 	)
 	sudo add-apt-repository "$repo"
 
-	sudo apt-get update
-	sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+	ensure_os_packages_exists \
+		containerd.io \
+		docker-ce \
+		docker-ce-cli \
+		;
 )
 
 setup_docker_compose() (
