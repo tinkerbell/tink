@@ -1,4 +1,4 @@
-package pkg
+package workflow
 
 // Workflow represents a workflow to be executed
 type Workflow struct {

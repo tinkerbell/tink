@@ -15,8 +15,8 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/tink/pkg"
 	pb "github.com/tinkerbell/tink/protos/workflow"
+	wflow "github.com/tinkerbell/tink/workflow"
 )
 
 // Workflow represents a workflow instance in database
@@ -91,11 +91,11 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, wo
 
 // Insert actions in the workflow_state table
 func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID, tx *sql.Tx) error {
-	wf, err := pkg.ParseYAML([]byte(yamlData))
+	wf, err := wflow.ParseYAML([]byte(yamlData))
 	if err != nil {
 		return err
 	}
-	err = pkg.ValidateTemplate(wf)
+	err = wflow.ValidateTemplate(wf)
 	if err != nil {
 		return errors.Wrap(err, "Invalid Template")
 	}

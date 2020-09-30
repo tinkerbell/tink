@@ -1,4 +1,4 @@
-package pkg
+package workflow
 
 import (
 	"github.com/docker/distribution/reference"

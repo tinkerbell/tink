@@ -9,7 +9,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/tink/pkg"
+	wflow "github.com/tinkerbell/tink/workflow"
 )
 
 // CreateTemplate creates a new workflow template
@@ -19,11 +19,11 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	wf, err := pkg.ParseYAML([]byte(data))
+	wf, err := wflow.ParseYAML([]byte(data))
 	if err != nil {
 		return err
 	}
-	err = pkg.ValidateTemplate(wf)
+	err = wflow.ValidateTemplate(wf)
 	if err != nil {
 		return err
 	}
