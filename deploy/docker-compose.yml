@@ -70,7 +70,7 @@ services:
         REGISTRY_PASSWORD: $TINKERBELL_REGISTRY_PASSWORD
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl --cacert /certs/ca.pem https://127.0.0.1"]
+      test: ["CMD-SHELL", "curl --cacert /certs/ca.pem -fsSL https://127.0.0.1"]
       interval: 5s
       timeout: 1s
       retries: 5

@@ -257,7 +257,7 @@ setup_osie() (
 		pushd "$SCRATCH"
 
 		if [ -z "${TB_OSIE_TAR:-}" ]; then
-			curl 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o ./osie.tar.gz
+			curl -fsSL 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o ./osie.tar.gz
 			tar -zxf osie.tar.gz
 		else
 			tar -zxf "$TB_OSIE_TAR"
