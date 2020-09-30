@@ -28,7 +28,6 @@ setup_docker() (
 	sudo apt-get install -y \
 		apt-transport-https \
 		ca-certificates \
-		curl \
 		gnupg-agent \
 		software-properties-common
 
@@ -82,7 +81,7 @@ configure_vagrant_user() (
 main() (
 	export DEBIAN_FRONTEND=noninteractive
 
-	ensure_os_packages_exists jq
+	ensure_os_packages_exists curl jq
 
 	if ! command_exists docker; then
 		setup_docker
