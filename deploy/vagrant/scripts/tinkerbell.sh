@@ -7,6 +7,22 @@ whoami
 
 cd /vagrant
 
+ensure_os_packages_exists() (
+	declare -a pkgs=()
+	for p in "$@"; do
+		if ! command_exists "$p"; then
+			pkgs+=("$p")
+		fi
+	done
+
+	if ((${#pkgs[@]} == 0)); then
+		return
+	fi
+
+	sudo apt-get update
+	sudo apt-get install -y "${pkgs[@]}"
+)
+
 setup_docker() (
 	# steps from https://docs.docker.com/engine/install/ubuntu/
 	sudo apt-get install -y \
@@ -66,7 +82,7 @@ configure_vagrant_user() (
 main() (
 	export DEBIAN_FRONTEND=noninteractive
 
-	apt-get update
+	ensure_os_packages_exists jq
 
 	if ! command_exists docker; then
 		setup_docker
@@ -74,10 +90,6 @@ main() (
 
 	if ! command_exists docker-compose; then
 		setup_docker_compose
-	fi
-
-	if ! command_exists jq; then
-		sudo apt-get install -y jq
 	fi
 
 	if [ ! -f ./envrc ]; then
