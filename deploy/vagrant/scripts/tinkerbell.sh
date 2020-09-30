@@ -7,14 +7,35 @@ whoami
 
 cd /vagrant
 
-setup_docker() (
+ensure_os_packages_exists() (
+	declare -a pkgs=()
+	for p in "$@"; do
+		if ! command_exists "$p"; then
+			pkgs+=("$p")
+		fi
+	done
+
+	if ((${#pkgs[@]} == 0)); then
+		return
+	fi
+
+	sudo apt-get update
+	sudo apt-get install -y "${pkgs[@]}"
+)
+
+ensure_docker_exists() (
+	if command_exists docker; then
+		return
+	fi
+
 	# steps from https://docs.docker.com/engine/install/ubuntu/
-	sudo apt-get install -y \
+
+	ensure_os_packages_exists \
 		apt-transport-https \
 		ca-certificates \
-		curl \
 		gnupg-agent \
-		software-properties-common
+		software-properties-common \
+		;
 
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
 		sudo apt-key add -
@@ -26,13 +47,20 @@ setup_docker() (
 	)
 	sudo add-apt-repository "$repo"
 
-	sudo apt-get update
-	sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+	ensure_os_packages_exists \
+		containerd.io \
+		docker-ce \
+		docker-ce-cli \
+		;
 )
 
-setup_docker_compose() (
+ensure_docker-compose_exists() (
+	if command_exists docker-compose; then
+		return
+	fi
+
 	# from https://docs.docker.com/compose/install/
-	sudo curl -L \
+	sudo curl -fsSL \
 		"https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" \
 		-o /usr/local/bin/docker-compose
 
@@ -66,19 +94,9 @@ configure_vagrant_user() (
 main() (
 	export DEBIAN_FRONTEND=noninteractive
 
-	apt-get update
-
-	if ! command_exists docker; then
-		setup_docker
-	fi
-
-	if ! command_exists docker-compose; then
-		setup_docker_compose
-	fi
-
-	if ! command_exists jq; then
-		sudo apt-get install -y jq
-	fi
+	ensure_os_packages_exists curl jq
+	ensure_docker_exists
+	ensure_docker-compose_exists
 
 	if [ ! -f ./envrc ]; then
 		./generate-envrc.sh eth1 >envrc

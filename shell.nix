@@ -2,9 +2,9 @@ let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
   owner = "NixOS";
   repo = "nixpkgs-channels";
-  #branch@date: nixpkgs-unstable@2020-02-01
-  rev = "e3a9318b6fdb2b022c0bda66d399e1e481b24b5c";
-  sha256 = "1hlblna9j0afvcm20p15f5is7cmwl96mc4vavc99ydc4yc9df62a";
+  #branch@date: nixpkgs-unstable@2020-09-11
+  rev = "6d4b93323e7f78121f8d6db6c59f3889aa1dd931";
+  sha256 = "0g2j41cx2w2an5d9kkqvgmada7ssdxqz1zvjd7hi5vif8ag0v5la";
 }) { } }:
 
 with pkgs;
@@ -19,5 +19,6 @@ mkShell {
     pythonPackages.codespell
     shfmt
     shellcheck
+    vagrant
   ];
 }
