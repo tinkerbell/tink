@@ -23,7 +23,7 @@ ensure_os_packages_exists() (
 	sudo apt-get install -y "${pkgs[@]}"
 )
 
-setup_docker() (
+ensure_docker_exists() (
 	if command_exists docker; then
 		return
 	fi
@@ -54,7 +54,7 @@ setup_docker() (
 		;
 )
 
-setup_docker_compose() (
+ensure_docker-compose_exists() (
 	if command_exists docker-compose; then
 		return
 	fi
@@ -95,8 +95,8 @@ main() (
 	export DEBIAN_FRONTEND=noninteractive
 
 	ensure_os_packages_exists curl jq
-	setup_docker
-	setup_docker_compose
+	ensure_docker_exists
+	ensure_docker-compose_exists
 
 	if [ ! -f ./envrc ]; then
 		./generate-envrc.sh eth1 >envrc
