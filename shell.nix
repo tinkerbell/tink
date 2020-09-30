@@ -19,5 +19,6 @@ mkShell {
     pythonPackages.codespell
     shfmt
     shellcheck
+    vagrant
   ];
 }
