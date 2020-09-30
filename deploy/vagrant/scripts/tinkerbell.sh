@@ -7,6 +7,30 @@ whoami
 
 cd /vagrant
 
+get_distribution() (
+	local lsb_dist=""
+	# Every system that we officially support has /etc/os-release
+	if [ -r /etc/os-release ]; then
+		# shellcheck disable=SC1091
+		lsb_dist="$(. /etc/os-release && echo "$ID")"
+	fi
+	# Returning an empty string here should be alright since the
+	# case statements don't act unless you provide an actual value
+	echo "$lsb_dist" | tr '[:upper:]' '[:lower:]'
+)
+
+get_distro_version() (
+	local lsb_version="0"
+	# Every system that we officially support has /etc/os-release
+	if [ -r /etc/os-release ]; then
+		# shellcheck disable=SC1091
+		lsb_version="$(. /etc/os-release && echo "$VERSION_ID")"
+	fi
+
+	echo "$lsb_version"
+)
+
+
 setup_docker() (
 	# steps from https://docs.docker.com/engine/install/ubuntu/
 	sudo apt-get install -y \
@@ -16,12 +40,17 @@ setup_docker() (
 		gnupg-agent \
 		software-properties-common
 
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
+	local lsb_dist
+	lsb_dist="$(get_distribution)"
+	local lsb_version
+	lsb_version="$(get_distro_version)"
+	curl -fsSL "https://download.docker.com/linux/$lsb_dist/gpg" |
 		sudo apt-key add -
 
 	local repo
 	repo=$(
-		printf "deb [arch=amd64] https://download.docker.com/linux/ubuntu %s stable" \
+		# shellcheck disable=SC1091
+		printf "deb [arch=amd64] https://download.docker.com/linux/$lsb_dist %s stable" \
 			"$(lsb_release -cs)"
 	)
 	sudo add-apt-repository "$repo"
@@ -32,11 +61,13 @@ setup_docker() (
 
 setup_docker_compose() (
 	# from https://docs.docker.com/compose/install/
-	sudo curl -L \
-		"https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" \
+	local DOCKER_COMPOSE_DOWNLOAD_LINK=${DOCKER_COMPOSE_DOWNLOAD_LINK:-"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"} # If variable not set or null, use default.
+	sudo curl -C - -SLR --progress-bar \
+		"${DOCKER_COMPOSE_DOWNLOAD_LINK}" \
 		-o /usr/local/bin/docker-compose
 
 	sudo chmod +x /usr/local/bin/docker-compose
+	docker-compose version
 )
 
 make_certs_writable() (
