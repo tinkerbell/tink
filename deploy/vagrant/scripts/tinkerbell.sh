@@ -24,6 +24,10 @@ ensure_os_packages_exists() (
 )
 
 setup_docker() (
+	if command_exists docker; then
+		return
+	fi
+
 	# steps from https://docs.docker.com/engine/install/ubuntu/
 
 	ensure_os_packages_exists \
@@ -51,6 +55,10 @@ setup_docker() (
 )
 
 setup_docker_compose() (
+	if command_exists docker-compose; then
+		return
+	fi
+
 	# from https://docs.docker.com/compose/install/
 	sudo curl -fsSL \
 		"https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" \
@@ -87,14 +95,8 @@ main() (
 	export DEBIAN_FRONTEND=noninteractive
 
 	ensure_os_packages_exists curl jq
-
-	if ! command_exists docker; then
-		setup_docker
-	fi
-
-	if ! command_exists docker-compose; then
-		setup_docker_compose
-	fi
+	setup_docker
+	setup_docker_compose
 
 	if [ ! -f ./envrc ]; then
 		./generate-envrc.sh eth1 >envrc
