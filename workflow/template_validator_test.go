@@ -32,6 +32,8 @@ tasks:
       image: hello-world
       timeout: 60
 `
+
+	veryLongName = "this is a very long string, that is used to test if the name is too long hahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhu"
 )
 
 func TestParse(t *testing.T) {
@@ -188,7 +190,7 @@ func withTaskInvalidName() workflowModifier {
 
 func withTaskLongName() workflowModifier {
 	return func(wf *Workflow) {
-		wf.Tasks[0].Name = "this task has a very long name to test whether we recevice an error or not if a task has very long name, one that would probably go beyond the limit of not having a task name with more than two hundred characters"
+		wf.Tasks[0].Name = veryLongName
 	}
 }
 
@@ -204,7 +206,7 @@ func withActionInvalidName() workflowModifier {
 
 func withActionLongName() workflowModifier {
 	return func(wf *Workflow) {
-		wf.Tasks[0].Actions[0].Name = "this action has a very long name to test whether we recevice an error or not if an action has very long name, one that would probably go beyond the limit of not having an action name with more than two hundred characters"
+		wf.Tasks[0].Actions[0].Name = veryLongName
 	}
 }
 
