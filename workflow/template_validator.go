@@ -10,8 +10,8 @@ const (
 	errEmptyName           = "task/action name cannot be empty"
 	errInvalidLength       = "task/action name cannot have more than 200 characters: %s"
 	errTaskDuplicateName   = "two tasks in a template cannot have same name: %s"
-	errActionInvalidImage  = "invalid action image: %s"
 	errActionDuplicateName = "two actions in a task cannot have same name: %s"
+	errActionInvalidImage  = "invalid action image: %s"
 )
 
 // Parse parses the template yaml content into a Workflow

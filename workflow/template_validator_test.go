@@ -88,11 +88,6 @@ func TestValidateTemplate(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			name:          "action image is invalid",
-			wf:            workflow(withActionInvalidImage()),
-			expectedError: true,
-		},
-		{
 			name:          "action name is duplicated",
 			wf:            workflow(withActionDuplicateName()),
 			expectedError: true,
@@ -100,6 +95,11 @@ func TestValidateTemplate(t *testing.T) {
 		{
 			name:          "action name is too long",
 			wf:            workflow(withActionLongName()),
+			expectedError: true,
+		},
+		{
+			name:          "action image is invalid",
+			wf:            workflow(withActionInvalidImage()),
 			expectedError: true,
 		},
 		{
@@ -120,38 +120,6 @@ func TestValidateTemplate(t *testing.T) {
 }
 
 type workflowModifier func(*Workflow)
-
-func withTaskLongName() workflowModifier {
-	return func(wf *Workflow) {
-		wf.Tasks[0].Name = "this task has a very long name to test whether we recevice an error or not if a task has very long name, one that would probably go beyond the limit of not having a task name with more than two hundred characters"
-	}
-}
-
-func withActionLongName() workflowModifier {
-	return func(wf *Workflow) {
-		wf.Tasks[0].Actions[0].Name = "this action has a very long name to test whether we recevice an error or not if an action has very long name, one that would probably go beyond the limit of not having an action name with more than two hundred characters"
-	}
-}
-
-func withTaskInvalidName() workflowModifier {
-	return func(wf *Workflow) { wf.Tasks[0].Name = "" }
-}
-
-func withTaskDuplicateName() workflowModifier {
-	return func(wf *Workflow) { wf.Tasks = append(wf.Tasks, wf.Tasks[0]) }
-}
-
-func withActionInvalidName() workflowModifier {
-	return func(wf *Workflow) { wf.Tasks[0].Actions[0].Name = "" }
-}
-
-func withActionInvalidImage() workflowModifier {
-	return func(wf *Workflow) { wf.Tasks[0].Actions[0].Image = "action-image-with-$#@-" }
-}
-
-func withActionDuplicateName() workflowModifier {
-	return func(wf *Workflow) { wf.Tasks[0].Actions = append(wf.Tasks[0].Actions, wf.Tasks[0].Actions[0]) }
-}
 
 func workflow(m ...workflowModifier) *Workflow {
 	wf := &Workflow{
@@ -205,4 +173,40 @@ func workflow(m ...workflowModifier) *Workflow {
 		f(wf)
 	}
 	return wf
+}
+
+// invalid task modifiers
+
+func withTaskInvalidName() workflowModifier {
+	return func(wf *Workflow) { wf.Tasks[0].Name = "" }
+}
+
+func withTaskLongName() workflowModifier {
+	return func(wf *Workflow) {
+		wf.Tasks[0].Name = "this task has a very long name to test whether we recevice an error or not if a task has very long name, one that would probably go beyond the limit of not having a task name with more than two hundred characters"
+	}
+}
+
+func withTaskDuplicateName() workflowModifier {
+	return func(wf *Workflow) { wf.Tasks = append(wf.Tasks, wf.Tasks[0]) }
+}
+
+// invalid action modifiers
+
+func withActionInvalidName() workflowModifier {
+	return func(wf *Workflow) { wf.Tasks[0].Actions[0].Name = "" }
+}
+
+func withActionLongName() workflowModifier {
+	return func(wf *Workflow) {
+		wf.Tasks[0].Actions[0].Name = "this action has a very long name to test whether we recevice an error or not if an action has very long name, one that would probably go beyond the limit of not having an action name with more than two hundred characters"
+	}
+}
+
+func withActionDuplicateName() workflowModifier {
+	return func(wf *Workflow) { wf.Tasks[0].Actions = append(wf.Tasks[0].Actions, wf.Tasks[0].Actions[0]) }
+}
+
+func withActionInvalidImage() workflowModifier {
+	return func(wf *Workflow) { wf.Tasks[0].Actions[0].Image = "action-image-with-$#@-" }
 }
