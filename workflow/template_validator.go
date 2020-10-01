@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	errEmptyName           = "task/action name cannot be empty: "
+	errEmptyName           = "task/action name cannot be empty"
 	errInvalidLength       = "task/action name cannot have more than 200 characters: "
 	errDuplicateTaskName   = "two tasks in a template cannot have same name: "
 	errInvalidActionImage  = "invalid action image: "
@@ -35,7 +35,7 @@ func validate(wf *Workflow) error {
 	taskNameMap := make(map[string]struct{})
 	for _, task := range wf.Tasks {
 		if hasEmptyName(task.Name) {
-			return errors.New(errEmptyName + task.Name)
+			return errors.New(errEmptyName)
 		}
 		if !hasValidLength(task.Name) {
 			return errors.New(errInvalidLength + task.Name)
@@ -48,7 +48,7 @@ func validate(wf *Workflow) error {
 		actionNameMap := make(map[string]struct{})
 		for _, action := range task.Actions {
 			if hasEmptyName(action.Name) {
-				return errors.New(errEmptyName + action.Name)
+				return errors.New(errEmptyName)
 			}
 
 			if !hasValidLength(action.Name) {
