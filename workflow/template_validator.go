@@ -14,9 +14,10 @@ const (
 	errDuplicateActionName = "two actions in a task cannot have same name: "
 )
 
-// ParseYAML parses the template yaml content
-func ParseYAML(yamlContent []byte) (*Workflow, error) {
-	var workflow = Workflow{}
+// Parse parses the template yaml content into a Workflow
+func Parse(yamlContent []byte) (*Workflow, error) {
+	var workflow Workflow
+
 	err := yaml.UnmarshalStrict(yamlContent, &workflow)
 	if err != nil {
 		return &Workflow{}, errors.Wrap(err, "parsing yaml data")

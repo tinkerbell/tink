@@ -19,7 +19,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	wf, err := wflow.ParseYAML([]byte(data))
+	_, err = wflow.Parse([]byte(data))
 	if err != nil {
 		return err
 	}

@@ -91,7 +91,7 @@ func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, wo
 
 // Insert actions in the workflow_state table
 func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.UUID, tx *sql.Tx) error {
-	wf, err := wflow.ParseYAML([]byte(yamlData))
+	wf, err := wflow.Parse([]byte(yamlData))
 	if err != nil {
 		return err
 	}

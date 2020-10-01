@@ -30,7 +30,7 @@ tasks:
       timeout: 60`
 )
 
-func TestParseYAML(t *testing.T) {
+func TestParse(t *testing.T) {
 	testcases := []struct {
 		name          string
 		content       []byte
@@ -49,7 +49,7 @@ func TestParseYAML(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := ParseYAML([]byte(test.content))
+			res, err := Parse([]byte(test.content))
 			if err != nil {
 				assert.Error(t, err)
 				assert.Empty(t, res)
