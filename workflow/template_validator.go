@@ -8,10 +8,10 @@ import (
 
 const (
 	errEmptyName           = "task/action name cannot be empty"
-	errInvalidLength       = "task/action name cannot have more than 200 characters: "
-	errDuplicateTaskName   = "two tasks in a template cannot have same name: "
-	errInvalidActionImage  = "invalid action image: "
-	errDuplicateActionName = "two actions in a task cannot have same name: "
+	errInvalidLength       = "task/action name cannot have more than 200 characters: %s"
+	errDuplicateTaskName   = "two tasks in a template cannot have same name: %s"
+	errInvalidActionImage  = "invalid action image: %s"
+	errDuplicateActionName = "two actions in a task cannot have same name: %s"
 )
 
 // Parse parses the template yaml content into a Workflow
@@ -38,11 +38,11 @@ func validate(wf *Workflow) error {
 			return errors.New(errEmptyName)
 		}
 		if !hasValidLength(task.Name) {
-			return errors.New(errInvalidLength + task.Name)
+			return errors.Errorf(errInvalidLength, task.Name)
 		}
 		_, ok := taskNameMap[task.Name]
 		if ok {
-			return errors.New(errDuplicateTaskName + task.Name)
+			return errors.Errorf(errDuplicateTaskName, task.Name)
 		}
 		taskNameMap[task.Name] = struct{}{}
 		actionNameMap := make(map[string]struct{})
@@ -52,16 +52,16 @@ func validate(wf *Workflow) error {
 			}
 
 			if !hasValidLength(action.Name) {
-				return errors.New(errInvalidLength + action.Name)
+				return errors.Errorf(errInvalidLength, action.Name)
 			}
 
 			if !hasValidImageName(action.Image) {
-				return errors.New(errInvalidActionImage + action.Image)
+				return errors.Errorf(errInvalidActionImage, action.Image)
 			}
 
 			_, ok := actionNameMap[action.Name]
 			if ok {
-				return errors.New(errDuplicateActionName + action.Name)
+				return errors.Errorf(errDuplicateActionName, action.Name)
 			}
 			actionNameMap[action.Name] = struct{}{}
 		}
