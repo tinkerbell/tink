@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	validTemplate = `version: "0.1"
+	validTemplate = `
+version: "0.1"
 name: hello_world_workflow
 global_timeout: 600
 tasks:
@@ -16,9 +17,11 @@ tasks:
     actions:
     - name: "hello_world"
       image: hello-world
-      timeout: 60`
+      timeout: 60
+`
 
-	invalidTemplate = `version: "0.1"
+	invalidTemplate = `
+version: "0.1"
 name: hello_world_workflow
 global_timeout: 600
 tasks:
@@ -27,7 +30,8 @@ tasks:
     actions:
   - name: "hello_world"
       image: hello-world
-      timeout: 60`
+      timeout: 60
+`
 )
 
 func TestParse(t *testing.T) {
@@ -126,6 +130,7 @@ func workflow(m ...workflowModifier) *Workflow {
 		ID:            "ce2e62ed-826f-4485-a39f-a82bb74338e2",
 		GlobalTimeout: 900,
 		Name:          "ubuntu-provisioning",
+		Version:       "0.1",
 		Tasks: []Task{
 			{
 				Name:       "pre-installation",
