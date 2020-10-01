@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	errEmptyName           = "task/action name cannot be empty"
-	errInvalidLength       = "task/action name cannot have more than 200 characters: %s"
+	errEmptyName           = "name cannot be empty"
+	errInvalidLength       = "name cannot have more than 200 characters: %s"
 	errTaskDuplicateName   = "two tasks in a template cannot have same name: %s"
 	errActionDuplicateName = "two actions in a task cannot have same name: %s"
 	errActionInvalidImage  = "invalid action image: %s"
