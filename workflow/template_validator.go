@@ -7,11 +7,12 @@ import (
 )
 
 const (
-	errEmptyName           = "name cannot be empty"
-	errInvalidLength       = "name cannot have more than 200 characters: %s"
-	errTaskDuplicateName   = "two tasks in a template cannot have same name: %s"
-	errActionDuplicateName = "two actions in a task cannot have same name: %s"
-	errActionInvalidImage  = "invalid action image: %s"
+	errEmptyName              = "name cannot be empty"
+	errInvalidLength          = "name cannot have more than 200 characters: %s"
+	errTemplateInvalidVersion = "invalid template version: %s"
+	errTaskDuplicateName      = "two tasks in a template cannot have same name: %s"
+	errActionDuplicateName    = "two actions in a task cannot have same name: %s"
+	errActionInvalidImage     = "invalid action image: %s"
 )
 
 // Parse parses the template yaml content into a Workflow
@@ -32,6 +33,21 @@ func Parse(yamlContent []byte) (*Workflow, error) {
 
 // validate validates a workflow template against certain requirements
 func validate(wf *Workflow) error {
+	if hasEmptyName(wf.Name) {
+		return errors.New(errEmptyName)
+	}
+	if !hasValidLength(wf.Name) {
+		return errors.Errorf(errInvalidLength, wf.Name)
+	}
+
+	if wf.Version != "0.1" {
+		return errors.Errorf(errTemplateInvalidVersion, wf.Version)
+	}
+
+	if len(wf.Tasks) == 0 {
+		return errors.New("template must have at least one task defined")
+	}
+
 	taskNameMap := make(map[string]struct{})
 	for _, task := range wf.Tasks {
 		if hasEmptyName(task.Name) {

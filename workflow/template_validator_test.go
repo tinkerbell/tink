@@ -74,6 +74,31 @@ func TestValidateTemplate(t *testing.T) {
 		expectedError bool
 	}{
 		{
+			name:          "template name is invalid",
+			wf:            workflow(withTemplateInvalidName()),
+			expectedError: true,
+		},
+		{
+			name:          "template name too long",
+			wf:            workflow(withTemplateLongName()),
+			expectedError: true,
+		},
+		{
+			name:          "template version is invalid",
+			wf:            workflow(withTemplateInvalidVersion()),
+			expectedError: true,
+		},
+		{
+			name:          "template tasks is nil",
+			wf:            workflow(withTemplateNilTasks()),
+			expectedError: true,
+		},
+		{
+			name:          "template tasks is empty",
+			wf:            workflow(withTemplateEmptyTasks()),
+			expectedError: true,
+		},
+		{
 			name:          "task name is invalid",
 			wf:            workflow(withTaskInvalidName()),
 			expectedError: true,
@@ -216,4 +241,34 @@ func withActionDuplicateName() workflowModifier {
 
 func withActionInvalidImage() workflowModifier {
 	return func(wf *Workflow) { wf.Tasks[0].Actions[0].Image = "action-image-with-$#@-" }
+}
+
+// invalid template modifiers
+
+func withTemplateInvalidName() workflowModifier {
+	return func(wf *Workflow) { wf.Name = "" }
+}
+
+func withTemplateLongName() workflowModifier {
+	return func(wf *Workflow) {
+		wf.Name = veryLongName
+	}
+}
+
+func withTemplateInvalidVersion() workflowModifier {
+	return func(wf *Workflow) {
+		wf.Version = "0.2"
+	}
+}
+
+func withTemplateNilTasks() workflowModifier {
+	return func(wf *Workflow) {
+		wf.Tasks = nil
+	}
+}
+
+func withTemplateEmptyTasks() workflowModifier {
+	return func(wf *Workflow) {
+		wf.Tasks = []Task{}
+	}
 }
