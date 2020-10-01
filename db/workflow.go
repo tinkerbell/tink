@@ -95,10 +95,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 	if err != nil {
 		return err
 	}
-	err = wflow.ValidateTemplate(wf)
-	if err != nil {
-		return errors.Wrap(err, "Invalid Template")
-	}
+
 	var actionList []*pb.WorkflowAction
 	var uniqueWorkerID uuid.UUID
 	for _, task := range wf.Tasks {

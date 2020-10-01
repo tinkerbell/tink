@@ -23,10 +23,6 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	if err != nil {
 		return err
 	}
-	err = wflow.ValidateTemplate(wf)
-	if err != nil {
-		return err
-	}
 
 	_, err = tx.Exec(`
 	INSERT INTO

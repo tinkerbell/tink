@@ -19,14 +19,18 @@ func ParseYAML(yamlContent []byte) (*Workflow, error) {
 	var workflow = Workflow{}
 	err := yaml.UnmarshalStrict(yamlContent, &workflow)
 	if err != nil {
-		return &Workflow{}, err
+		return &Workflow{}, errors.Wrap(err, "parsing yaml data")
 	}
+
+	if err = validate(&workflow); err != nil {
+		return &Workflow{}, errors.Wrap(err, "validating workflow template")
+	}
+
 	return &workflow, nil
 }
 
-// ValidateTemplate validates a workflow template
-// against certain design paradigms
-func ValidateTemplate(wf *Workflow) error {
+// validate validates a workflow template against certain requirements
+func validate(wf *Workflow) error {
 	taskNameMap := make(map[string]struct{})
 	for _, task := range wf.Tasks {
 		if hasEmptyName(task.Name) {

@@ -109,7 +109,7 @@ func TestValidateTemplate(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateTemplate(test.wf)
+			err := validate(test.wf)
 			if err != nil && test.expectedError {
 				assert.Error(t, err)
 				return
