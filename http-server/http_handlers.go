@@ -8,9 +8,7 @@ import (
 	"net/http"
 	tt "text/template"
 
-	// nolint:staticcheck
-	// SA1019 We will do it later
-	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/jsonpb" // nolint:staticcheck
 
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
