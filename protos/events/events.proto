@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/tink/protos/events";
+
+package github.com.tinkerbell.tink.protos.events;
+
+import "google/protobuf/timestamp.proto";
+
+service EventsService {
+  rpc Watch(WatchRequest) returns (stream Event){}
+}
+
+// An event represents a change in the state of a give resource type.
+message Event {
+  string id = 1;
+  string resource_id = 2;
+  ResourceType resource_type = 3;
+  EventType event_type = 4;
+  bytes data = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// WatchRequest allows cunsumers to customize watch, and
+// only look for certain events on certain resources.
+message WatchRequest {
+  // Resource ID to watch a specific resource.
+  string resource_id = 1;
+
+  // List of EventType(s) consumer wants to watch for.
+  // An empty list would mean ALL EventType(s).
+  repeated EventType event_types = 2;
+
+  // List of ResourceType(s) consumer wants to watch for.
+  // An empty list would mean ALL ResourceType(s).
+  repeated ResourceType resource_types = 3;
+
+  // Every consumer when it connects to a stream of events will specify
+  // how old the events returned should be (by default 5m).
+  google.protobuf.Timestamp watch_events_from = 4;
+}
+
+// ResourceType is a resource in Tinkerbell space that has a state, which
+// can change over time.
+enum ResourceType {
+  UNKNOWN_RESOURCE = 0;
+  TEMPLATE = 1;
+  HARDWARE = 2;
+  WORKFLOW = 3;
+}
+
+// EventType represents different events that lead to change in state for
+// a given resource.
+enum EventType {
+  UNKNOWN_EVENT = 0;
+  CREATED = 1;
+  UPDATED = 2;
+  DELETED = 3;
+}
