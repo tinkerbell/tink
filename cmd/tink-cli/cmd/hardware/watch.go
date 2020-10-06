@@ -28,7 +28,7 @@ var watchCmd = &cobra.Command{
 		stdoutLock := sync.Mutex{}
 		for _, id := range args {
 			go func(id string) {
-				stream, err := client.HardwareClient.Watch(context.Background(), &hardware.GetRequest{Id: id})
+				stream, err := client.HardwareClient.DeprecatedWatch(context.Background(), &hardware.GetRequest{Id: id})
 				if err != nil {
 					log.Fatal(err)
 				}

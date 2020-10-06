@@ -181,7 +181,7 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 	return nil
 }
 
-func (s *server) Watch(in *hardware.GetRequest, stream hardware.HardwareService_WatchServer) error {
+func (s *server) DeprecatedWatch(in *hardware.GetRequest, stream hardware.HardwareService_DeprecatedWatchServer) error {
 	l := logger.With("id", in.Id)
 
 	ch := make(chan string, 1)
