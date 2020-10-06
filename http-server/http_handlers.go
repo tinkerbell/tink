@@ -8,7 +8,8 @@ import (
 	"net/http"
 	tt "text/template"
 
-	// nolint:staticcheck SA1019 We will do it later
+	// nolint:staticcheck
+	// SA1019 We will do it later
 	"github.com/golang/protobuf/jsonpb"
 
 	"github.com/tinkerbell/tink/protos/template"
@@ -23,6 +24,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// RegisterHardwareServiceHandlerFromEndpoint serves Hardware requests at the
+// given endpoint over GRPC
 func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -214,6 +217,8 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 	return nil
 }
 
+// RegisterTemplateHandlerFromEndpoint serves Template requests at the given
+// endpoint over GRPC
 func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -347,6 +352,8 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 	return nil
 }
 
+// RegisterWorkflowSvcHandlerFromEndpoint serves Workflow requests at the given
+// endpoint over GRPC
 func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
