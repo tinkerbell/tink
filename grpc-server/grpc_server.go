@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/metrics"
+	"github.com/tinkerbell/tink/protos/events"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -69,6 +70,7 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, db *db.Tink
 	template.RegisterTemplateServiceServer(s, server)
 	workflow.RegisterWorkflowServiceServer(s, server)
 	hardware.RegisterHardwareServiceServer(s, server)
+	events.RegisterEventsServiceServer(s, server)
 
 	grpc_prometheus.Register(s)
 
