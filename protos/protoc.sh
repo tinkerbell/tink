@@ -8,13 +8,21 @@
 #
 set -e
 
-GOPATH=${GOPATH:-$(go env GOPATH)}
+export GOBIN=$PWD/bin
 
 if command -v protoc >/dev/null; then
-	GW_PATH="$GOPATH"/src/github.com/grpc-ecosystem/grpc-gateway
-	GO111MODULES=on go get github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+	GW_PATH="${GOPATH:-$(go env GOPATH)}/src/github.com/grpc-ecosystem/grpc-gateway"
 
-	PROTOC="protoc -I/usr/local/include -I$GW_PATH/third_party/googleapis --plugin=protoc-gen-grpc-gateway=$GOPATH/bin/protoc-gen-grpc-gateway"
+	DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+	export GOBIN=$DIR/bin
+	export PATH=$GOBIN:$PATH
+
+	# shellcheck disable=SC2046
+	go install $(sed -n -e 's|^\s*_\s*"\(.*\)".*$|\1| p' "$DIR/tools.go")
+
+	PROTOC="protoc -I$GW_PATH/third_party/googleapis"
+
+	unset DIR GW_PATH
 else
 	IMAGE=jaegertracing/protobuf:0.2.0
 	BASE=/protos
