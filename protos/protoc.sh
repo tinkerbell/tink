@@ -11,29 +11,27 @@ set -e
 export GOBIN=$PWD/bin
 
 if command -v protoc >/dev/null; then
-	GW_PATH="${GOPATH:-$(go env GOPATH)}/src/github.com/grpc-ecosystem/grpc-gateway"
-
 	DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
 	export GOBIN=$DIR/bin
 	export PATH=$GOBIN:$PATH
+	unset DIR
 
 	# shellcheck disable=SC2046
 	go install $(sed -n -e 's|^\s*_\s*"\(.*\)".*$|\1| p' tools.go)
-
-	PROTOC="protoc -I$GW_PATH/third_party/googleapis"
-
-	unset DIR GW_PATH
+	PROTOC=protoc
 else
 	IMAGE=jaegertracing/protobuf:0.2.0
 	BASE=/protos
 	PROTOC="docker run -v $(pwd):$BASE -w $BASE --rm $IMAGE "
 fi
 
+protodep up -f --use-https
+
 for proto in protos/*/*.proto; do
 	echo "Generating ${proto/.proto/}.pb.go..."
 	$PROTOC \
 		-I./protos \
-		-I./protos/common \
+		-I./protos/third_party/ \
 		--go_out ./protos \
 		--go_opt paths=source_relative \
 		--go_opt plugins=grpc \

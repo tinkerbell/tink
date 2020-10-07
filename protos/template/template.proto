@@ -5,7 +5,7 @@ option go_package = "template";
 package github.com.tinkerbell.tink.protos.template;
 
 import "google/api/annotations.proto";
-import "timestamp.proto";
+import "google/protobuf/timestamp.proto";
 
 service Template {
 	rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse) {

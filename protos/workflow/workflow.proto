@@ -5,7 +5,7 @@ option go_package = "workflow";
 package github.com.tinkerbell.tink.protos.workflow;
 
 import "google/api/annotations.proto";
-import "timestamp.proto";
+import "google/protobuf/timestamp.proto";
 
 service WorkflowSvc {
     rpc CreateWorkflow(CreateRequest) returns (CreateResponse) {
