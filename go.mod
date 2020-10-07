@@ -43,7 +43,7 @@ require (
 	golang.org/x/tools v0.0.0-20200921190806-0f52b63a40e8 // indirect
 	google.golang.org/genproto v0.0.0-20200921165018-b9da36f5f452
 	google.golang.org/grpc v1.29.1
-	google.golang.org/protobuf v1.25.0 // indirect
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
