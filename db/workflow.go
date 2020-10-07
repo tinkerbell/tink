@@ -192,7 +192,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 
 // InsertIntoWfDataTable : Insert ephemeral data in workflow_data table
 func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
-	version, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowID())
+	version, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowId())
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflo
 		workflow_data (workflow_id, version, metadata, data)
 	VALUES
 		($1, $2, $3, $4);
-	`, req.GetWorkflowID(), version, string(req.GetMetadata()), string(req.GetData()))
+	`, req.GetWorkflowId(), version, string(req.GetMetadata()), string(req.GetData()))
 	if err != nil {
 		return errors.Wrap(err, "INSERT Into workflow_data")
 	}
@@ -222,7 +222,7 @@ func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflo
 			data = NULL
 		WHERE
 			workflow_id = $1 AND version = $2;
-		`, req.GetWorkflowID(), cleanVersion)
+		`, req.GetWorkflowId(), cleanVersion)
 		if err != nil {
 			return errors.Wrap(err, "UPDATE")
 		}
@@ -239,7 +239,7 @@ func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflo
 func (d TinkDB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 	version := req.GetVersion()
 	if req.Version == 0 {
-		v, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowID())
+		v, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowId())
 		if err != nil {
 			return []byte(""), err
 		}
@@ -251,7 +251,7 @@ func (d TinkDB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataR
 	WHERE
 		workflow_id = $1 AND version = $2
 	`
-	row := d.instance.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
+	row := d.instance.QueryRowContext(ctx, query, req.GetWorkflowId(), version)
 	buf := []byte{}
 	err := row.Scan(&buf)
 	if err == nil {
@@ -270,7 +270,7 @@ func (d TinkDB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataR
 func (d TinkDB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 	version := req.GetVersion()
 	if req.Version == 0 {
-		v, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowID())
+		v, err := getLatestVersionWfData(ctx, d.instance, req.GetWorkflowId())
 		if err != nil {
 			return []byte(""), err
 		}
@@ -282,7 +282,7 @@ func (d TinkDB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowData
 	WHERE
 		workflow_id = $1 AND version = $2
 	`
-	row := d.instance.QueryRowContext(ctx, query, req.GetWorkflowID(), version)
+	row := d.instance.QueryRowContext(ctx, query, req.GetWorkflowId(), version)
 	buf := []byte{}
 	err := row.Scan(&buf)
 	if err == nil {

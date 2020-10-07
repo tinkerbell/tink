@@ -39,9 +39,9 @@ message WorkflowTemplate {
   string id = 1;
   string name = 2;
   reserved 3; // obsolete data
-  google.protobuf.Timestamp createdAt = 4;
-  google.protobuf.Timestamp updatedAt = 5;
-  google.protobuf.Timestamp deletedAt = 6;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  google.protobuf.Timestamp deleted_at = 6;
   string data = 7;
 }
 

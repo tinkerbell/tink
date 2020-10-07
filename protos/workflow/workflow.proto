@@ -58,9 +58,9 @@ message Workflow {
   string template = 2;
   string hardware = 3;
   State state = 4;
-  google.protobuf.Timestamp createdAt = 5;
-  google.protobuf.Timestamp updatedAt = 6;
-  google.protobuf.Timestamp deletedAt = 7;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  google.protobuf.Timestamp deleted_at = 7;
   string data = 8;
 }
 
@@ -110,7 +110,7 @@ message WorkflowActionStatus {
   ActionState action_status = 4;
   int64 seconds = 5;
   string message = 6;
-  google.protobuf.Timestamp createdAt = 7;
+  google.protobuf.Timestamp created_at = 7;
   string worker_id = 8;
 }
 
@@ -144,7 +144,7 @@ message WorkflowActionList {
 }
 
 message GetWorkflowDataRequest {
-  string workflow_iD = 1;
+  string workflow_id = 1;
   int32 version = 2;
 }
 
@@ -154,7 +154,7 @@ message GetWorkflowDataResponse {
 }
 
 message UpdateWorkflowDataRequest {
-  string workflow_iD = 1;
+  string workflow_id = 1;
   bytes metadata = 2;
   bytes data = 3;
 }

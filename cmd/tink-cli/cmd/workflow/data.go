@@ -35,7 +35,7 @@ var dataCmd = &cobra.Command{
 	},
 	Run: func(c *cobra.Command, args []string) {
 		for _, arg := range args {
-			req := &workflow.GetWorkflowDataRequest{WorkflowID: arg, Version: version}
+			req := &workflow.GetWorkflowDataRequest{WorkflowId: arg, Version: version}
 			var res *workflow.GetWorkflowDataResponse
 			var err error
 			if needsMetadata {

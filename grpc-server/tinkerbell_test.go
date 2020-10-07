@@ -619,7 +619,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 			s := testServer(tc.args.db)
 			res, err := s.UpdateWorkflowData(
 				context.TODO(), &pb.UpdateWorkflowDataRequest{
-					WorkflowID: tc.args.workflowID,
+					WorkflowId: tc.args.workflowID,
 					Data:       tc.args.data,
 				})
 			if err != nil {
@@ -705,7 +705,7 @@ func TestGetWorkflowData(t *testing.T) {
 		s := testServer(tc.args.db)
 		t.Run(name, func(t *testing.T) {
 			res, err := s.GetWorkflowData(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: tc.args.workflowID},
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID},
 			)
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -874,7 +874,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
 			res, err := s.GetWorkflowMetadata(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: tc.args.workflowID},
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID},
 			)
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -944,7 +944,7 @@ func TestGetWorkflowDataVersion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
 			res, err := s.GetWorkflowDataVersion(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowID: workflowID},
+				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowId: workflowID},
 			)
 			assert.Equal(t, tc.want.version, res.Version)
 			if err != nil {

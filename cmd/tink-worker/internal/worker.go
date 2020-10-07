@@ -386,7 +386,7 @@ func getWorkflowData(ctx context.Context, logger log.Logger, client pb.WorkflowS
 	l := logger.With("workflowID", workflowID,
 		"workerID", workerID,
 	)
-	res, err := client.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowID: workflowID})
+	res, err := client.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
 	if err != nil {
 		l.Error(err)
 	}
@@ -456,7 +456,7 @@ func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowSvcCli
 	}
 
 	_, err = client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
-		WorkflowID: st.GetWorkflowId(),
+		WorkflowId: st.GetWorkflowId(),
 		Data:       data,
 		Metadata:   metadata,
 	})
