@@ -23,11 +23,15 @@ fi
 
 for proto in hardware packet template workflow; do
 	echo "Generating ${proto}.pb.go..."
-	$PROTOC -I./ \
+	$PROTOC \
+		-I./ \
 		-I./common \
-		--go_opt=paths=source_relative \
-		--go_out=plugins=grpc:./ \
-		--grpc-gateway_out=logtostderr=true:. \
+		--go_out ./protos \
+		--go_opt paths=source_relative \
+		--go_opt plugins=grpc \
+		--grpc-gateway_out ./protos \
+		--grpc-gateway_opt logtostderr=true \
+		--grpc-gateway_opt paths=source_relative \
 		"${proto}/${proto}.proto"
 done
 goimports -w .
