@@ -18,7 +18,7 @@ if command -v protoc >/dev/null; then
 	export PATH=$GOBIN:$PATH
 
 	# shellcheck disable=SC2046
-	go install $(sed -n -e 's|^\s*_\s*"\(.*\)".*$|\1| p' "$DIR/tools.go")
+	go install $(sed -n -e 's|^\s*_\s*"\(.*\)".*$|\1| p' tools.go)
 
 	PROTOC="protoc -I$GW_PATH/third_party/googleapis"
 
@@ -29,17 +29,17 @@ else
 	PROTOC="docker run -v $(pwd):$BASE -w $BASE --rm $IMAGE "
 fi
 
-for proto in hardware packet template workflow; do
-	echo "Generating ${proto}.pb.go..."
+for proto in protos/*/*.proto; do
+	echo "Generating ${proto/.proto/}.pb.go..."
 	$PROTOC \
-		-I./ \
-		-I./common \
+		-I./protos \
+		-I./protos/common \
 		--go_out ./protos \
 		--go_opt paths=source_relative \
 		--go_opt plugins=grpc \
 		--grpc-gateway_out ./protos \
 		--grpc-gateway_opt logtostderr=true \
 		--grpc-gateway_opt paths=source_relative \
-		"${proto}/${proto}.proto"
+		"${proto}"
 done
 goimports -w .
