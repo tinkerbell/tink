@@ -39,7 +39,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			retryInterval, _ := cmd.Flags().GetDuration("retry-interval")
-			retries, _ := cmd.Flags().GetInt("retries")
+			retries, _ := cmd.Flags().GetInt("max-retry")
 			// TODO(displague) is log-level no longer useful?
 			// logLevel, _ := cmd.Flags().GetString("log-level")
 			workerID, _ := cmd.Flags().GetString("id")
