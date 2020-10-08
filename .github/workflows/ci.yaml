@@ -27,23 +27,6 @@ jobs:
       run: go test -coverprofile=coverage.txt ./...
     - name: upload codecov
       run: bash <(curl -s https://codecov.io/bash)
-    - name: Build binaries
-      run: make
-    - name: Upload tink-server binary
-      uses: actions/upload-artifact@v2
-      with:
-        name: tink-server
-        path: ./cmd/tink-server/tink-server
-    - name: Upload tink-cli binary
-      uses: actions/upload-artifact@v2
-      with:
-        name: tink-cli
-        path: ./cmd/tink-cli/tink-cli
-    - name: Upload tink-worker binary
-      uses: actions/upload-artifact@v2
-      with:
-        name: tink-worker
-        path: ./cmd/tink-worker/tink-worker
     - uses: cachix/install-nix-action@v10
       with:
         nix_path: nixpkgs=channel:nixos-unstable
@@ -60,40 +43,10 @@ jobs:
         echo ::set-output name=tink-worker-tags::quay.io/tinkerbell/tink-worker:latest,quay.io/tinkerbell/tink-worker:sha-${GITHUB_SHA::8}
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Download tink-cli binary
-      uses: actions/download-artifact@v2
-      with:
-        name: tink-cli
-        path: ./cmd/tink-cli
-    - name: Download tink-server binary
-      uses: actions/download-artifact@v2
-      with:
-        name: tink-server
-        path: ./cmd/tink-server
-    - name: Download tink-worker binary
-      uses: actions/download-artifact@v2
-      with:
-        name: tink-worker
-        path: ./cmd/tink-worker
-    - name: set tink-worker permission
-      run: chmod +x  ./cmd/tink-worker/tink-worker
-    - name: set tink-cli permission
-      run: chmod +x  ./cmd/tink-cli/tink-cli
-    - name: set tink-server permission
-      run: chmod +x  ./cmd/tink-server/tink-server
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Login to quay.io
-      uses: docker/login-action@v1
-      if: ${{ startsWith(github.ref, 'refs/heads/master') }}
-      with:
-        registry: quay.io
-        username: ${{ secrets.QUAY_USERNAME }}
-        password: ${{ secrets.QUAY_PASSWORD }}
     - name: quay.io/tinkerbell/tink
       uses: docker/build-push-action@v2
       with:
-        context: ./cmd/tink-server/
+        context: .
         file: ./cmd/tink-server/Dockerfile
         cache-from: type=registry,ref=quay.io/tinkerbell/tink:latest
         push: ${{ startsWith(github.ref, 'refs/heads/master') }}
@@ -101,7 +54,7 @@ jobs:
     - name: quay.io/tinkerbell/tink-cli
       uses: docker/build-push-action@v2
       with:
-        context: ./cmd/tink-cli/
+        context: .
         file: ./cmd/tink-cli/Dockerfile
         cache-from: type=registry,ref=quay.io/tinkerbell/tink-cli:latest
         push: ${{ startsWith(github.ref, 'refs/heads/master') }}
@@ -109,7 +62,7 @@ jobs:
     - name: quay.io/tinkerbell/tink-worker
       uses: docker/build-push-action@v2
       with:
-        context: ./cmd/tink-worker/
+        context: .
         file: ./cmd/tink-worker/Dockerfile
         cache-from: type=registry,ref=quay.io/tinkerbell/tink-worker:latest
         push: ${{ startsWith(github.ref, 'refs/heads/master') }}
