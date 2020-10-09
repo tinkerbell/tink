@@ -3,16 +3,17 @@
 package hardware
 
 import (
-	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/client"
-	"github.com/tinkerbell/tink/pkg"
+	"github.com/tinkerbell/tink/client/informers"
+	"github.com/tinkerbell/tink/protos/events"
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
@@ -28,21 +29,40 @@ var watchCmd = &cobra.Command{
 		stdoutLock := sync.Mutex{}
 		for _, id := range args {
 			go func(id string) {
-				stream, err := client.HardwareClient.DeprecatedWatch(context.Background(), &hardware.GetRequest{Id: id})
-				if err != nil {
-					log.Fatal(err)
+				req := &events.WatchRequest{
+					ResourceId: id,
+					EventTypes: []events.EventType{
+						events.EventType_CREATED,
+						events.EventType_UPDATED,
+						events.EventType_DELETED,
+					},
+					ResourceTypes: []events.ResourceType{events.ResourceType_HARDWARE},
 				}
-
-				var hw *hardware.Hardware
-				for hw, err = stream.Recv(); err == nil && hw != nil; hw, err = stream.Recv() {
+				informer := informers.NewInformer()
+				err := informer.Start(cmd.Context(), req, func(e *events.Event) error {
 					stdoutLock.Lock()
-					b, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
+					d, err := base64.StdEncoding.DecodeString(strings.Trim(string(e.Data), "\""))
 					if err != nil {
 						log.Fatal(err)
 					}
-					fmt.Println(string(b))
+
+					hd := &struct {
+						Data *hardware.Hardware
+					}{}
+
+					err = json.Unmarshal(d, hd)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					hw, err := json.Marshal(hd.Data)
+					if err != nil {
+						log.Fatal(err)
+					}
+					fmt.Println(string(hw))
 					stdoutLock.Unlock()
-				}
+					return nil
+				})
 				if err != nil && err != io.EOF {
 					log.Fatal(err)
 				}
