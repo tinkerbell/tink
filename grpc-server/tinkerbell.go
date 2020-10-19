@@ -28,7 +28,7 @@ const (
 )
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
-func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowSvc_GetWorkflowContextsServer) error {
+func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowService_GetWorkflowContextsServer) error {
 	wfs, err := getWorkflowsForWorker(s.db, req.WorkerId)
 	if err != nil {
 		return err

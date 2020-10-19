@@ -148,7 +148,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 }
 
 // ListWorkflows implements workflow.ListWorkflows
-func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowSvc_ListWorkflowsServer) error {
+func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowService_ListWorkflowsServer) error {
 	logger.Info("listworkflows")
 	labels := prometheus.Labels{"method": "ListWorkflows", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()
@@ -231,7 +231,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 }
 
 // ShowWorflowevents  implements workflow.ShowWorflowEvents
-func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowSvc_ShowWorkflowEventsServer) error {
+func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowService_ShowWorkflowEventsServer) error {
 	logger.Info("List workflows Events")
 	labels := prometheus.Labels{"method": "ShowWorkflowEvents", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()

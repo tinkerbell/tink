@@ -48,7 +48,7 @@ type WorkflowMetadata struct {
 
 // Worker details provide all the context needed to run a
 type Worker struct {
-	client         pb.WorkflowSvcClient
+	client         pb.WorkflowServiceClient
 	regConn        *RegistryConnDetails
 	registryClient *client.Client
 	logger         log.Logger
@@ -59,7 +59,7 @@ type Worker struct {
 }
 
 // NewWorker creates a new Worker, creating a new Docker registry client
-func NewWorker(client pb.WorkflowSvcClient, regConn *RegistryConnDetails, logger log.Logger, registry string, retries int, retryInterval time.Duration, maxFileSize int64) *Worker {
+func NewWorker(client pb.WorkflowServiceClient, regConn *RegistryConnDetails, logger log.Logger, registry string, retries int, retryInterval time.Duration, maxFileSize int64) *Worker {
 	registryClient, err := regConn.NewClient()
 	if err != nil {
 		panic(err)
@@ -382,7 +382,7 @@ func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.Workfl
 	return err
 }
 
-func getWorkflowData(ctx context.Context, logger log.Logger, client pb.WorkflowSvcClient, workerID, workflowID string) {
+func getWorkflowData(ctx context.Context, logger log.Logger, client pb.WorkflowServiceClient, workerID, workflowID string) {
 	l := logger.With("workflowID", workflowID,
 		"workerID", workerID,
 	)
@@ -436,7 +436,7 @@ func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.Workfl
 	}
 }
 
-func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowSvcClient, st *pb.WorkflowActionStatus, data []byte, checksum string) {
+func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowServiceClient, st *pb.WorkflowActionStatus, data []byte, checksum string) {
 	l := logger.With("workflowID", st.GetWorkflowId,
 		"workerID", st.GetWorkerId(),
 		"actionName", st.GetActionName(),

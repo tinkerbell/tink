@@ -369,7 +369,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			}
 		}()
 	}()
-	client := workflow.NewWorkflowSvcClient(conn)
+	client := workflow.NewWorkflowServiceClient(conn)
 
 	// workflow create handler | POST /v1/workflows
 	workflowCreatePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))

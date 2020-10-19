@@ -18,7 +18,7 @@ import (
 // gRPC clients
 var (
 	TemplateClient template.TemplateClient
-	WorkflowClient workflow.WorkflowSvcClient
+	WorkflowClient workflow.WorkflowServiceClient
 	HardwareClient hardware.HardwareServiceClient
 )
 
@@ -64,7 +64,7 @@ func Setup() error {
 		return err
 	}
 	TemplateClient = template.NewTemplateClient(conn)
-	WorkflowClient = workflow.NewWorkflowSvcClient(conn)
+	WorkflowClient = workflow.NewWorkflowServiceClient(conn)
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
 	return nil
 }
@@ -79,10 +79,10 @@ func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 }
 
 // TinkWorkflowClient creates a new workflow client
-func TinkWorkflowClient() (workflow.WorkflowSvcClient, error) {
+func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return workflow.NewWorkflowSvcClient(conn), nil
+	return workflow.NewWorkflowServiceClient(conn), nil
 }

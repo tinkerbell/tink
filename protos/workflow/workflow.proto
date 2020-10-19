@@ -7,7 +7,7 @@ package github.com.tinkerbell.tink.protos.workflow;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-service WorkflowSvc {
+service WorkflowService {
   rpc CreateWorkflow(CreateRequest) returns (CreateResponse) {
     option (google.api.http) = {
       post: "/v1/workflows"

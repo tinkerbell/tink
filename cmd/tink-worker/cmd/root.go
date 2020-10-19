@@ -65,7 +65,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rClient := pb.NewWorkflowSvcClient(conn)
+			rClient := pb.NewWorkflowServiceClient(conn)
 
 			regConn := internal.NewRegistryConnDetails(registry, user, pwd, logger)
 			worker := internal.NewWorker(rClient, regConn, logger, registry, retries, retryInterval, maxFileSize)
