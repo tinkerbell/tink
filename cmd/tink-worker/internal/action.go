@@ -54,7 +54,7 @@ func startContainer(ctx context.Context, l log.Logger, cli *client.Client, id st
 func waitContainer(ctx context.Context, cli *client.Client, id string) (pb.ActionState, error) {
 	// Inspect whether the container is in running state
 	if _, err := cli.ContainerInspect(ctx, id); err != nil {
-		return pb.ActionState_ACTION_FAILED, nil
+		return pb.ActionState_ACTION_STATE_FAILED, nil
 	}
 
 	// send API call to wait for the container completion
@@ -63,13 +63,13 @@ func waitContainer(ctx context.Context, cli *client.Client, id string) (pb.Actio
 	select {
 	case status := <-wait:
 		if status.StatusCode == 0 {
-			return pb.ActionState_ACTION_SUCCESS, nil
+			return pb.ActionState_ACTION_STATE_SUCCESS, nil
 		}
-		return pb.ActionState_ACTION_FAILED, nil
+		return pb.ActionState_ACTION_STATE_FAILED, nil
 	case err := <-errC:
-		return pb.ActionState_ACTION_FAILED, err
+		return pb.ActionState_ACTION_STATE_FAILED, err
 	case <-ctx.Done():
-		return pb.ActionState_ACTION_TIMEOUT, ctx.Err()
+		return pb.ActionState_ACTION_STATE_TIMEOUT, ctx.Err()
 	}
 }
 
@@ -80,15 +80,15 @@ func waitFailedContainer(ctx context.Context, l log.Logger, cli *client.Client, 
 	select {
 	case status := <-wait:
 		if status.StatusCode == 0 {
-			failedActionStatus <- pb.ActionState_ACTION_SUCCESS
+			failedActionStatus <- pb.ActionState_ACTION_STATE_SUCCESS
 		}
-		failedActionStatus <- pb.ActionState_ACTION_FAILED
+		failedActionStatus <- pb.ActionState_ACTION_STATE_FAILED
 	case err := <-errC:
 		l.Error(err)
-		failedActionStatus <- pb.ActionState_ACTION_FAILED
+		failedActionStatus <- pb.ActionState_ACTION_STATE_FAILED
 	case <-ctx.Done():
 		l.Error(ctx.Err())
-		failedActionStatus <- pb.ActionState_ACTION_TIMEOUT
+		failedActionStatus <- pb.ActionState_ACTION_STATE_TIMEOUT
 	}
 }
 

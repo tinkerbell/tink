@@ -49,11 +49,11 @@ var stateCmd = &cobra.Command{
 }
 
 func calWorkflowProgress(cur int64, total int64, state workflow.ActionState) string {
-	if total == 0 || (cur == 0 && state != workflow.ActionState_ACTION_SUCCESS) {
+	if total == 0 || (cur == 0 && state != workflow.ActionState_ACTION_STATE_SUCCESS) {
 		return "0%"
 	}
 	var taskCompleted int64
-	if state == workflow.ActionState_ACTION_SUCCESS {
+	if state == workflow.ActionState_ACTION_STATE_SUCCESS {
 		taskCompleted = cur + 1
 	} else {
 		taskCompleted = cur

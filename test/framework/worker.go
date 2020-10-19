@@ -117,7 +117,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	workflowStatus := make(chan workflow.ActionState, 1)
 	cli, err := initializeDockerClient()
 	if err != nil {
-		return workflow.ActionState_ACTION_FAILED, err
+		return workflow.ActionState_ACTION_STATE_FAILED, err
 	}
 	workerContainer := make([]string, workers)
 	var i int64
@@ -151,7 +151,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	}
 
 	if err != nil {
-		return workflow.ActionState_ACTION_FAILED, err
+		return workflow.ActionState_ACTION_STATE_FAILED, err
 	}
 
 	status := <-workflowStatus

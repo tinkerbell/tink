@@ -104,7 +104,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 				},
@@ -272,7 +272,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    taskName,
 				actionName:  actionName,
-				actionState: pb.ActionState_ACTION_PENDING,
+				actionState: pb.ActionState_ACTION_STATE_PENDING,
 			},
 			want: want{
 				expectedError: true,
@@ -285,7 +285,7 @@ func TestReportActionStatus(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -296,7 +296,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    taskName,
 				actionName:  actionName,
-				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+				actionState: pb.ActionState_ACTION_STATE_IN_PROGRESS,
 			},
 			want: want{
 				expectedError: true,
@@ -309,7 +309,7 @@ func TestReportActionStatus(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -336,7 +336,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    taskName,
 				actionName:  actionName,
-				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+				actionState: pb.ActionState_ACTION_STATE_IN_PROGRESS,
 			},
 			want: want{
 				expectedError: false,
@@ -351,7 +351,7 @@ func TestReportActionStatus(t *testing.T) {
 							TotalNumberOfActions: 1,
 							CurrentActionIndex:   0,
 							CurrentAction:        "disk-wipe",
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -385,7 +385,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    taskName,
 				actionName:  actionName,
-				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+				actionState: pb.ActionState_ACTION_STATE_IN_PROGRESS,
 			},
 			want: want{
 				expectedError: false,
@@ -398,7 +398,7 @@ func TestReportActionStatus(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -419,7 +419,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    taskName,
 				actionName:  "different-action-name",
-				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+				actionState: pb.ActionState_ACTION_STATE_IN_PROGRESS,
 			},
 			want: want{
 				expectedError: true,
@@ -432,7 +432,7 @@ func TestReportActionStatus(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -453,7 +453,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    "different-task-name",
 				actionName:  taskName,
-				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+				actionState: pb.ActionState_ACTION_STATE_IN_PROGRESS,
 			},
 			want: want{
 				expectedError: true,
@@ -466,7 +466,7 @@ func TestReportActionStatus(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -490,7 +490,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    taskName,
 				actionName:  actionName,
-				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+				actionState: pb.ActionState_ACTION_STATE_IN_PROGRESS,
 			},
 			want: want{
 				expectedError: true,
@@ -503,7 +503,7 @@ func TestReportActionStatus(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -530,7 +530,7 @@ func TestReportActionStatus(t *testing.T) {
 				workerID:    workerID,
 				taskName:    taskName,
 				actionName:  actionName,
-				actionState: pb.ActionState_ACTION_IN_PROGRESS,
+				actionState: pb.ActionState_ACTION_STATE_IN_PROGRESS,
 			},
 			want: want{
 				expectedError: true,
@@ -977,7 +977,7 @@ func TestIsApplicableToSend(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_FAILED,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_FAILED,
 						}, nil
 					},
 				},
@@ -993,7 +993,7 @@ func TestIsApplicableToSend(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_FAILED,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_FAILED,
 						}, nil
 					},
 				},
@@ -1009,7 +1009,7 @@ func TestIsApplicableToSend(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_PENDING,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_PENDING,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -1028,7 +1028,7 @@ func TestIsApplicableToSend(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_SUCCESS,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -1057,7 +1057,7 @@ func TestIsApplicableToSend(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_IN_PROGRESS,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_IN_PROGRESS,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -1086,7 +1086,7 @@ func TestIsApplicableToSend(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_SUCCESS,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -1122,7 +1122,7 @@ func TestIsApplicableToSend(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_IN_PROGRESS,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_IN_PROGRESS,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -1184,7 +1184,7 @@ func TestIsLastAction(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_SUCCESS,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
@@ -1220,7 +1220,7 @@ func TestIsLastAction(t *testing.T) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
 							TotalNumberOfActions: 1,
-							CurrentActionState:   pb.ActionState_ACTION_SUCCESS,
+							CurrentActionState:   pb.ActionState_ACTION_STATE_SUCCESS,
 						}, nil
 					},
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {

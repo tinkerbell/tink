@@ -121,7 +121,7 @@ func TestVagrantSetupGuide(t *testing.T) {
 			t.Fatal(err)
 		}
 		for event, err := events.Recv(); err == nil && event != nil; event, err = events.Recv() {
-			if event.ActionName == "hello_world" && event.ActionStatus == workflow.ActionState_ACTION_SUCCESS {
+			if event.ActionName == "hello_world" && event.ActionStatus == workflow.ActionState_ACTION_STATE_SUCCESS {
 				t.Logf("event %s SUCCEEDED as expected", event.ActionName)
 				return
 			}

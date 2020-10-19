@@ -65,11 +65,11 @@ message Workflow {
 }
 
 enum State {
-  PENDING = 0;
-  RUNNING = 1;
-  FAILED = 2;
-  TIMEOUT = 3;
-  SUCCESS = 4;
+  STATE_PENDING = 0;
+  STATE_RUNNING = 1;
+  STATE_FAILED = 2;
+  STATE_TIMEOUT = 3;
+  STATE_SUCCESS = 4;
 }
 
 message CreateRequest {
@@ -86,11 +86,11 @@ message GetRequest {
 }
 
 enum ActionState {
-  ACTION_PENDING = 0;
-  ACTION_IN_PROGRESS = 1;
-  ACTION_SUCCESS = 2;
-  ACTION_FAILED = 3;
-  ACTION_TIMEOUT = 4;
+  ACTION_STATE_PENDING = 0;
+  ACTION_STATE_IN_PROGRESS = 1;
+  ACTION_STATE_SUCCESS = 2;
+  ACTION_STATE_FAILED = 3;
+  ACTION_STATE_TIMEOUT = 4;
 }
 
 message WorkflowContext {
