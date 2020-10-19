@@ -16,127 +16,127 @@ import "google/api/annotations.proto";
 // Read access to individual hardware profiles is provided through the unique
 // ID, MAC, and IP hardware properties.
 service HardwareService {
-	// Push adds a new Hardware profile to the data store.
-	rpc Push (PushRequest) returns (Empty) {
-		option (google.api.http) = {
-            post: "/v1/hardware"
-            body: "*"
-        };
-	};
-
-	// ByMac returns the Hardware with the given hardware MAC Address.
-	rpc ByMAC(GetRequest) returns (Hardware) {
-		option (google.api.http) = {
-            post: "/v1/hardware/mac"
-            body: "*"
-        };
-	};
-
-	// ByIP returns the Hardware with the given IP Address.
-	rpc ByIP(GetRequest) returns (Hardware) {
-		option (google.api.http) = {
-            post: "/v1/hardware/ip"
-            body: "*"
-        };
-	};
-
-	// ByID returns the Hardware with the given ID.
-	rpc ByID(GetRequest) returns (Hardware) {
-		option (google.api.http) = {
-            get: "/v1/hardware/{id}"
-        };
-	};
-
-	// All returns all of the Hardware profiles.
-	rpc All(Empty) returns (stream Hardware) {
-		option (google.api.http) = {
-            get: "/v1/hardware"
-        };
-	};
-
-	// Watch watches for events on the given hardware and streams the matching Hardware.
-	rpc Watch(GetRequest) returns (stream Hardware);
-
-	// Delete deletes the given hardware from the data store.
-	rpc Delete(DeleteRequest) returns (Empty) {
+  // Push adds a new Hardware profile to the data store.
+  rpc Push (PushRequest) returns (Empty) {
     option (google.api.http) = {
-            delete: "/v1/hardware/{id}"
-        };
+      post: "/v1/hardware"
+      body: "*"
+    };
+  };
+
+  // ByMac returns the Hardware with the given hardware MAC Address.
+  rpc ByMAC(GetRequest) returns (Hardware) {
+    option (google.api.http) = {
+      post: "/v1/hardware/mac"
+      body: "*"
+    };
+  };
+
+  // ByIP returns the Hardware with the given IP Address.
+  rpc ByIP(GetRequest) returns (Hardware) {
+    option (google.api.http) = {
+      post: "/v1/hardware/ip"
+      body: "*"
+    };
+  };
+
+  // ByID returns the Hardware with the given ID.
+  rpc ByID(GetRequest) returns (Hardware) {
+    option (google.api.http) = {
+      get: "/v1/hardware/{id}"
+    };
+  };
+
+  // All returns all of the Hardware profiles.
+  rpc All(Empty) returns (stream Hardware) {
+    option (google.api.http) = {
+      get: "/v1/hardware"
+    };
+  };
+
+  // Watch watches for events on the given hardware and streams the matching Hardware.
+  rpc Watch(GetRequest) returns (stream Hardware);
+
+  // Delete deletes the given hardware from the data store.
+  rpc Delete(DeleteRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v1/hardware/{id}"
+    };
   };
 }
 
 message PushRequest {
-	Hardware data = 1;
+  Hardware data = 1;
 }
 
 message Empty {
 }
 
 message GetRequest {
-	string mac = 1;
-	string ip = 2;
-	string id = 3;
+  string mac = 1;
+  string ip = 2;
+  string id = 3;
 }
 
 message Hardware {
-	message DHCP {
-		message IP {
-			string address = 1;
-			string netmask = 2;
-			string gateway = 3;
-			int64 family = 4;
-		}
-		string mac = 1;
-		reserved 2; // obsolete ip
-		string hostname = 3;
-		int64 lease_time = 4;
-		repeated string name_servers = 5;
-		repeated string time_servers = 6;
-		reserved 7; // obsolete gateway
-		string arch = 8;
-		bool uefi = 9;
-		string iface_name = 10;
-		IP ip = 11;
-	}
-	message Netboot {
-		message IPXE {
-			string url = 1;
-			string contents = 2;
-		}
-		message Osie {
-			string base_url = 1;
-			string kernel = 2;
-			string initrd = 3;
-		}
+  message DHCP {
+    message IP {
+      string address = 1;
+      string netmask = 2;
+      string gateway = 3;
+      int64 family = 4;
+    }
+    string mac = 1;
+    reserved 2; // obsolete ip
+    string hostname = 3;
+    int64 lease_time = 4;
+    repeated string name_servers = 5;
+    repeated string time_servers = 6;
+    reserved 7; // obsolete gateway
+    string arch = 8;
+    bool uefi = 9;
+    string iface_name = 10;
+    IP ip = 11;
+  }
+  message Netboot {
+    message IPXE {
+      string url = 1;
+      string contents = 2;
+    }
+    message Osie {
+      string base_url = 1;
+      string kernel = 2;
+      string initrd = 3;
+    }
 
-		bool allow_pxe = 1;
-		bool allow_workflow = 2;
-		IPXE ipxe = 3;
-		reserved 4; // obsolete bootstrapper
-		Osie osie = 5;
-	}
-	message Network {
-		message Interface {
-			DHCP dhcp = 1;
-			Netboot netboot = 2;
-		}
-		reserved 1; // obsolete dhcp
-		reserved 2; // obsolete netboot
-		repeated Interface interfaces = 3;
-		reserved 4; // obsolete default
-	}
+    bool allow_pxe = 1;
+    bool allow_workflow = 2;
+    IPXE ipxe = 3;
+    reserved 4; // obsolete bootstrapper
+    Osie osie = 5;
+  }
+  message Network {
+    message Interface {
+      DHCP dhcp = 1;
+      Netboot netboot = 2;
+    }
+    reserved 1; // obsolete dhcp
+    reserved 2; // obsolete netboot
+    repeated Interface interfaces = 3;
+    reserved 4; // obsolete default
+  }
 
-	reserved 1; // obsolete json
-	reserved 2; // obsolete dhcp
-	reserved 3; // obsolete netboot
-	reserved 4; // obsolete network
-	reserved 5; // obsolete metadata
-	Network network = 6;
-	string id = 7;
-	int64 version = 8;
+  reserved 1; // obsolete json
+  reserved 2; // obsolete dhcp
+  reserved 3; // obsolete netboot
+  reserved 4; // obsolete network
+  reserved 5; // obsolete metadata
+  Network network = 6;
+  string id = 7;
+  int64 version = 8;
   string metadata = 9;
 }
 
 message DeleteRequest {
-	string id = 1;
+  string id = 1;
 }
