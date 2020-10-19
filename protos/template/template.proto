@@ -7,7 +7,7 @@ package github.com.tinkerbell.tink.protos.template;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-service Template {
+service TemplateService {
   rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse) {
     option (google.api.http) = {
       post: "/v1/templates"

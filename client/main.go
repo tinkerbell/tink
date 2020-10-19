@@ -17,7 +17,7 @@ import (
 
 // gRPC clients
 var (
-	TemplateClient template.TemplateClient
+	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
 	HardwareClient hardware.HardwareServiceClient
 )
@@ -63,7 +63,7 @@ func Setup() error {
 	if err != nil {
 		return err
 	}
-	TemplateClient = template.NewTemplateClient(conn)
+	TemplateClient = template.NewTemplateServiceClient(conn)
 	WorkflowClient = workflow.NewWorkflowServiceClient(conn)
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
 	return nil

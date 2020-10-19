@@ -234,7 +234,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 			}
 		}()
 	}()
-	client := template.NewTemplateClient(conn)
+	client := template.NewTemplateServiceClient(conn)
 
 	// template create handler | POST /v1/templates
 	templateCreatePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "templates"}, "", runtime.AssumeColonVerbOpt(true)))

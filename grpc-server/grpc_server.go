@@ -66,7 +66,7 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, db *db.Tink
 
 	// register servers
 	s := grpc.NewServer(params...)
-	template.RegisterTemplateServer(s, server)
+	template.RegisterTemplateServiceServer(s, server)
 	workflow.RegisterWorkflowServiceServer(s, server)
 	hardware.RegisterHardwareServiceServer(s, server)
 
