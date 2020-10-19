@@ -84,7 +84,7 @@ func removeContainer(ctx context.Context, cli *dc.Client, id string) error {
 	log.Println("Worker Container removed : ", id)
 	return nil
 }
-func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan workflow.ActionState) {
+func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan workflow.State) {
 	for len(workflowStatus) == 0 {
 		GetCurrentStatus(ctx, wfID, workflowStatus)
 	}
@@ -110,14 +110,14 @@ func captureLogs(ctx context.Context, cli *dc.Client, id string) {
 }
 
 // StartWorkers starts the dummy workers
-func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.ActionState, error) {
+func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.State, error) {
 	log = logger.WithField("workflow_id", wfID)
 	var wg sync.WaitGroup
 	failedWorkers := make(chan string, workers)
-	workflowStatus := make(chan workflow.ActionState, 1)
+	workflowStatus := make(chan workflow.State, 1)
 	cli, err := initializeDockerClient()
 	if err != nil {
-		return workflow.ActionState_ACTION_STATE_FAILED, err
+		return workflow.State_STATE_FAILED, err
 	}
 	workerContainer := make([]string, workers)
 	var i int64
@@ -151,7 +151,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	}
 
 	if err != nil {
-		return workflow.ActionState_ACTION_STATE_FAILED, err
+		return workflow.State_STATE_FAILED, err
 	}
 
 	status := <-workflowStatus

@@ -51,10 +51,10 @@ func startContainer(ctx context.Context, l log.Logger, cli *client.Client, id st
 	return errors.Wrap(cli.ContainerStart(ctx, id, types.ContainerStartOptions{}), "DOCKER START")
 }
 
-func waitContainer(ctx context.Context, cli *client.Client, id string) (pb.ActionState, error) {
+func waitContainer(ctx context.Context, cli *client.Client, id string) (pb.State, error) {
 	// Inspect whether the container is in running state
 	if _, err := cli.ContainerInspect(ctx, id); err != nil {
-		return pb.ActionState_ACTION_STATE_FAILED, nil
+		return pb.State_STATE_FAILED, nil
 	}
 
 	// send API call to wait for the container completion
@@ -63,32 +63,32 @@ func waitContainer(ctx context.Context, cli *client.Client, id string) (pb.Actio
 	select {
 	case status := <-wait:
 		if status.StatusCode == 0 {
-			return pb.ActionState_ACTION_STATE_SUCCESS, nil
+			return pb.State_STATE_SUCCESS, nil
 		}
-		return pb.ActionState_ACTION_STATE_FAILED, nil
+		return pb.State_STATE_FAILED, nil
 	case err := <-errC:
-		return pb.ActionState_ACTION_STATE_FAILED, err
+		return pb.State_STATE_FAILED, err
 	case <-ctx.Done():
-		return pb.ActionState_ACTION_STATE_TIMEOUT, ctx.Err()
+		return pb.State_STATE_TIMEOUT, ctx.Err()
 	}
 }
 
-func waitFailedContainer(ctx context.Context, l log.Logger, cli *client.Client, id string, failedActionStatus chan pb.ActionState) {
+func waitFailedContainer(ctx context.Context, l log.Logger, cli *client.Client, id string, failedActionStatus chan pb.State) {
 	// send API call to wait for the container completion
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 
 	select {
 	case status := <-wait:
 		if status.StatusCode == 0 {
-			failedActionStatus <- pb.ActionState_ACTION_STATE_SUCCESS
+			failedActionStatus <- pb.State_STATE_SUCCESS
 		}
-		failedActionStatus <- pb.ActionState_ACTION_STATE_FAILED
+		failedActionStatus <- pb.State_STATE_FAILED
 	case err := <-errC:
 		l.Error(err)
-		failedActionStatus <- pb.ActionState_ACTION_STATE_FAILED
+		failedActionStatus <- pb.State_STATE_FAILED
 	case <-ctx.Done():
 		l.Error(ctx.Err())
-		failedActionStatus <- pb.ActionState_ACTION_STATE_TIMEOUT
+		failedActionStatus <- pb.State_STATE_TIMEOUT
 	}
 }
 

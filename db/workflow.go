@@ -529,7 +529,7 @@ func (d TinkDB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.Workf
 	row := d.instance.QueryRowContext(ctx, query, wfID)
 	var cw, ct, ca string
 	var cai, tact int64
-	var cas pb.ActionState
+	var cas pb.State
 	err := row.Scan(&cw, &ct, &ca, &cai, &cas, &tact)
 	if err == nil {
 		return &pb.WorkflowContext{
@@ -635,7 +635,7 @@ func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionSt
 			ActionName:   aName,
 			Seconds:      secs,
 			Message:      msg,
-			ActionStatus: pb.ActionState(status),
+			ActionStatus: pb.State(status),
 			CreatedAt:    createdAt,
 		}
 		err = fn(wfs)

@@ -94,16 +94,16 @@ func (w *Worker) captureLogs(ctx context.Context, id string) {
 	}
 }
 
-func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAction) (pb.ActionState, error) {
+func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAction) (pb.State, error) {
 	l := w.logger.With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
 
 	cli := w.registryClient
 	if err := w.regConn.pullImage(ctx, cli, action.GetImage()); err != nil {
-		return pb.ActionState_ACTION_STATE_IN_PROGRESS, errors.Wrap(err, "DOCKER PULL")
+		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER PULL")
 	}
 	id, err := w.createContainer(ctx, action.Command, wfID, action)
 	if err != nil {
-		return pb.ActionState_ACTION_STATE_IN_PROGRESS, errors.Wrap(err, "DOCKER CREATE")
+		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER CREATE")
 	}
 	l.With("containerID", id, "command", action.GetOnTimeout()).Info("container created")
 
@@ -119,10 +119,10 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 
 	err = startContainer(timeCtx, l, cli, id)
 	if err != nil {
-		return pb.ActionState_ACTION_STATE_IN_PROGRESS, errors.Wrap(err, "DOCKER RUN")
+		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER RUN")
 	}
 
-	failedActionStatus := make(chan pb.ActionState)
+	failedActionStatus := make(chan pb.State)
 
 	// capturing logs of action container in a go-routine
 	go w.captureLogs(ctx, id)
@@ -139,14 +139,14 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	}
 
 	l.With("status", status.String()).Info("container removed")
-	if status != pb.ActionState_ACTION_STATE_SUCCESS {
-		if status == pb.ActionState_ACTION_STATE_TIMEOUT && action.OnTimeout != nil {
+	if status != pb.State_STATE_SUCCESS {
+		if status == pb.State_STATE_TIMEOUT && action.OnTimeout != nil {
 			id, err = w.createContainer(ctx, action.OnTimeout, wfID, action)
 			if err != nil {
 				l.Error(errors.Wrap(err, errCreateContainer))
 			}
 			l.With("containerID", id, "status", status.String(), "command", action.GetOnTimeout()).Info("container created")
-			failedActionStatus := make(chan pb.ActionState)
+			failedActionStatus := make(chan pb.State)
 			go w.captureLogs(ctx, id)
 			go waitFailedContainer(ctx, l, cli, id, failedActionStatus)
 			err = startContainer(ctx, l, cli, id)
@@ -208,15 +208,15 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string) er
 				}
 			} else {
 				switch wfContext.GetCurrentActionState() {
-				case pb.ActionState_ACTION_STATE_SUCCESS:
+				case pb.State_STATE_SUCCESS:
 					if isLastAction(wfContext, actions) {
 						continue
 					}
 					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()+1]
 					actionIndex = int(wfContext.GetCurrentActionIndex()) + 1
-				case pb.ActionState_ACTION_STATE_FAILED:
+				case pb.State_STATE_FAILED:
 					continue
-				case pb.ActionState_ACTION_STATE_TIMEOUT:
+				case pb.State_STATE_TIMEOUT:
 					continue
 				default:
 					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()]
@@ -269,12 +269,12 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string) er
 				l := l.With("actionName", action.GetName(),
 					"taskName", action.GetTaskName(),
 				)
-				if wfContext.GetCurrentActionState() != pb.ActionState_ACTION_STATE_IN_PROGRESS {
+				if wfContext.GetCurrentActionState() != pb.State_STATE_RUNNING {
 					actionStatus := &pb.WorkflowActionStatus{
 						WorkflowId:   wfID,
 						TaskName:     action.GetTaskName(),
 						ActionName:   action.GetName(),
-						ActionStatus: pb.ActionState_ACTION_STATE_IN_PROGRESS,
+						ActionStatus: pb.State_STATE_RUNNING,
 						Seconds:      0,
 						Message:      "Started execution",
 						WorkerId:     action.GetWorkerId(),
@@ -303,11 +303,11 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string) er
 					WorkerId:   action.GetWorkerId(),
 				}
 
-				if err != nil || status != pb.ActionState_ACTION_STATE_SUCCESS {
-					if status == pb.ActionState_ACTION_STATE_TIMEOUT {
-						actionStatus.ActionStatus = pb.ActionState_ACTION_STATE_TIMEOUT
+				if err != nil || status != pb.State_STATE_SUCCESS {
+					if status == pb.State_STATE_TIMEOUT {
+						actionStatus.ActionStatus = pb.State_STATE_TIMEOUT
 					} else {
-						actionStatus.ActionStatus = pb.ActionState_ACTION_STATE_FAILED
+						actionStatus.ActionStatus = pb.State_STATE_FAILED
 					}
 					l.With("actionStatus", actionStatus.ActionStatus.String())
 					l.Error(err)
@@ -318,7 +318,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string) er
 					return err
 				}
 
-				actionStatus.ActionStatus = pb.ActionState_ACTION_STATE_SUCCESS
+				actionStatus.ActionStatus = pb.State_STATE_SUCCESS
 				actionStatus.Message = "finished execution successfully"
 
 				err = w.reportActionStatus(ctx, actionStatus)

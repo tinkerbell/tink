@@ -214,7 +214,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 		CurrentTask:          w.CurrentTask,
 		CurrentAction:        w.CurrentAction,
 		CurrentActionIndex:   w.CurrentActionIndex,
-		CurrentActionState:   workflow.ActionState(w.CurrentActionState),
+		CurrentActionState:   workflow.State(w.CurrentActionState),
 		TotalNumberOfActions: w.TotalNumberOfActions,
 	}
 	l := logger.With(
@@ -253,7 +253,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,
 			ActionName:   w.ActionName,
-			ActionStatus: workflow.ActionState(w.ActionStatus),
+			ActionStatus: workflow.State(w.ActionStatus),
 			Seconds:      w.Seconds,
 			Message:      w.Message,
 			CreatedAt:    w.CreatedAt,

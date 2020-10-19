@@ -105,7 +105,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 	}
 
 	actionIndex := wfContext.GetCurrentActionIndex()
-	if req.GetActionStatus() == pb.ActionState_ACTION_STATE_IN_PROGRESS {
+	if req.GetActionStatus() == pb.State_STATE_RUNNING {
 		if wfContext.GetCurrentAction() != "" {
 			actionIndex = actionIndex + 1
 		}
@@ -217,15 +217,15 @@ func getWorkflowActions(context context.Context, db db.Database, wfID string) (*
 // isApplicableToSend checks if a particular workflow context is applicable or if it is needed to
 // be sent to a worker based on the state of the current action and the targeted workerID
 func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, workerID string, db db.Database) bool {
-	if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_STATE_FAILED ||
-		wfContext.GetCurrentActionState() == pb.ActionState_ACTION_STATE_TIMEOUT {
+	if wfContext.GetCurrentActionState() == pb.State_STATE_FAILED ||
+		wfContext.GetCurrentActionState() == pb.State_STATE_TIMEOUT {
 		return false
 	}
 	actions, err := getWorkflowActions(context, db, wfContext.GetWorkflowId())
 	if err != nil {
 		return false
 	}
-	if wfContext.GetCurrentActionState() == pb.ActionState_ACTION_STATE_SUCCESS {
+	if wfContext.GetCurrentActionState() == pb.State_STATE_SUCCESS {
 		if isLastAction(wfContext, actions) {
 			return false
 		}
