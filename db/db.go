@@ -12,6 +12,7 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	migrate "github.com/rubenv/sql-migrate"
+	ev "github.com/tinkerbell/tink/db/events"
 	"github.com/tinkerbell/tink/db/migration"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
@@ -87,6 +88,15 @@ func (t *TinkDB) CheckRequiredMigrations() (int, error) {
 		return 0, err
 	}
 	return len(migrations) - len(records), nil
+}
+
+// PurgeEvents periodically checks the events table and
+// purges the events that have passed the defined EVENTS_TTL.
+func (t *TinkDB) PurgeEvents(errCh chan<- error) {
+	err := ev.Purge(t.instance, logger)
+	if err != nil {
+		errCh <- err
+	}
 }
 
 // Error returns the underlying cause for error

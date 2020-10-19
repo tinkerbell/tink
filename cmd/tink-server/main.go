@@ -46,6 +46,8 @@ func main() {
 		os.Exit(0)
 	}
 
+	go tinkDB.PurgeEvents(errCh)
+
 	numAvailableMigrations, err := tinkDB.CheckRequiredMigrations()
 	if err != nil {
 		log.Fatal(err)
