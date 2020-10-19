@@ -10,7 +10,6 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/db/mock"
 	"github.com/tinkerbell/tink/metrics"

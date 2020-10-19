@@ -10,10 +10,9 @@ import (
 	"log"
 	"sync"
 
-	"github.com/tinkerbell/tink/pkg"
-
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/pkg"
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
