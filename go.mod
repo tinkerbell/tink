@@ -16,7 +16,6 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.15.2
-	github.com/grpc-ecosystem/grpc-gateway v1.15.0
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/lib/pq v1.2.1-0.20191011153232-f91d3411e481
 	github.com/mattn/go-runewidth v0.0.5 // indirect

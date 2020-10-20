@@ -18,87 +18,97 @@ type Notification struct {
 	CreatedAt    *time.Time  `json:"created_at,omitempty"`
 }
 
-// Filter a notification based on given event and resource types
-func (n Notification) Filter(resourceID string, eventTypes map[events.EventType]struct{}, resourceTypes map[events.ResourceType]struct{}) bool {
-	if resourceID != "" && n.ResourceID != resourceID {
-		return true
-	}
-
-	eType := GetEventType(n.EventType)
-	if _, ok := eventTypes[eType]; !ok {
-		return true
-	}
-
-	rType := GetResourceType(n.ResourceType)
-	if _, ok := resourceTypes[rType]; !ok {
-		return true
-	}
-	return false
-}
-
-// Unmarshal converts a notification into events.Event type
-func (n Notification) Unmarshal(e *events.Event) error {
+// ToEvent converts a notification into events.Event type
+func (n Notification) ToEvent() (*events.Event, error) {
 	d, err := json.Marshal(n.Data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	createdAt, err := ptypes.TimestampProto(*n.CreatedAt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	e.Id = n.ID
-	e.ResourceId = n.ResourceID
-	e.ResourceType = GetResourceType(n.ResourceType)
-	e.EventType = GetEventType(n.EventType)
-	e.Data = d
-	e.CreatedAt = createdAt
-	return nil
+	return &events.Event{
+		Id:           n.ID,
+		ResourceId:   n.ResourceID,
+		ResourceType: ResourceType(n.ResourceType),
+		EventType:    EventType(n.EventType),
+		Data:         d,
+		CreatedAt:    createdAt,
+	}, nil
 }
 
-// GetResourceType returns events.ResourceType for a given key
-func GetResourceType(name string) events.ResourceType {
+// Prefix adds prefix to notification's resource and event type
+func (n *Notification) Prefix() {
+	const (
+		resourceTypePrefix = "RESOURCE_TYPE_"
+		eventTypePrefix    = "EVENT_TYPE_"
+	)
+	n.ResourceType = resourceTypePrefix + n.ResourceType
+	n.EventType = eventTypePrefix + n.EventType
+}
+
+// Filter a notification based on given reducer.
+func Filter(n *Notification, reducer func(n *Notification) bool) bool {
+	return reducer(n)
+}
+
+// ResourceType returns events.ResourceType for a given key
+func ResourceType(name string) events.ResourceType {
 	switch name {
-	case events.ResourceType_TEMPLATE.String():
-		return events.ResourceType_TEMPLATE
-	case events.ResourceType_HARDWARE.String():
-		return events.ResourceType_HARDWARE
-	case events.ResourceType_WORKFLOW.String():
-		return events.ResourceType_WORKFLOW
+	case events.ResourceType_RESOURCE_TYPE_TEMPLATE.String():
+		return events.ResourceType_RESOURCE_TYPE_TEMPLATE
+	case events.ResourceType_RESOURCE_TYPE_HARDWARE.String():
+		return events.ResourceType_RESOURCE_TYPE_HARDWARE
+	case events.ResourceType_RESOURCE_TYPE_WORKFLOW.String():
+		return events.ResourceType_RESOURCE_TYPE_WORKFLOW
 	default:
-		return events.ResourceType_UNKNOWN_RESOURCE
+		return events.ResourceType_RESOURCE_TYPE_UNKNOWN
 	}
 }
 
-// GetEventType returns events.EventType for a given key
-func GetEventType(name string) events.EventType {
+// EventType returns events.EventType for a given key
+func EventType(name string) events.EventType {
 	switch name {
-	case events.EventType_CREATED.String():
-		return events.EventType_CREATED
-	case events.EventType_UPDATED.String():
-		return events.EventType_UPDATED
-	case events.EventType_DELETED.String():
-		return events.EventType_DELETED
+	case events.EventType_EVENT_TYPE_CREATED.String():
+		return events.EventType_EVENT_TYPE_CREATED
+	case events.EventType_EVENT_TYPE_UPDATED.String():
+		return events.EventType_EVENT_TYPE_UPDATED
+	case events.EventType_EVENT_TYPE_DELETED.String():
+		return events.EventType_EVENT_TYPE_DELETED
 	default:
-		return events.EventType_UNKNOWN_EVENT
+		return events.EventType_EVENT_TYPE_UNKNOWN
 	}
 }
 
-// MapEventType converts a []events.EventType to a map[events.EventType]struct{}
-func MapEventType(eventTypes []events.EventType) map[events.EventType]struct{} {
-	mapETs := map[events.EventType]struct{}{}
-	for _, eventType := range eventTypes {
-		mapETs[eventType] = struct{}{}
-	}
-	return mapETs
-}
+// Reduce returns a closure to filter notifications.
+func Reduce(req *events.WatchRequest) func(n *Notification) bool {
+	return func(n *Notification) bool {
+		if req.ResourceId != "" && n.ResourceID != req.ResourceId {
+			return true
+		}
 
-// MapResourceType converts a []events.ResourceType to a map[events.ResourceType]struct{}
-func MapResourceType(resourceTypes []events.ResourceType) map[events.ResourceType]struct{} {
-	mapRTs := map[events.ResourceType]struct{}{}
-	for _, resourceType := range resourceTypes {
-		mapRTs[resourceType] = struct{}{}
+		eType := EventType(n.EventType)
+		for i, t := range req.EventTypes {
+			if t == eType {
+				break
+			}
+			if i == len(req.EventTypes)-1 && t != eType {
+				return true
+			}
+		}
+
+		rType := ResourceType(n.ResourceType)
+		for i, t := range req.ResourceTypes {
+			if t == rType {
+				break
+			}
+			if i == len(req.ResourceTypes)-1 && t != rType {
+				return true
+			}
+		}
+		return false
 	}
-	return mapRTs
 }

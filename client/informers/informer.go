@@ -18,8 +18,8 @@ type sharedInformer struct {
 	errCh    chan error
 }
 
-// NewInformer returns an instance of event informer
-func NewInformer() Informer {
+// New returns an instance of event informer
+func New() Informer {
 	return &sharedInformer{
 		eventsCh: make(chan *events.Event),
 		errCh:    make(chan error),
@@ -27,7 +27,8 @@ func NewInformer() Informer {
 }
 
 func (s *sharedInformer) Start(ctx context.Context, req *events.WatchRequest, fn func(e *events.Event) error) error {
-	stream, err := client.EventClient.Watch(ctx, req)
+	defer close(s.errCh)
+	stream, err := client.EventsClient.Watch(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -44,6 +45,7 @@ func (s *sharedInformer) Start(ctx context.Context, req *events.WatchRequest, fn
 	if err != nil {
 		return err
 	}
+	close(s.eventsCh)
 	return <-s.errCh
 }
 

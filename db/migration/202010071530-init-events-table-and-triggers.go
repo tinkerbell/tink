@@ -8,9 +8,19 @@ func Get202010071530() *migrate.Migration {
 		Up: []string{`
 SET ROLE tinkerbell;
 
-CREATE EXTENSION "uuid-ossp";
-CREATE TYPE resource_type AS ENUM ('HARDWARE', 'TEMPLATE', 'WORKFLOW');
-CREATE TYPE event_type AS ENUM ('CREATED', 'UPDATED', 'DELETED');
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+DO $$ BEGIN
+    CREATE TYPE resource_type AS ENUM ('HARDWARE', 'TEMPLATE', 'WORKFLOW');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE event_type AS ENUM ('CREATED', 'UPDATED', 'DELETED');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS events (
 	id UUID UNIQUE DEFAULT uuid_generate_v4()
@@ -33,6 +43,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS events_channel ON events;
+
 CREATE TRIGGER events_channel
 AFTER INSERT ON events
 FOR EACH ROW EXECUTE PROCEDURE events_notify_changes();
@@ -53,6 +65,8 @@ BEGIN
 	RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS hardware_event_trigger ON hardware;
 
 CREATE TRIGGER hardware_event_trigger
 AFTER INSERT OR UPDATE ON hardware
@@ -75,6 +89,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS template_event_trigger ON template;
+
 CREATE TRIGGER template_event_trigger
 AFTER INSERT OR UPDATE ON template
 FOR EACH ROW EXECUTE PROCEDURE insert_template_event();
@@ -95,6 +111,8 @@ BEGIN
 	RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS workflow_event_trigger ON workflow;
 
 CREATE TRIGGER workflow_event_trigger
 AFTER INSERT OR UPDATE ON workflow

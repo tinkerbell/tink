@@ -42,17 +42,17 @@ message WatchRequest {
 // ResourceType is a resource in Tinkerbell space that has a state, which
 // can change over time.
 enum ResourceType {
-  UNKNOWN_RESOURCE = 0;
-  TEMPLATE = 1;
-  HARDWARE = 2;
-  WORKFLOW = 3;
+  RESOURCE_TYPE_UNKNOWN = 0;
+  RESOURCE_TYPE_TEMPLATE = 1;
+  RESOURCE_TYPE_HARDWARE = 2;
+  RESOURCE_TYPE_WORKFLOW = 3;
 }
 
 // EventType represents different events that lead to change in state for
 // a given resource.
 enum EventType {
-  UNKNOWN_EVENT = 0;
-  CREATED = 1;
-  UPDATED = 2;
-  DELETED = 3;
+  EVENT_TYPE_UNKNOWN = 0;
+  EVENT_TYPE_CREATED = 1;
+  EVENT_TYPE_UPDATED = 2;
+  EVENT_TYPE_DELETED = 3;
 }

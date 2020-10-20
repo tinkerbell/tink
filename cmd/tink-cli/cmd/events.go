@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/event"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/events"
 )
 
 var eventcmd = &cobra.Command{
-	Use:     "event",
-	Short:   "tink event client",
-	Example: "tink event [command]",
+	Use:     "events",
+	Short:   "tink events client",
+	Example: "tink events [command]",
 	Args: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("%v requires arguments", c.UseLine())
@@ -20,6 +20,6 @@ var eventcmd = &cobra.Command{
 }
 
 func init() {
-	eventcmd.AddCommand(event.SubCommands...)
+	eventcmd.AddCommand(events.SubCommands...)
 	rootCmd.AddCommand(eventcmd)
 }

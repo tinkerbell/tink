@@ -1,4 +1,4 @@
-package event
+package events
 
 import (
 	"bytes"
@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	ignoreRTAll = "ignoring \"all\" since specific resource type(s) have been provided"
-	ignoreETAll = "ignoring \"all\" since specific event type(s) have been provided"
+	ignoreRTAll = `ignoring "all" since specific resource type(s) have been provided`
+	ignoreETAll = `ignoring "all" since specific event type(s) have been provided`
 )
 
 var (
@@ -29,30 +29,36 @@ var (
 	from                      int
 
 	allResourceTypes = []events.ResourceType{
-		events.ResourceType_TEMPLATE,
-		events.ResourceType_HARDWARE,
-		events.ResourceType_WORKFLOW,
+		events.ResourceType_RESOURCE_TYPE_TEMPLATE,
+		events.ResourceType_RESOURCE_TYPE_HARDWARE,
+		events.ResourceType_RESOURCE_TYPE_WORKFLOW,
 	}
 
 	allEventTypes = []events.EventType{
-		events.EventType_CREATED,
-		events.EventType_UPDATED,
-		events.EventType_DELETED,
+		events.EventType_EVENT_TYPE_CREATED,
+		events.EventType_EVENT_TYPE_UPDATED,
+		events.EventType_EVENT_TYPE_DELETED,
 	}
 
-	eventKeys = map[string]string{
-		"create": events.EventType_CREATED.String(),
-		"update": events.EventType_UPDATED.String(),
-		"delete": events.EventType_DELETED.String(),
+	eventKeys = map[string]events.EventType{
+		"create": events.EventType_EVENT_TYPE_CREATED,
+		"update": events.EventType_EVENT_TYPE_UPDATED,
+		"delete": events.EventType_EVENT_TYPE_DELETED,
+	}
+
+	resourceKeys = map[string]events.ResourceType{
+		"template": events.ResourceType_RESOURCE_TYPE_TEMPLATE,
+		"hardware": events.ResourceType_RESOURCE_TYPE_HARDWARE,
+		"workflow": events.ResourceType_RESOURCE_TYPE_WORKFLOW,
 	}
 )
 
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
 	Use:   "watch",
-	Short: "watch for event(s) on given resource(s)",
-	Example: `tink event watch [flags]
-tink event watch --resource-type workflow --resource-type hardware --event-type create`,
+	Short: "watch for events of given type(s) on given resource(s)",
+	Example: `tink events watch [flags]
+tink events watch --resource-type workflow --resource-type hardware --event-type create`,
 	Run: func(cmd *cobra.Command, args []string) {
 		stdoutLock := sync.Mutex{}
 
@@ -65,15 +71,15 @@ tink event watch --resource-type workflow --resource-type hardware --event-type 
 		ctx, cancel := context.WithCancel(cmd.Context())
 		defer cancel()
 
-		informer := informers.NewInformer()
+		informer := informers.New()
 		err := informer.Start(ctx, req, func(e *events.Event) error {
 			event, _ := json.Marshal(e)
-			stdoutLock.Lock()
 			var prettyJSON bytes.Buffer
 			err := json.Indent(&prettyJSON, event, "", "\t")
 			if err != nil {
 				return err
 			}
+			stdoutLock.Lock()
 			fmt.Println(prettyJSON.String())
 			stdoutLock.Unlock()
 			return nil
@@ -101,7 +107,7 @@ func processFlags(req *events.WatchRequest) {
 				fmt.Println(ignoreRTAll)
 				continue
 			}
-			req.ResourceTypes = append(req.ResourceTypes, informers.GetResourceType(strings.ToUpper(rt)))
+			req.ResourceTypes = append(req.ResourceTypes, resourceKeys[rt])
 		}
 	}
 
@@ -113,10 +119,7 @@ func processFlags(req *events.WatchRequest) {
 				fmt.Println(ignoreETAll)
 				continue
 			}
-			if key, ok := eventKeys[et]; ok {
-				req.EventTypes = append(req.EventTypes, informers.GetEventType(key))
-			}
-
+			req.EventTypes = append(req.EventTypes, eventKeys[et])
 		}
 	}
 	then := time.Now().Local().Add(time.Duration(int64(-from) * int64(time.Minute)))

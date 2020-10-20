@@ -15,29 +15,9 @@ func watchRequest(m ...watchRequestModifier) *events.WatchRequest {
 	return req
 }
 
-func withAllEventTypes() watchRequestModifier {
-	return func(e *events.WatchRequest) {
-		e.EventTypes = []events.EventType{
-			events.EventType_CREATED,
-			events.EventType_UPDATED,
-			events.EventType_DELETED,
-		}
-	}
-}
-
 func withEventTypes(ets []events.EventType) watchRequestModifier {
 	return func(e *events.WatchRequest) {
 		e.EventTypes = ets
-	}
-}
-
-func withAllResourceTypes() watchRequestModifier {
-	return func(e *events.WatchRequest) {
-		e.ResourceTypes = []events.ResourceType{
-			events.ResourceType_TEMPLATE,
-			events.ResourceType_HARDWARE,
-			events.ResourceType_WORKFLOW,
-		}
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/tink/protos/events"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -20,6 +21,7 @@ var (
 	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
 	HardwareClient hardware.HardwareServiceClient
+	EventsClient   events.EventsServiceClient
 )
 
 // GetConnection returns a gRPC client connection
@@ -66,6 +68,7 @@ func Setup() error {
 	TemplateClient = template.NewTemplateServiceClient(conn)
 	WorkflowClient = workflow.NewWorkflowServiceClient(conn)
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
+	EventsClient = events.NewEventsServiceClient(conn)
 	return nil
 }
 

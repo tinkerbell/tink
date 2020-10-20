@@ -36,25 +36,25 @@ const _ = proto.ProtoPackageIsVersion4
 type ResourceType int32
 
 const (
-	ResourceType_UNKNOWN_RESOURCE ResourceType = 0
-	ResourceType_TEMPLATE         ResourceType = 1
-	ResourceType_HARDWARE         ResourceType = 2
-	ResourceType_WORKFLOW         ResourceType = 3
+	ResourceType_RESOURCE_TYPE_UNKNOWN  ResourceType = 0
+	ResourceType_RESOURCE_TYPE_TEMPLATE ResourceType = 1
+	ResourceType_RESOURCE_TYPE_HARDWARE ResourceType = 2
+	ResourceType_RESOURCE_TYPE_WORKFLOW ResourceType = 3
 )
 
 // Enum value maps for ResourceType.
 var (
 	ResourceType_name = map[int32]string{
-		0: "UNKNOWN_RESOURCE",
-		1: "TEMPLATE",
-		2: "HARDWARE",
-		3: "WORKFLOW",
+		0: "RESOURCE_TYPE_UNKNOWN",
+		1: "RESOURCE_TYPE_TEMPLATE",
+		2: "RESOURCE_TYPE_HARDWARE",
+		3: "RESOURCE_TYPE_WORKFLOW",
 	}
 	ResourceType_value = map[string]int32{
-		"UNKNOWN_RESOURCE": 0,
-		"TEMPLATE":         1,
-		"HARDWARE":         2,
-		"WORKFLOW":         3,
+		"RESOURCE_TYPE_UNKNOWN":  0,
+		"RESOURCE_TYPE_TEMPLATE": 1,
+		"RESOURCE_TYPE_HARDWARE": 2,
+		"RESOURCE_TYPE_WORKFLOW": 3,
 	}
 )
 
@@ -90,25 +90,25 @@ func (ResourceType) EnumDescriptor() ([]byte, []int) {
 type EventType int32
 
 const (
-	EventType_UNKNOWN_EVENT EventType = 0
-	EventType_CREATED       EventType = 1
-	EventType_UPDATED       EventType = 2
-	EventType_DELETED       EventType = 3
+	EventType_EVENT_TYPE_UNKNOWN EventType = 0
+	EventType_EVENT_TYPE_CREATED EventType = 1
+	EventType_EVENT_TYPE_UPDATED EventType = 2
+	EventType_EVENT_TYPE_DELETED EventType = 3
 )
 
 // Enum value maps for EventType.
 var (
 	EventType_name = map[int32]string{
-		0: "UNKNOWN_EVENT",
-		1: "CREATED",
-		2: "UPDATED",
-		3: "DELETED",
+		0: "EVENT_TYPE_UNKNOWN",
+		1: "EVENT_TYPE_CREATED",
+		2: "EVENT_TYPE_UPDATED",
+		3: "EVENT_TYPE_DELETED",
 	}
 	EventType_value = map[string]int32{
-		"UNKNOWN_EVENT": 0,
-		"CREATED":       1,
-		"UPDATED":       2,
-		"DELETED":       3,
+		"EVENT_TYPE_UNKNOWN": 0,
+		"EVENT_TYPE_CREATED": 1,
+		"EVENT_TYPE_UPDATED": 2,
+		"EVENT_TYPE_DELETED": 3,
 	}
 )
 
@@ -203,14 +203,14 @@ func (x *Event) GetResourceType() ResourceType {
 	if x != nil {
 		return x.ResourceType
 	}
-	return ResourceType_UNKNOWN_RESOURCE
+	return ResourceType_RESOURCE_TYPE_UNKNOWN
 }
 
 func (x *Event) GetEventType() EventType {
 	if x != nil {
 		return x.EventType
 	}
-	return EventType_UNKNOWN_EVENT
+	return EventType_EVENT_TYPE_UNKNOWN
 }
 
 func (x *Event) GetData() []byte {
