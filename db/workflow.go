@@ -73,15 +73,13 @@ func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) 
 }
 
 func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, workerID uuid.UUID, tx *sql.Tx) error {
-	// TODO This command is not 100% reliable for concurrent write operations
 	_, err := tx.Exec(`
 	INSERT INTO
 		workflow_worker_map (workflow_id, worker_id)
-	SELECT $1, $2
-	WHERE
-		NOT EXISTS (
-			SELECT workflow_id FROM workflow_worker_map WHERE workflow_id = $1 AND worker_id = $2
-		);
+	VALUES
+	        ($1, $2)
+	ON CONFLICT (workflow_id, worker_id)
+	DO NOTHING;
 	`, wfID, workerID)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_worker_map")
