@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS workflow_worker_map (
         , worker_id UUID NOT NULL
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS uidx_workflow_worker_map ON workflow_worker_map (workflow_id, worker_id);
+
 CREATE TABLE IF NOT EXISTS workflow_data (
         workflow_id UUID NOT NULL
         , version INT
