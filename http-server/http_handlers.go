@@ -9,14 +9,12 @@ import (
 	tt "text/template"
 
 	"github.com/golang/protobuf/jsonpb" // nolint:staticcheck
-
-	"github.com/tinkerbell/tink/protos/template"
-	"github.com/tinkerbell/tink/protos/workflow"
-
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 	"github.com/tinkerbell/tink/pkg"
 	"github.com/tinkerbell/tink/protos/hardware"
+	"github.com/tinkerbell/tink/protos/template"
+	"github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

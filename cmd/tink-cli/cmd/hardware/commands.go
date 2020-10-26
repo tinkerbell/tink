@@ -6,15 +6,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/tinkerbell/tink/pkg"
-
-	"github.com/tinkerbell/tink/protos/hardware"
-
-	"github.com/jedib0t/go-pretty/table"
-
 	"github.com/google/uuid"
+	"github.com/jedib0t/go-pretty/table"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/tinkerbell/tink/pkg"
+	"github.com/tinkerbell/tink/protos/hardware"
 )
 
 // SubCommands holds the sub commands for template command

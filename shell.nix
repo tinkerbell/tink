@@ -14,6 +14,7 @@ mkShell {
     git
     gnumake
     go
+    gotools
     jq
     nodePackages.prettier
     pythonPackages.codespell

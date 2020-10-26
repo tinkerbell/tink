@@ -4,23 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-
-	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/packethost/pkg/log"
-
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/bufconn"
-
 	"testing"
 
+	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/protos/hardware"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
 )
 
 const bufSize = 1024 * 1024
