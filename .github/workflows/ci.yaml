@@ -15,8 +15,8 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: '1.14.6'
-    - name: go fmt
-      run: go fmt ./...
+    - name: goimports
+      run: go get golang.org/x/tools/cmd/goimports && goimports .
     - name: go vet
       run: go vet ./...
     - name: golangci-lint
