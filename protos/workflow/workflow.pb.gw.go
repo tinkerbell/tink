@@ -31,7 +31,7 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = descriptor.ForMessage
 
-func request_WorkflowSvc_CreateWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowSvcClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_WorkflowService_CreateWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateRequest
 	var metadata runtime.ServerMetadata
 
@@ -48,7 +48,7 @@ func request_WorkflowSvc_CreateWorkflow_0(ctx context.Context, marshaler runtime
 
 }
 
-func local_request_WorkflowSvc_CreateWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowSvcServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_WorkflowService_CreateWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateRequest
 	var metadata runtime.ServerMetadata
 
@@ -65,7 +65,7 @@ func local_request_WorkflowSvc_CreateWorkflow_0(ctx context.Context, marshaler r
 
 }
 
-func request_WorkflowSvc_GetWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowSvcClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_WorkflowService_GetWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -92,7 +92,7 @@ func request_WorkflowSvc_GetWorkflow_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
-func local_request_WorkflowSvc_GetWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowSvcServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_WorkflowService_GetWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -119,7 +119,7 @@ func local_request_WorkflowSvc_GetWorkflow_0(ctx context.Context, marshaler runt
 
 }
 
-func request_WorkflowSvc_DeleteWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowSvcClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_WorkflowService_DeleteWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -146,7 +146,7 @@ func request_WorkflowSvc_DeleteWorkflow_0(ctx context.Context, marshaler runtime
 
 }
 
-func local_request_WorkflowSvc_DeleteWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowSvcServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_WorkflowService_DeleteWorkflow_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -173,7 +173,7 @@ func local_request_WorkflowSvc_DeleteWorkflow_0(ctx context.Context, marshaler r
 
 }
 
-func request_WorkflowSvc_ListWorkflows_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowSvcClient, req *http.Request, pathParams map[string]string) (WorkflowSvc_ListWorkflowsClient, runtime.ServerMetadata, error) {
+func request_WorkflowService_ListWorkflows_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowServiceClient, req *http.Request, pathParams map[string]string) (WorkflowService_ListWorkflowsClient, runtime.ServerMetadata, error) {
 	var protoReq Empty
 	var metadata runtime.ServerMetadata
 
@@ -190,7 +190,7 @@ func request_WorkflowSvc_ListWorkflows_0(ctx context.Context, marshaler runtime.
 
 }
 
-func request_WorkflowSvc_GetWorkflowContext_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowSvcClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_WorkflowService_GetWorkflowContext_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -217,7 +217,7 @@ func request_WorkflowSvc_GetWorkflowContext_0(ctx context.Context, marshaler run
 
 }
 
-func local_request_WorkflowSvc_GetWorkflowContext_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowSvcServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_WorkflowService_GetWorkflowContext_0(ctx context.Context, marshaler runtime.Marshaler, server WorkflowServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -244,7 +244,7 @@ func local_request_WorkflowSvc_GetWorkflowContext_0(ctx context.Context, marshal
 
 }
 
-func request_WorkflowSvc_ShowWorkflowEvents_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowSvcClient, req *http.Request, pathParams map[string]string) (WorkflowSvc_ShowWorkflowEventsClient, runtime.ServerMetadata, error) {
+func request_WorkflowService_ShowWorkflowEvents_0(ctx context.Context, marshaler runtime.Marshaler, client WorkflowServiceClient, req *http.Request, pathParams map[string]string) (WorkflowService_ShowWorkflowEventsClient, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
@@ -279,12 +279,12 @@ func request_WorkflowSvc_ShowWorkflowEvents_0(ctx context.Context, marshaler run
 
 }
 
-// RegisterWorkflowSvcHandlerServer registers the http handlers for service WorkflowSvc to "mux".
-// UnaryRPC     :call WorkflowSvcServer directly.
+// RegisterWorkflowServiceHandlerServer registers the http handlers for service WorkflowService to "mux".
+// UnaryRPC     :call WorkflowServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-func RegisterWorkflowSvcHandlerServer(ctx context.Context, mux *runtime.ServeMux, server WorkflowSvcServer) error {
+func RegisterWorkflowServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server WorkflowServiceServer) error {
 
-	mux.Handle("POST", pattern_WorkflowSvc_CreateWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_WorkflowService_CreateWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -293,18 +293,18 @@ func RegisterWorkflowSvcHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_WorkflowSvc_CreateWorkflow_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_WorkflowService_CreateWorkflow_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_CreateWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_CreateWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_GetWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_GetWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -313,18 +313,18 @@ func RegisterWorkflowSvcHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_WorkflowSvc_GetWorkflow_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_WorkflowService_GetWorkflow_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_GetWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_GetWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_WorkflowSvc_DeleteWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_WorkflowService_DeleteWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -333,25 +333,25 @@ func RegisterWorkflowSvcHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_WorkflowSvc_DeleteWorkflow_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_WorkflowService_DeleteWorkflow_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_DeleteWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_DeleteWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_ListWorkflows_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_ListWorkflows_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 		return
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_GetWorkflowContext_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_GetWorkflowContext_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -360,18 +360,18 @@ func RegisterWorkflowSvcHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_WorkflowSvc_GetWorkflowContext_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_WorkflowService_GetWorkflowContext_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_GetWorkflowContext_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_GetWorkflowContext_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_ShowWorkflowEvents_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_ShowWorkflowEvents_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -381,9 +381,9 @@ func RegisterWorkflowSvcHandlerServer(ctx context.Context, mux *runtime.ServeMux
 	return nil
 }
 
-// RegisterWorkflowSvcHandlerFromEndpoint is same as RegisterWorkflowSvcHandler but
+// RegisterWorkflowServiceHandlerFromEndpoint is same as RegisterWorkflowServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterWorkflowServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -403,23 +403,23 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		}()
 	}()
 
-	return RegisterWorkflowSvcHandler(ctx, mux, conn)
+	return RegisterWorkflowServiceHandler(ctx, mux, conn)
 }
 
-// RegisterWorkflowSvcHandler registers the http handlers for service WorkflowSvc to "mux".
+// RegisterWorkflowServiceHandler registers the http handlers for service WorkflowService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterWorkflowSvcHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterWorkflowSvcHandlerClient(ctx, mux, NewWorkflowSvcClient(conn))
+func RegisterWorkflowServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterWorkflowServiceHandlerClient(ctx, mux, NewWorkflowServiceClient(conn))
 }
 
-// RegisterWorkflowSvcHandlerClient registers the http handlers for service WorkflowSvc
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "WorkflowSvcClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "WorkflowSvcClient"
+// RegisterWorkflowServiceHandlerClient registers the http handlers for service WorkflowService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "WorkflowServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "WorkflowServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "WorkflowSvcClient" to call the correct interceptors.
-func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux, client WorkflowSvcClient) error {
+// "WorkflowServiceClient" to call the correct interceptors.
+func RegisterWorkflowServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client WorkflowServiceClient) error {
 
-	mux.Handle("POST", pattern_WorkflowSvc_CreateWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_WorkflowService_CreateWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -428,18 +428,18 @@ func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkflowSvc_CreateWorkflow_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkflowService_CreateWorkflow_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_CreateWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_CreateWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_GetWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_GetWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -448,18 +448,18 @@ func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkflowSvc_GetWorkflow_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkflowService_GetWorkflow_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_GetWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_GetWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_WorkflowSvc_DeleteWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_WorkflowService_DeleteWorkflow_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -468,18 +468,18 @@ func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkflowSvc_DeleteWorkflow_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkflowService_DeleteWorkflow_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_DeleteWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_DeleteWorkflow_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_ListWorkflows_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_ListWorkflows_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -488,18 +488,18 @@ func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkflowSvc_ListWorkflows_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkflowService_ListWorkflows_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_ListWorkflows_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_ListWorkflows_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_GetWorkflowContext_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_GetWorkflowContext_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -508,18 +508,18 @@ func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkflowSvc_GetWorkflowContext_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkflowService_GetWorkflowContext_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_GetWorkflowContext_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_GetWorkflowContext_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_WorkflowSvc_ShowWorkflowEvents_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkflowService_ShowWorkflowEvents_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -528,14 +528,14 @@ func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkflowSvc_ShowWorkflowEvents_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkflowService_ShowWorkflowEvents_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkflowSvc_ShowWorkflowEvents_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_WorkflowService_ShowWorkflowEvents_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -543,29 +543,29 @@ func RegisterWorkflowSvcHandlerClient(ctx context.Context, mux *runtime.ServeMux
 }
 
 var (
-	pattern_WorkflowSvc_CreateWorkflow_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_WorkflowService_CreateWorkflow_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_WorkflowSvc_GetWorkflow_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "workflows", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_WorkflowService_GetWorkflow_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "workflows", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_WorkflowSvc_DeleteWorkflow_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "workflows", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_WorkflowService_DeleteWorkflow_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "workflows", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_WorkflowSvc_ListWorkflows_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_WorkflowService_ListWorkflows_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "workflows"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_WorkflowSvc_GetWorkflowContext_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "workflows", "id", "state"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_WorkflowService_GetWorkflowContext_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "workflows", "id", "state"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_WorkflowSvc_ShowWorkflowEvents_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "workflows", "id", "events"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_WorkflowService_ShowWorkflowEvents_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "workflows", "id", "events"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
-	forward_WorkflowSvc_CreateWorkflow_0 = runtime.ForwardResponseMessage
+	forward_WorkflowService_CreateWorkflow_0 = runtime.ForwardResponseMessage
 
-	forward_WorkflowSvc_GetWorkflow_0 = runtime.ForwardResponseMessage
+	forward_WorkflowService_GetWorkflow_0 = runtime.ForwardResponseMessage
 
-	forward_WorkflowSvc_DeleteWorkflow_0 = runtime.ForwardResponseMessage
+	forward_WorkflowService_DeleteWorkflow_0 = runtime.ForwardResponseMessage
 
-	forward_WorkflowSvc_ListWorkflows_0 = runtime.ForwardResponseStream
+	forward_WorkflowService_ListWorkflows_0 = runtime.ForwardResponseStream
 
-	forward_WorkflowSvc_GetWorkflowContext_0 = runtime.ForwardResponseMessage
+	forward_WorkflowService_GetWorkflowContext_0 = runtime.ForwardResponseMessage
 
-	forward_WorkflowSvc_ShowWorkflowEvents_0 = runtime.ForwardResponseStream
+	forward_WorkflowService_ShowWorkflowEvents_0 = runtime.ForwardResponseStream
 )

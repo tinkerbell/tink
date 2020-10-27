@@ -8,26 +8,29 @@
 #
 set -e
 
-GOPATH=${GOPATH:-$(go env GOPATH)}
+export GOBIN=$PWD/bin
 
-if command -v protoc >/dev/null; then
-	GW_PATH="$GOPATH"/src/github.com/grpc-ecosystem/grpc-gateway
-	GO111MODULES=on go get github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+export GOBIN=$DIR/bin
+export PATH=$GOBIN:$PATH
+unset DIR
 
-	PROTOC="protoc -I/usr/local/include -I$GW_PATH/third_party/googleapis --plugin=protoc-gen-grpc-gateway=$GOPATH/bin/protoc-gen-grpc-gateway"
-else
-	IMAGE=jaegertracing/protobuf:0.2.0
-	BASE=/protos
-	PROTOC="docker run -v $(pwd):$BASE -w $BASE --rm $IMAGE "
-fi
+# shellcheck disable=SC2046
+go install $(sed -n -e 's|^\s*_\s*"\(.*\)".*$|\1| p' tools.go)
 
-for proto in hardware packet template workflow; do
-	echo "Generating ${proto}.pb.go..."
-	$PROTOC -I./ \
-		-I./common \
-		--go_opt=paths=source_relative \
-		--go_out=plugins=grpc:./ \
-		--grpc-gateway_out=logtostderr=true:. \
-		"${proto}/${proto}.proto"
+protodep up -f --use-https
+
+for proto in protos/*/*.proto; do
+	echo "Generating ${proto/.proto/}.pb.go..."
+	protoc \
+		-I./protos \
+		-I./protos/third_party/ \
+		--go_out ./protos \
+		--go_opt paths=source_relative \
+		--go_opt plugins=grpc \
+		--grpc-gateway_out ./protos \
+		--grpc-gateway_opt logtostderr=true \
+		--grpc-gateway_opt paths=source_relative \
+		"${proto}"
 done
 goimports -w .

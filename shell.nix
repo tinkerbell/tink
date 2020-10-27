@@ -13,10 +13,12 @@ mkShell {
   buildInputs = [
     git
     gnumake
+    gnused
     go
     gotools
     jq
     nodePackages.prettier
+    protobuf
     pythonPackages.codespell
     shfmt
     shellcheck

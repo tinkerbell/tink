@@ -99,7 +99,7 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 }
 
 // ListTemplates implements template.ListTemplates
-func (s *server) ListTemplates(_ *template.Empty, stream template.Template_ListTemplatesServer) error {
+func (s *server) ListTemplates(_ *template.Empty, stream template.TemplateService_ListTemplatesServer) error {
 	logger.Info("listtemplates")
 	labels := prometheus.Labels{"method": "ListTemplates", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()

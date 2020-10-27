@@ -36,7 +36,7 @@ package e2e
 //				// Check for worker exit status
 //				status := <-workerStatus
 //				expected := 0
-//				if test.expected != workflow.ActionState_ACTION_SUCCESS {
+//				if test.expected != workflow.ActionState_ACTION_STATE_SUCCESS {
 //					expected = 1
 //				}
 //				assert.Equal(t, int64(expected), status)

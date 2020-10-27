@@ -17,11 +17,11 @@ import (
 )
 
 var state = map[int32]workflow.State{
-	0: workflow.State_PENDING,
-	1: workflow.State_RUNNING,
-	2: workflow.State_FAILED,
-	3: workflow.State_TIMEOUT,
-	4: workflow.State_SUCCESS,
+	0: workflow.State_STATE_PENDING,
+	1: workflow.State_STATE_RUNNING,
+	2: workflow.State_STATE_FAILED,
+	3: workflow.State_STATE_TIMEOUT,
+	4: workflow.State_STATE_SUCCESS,
 }
 
 const (
@@ -60,7 +60,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		ID:       id.String(),
 		Template: in.Template,
 		Hardware: in.Hardware,
-		State:    workflow.State_value[workflow.State_PENDING.String()],
+		State:    workflow.State_value[workflow.State_STATE_PENDING.String()],
 	}
 	err = s.db.CreateWorkflow(ctx, wf, data, id)
 	if err != nil {
@@ -134,7 +134,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 	defer timer.ObserveDuration()
 
 	l.Info(msg)
-	err := s.db.DeleteWorkflow(ctx, in.Id, workflow.State_value[workflow.State_RUNNING.String()])
+	err := s.db.DeleteWorkflow(ctx, in.Id, workflow.State_value[workflow.State_STATE_RUNNING.String()])
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		l := logger
@@ -148,7 +148,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 }
 
 // ListWorkflows implements workflow.ListWorkflows
-func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowSvc_ListWorkflowsServer) error {
+func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowService_ListWorkflowsServer) error {
 	logger.Info("listworkflows")
 	labels := prometheus.Labels{"method": "ListWorkflows", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()
@@ -214,7 +214,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 		CurrentTask:          w.CurrentTask,
 		CurrentAction:        w.CurrentAction,
 		CurrentActionIndex:   w.CurrentActionIndex,
-		CurrentActionState:   workflow.ActionState(w.CurrentActionState),
+		CurrentActionState:   workflow.State(w.CurrentActionState),
 		TotalNumberOfActions: w.TotalNumberOfActions,
 	}
 	l := logger.With(
@@ -231,7 +231,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 }
 
 // ShowWorflowevents  implements workflow.ShowWorflowEvents
-func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowSvc_ShowWorkflowEventsServer) error {
+func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowService_ShowWorkflowEventsServer) error {
 	logger.Info("List workflows Events")
 	labels := prometheus.Labels{"method": "ShowWorkflowEvents", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()
@@ -253,7 +253,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,
 			ActionName:   w.ActionName,
-			ActionStatus: workflow.ActionState(w.ActionStatus),
+			ActionStatus: workflow.State(w.ActionStatus),
 			Seconds:      w.Seconds,
 			Message:      w.Message,
 			CreatedAt:    w.CreatedAt,
