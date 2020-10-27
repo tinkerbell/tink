@@ -10,26 +10,19 @@ set -e
 
 export GOBIN=$PWD/bin
 
-if command -v protoc >/dev/null; then
-	DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
-	export GOBIN=$DIR/bin
-	export PATH=$GOBIN:$PATH
-	unset DIR
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && pwd)"
+export GOBIN=$DIR/bin
+export PATH=$GOBIN:$PATH
+unset DIR
 
-	# shellcheck disable=SC2046
-	go install $(sed -n -e 's|^\s*_\s*"\(.*\)".*$|\1| p' tools.go)
-	PROTOC=protoc
-else
-	IMAGE=jaegertracing/protobuf:0.2.0
-	BASE=/protos
-	PROTOC="docker run -v $(pwd):$BASE -w $BASE --rm $IMAGE "
-fi
+# shellcheck disable=SC2046
+go install $(sed -n -e 's|^\s*_\s*"\(.*\)".*$|\1| p' tools.go)
 
 protodep up -f --use-https
 
 for proto in protos/*/*.proto; do
 	echo "Generating ${proto/.proto/}.pb.go..."
-	$PROTOC \
+	protoc \
 		-I./protos \
 		-I./protos/third_party/ \
 		--go_out ./protos \
