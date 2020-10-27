@@ -34,36 +34,32 @@ jobs:
   docker-images:
     runs-on: ubuntu-latest
     needs: [validation]
+    strategy:
+      matrix:
+        include:
+          - repository: quay.io/tinkerbell/tink-cli
+            file: ./cmd/tink-cli/Dockerfile
+          - repository: quay.io/tinkerbell/tink
+            file: ./cmd/tink-server/Dockerfile
+          - repository: quay.io/tinkerbell/tink-worker
+            file: ./cmd/tink-worker/Dockerfile
     steps:
     - name: Docker Image Tag for Sha
       id: docker-image-tag
       run: |
-        echo ::set-output name=tink-server-tags::quay.io/tinkerbell/tink:latest,quay.io/tinkerbell/tink:sha-${GITHUB_SHA::8}
-        echo ::set-output name=tink-cli-tags::quay.io/tinkerbell/tink-cli:latest,quay.io/tinkerbell/tink-cli:sha-${GITHUB_SHA::8}
-        echo ::set-output name=tink-worker-tags::quay.io/tinkerbell/tink-worker:latest,quay.io/tinkerbell/tink-worker:sha-${GITHUB_SHA::8}
+        echo ::set-output name=tags::${{ matrix.repository }}:latest,${{ matrix.repository }}:sha-${GITHUB_SHA::8}
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: quay.io/tinkerbell/tink
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: ${{ matrix.repository }}
       uses: docker/build-push-action@v2
       with:
         context: .
-        file: ./cmd/tink-server/Dockerfile
-        cache-from: type=registry,ref=quay.io/tinkerbell/tink:latest
+        file: ${{ matrix.file }}
+        cache-from: type=registry,ref=${{ matrix.repository }}:latest
         push: ${{ startsWith(github.ref, 'refs/heads/master') }}
-        tags: ${{ steps.docker-image-tag.outputs.tink-server-tags }}
-    - name: quay.io/tinkerbell/tink-cli
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./cmd/tink-cli/Dockerfile
-        cache-from: type=registry,ref=quay.io/tinkerbell/tink-cli:latest
-        push: ${{ startsWith(github.ref, 'refs/heads/master') }}
-        tags: ${{ steps.docker-image-tag.outputs.tink-cli-tags }}
-    - name: quay.io/tinkerbell/tink-worker
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./cmd/tink-worker/Dockerfile
-        cache-from: type=registry,ref=quay.io/tinkerbell/tink-worker:latest
-        push: ${{ startsWith(github.ref, 'refs/heads/master') }}
-        tags: ${{ steps.docker-image-tag.outputs.tink-worker-tags }}
+        tags: ${{ steps.docker-image-tag.outputs.tags }}
+        platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
