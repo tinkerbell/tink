@@ -5,6 +5,7 @@ WORKDIR /usr/myapp
 RUN make cli
 
 FROM alpine:3.11
-ENTRYPOINT ["/usr/bin/tink-cli"]
+CMD sleep infinity
+
 RUN apk add --no-cache --update --upgrade ca-certificates
-COPY --from=0 /usr/myapp/cmd/tink-cli/tink-cli /usr/bin/tink-cli
+COPY --from=0 /usr/myapp/cmd/tink-cli/tink-cli /usr/bin/tink
