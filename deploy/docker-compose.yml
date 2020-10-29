@@ -2,7 +2,8 @@ version: "2.1"
 services:
   tink-server:
     build:
-      context: ../cmd/tink-server
+      context: ../
+      dockerfile: ../cmd/tink-server/Dockerfile
     restart: unless-stopped
     environment:
       FACILITY: ${FACILITY:-onprem}
@@ -34,7 +35,8 @@ services:
 
   tink-server-migration:
     build:
-      context: ../cmd/tink-server
+      context: ../
+      dockerfile: ../cmd/tink-server/Dockerfile
     restart: on-failure
     environment:
       ONLY_MIGRATION: "true"
@@ -73,7 +75,8 @@ services:
 
   tink-cli:
     build:
-      context: ../cmd/tink-cli
+      context: ../
+      dockerfile: ../cmd/tink-cli/Dockerfile
     restart: unless-stopped
     environment:
       TINKERBELL_GRPC_AUTHORITY: 127.0.0.1:42113
