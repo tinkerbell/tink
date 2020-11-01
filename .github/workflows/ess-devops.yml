@@ -12,6 +12,8 @@ jobs:
       run: echo "/usr/local/go/bin" >> $GITHUB_PATH
     - name: set GOCACHE
       run: echo "GOCACHE=$PWD/.cache" >> $GITHUB_ENV
+    - name: set GOCACHE dir
+      run: mkdir $PWD/.cache
     - name: get ENV
       run: printenv
     - name: Compile tink-cli
