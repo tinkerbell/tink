@@ -7,23 +7,14 @@ jobs:
     runs-on: metal
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-    - name: set GOCACHE
-      run: |
-        echo "GOCACHE=$PWD/.cache" >> $GITHUB_ENV
-        mkdir $PWD/.cache
-    - name: Setup Go
-      uses: actions/setup-go@v2
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
       with:
         go-version: '1.14.0'
     - name: Install dependencies
       run: |
         go version
         go get -u golang.org/x/lint/golint
-    - name: Setup Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.14.0'
     - name: get ENV
       run: printenv
     - name: Compile tink-cli
