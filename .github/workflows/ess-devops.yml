@@ -24,7 +24,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: User
-      run: whoami
+      run: ls /usr/local/go/bin
     - name: Compile tink-cli
       run: go build -o ./cmd/tink-cli ./cmd/tink-cli
     - name: Build tink-cli
