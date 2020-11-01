@@ -13,7 +13,7 @@ jobs:
     - name: set GOCACHE
       run: echo "GOCACHE=$PWD/.cache" >> $GITHUB_ENV
     - name: set GOCACHE dir
-      run: mkdir $PWD/.cache
+      run: mkdir -p $GOCACHE
     - name: get ENV
       run: printenv
     - name: Compile tink-cli
