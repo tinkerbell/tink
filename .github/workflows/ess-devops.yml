@@ -38,5 +38,5 @@ jobs:
         registry: quay.io
         username: ${{ secrets.QUAY_USER }}
         password: ${{ secrets.QUAY_SECRET }}
-    - name: Build tink-cli
+    - name: Push image to quay
       run: docker push quay.io/ess_metal/tink-cli:$VERSION
