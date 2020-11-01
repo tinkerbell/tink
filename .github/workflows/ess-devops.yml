@@ -6,10 +6,12 @@ jobs:
   build:
     runs-on: metal
     steps:
-    - name: Checkout code
+    - name: Checkout
       uses: actions/checkout@v2
-    - name: Set GOPATH
+    - name: set GOPATH
       run: echo "/usr/local/go/bin" >> $GITHUB_PATH
+    - name: get ENV
+      run: printenv
     - name: Compile tink-cli
       run: go build -o ./cmd/tink-cli ./cmd/tink-cli
     - name: Build tink-cli
