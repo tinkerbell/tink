@@ -27,6 +27,6 @@ jobs:
     - name: List Project Files
       run: ls
     - name: Compile Binaries
-      run: make all
+      run: make tink-cli
     - name: Build tink-cli
       run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:v0.0.0
