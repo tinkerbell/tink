@@ -25,4 +25,4 @@ jobs:
     - name: Compile Binaries
       run: make all
     - name: Build tink-cli
-      run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:${GITHUB_RUN_NUMBER}
+      run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:v0.0.0
