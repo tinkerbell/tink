@@ -8,14 +8,14 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: set GOBINARY
-      run: echo "/usr/local/go/bin" >> $GITHUB_PATH
-    - name: set GOCACHE
-      run: echo "GOCACHE=$PWD/.cache" >> $GITHUB_ENV
-    - name: set GOCACHE
-      run: echo "GOPATH=$PWD" >> $GITHUB_ENV
-    - name: set GOCACHE dir
-      run: mkdir -p $GOCACHE
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.14.0'
+    - name: Install dependencies
+      run: |
+        go version
+        go get -u golang.org/x/lint/golint
     - name: get ENV
       run: printenv
     - name: Compile tink-cli
