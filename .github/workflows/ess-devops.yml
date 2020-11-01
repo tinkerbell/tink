@@ -21,11 +21,13 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
+    - name: Set Source
+      uses: source ~/.bashrc
     - name: Checkout code
       uses: actions/checkout@v2
     - name: User
       run: ls /usr/local/go/bin
     - name: Compile tink-cli
-      run: /usr/local/go/bin/go build -o ./cmd/tink-cli ./cmd/tink-cli
+      run: go build -o ./cmd/tink-cli ./cmd/tink-cli
     - name: Build tink-cli
       run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:$GITHUB_RUN_NUMBER
