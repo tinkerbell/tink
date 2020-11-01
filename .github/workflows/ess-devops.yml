@@ -8,10 +8,12 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: set GOPATH
+    - name: set GOBINARY
       run: echo "/usr/local/go/bin" >> $GITHUB_PATH
     - name: set GOCACHE
       run: echo "GOCACHE=$PWD/.cache" >> $GITHUB_ENV
+    - name: set GOCACHE
+      run: echo "GOPATH=$PWD" >> $GITHUB_ENV
     - name: set GOCACHE dir
       run: mkdir -p $GOCACHE
     - name: get ENV
