@@ -15,7 +15,7 @@ jobs:
       with:
         go-version: '1.14.0'
     - name: Set Env
-      run: echo "GOPATH="__w/tink/go/" >> $GITHUB_ENV
+      run: echo "GOPATH=__w/tink/go/" >> $GITHUB_ENV
     - name: Install dependencies
       run: |
         go version
