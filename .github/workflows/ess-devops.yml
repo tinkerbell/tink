@@ -23,8 +23,8 @@ jobs:
     # Runs a single command using the runners shell
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: List Project Files
-      run: ls
+    - name: User
+      run: whoami
     - name: Compile tink-cli
       run: go build -o ./cmd/tink-cli ./cmd/tink-cli
     - name: Build tink-cli
