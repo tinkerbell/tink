@@ -15,7 +15,7 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Set Cache
-    - uses: actions/cache@v2
+      uses: actions/cache@v2
     - name: Install Go
       uses: actions/setup-go@v2
       with:
