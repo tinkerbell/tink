@@ -22,7 +22,7 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Set Source
-      uses: source ~/.bashrc
+      run: source ~/.bashrc
     - name: Checkout code
       uses: actions/checkout@v2
     - name: User
