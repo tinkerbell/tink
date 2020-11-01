@@ -5,22 +5,9 @@ on:
 jobs:
   build:
     runs-on: metal
-    # The type of runner that the job will run on
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Runs a single command using the runners shell
-    - name: Set Cache
-      uses: actions/cache@v2
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.14.6'
-    - name: goimports
-      run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        version: v1.31
+    - name: Env
+      run: echo "::set-env name=PATH::/usr/local/go/bin"
     - name: Checkout code
       uses: actions/checkout@v2
     - name: User
