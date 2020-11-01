@@ -21,8 +21,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
-    - name: Set Source
-      run: source ~/.bashrc
+    - name: Export GOPATH
+      run: export PATH="$PATH:$(/usr/local/go/bin/go env GOPATH)/bin"
     - name: Checkout code
       uses: actions/checkout@v2
     - name: User
