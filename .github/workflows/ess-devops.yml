@@ -1,7 +1,6 @@
 name: ESS-Devops
 on:
   push:
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,5 +25,11 @@ jobs:
       run: printenv
     - name: Compile tink-cli
       run: go build -o ./cmd/tink-cli ./cmd/tink-cli
+    - name: Get the version
+      id: get_version
+      run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_ENV
+    - name: Set version
+      if: ${{ VERSION == '' }}
+      run: echo "VERSION=sha-${GITHUB_SHA::8}" >> $GITHUB_ENV
     - name: Build tink-cli
-      run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:$GITHUB_RUN_NUMBER
+      run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:$VERSION
