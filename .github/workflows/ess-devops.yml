@@ -28,4 +28,4 @@ jobs:
     - name: Compile tink-cli
       run: go build -o ./cmd/tink-cli ./cmd/tink-cli
     - name: Build tink-cli
-      run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:${{ GITHUB_RUN_NUMBER }}
+      run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:$GITHUB_RUN_NUMBER
