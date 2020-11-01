@@ -29,7 +29,7 @@ jobs:
       id: get_version
       run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_ENV
     - name: Set version
-      if: ${{ VERSION == '' }}
+      if: ${{ $VERSION == '' }}
       run: echo "VERSION=sha-${GITHUB_SHA::8}" >> $GITHUB_ENV
     - name: Build tink-cli
       run: docker build cmd/tink-cli -t quay.io/ess_metal/tink-cli:$VERSION
