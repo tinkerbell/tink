@@ -3,11 +3,6 @@ on:
   push:
 
 jobs:
-  validation:
-    runs-on: metal
-    env:
-      CGO_ENABLED: 0
-  # This workflow contains a single job called "greet"
   build:
     runs-on: metal
     # The type of runner that the job will run on
