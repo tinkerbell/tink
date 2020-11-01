@@ -6,8 +6,6 @@ jobs:
   build:
     runs-on: metal
     steps:
-    - name: Env
-      run: echo "::set-env name=PATH::/usr/local/go/bin"
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Set GOPATH
