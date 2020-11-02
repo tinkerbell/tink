@@ -267,9 +267,9 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		}
 	})
 
-	// template get handler | GET /v1/templates/{id}
-	templateGetPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "templates", "id"}, "", runtime.AssumeColonVerbOpt(true)))
-	mux.Handle("GET", templateGetPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	// template get by id handler | GET /v1/templates/{id}
+	templateGetByIDPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "templates", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	mux.Handle("GET", templateGetByIDPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		var gr template.GetRequest
 		val, ok := pathParams["id"]
 		if !ok {
@@ -277,12 +277,38 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		gr.Id, err = runtime.String(val)
-
+		id, err := runtime.String(val)
 		if err != nil {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 			return
 		}
+		gr.GetBy = &template.GetRequest_Id{Id: id}
+
+		t, err := client.GetTemplate(context.Background(), &gr)
+		if err != nil {
+			logger.Error(err)
+			writeResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeResponse(w, http.StatusOK, t.Data)
+	})
+
+	// template get by name handler | GET /v1/templates/name/{name}
+	templateGetByNamePattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 2}, []string{"v1", "templates", "name"}, "", runtime.AssumeColonVerbOpt(true)))
+	mux.Handle("GET", templateGetByNamePattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		var gr template.GetRequest
+		val, ok := pathParams["name"]
+		if !ok {
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name").Error())
+			return
+		}
+
+		name, err := runtime.String(val)
+		if err != nil {
+			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err).Error())
+			return
+		}
+		gr.GetBy = &template.GetRequest_Name{Name: name}
 
 		t, err := client.GetTemplate(context.Background(), &gr)
 		if err != nil {
@@ -303,19 +329,19 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		gr.Id, err = runtime.String(val)
-
+		id, err := runtime.String(val)
 		if err != nil {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err).Error())
 			return
 		}
+		gr.GetBy = &template.GetRequest_Id{Id: id}
 
 		if _, err := client.DeleteTemplate(context.Background(), &gr); err != nil {
 			logger.Error(err)
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "template deleted successfully", "id": "%v"}`, gr.Id))
+		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "template deleted successfully", "id": "%v"}`, gr.GetId()))
 	})
 
 	// template list handler | GET /v1/templates?name=
