@@ -50,7 +50,10 @@ message CreateResponse {
 }
 
 message GetRequest {
-  string id = 1;
+  oneof get_by {
+    string id = 1;
+    string name = 2;
+  }
 }
 
 message ListRequest {

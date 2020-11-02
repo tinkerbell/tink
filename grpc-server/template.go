@@ -58,7 +58,11 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	n, d, err := s.db.GetTemplate(ctx, in.Id)
+	fields := map[string]string{
+		"id":   in.GetId(),
+		"name": in.GetName(),
+	}
+	n, d, err := s.db.GetTemplate(ctx, fields)
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -68,7 +72,7 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 		}
 		l.Error(err)
 	}
-	return &template.WorkflowTemplate{Id: in.Id, Name: n, Data: d}, err
+	return &template.WorkflowTemplate{Id: in.GetId(), Name: n, Data: d}, err
 }
 
 // DeleteTemplate implements template.DeleteTemplate
@@ -86,7 +90,7 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := s.db.DeleteTemplate(ctx, in.Id)
+	err := s.db.DeleteTemplate(ctx, in.GetId())
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()

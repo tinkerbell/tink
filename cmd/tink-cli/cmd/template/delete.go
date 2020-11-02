@@ -29,7 +29,11 @@ var deleteCmd = &cobra.Command{
 	},
 	Run: func(c *cobra.Command, args []string) {
 		for _, arg := range args {
-			req := template.GetRequest{Id: arg}
+			req := template.GetRequest{
+				GetBy: &template.GetRequest_Id{
+					Id: arg,
+				},
+			}
 			if _, err := client.TemplateClient.DeleteTemplate(context.Background(), &req); err != nil {
 				log.Fatal(err)
 			}

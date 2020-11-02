@@ -67,6 +67,10 @@ func local_request_TemplateService_CreateTemplate_0(ctx context.Context, marshal
 
 }
 
+var (
+	filter_TemplateService_GetTemplate_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+)
+
 func request_TemplateService_GetTemplate_0(ctx context.Context, marshaler runtime.Marshaler, client TemplateServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
@@ -83,10 +87,22 @@ func request_TemplateService_GetTemplate_0(ctx context.Context, marshaler runtim
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.Id, err = runtime.String(val)
+	if protoReq.GetBy == nil {
+		protoReq.GetBy = &GetRequest_Id{}
+	} else if _, ok := protoReq.GetBy.(*GetRequest_Id); !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "expect type: *GetRequest_Id, but: %t\n", protoReq.GetBy)
+	}
+	protoReq.GetBy.(*GetRequest_Id).Id, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_TemplateService_GetTemplate_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.GetTemplate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -110,16 +126,32 @@ func local_request_TemplateService_GetTemplate_0(ctx context.Context, marshaler 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.Id, err = runtime.String(val)
+	if protoReq.GetBy == nil {
+		protoReq.GetBy = &GetRequest_Id{}
+	} else if _, ok := protoReq.GetBy.(*GetRequest_Id); !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "expect type: *GetRequest_Id, but: %t\n", protoReq.GetBy)
+	}
+	protoReq.GetBy.(*GetRequest_Id).Id, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_TemplateService_GetTemplate_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := server.GetTemplate(ctx, &protoReq)
 	return msg, metadata, err
 
 }
+
+var (
+	filter_TemplateService_DeleteTemplate_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+)
 
 func request_TemplateService_DeleteTemplate_0(ctx context.Context, marshaler runtime.Marshaler, client TemplateServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
@@ -137,10 +169,22 @@ func request_TemplateService_DeleteTemplate_0(ctx context.Context, marshaler run
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.Id, err = runtime.String(val)
+	if protoReq.GetBy == nil {
+		protoReq.GetBy = &GetRequest_Id{}
+	} else if _, ok := protoReq.GetBy.(*GetRequest_Id); !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "expect type: *GetRequest_Id, but: %t\n", protoReq.GetBy)
+	}
+	protoReq.GetBy.(*GetRequest_Id).Id, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_TemplateService_DeleteTemplate_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.DeleteTemplate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -164,10 +208,22 @@ func local_request_TemplateService_DeleteTemplate_0(ctx context.Context, marshal
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.Id, err = runtime.String(val)
+	if protoReq.GetBy == nil {
+		protoReq.GetBy = &GetRequest_Id{}
+	} else if _, ok := protoReq.GetBy.(*GetRequest_Id); !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "expect type: *GetRequest_Id, but: %t\n", protoReq.GetBy)
+	}
+	protoReq.GetBy.(*GetRequest_Id).Id, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_TemplateService_DeleteTemplate_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := server.DeleteTemplate(ctx, &protoReq)
