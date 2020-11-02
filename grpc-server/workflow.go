@@ -270,15 +270,18 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	return nil
 }
 
-func createYaml(ctx context.Context, db db.Database, temp string, devices string) (string, error) {
-	_, tempData, err := db.GetTemplate(ctx, temp)
-	if err != nil {
-		return "", errors.Wrapf(err, errFailedToGetTemplate, temp)
+func createYaml(ctx context.Context, db db.Database, templateID string, devices string) (string, error) {
+	fields := map[string]string{
+		"id": templateID,
 	}
-	return renderTemplate(temp, tempData, []byte(devices))
+	_, templateData, err := db.GetTemplate(ctx, fields)
+	if err != nil {
+		return "", errors.Wrapf(err, errFailedToGetTemplate, templateID)
+	}
+	return renderTemplate(templateID, templateData, []byte(devices))
 }
 
-func renderTemplate(templateID, tempData string, devices []byte) (string, error) {
+func renderTemplate(templateID, templateData string, devices []byte) (string, error) {
 	var hardware map[string]interface{}
 	err := json.Unmarshal(devices, &hardware)
 	if err != nil {
@@ -288,7 +291,7 @@ func renderTemplate(templateID, tempData string, devices []byte) (string, error)
 	}
 
 	t := template.New("workflow-template")
-	_, err = t.Parse(string(tempData))
+	_, err = t.Parse(string(templateData))
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		logger.Error(err)
