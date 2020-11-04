@@ -95,13 +95,15 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, name string) error {
 }
 
 // ListTemplates returns all saved templates
-func (d TinkDB) ListTemplates(fn func(id, n string, in, del *timestamp.Timestamp) error) error {
+func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *timestamp.Timestamp) error) error {
 	rows, err := d.instance.Query(`
 	SELECT id, name, created_at, updated_at
 	FROM template
 	WHERE
+		name ILIKE $1
+	AND
 		deleted_at IS NULL;
-	`)
+	`, filter)
 
 	if err != nil {
 		return err

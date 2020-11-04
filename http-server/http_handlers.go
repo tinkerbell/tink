@@ -318,10 +318,19 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		writeResponse(w, http.StatusOK, fmt.Sprintf(`{"status": "ok", "msg": "template deleted successfully", "id": "%v"}`, gr.Id))
 	})
 
-	// template list handler | GET /v1/templates
+	// template list handler | GET /v1/templates?name=
 	templateListPattern := runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "templates"}, "", runtime.AssumeColonVerbOpt(true)))
 	mux.Handle("GET", templateListPattern, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		list, err := client.ListTemplates(context.Background(), &template.Empty{})
+		nameFilter := "*" // default filter will match everything
+		if query := req.URL.Query()["name"]; len(query) > 0 {
+			nameFilter = query[0]
+		}
+
+		list, err := client.ListTemplates(context.Background(), &template.ListRequest{
+			FilterBy: &template.ListRequest_Name{
+				Name: nameFilter,
+			},
+		})
 		if err != nil {
 			logger.Error(err)
 			writeResponse(w, http.StatusInternalServerError, err.Error())
