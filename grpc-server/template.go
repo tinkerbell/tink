@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
@@ -57,7 +58,11 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	n, d, err := s.db.GetTemplate(ctx, in.Id)
+	fields := map[string]string{
+		"id":   in.GetId(),
+		"name": in.GetName(),
+	}
+	n, d, err := s.db.GetTemplate(ctx, fields)
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -67,7 +72,7 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 		}
 		l.Error(err)
 	}
-	return &template.WorkflowTemplate{Id: in.Id, Name: n, Data: d}, err
+	return &template.WorkflowTemplate{Id: in.GetId(), Name: n, Data: d}, err
 }
 
 // DeleteTemplate implements template.DeleteTemplate
@@ -85,7 +90,7 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
-	err := s.db.DeleteTemplate(ctx, in.Id)
+	err := s.db.DeleteTemplate(ctx, in.GetId())
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -99,12 +104,17 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 }
 
 // ListTemplates implements template.ListTemplates
-func (s *server) ListTemplates(_ *template.Empty, stream template.TemplateService_ListTemplatesServer) error {
+func (s *server) ListTemplates(in *template.ListRequest, stream template.TemplateService_ListTemplatesServer) error {
 	logger.Info("listtemplates")
 	labels := prometheus.Labels{"method": "ListTemplates", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
+
+	filter := "%" // default filter will match everything
+	if in.GetName() != "" {
+		filter = strings.ReplaceAll(in.GetName(), "*", "%") // replace '*' with psql '%' wildcard
+	}
 
 	s.dbLock.RLock()
 	ready := s.dbReady
@@ -116,7 +126,7 @@ func (s *server) ListTemplates(_ *template.Empty, stream template.TemplateServic
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := s.db.ListTemplates(func(id, n string, crTime, upTime *timestamp.Timestamp) error {
+	err := s.db.ListTemplates(filter, func(id, n string, crTime, upTime *timestamp.Timestamp) error {
 		return stream.Send(&template.WorkflowTemplate{Id: id, Name: n, CreatedAt: crTime, UpdatedAt: upTime})
 	})
 

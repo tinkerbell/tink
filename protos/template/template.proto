@@ -24,7 +24,7 @@ service TemplateService {
       delete: "/v1/templates/{id}"
     };
   };
-  rpc ListTemplates(Empty) returns (stream WorkflowTemplate) {
+  rpc ListTemplates(ListRequest) returns (stream WorkflowTemplate) {
     option (google.api.http) = {
       get: "/v1/templates"
     };
@@ -50,5 +50,14 @@ message CreateResponse {
 }
 
 message GetRequest {
-  string id = 1;
+  oneof get_by {
+    string id = 1;
+    string name = 2;
+  }
+}
+
+message ListRequest {
+  oneof filter_by {
+    string name = 1;
+  }
 }

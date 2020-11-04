@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -35,9 +36,9 @@ type hardware interface {
 
 type template interface {
 	CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error
-	GetTemplate(ctx context.Context, id string) (string, string, error)
+	GetTemplate(ctx context.Context, fields map[string]string) (string, string, error)
 	DeleteTemplate(ctx context.Context, name string) error
-	ListTemplates(fn func(id, n string, in, del *timestamp.Timestamp) error) error
+	ListTemplates(in string, fn func(id, n string, in, del *timestamp.Timestamp) error) error
 	UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error
 }
 
@@ -113,4 +114,15 @@ func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (st
 	}
 
 	return "", err
+}
+
+// buildGetCondition builds a where condition string in the format "column_name = 'field_value' AND"
+// takes in a map[string]string with keys being the column name and the values being the field values
+func buildGetCondition(fields map[string]string) (string, error) {
+	for column, field := range fields {
+		if field != "" {
+			return fmt.Sprintf("%s = '%s' AND", column, field), nil
+		}
+	}
+	return "", errors.New("one GetBy field must be set to build a get condition")
 }
