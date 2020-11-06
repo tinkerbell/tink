@@ -63,6 +63,7 @@ services:
     environment:
       POSTGRES_PASSWORD: tinkerbell
       POSTGRES_USER: tinkerbell
+      POSTGRES_DB: tinkerbell
     volumes:
       - postgres_data:/var/lib/postgresql/data:rw
     ports:
