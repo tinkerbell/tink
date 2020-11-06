@@ -6,9 +6,6 @@ func Get202009171251() *migrate.Migration {
 	return &migrate.Migration{
 		Id: "202009171251-init-database",
 		Up: []string{`
-SET ROLE tinkerbell;
-SELECT 'CREATE DATABASE tinkerbell' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'tinkerbell');
-
 CREATE TABLE IF NOT EXISTS hardware (
 	id UUID UNIQUE
 	, inserted_at TIMESTAMPTZ
