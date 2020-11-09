@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hegel
+  name: hegel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hegel
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: hegel
+    spec:
+      containers:
+      - env:
+        - name: DATA_MODEL_VERSION
+          value: "1"
+        - name: GRPC_PORT
+          value: "42115"
+        - name: HEGEL_FACILITY
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: FACILITY
+        - name: HEGEL_USE_TLS
+          value: "0"
+        - name: TINKERBELL_CERT_URL
+          value: http://tinkerbell:42114/cert
+        - name: TINKERBELL_GRPC_AUTHORITY
+          value: tinkerbell:42113
+        image: quay.io/tinkerbell/hegel:latest
+        imagePullPolicy: Always
+        name: hegel
+        ports:
+        - containerPort: 42115
+        - containerPort: 50061
+          hostPort: 50061
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: hegel
+  name: hegel
+spec:
+  ports:
+  - name: "42115"
+    port: 42115
+    targetPort: 42115
+  - name: "50061"
+    port: 50061
+    targetPort: 50061
+  selector:
+  selector:
+    app: hegel
+  type: ClusterIP

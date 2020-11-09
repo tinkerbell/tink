@@ -67,6 +67,19 @@ ensure_docker-compose_exists() (
 	sudo chmod +x /usr/local/bin/docker-compose
 )
 
+ensure_k3s_exists() (
+	if command_exists k3s; then
+		return
+	fi
+
+	ensure_docker_exists
+
+	# from https://rancher.com/docs/k3s/latest/en/installation/install-options/
+	curl -fsSL "https://get.k3s.io" |
+		INSTALL_K3S_EXEC="--disable traefik --docker --kube-apiserver-arg service-node-port-range=0-65535" \
+		sudo -E sh -s -
+)
+
 make_certs_writable() (
 	local certdir="/etc/docker/certs.d/$TINKERBELL_HOST_IP"
 	sudo mkdir -p "$certdir"
@@ -104,6 +117,11 @@ main() (
 
 	# shellcheck disable=SC1091
 	. ./envrc
+
+	# Use Kubernetes, or not
+	if "${USE_KUBERNETES:-false}"; then
+		ensure_k3s_exists
+	fi
 
 	make_certs_writable
 

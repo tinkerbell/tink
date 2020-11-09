@@ -1,0 +1,135 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tink-server
+  name: tinkerbell
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tink-server
+  template:
+    metadata:
+      labels:
+        app: tink-server
+    spec:
+      containers:
+      - env:
+        - name: FACILITY
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: FACILITY
+        - name: PGDATABASE
+          value: tinkerbell
+        - name: PGHOST
+          value: postgres
+        - name: PGPASSWORD
+          value: tinkerbell
+        - name: PGPORT
+          value: "5432"
+        - name: PGSSLMODE
+          value: disable
+        - name: PGUSER
+          value: tinkerbell
+        - name: TINKERBELL_GRPC_AUTHORITY
+          value: :42113
+        - name: TINKERBELL_HTTP_AUTHORITY
+          value: :42114
+        - name: TINK_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_TINK_PASSWORD
+        - name: TINK_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_TINK_USERNAME
+        image: quay.io/tinkerbell/tink:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /cert
+            port: 42114
+        name: tinkerbell
+        ports:
+        - containerPort: 42113
+        - containerPort: 42114
+        readinessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /cert
+            port: 42114
+        name: tinkerbell
+        volumeMounts:
+        - mountPath: /certs/onprem
+          name: certs
+      initContainers:
+      - env:
+        - name: ONLY_MIGRATION
+          value: "true"
+        - name: FACILITY
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: FACILITY
+        - name: PGDATABASE
+          value: tinkerbell
+        - name: PGHOST
+          value: postgres
+        - name: PGPASSWORD
+          value: tinkerbell
+        - name: PGPORT
+          value: "5432"
+        - name: PGSSLMODE
+          value: disable
+        - name: PGUSER
+          value: tinkerbell
+        - name: TINKERBELL_GRPC_AUTHORITY
+          value: :42113
+        - name: TINKERBELL_HTTP_AUTHORITY
+          value: :42114
+        - name: TINK_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_TINK_PASSWORD
+        - name: TINK_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_TINK_USERNAME
+        image: quay.io/tinkerbell/tink:latest
+        imagePullPolicy: Always
+        name: tinkerbell-migration
+        volumeMounts:
+        - mountPath: /certs/onprem
+          name: certs
+      volumes:
+      - name: certs
+        secret:
+          secretName: certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tink-server
+  name: tinkerbell
+spec:
+  ports:
+  - name: "42113"
+    nodePort: 42113
+    port: 42113
+    targetPort: 42113
+  - name: "42114"
+    nodePort: 42114
+    port: 42114
+    targetPort: 42114
+  selector:
+    app: tink-server
+  type: NodePort

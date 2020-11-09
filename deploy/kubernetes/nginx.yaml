@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: docker.io/nginx:alpine
+        imagePullPolicy: Always
+        name: nginx
+        ports:
+        - containerPort: 80
+        tty: true
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html/
+          name: nginx-data
+      restartPolicy: Always
+      volumes:
+      - name: nginx-data
+#        persistentVolumeClaim:
+#          claimName: nginx-data
+        hostPath:
+          path: /vagrant/deploy/state/webroot
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - name: "80"
+    nodePort: 8080
+    port: 80
+    targetPort: 80
+  selector:
+    app: nginx
+  type: NodePort
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  labels:
+#    app: nginx
+#  name: nginx-data
+#spec:
+#  accessModes:
+#  - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 5Gi

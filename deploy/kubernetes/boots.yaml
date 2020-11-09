@@ -1,0 +1,111 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: boots
+  name: boots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: boots
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: boots
+    spec:
+      containers:
+      - args:
+        - -dhcp-addr
+        - 0.0.0.0:67
+        - -tftp-addr
+        - 0.0.0.0:69
+        - -http-addr
+        - 0.0.0.0:80
+        - -log-level
+        - DEBUG
+        env:
+        - name: API_AUTH_TOKEN
+          value: ignored
+        - name: API_CONSUMER_TOKEN
+          value: ignored
+        - name: BOOTP_BIND
+          value: 0.0.0.0:67
+        - name: DATA_MODEL_VERSION
+          value: "1"
+        - name: DNS_SERVERS
+          value: 8.8.8.8
+        - name: DOCKER_REGISTRY
+          value: $(PUBLIC_IP)
+        - name: ELASTIC_SEARCH_URL
+          value: $(PUBLIC_IP):9200
+        - name: FACILITY_CODE
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: FACILITY
+        - name: HTTP_BIND
+          value: 0.0.0.0:80
+        - name: MIRROR_HOST
+          value: $(PUBLIC_IP):8080
+        - name: PUBLIC_IP
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_HOST_IP
+        - name: REGISTRY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_REGISTRY_PASSWORD
+        - name: REGISTRY_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_REGISTRY_USERNAME
+        - name: SYSLOG_BIND
+          value: 0.0.0.0:514
+        - name: TFTP_BIND
+          value: 0.0.0.0:69
+        - name: TINKERBELL_CERT_URL
+          value: http://$(PUBLIC_IP):42114/cert
+        - name: TINKERBELL_GRPC_AUTHORITY
+          value: $(PUBLIC_IP):42113
+        image: quay.io/tinkerbell/boots:latest
+        imagePullPolicy: Always
+        name: boots
+        ports:
+        - containerPort: 80
+        - containerPort: 67
+          protocol: UDP
+        - containerPort: 69
+          protocol: UDP
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: boots
+  name: boots
+spec:
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+  - name: "67"
+    port: 67
+    protocol: UDP
+    targetPort: 67
+  - name: "69"
+    port: 69
+    protocol: UDP
+    targetPort: 69
+  selector:
+    app: boots
+  type: ClusterIP

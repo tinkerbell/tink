@@ -1,0 +1,143 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: registry
+  name: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      containers:
+      - env:
+        - name: REGISTRY_AUTH
+          value: htpasswd
+        - name: REGISTRY_AUTH_HTPASSWD_PATH
+          value: /auth/htpasswd
+        - name: REGISTRY_AUTH_HTPASSWD_REALM
+          value: Registry Realm
+        - name: REGISTRY_HTTP_ADDR
+          value: 0.0.0.0:443
+        - name: REGISTRY_HTTP_TLS_CERTIFICATE
+          value: /certs/server.pem
+        - name: REGISTRY_HTTP_TLS_KEY
+          value: /certs/server-key.pem
+        - name: A_REGISTRY_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_REGISTRY_PASSWORD
+        - name: A_REGISTRY_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_REGISTRY_USERNAME
+        image: docker.io/registry:2.7.0
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /
+            port: 443
+        name: registry
+        ports:
+        - containerPort: 443
+        readinessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /
+            port: 443
+        volumeMounts:
+        - mountPath: /auth
+          name: registry-auth
+        - mountPath: /certs
+          name: certs
+        - mountPath: /var/lib/registry
+          name: registry-data
+      initContainers:
+      - command: 
+        - htpasswd
+        - -Bbc
+        - "$(REGISTRY_AUTH_HTPASSWD_PATH)"
+        - "$(REGISTRY_AUTH_USERNAME)"
+        - "$(REGISTRY_AUTH_PASSWORD)"
+        env:
+        - name: REGISTRY_AUTH_HTPASSWD_PATH
+          value: /auth/htpasswd
+        - name: REGISTRY_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_REGISTRY_PASSWORD
+        - name: REGISTRY_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_REGISTRY_USERNAME
+        image: docker.io/registry:2.7.0
+        imagePullPolicy: Always
+        name: htpasswd
+        volumeMounts:
+        - mountPath: /auth
+          name: registry-auth
+      restartPolicy: Always
+      volumes:
+      - name: certs
+        secret:
+          secretName: certs
+      - name: registry-auth
+        persistentVolumeClaim:
+          claimName: registry-auth
+      - name: registry-data
+        persistentVolumeClaim:
+          claimName: registry-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: registry
+  name: registry
+spec:
+  ports:
+  - name: "443"
+    nodePort: 443
+    port: 443
+    targetPort: 443
+  selector:
+    app: registry
+  type: NodePort
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: registry
+  name: registry-auth
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Ki
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: registry
+  name: registry-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+

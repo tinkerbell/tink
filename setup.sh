@@ -396,8 +396,13 @@ docker_mirror_image() (
 )
 
 start_registry() (
-	docker-compose -f "$DEPLOYDIR/docker-compose.yml" up --build -d registry
-	check_container_status "registry"
+	if "$USE_KUBERNETES"; then
+		kubectl apply -f "$DEPLOYDIR/kubernetes/registry.yaml"
+		kubectl wait pods -l app=registry --for condition=ready --timeout 120s
+	else
+		docker-compose -f "$DEPLOYDIR/docker-compose.yml" up --build -d registry
+		check_container_status "registry"
+	fi
 )
 
 # This function supposes that the registry is up and running.
@@ -420,10 +425,20 @@ setup_docker_registry() (
 start_components() (
 	local components=(db hegel tink-server boots tink-cli nginx)
 	for comp in "${components[@]}"; do
-		docker-compose -f "$DEPLOYDIR/docker-compose.yml" up --build -d "$comp"
-		sleep 3
-		check_container_status "$comp"
+		if "$USE_KUBERNETES"; then
+			kubectl apply -f "$DEPLOYDIR/kubernetes/$comp.yaml"
+			kubectl wait pods -l "app=$comp" --for condition=ready --timeout 120s
+		else
+			docker-compose -f "$DEPLOYDIR/docker-compose.yml" up --build -d "$comp"
+			sleep 3
+			check_container_status "$comp"
+		fi
 	done
+)
+
+create_secrets() (
+	awk '/^export /{print $2}' envrc | sed "s/\([\"']\)\(.*\)\1\$/\2/g" | kubectl create secret generic tinkerbell --from-env-file=/dev/stdin --dry-run=client -o yaml | kubectl apply -f-
+	kubectl create secret generic certs --from-file /vagrant/deploy/state/certs/ --dry-run=client -o yaml | kubectl apply -f-
 )
 
 command_exists() (
@@ -480,7 +495,11 @@ check_prerequisites() (
 )
 
 whats_next() (
-	echo "$NEXT  1. Enter /vagrant/deploy and run: source ../envrc; docker-compose up -d"
+	if "$USE_KUBERNETES"; then
+		echo "$NEXT  1. Enter /vagrant/deploy/kubernetes and run: source ../../envrc; kubectl apply -f ."
+	else
+		echo "$NEXT  1. Enter /vagrant/deploy and run: source ../envrc; docker-compose up -d"
+	fi
 	echo "$BLANK 2. Try executing your fist workflow."
 	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )
@@ -501,10 +520,18 @@ do_setup() (
 	# shellcheck disable=SC1090
 	source "$ENV_FILE"
 
+	# Use Kubernetes, or not
+	USE_KUBERNETES=${USE_KUBERNETES:=false}
+
 	setup_networking "$lsb_dist" "$lsb_version"
 
 	setup_osie
 	generate_certificates
+
+	if "$USE_KUBERNETES"; then
+		create_secrets
+	fi
+
 	setup_docker_registry
 
 	echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"

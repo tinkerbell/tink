@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: db
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_DB
+          value: tinkerbell
+        - name: POSTGRES_PASSWORD
+          value: tinkerbell
+        - name: POSTGRES_USER
+          value: tinkerbell
+        image: docker.io/postgres:10-alpine
+        imagePullPolicy: Always
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - tinkerbell
+          failureThreshold: 30
+          periodSeconds: 1
+          timeoutSeconds: 1
+        name: postgres
+        ports:
+        - containerPort: 5432
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - tinkerbell
+          failureThreshold: 30
+          periodSeconds: 1
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-data
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: db
+  name: postgres
+spec:
+  ports:
+  - name: "5432"
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: db
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: db
+  name: postgres-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
