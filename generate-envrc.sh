@@ -78,8 +78,8 @@ export TINKERBELL_TINK_PASSWORD="$tink_password"
 export TINKERBELL_REGISTRY_USERNAME=admin
 export TINKERBELL_REGISTRY_PASSWORD="$registry_password"
 
-# Use Kubernetes instead of Docker Compose
-#export USE_KUBERNETES=true
+# Set to true to use Kubernetes instead of Docker Compose
+export USE_KUBERNETES=${USE_KUBERNETES:-false}
 
 # Legacy options, to be deleted:
 export FACILITY=onprem

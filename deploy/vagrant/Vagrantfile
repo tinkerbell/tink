@@ -12,7 +12,11 @@ Vagrant.configure('2') do |config|
     provisioner.vm.box = 'generic/ubuntu1804'
     provisioner.vm.hostname = 'provisioner'
     provisioner.vm.synced_folder './../../', '/vagrant'
-    provisioner.vm.provision :shell, path: './scripts/tinkerbell.sh'
+    provisioner.vm.provision :shell,
+                             path: './scripts/tinkerbell.sh',
+                             env: {
+                               'USE_KUBERNETES' => ENV['USE_KUBERNETES']
+                             }
 
     provisioner.vm.network :private_network,
                         virtualbox__intnet: "tink_network",

@@ -106,6 +106,7 @@ configure_vagrant_user() (
 
 main() (
 	export DEBIAN_FRONTEND=noninteractive
+	export USE_KUBERNETES=${USE_KUBERNETES:-false}
 
 	ensure_os_packages_exists curl jq
 	ensure_docker_exists
@@ -119,7 +120,7 @@ main() (
 	. ./envrc
 
 	# Use Kubernetes, or not
-	if "${USE_KUBERNETES:-false}"; then
+	if "${USE_KUBERNETES}"; then
 		ensure_k3s_exists
 	fi
 
