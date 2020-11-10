@@ -28,6 +28,11 @@ spec:
         - -log-level
         - DEBUG
         env:
+        - name: PUBLIC_IP
+          valueFrom:
+            secretKeyRef:
+              name: tinkerbell
+              key: TINKERBELL_HOST_IP
         - name: API_AUTH_TOKEN
           value: ignored
         - name: API_CONSUMER_TOKEN
@@ -39,9 +44,9 @@ spec:
         - name: DNS_SERVERS
           value: 8.8.8.8
         - name: DOCKER_REGISTRY
-          value: $(PUBLIC_IP)
+          value: "$(PUBLIC_IP)"
         - name: ELASTIC_SEARCH_URL
-          value: $(PUBLIC_IP):9200
+          value: "$(PUBLIC_IP):9200"
         - name: FACILITY_CODE
           valueFrom:
             secretKeyRef:
@@ -50,12 +55,7 @@ spec:
         - name: HTTP_BIND
           value: 0.0.0.0:80
         - name: MIRROR_HOST
-          value: $(PUBLIC_IP):8080
-        - name: PUBLIC_IP
-          valueFrom:
-            secretKeyRef:
-              name: tinkerbell
-              key: TINKERBELL_HOST_IP
+          value: "$(PUBLIC_IP):8080"
         - name: REGISTRY_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -71,9 +71,9 @@ spec:
         - name: TFTP_BIND
           value: 0.0.0.0:69
         - name: TINKERBELL_CERT_URL
-          value: http://$(PUBLIC_IP):42114/cert
+          value: "http://$(PUBLIC_IP):42114/cert"
         - name: TINKERBELL_GRPC_AUTHORITY
-          value: $(PUBLIC_IP):42113
+          value: "$(PUBLIC_IP):42113"
         image: quay.io/tinkerbell/boots:latest
         imagePullPolicy: Always
         name: boots
