@@ -274,7 +274,7 @@ func createYaml(ctx context.Context, db db.Database, templateID string, devices 
 	fields := map[string]string{
 		"id": templateID,
 	}
-	_, templateData, err := db.GetTemplate(ctx, fields)
+	_, _, templateData, err := db.GetTemplate(ctx, fields)
 	if err != nil {
 		return "", errors.Wrapf(err, errFailedToGetTemplate, templateID)
 	}

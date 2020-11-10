@@ -32,7 +32,7 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 }
 
 // GetTemplate returns a workflow template
-func (d DB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, error) {
+func (d DB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, string, error) {
 	return d.GetTemplateFunc(ctx, fields)
 }
 
