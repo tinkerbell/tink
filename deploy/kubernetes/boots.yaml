@@ -74,7 +74,7 @@ spec:
           value: "http://$(PUBLIC_IP):42114/cert"
         - name: TINKERBELL_GRPC_AUTHORITY
           value: "$(PUBLIC_IP):42113"
-        image: docker.io/mrchrd/boots:latest
+        image: quay.io/tinkerbell/boots:latest
         imagePullPolicy: Always
         name: boots
         ports:
