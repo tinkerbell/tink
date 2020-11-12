@@ -22,6 +22,8 @@ const (
 	invalidID  = "d699-4e9f-a29c-a5890ccbd"
 	actionName = "install-rootfs"
 	taskName   = "ubuntu-provisioning"
+
+	defaultTestTimeout = time.Millisecond * 10
 )
 
 var wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
@@ -115,12 +117,13 @@ func TestGetWorkflowContextList(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			res, err := s.GetWorkflowContextList(
-				context.TODO(), &pb.WorkflowContextRequest{WorkerId: tc.args.workerID},
-			)
+			res, err := s.GetWorkflowContextList(ctx, &pb.WorkflowContextRequest{WorkerId: tc.args.workerID})
 			if err != nil {
 				assert.Error(t, err)
 				assert.Nil(t, res)
@@ -197,12 +200,13 @@ func TestGetWorkflowActions(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			res, err := s.GetWorkflowActions(
-				context.TODO(), &pb.WorkflowActionsRequest{WorkflowId: tc.args.workflowID},
-			)
+			res, err := s.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
@@ -537,10 +541,13 @@ func TestReportActionStatus(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			res, err := s.ReportActionStatus(context.TODO(),
+			res, err := s.ReportActionStatus(ctx,
 				&pb.WorkflowActionStatus{
 					WorkflowId:   tc.args.workflowID,
 					ActionName:   tc.args.actionName,
@@ -614,11 +621,14 @@ func TestUpdateWorkflowData(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
 			res, err := s.UpdateWorkflowData(
-				context.TODO(), &pb.UpdateWorkflowDataRequest{
+				ctx, &pb.UpdateWorkflowDataRequest{
 					WorkflowId: tc.args.workflowID,
 					Data:       tc.args.data,
 				})
@@ -701,12 +711,13 @@ func TestGetWorkflowData(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		s := testServer(tc.args.db)
 		t.Run(name, func(t *testing.T) {
-			res, err := s.GetWorkflowData(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID},
-			)
+			res, err := s.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
@@ -870,12 +881,13 @@ func TestGetWorkflowMetadata(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			res, err := s.GetWorkflowMetadata(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID},
-			)
+			res, err := s.GetWorkflowMetadata(ctx, &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
@@ -940,12 +952,13 @@ func TestGetWorkflowDataVersion(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			res, err := s.GetWorkflowDataVersion(
-				context.TODO(), &pb.GetWorkflowDataRequest{WorkflowId: workflowID},
-			)
+			res, err := s.GetWorkflowDataVersion(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
 			assert.Equal(t, tc.want.version, res.Version)
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -1152,13 +1165,14 @@ func TestIsApplicableToSend(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			wfContext, _ := s.db.GetWorkflowContexts(context.TODO(), workflowID)
-			res := isApplicableToSend(
-				context.TODO(), wfContext, workerID, s.db,
-			)
+			wfContext, _ := s.db.GetWorkflowContexts(ctx, workflowID)
+			res := isApplicableToSend(ctx, wfContext, workerID, s.db)
 			assert.Equal(t, tc.want.isApplicable, res)
 		})
 	}
@@ -1243,11 +1257,14 @@ func TestIsLastAction(t *testing.T) {
 			},
 		},
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(tc.args.db)
-			wfContext, _ := s.db.GetWorkflowContexts(context.TODO(), workflowID)
-			actions, _ := s.db.GetWorkflowActions(context.TODO(), workflowID)
+			wfContext, _ := s.db.GetWorkflowContexts(ctx, workflowID)
+			actions, _ := s.db.GetWorkflowActions(ctx, workflowID)
 			res := isLastAction(wfContext, actions)
 			assert.Equal(t, tc.want.isLastAction, res)
 		})

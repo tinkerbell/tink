@@ -97,12 +97,14 @@ func TestCreateTemplate(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name := range testCases {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			s := testServer(tc.args.db)
-			res, err := s.CreateTemplate(context.TODO(), &pb.WorkflowTemplate{Name: tc.args.name, Data: tc.args.template})
+			res, err := s.CreateTemplate(ctx, &pb.WorkflowTemplate{Name: tc.args.name, Data: tc.args.template})
 			if tc.want.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -262,12 +264,14 @@ func TestGetTemplate(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
 	for name := range testCases {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			s := testServer(tc.args.db)
-			res, err := s.GetTemplate(context.TODO(), tc.args.getRequest)
+			res, err := s.GetTemplate(ctx, tc.args.getRequest)
 			if tc.err {
 				assert.Error(t, err)
 			} else {
