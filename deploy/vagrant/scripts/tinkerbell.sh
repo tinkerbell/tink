@@ -77,7 +77,7 @@ ensure_k3s_exists() (
 	# from https://rancher.com/docs/k3s/latest/en/installation/install-options/
 	curl -fsSL "https://get.k3s.io" |
 		INSTALL_K3S_EXEC="--disable traefik --docker --kube-apiserver-arg service-node-port-range=0-65535" \
-		sudo -E sh -s -
+			sudo -E sh -s -
 )
 
 make_certs_writable() (
