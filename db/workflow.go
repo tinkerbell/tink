@@ -40,7 +40,7 @@ func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id
 
 	err = insertActionList(ctx, d.instance, data, id, tx)
 	if err != nil {
-		return errors.Wrap(err, "Failed to insert in workflow_state")
+		return errors.Wrap(err, "failed to insert in workflow_state")
 
 	}
 	err = insertInWorkflow(ctx, d.instance, wf, tx)
@@ -109,9 +109,10 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
 		if err != nil {
+			if errors.Cause(err) == sql.ErrNoRows {
+				return errors.Wrapf(err, "hardware %s not found", task.WorkerAddr)
+			}
 			return err
-		} else if workerID == "" {
-			return fmt.Errorf("hardware mentioned with reference %s not found", task.WorkerAddr)
 		}
 		workerUID, err := uuid.Parse(workerID)
 		if err != nil {
