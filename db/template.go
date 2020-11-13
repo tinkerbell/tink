@@ -46,31 +46,32 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 }
 
 // GetTemplate returns a workflow template
-func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, error) {
+func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, string, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
-		return "", "", errors.Wrap(err, "failed to build get condition")
+		return "", "", "", errors.Wrap(err, "failed to build get condition")
 	}
 
 	query := `
-	SELECT name, data
+	SELECT id, name, data
 	FROM template
 	WHERE
 		` + getCondition + `
 		deleted_at IS NULL
 	`
 	row := d.instance.QueryRowContext(ctx, query)
+	id := []byte{}
 	name := []byte{}
 	data := []byte{}
-	err = row.Scan(&name, &data)
+	err = row.Scan(&id, &name, &data)
 	if err == nil {
-		return string(name), string(data), nil
+		return string(id), string(name), string(data), nil
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		logger.Error(err)
 	}
-	return "", "", err
+	return "", "", "", err
 }
 
 // DeleteTemplate deletes a workflow template

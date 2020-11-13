@@ -132,16 +132,16 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
 						if fields["name"] == templateName1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
-						return "", "", errors.New("failed to get template")
+						return "", "", "", errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Name{Name: templateName1}},
@@ -155,16 +155,16 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
 						if fields["name"] == templateName1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
-						return "", "", errors.New("failed to get template")
+						return "", "", "", errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Name{Name: templateName2}},
@@ -178,16 +178,16 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
 						if fields["name"] == templateName1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
-						return "", "", errors.New("failed to get template")
+						return "", "", "", errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Id{Id: templateID1}},
@@ -201,16 +201,16 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
 						if fields["name"] == templateName1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
-						return "", "", errors.New("failed to get template")
+						return "", "", "", errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Id{Id: templateID2}},
@@ -224,16 +224,16 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
 						if fields["name"] == templateName1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
-						return "", "", errors.New("failed to get template")
+						return "", "", "", errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{},
@@ -247,16 +247,16 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
 						if fields["name"] == templateName1 {
-							return "", template1, nil
+							return templateID1, templateName1, template1, nil
 						}
-						return "", "", errors.New("failed to get template")
+						return "", "", "", errors.New("failed to get template")
 					},
 				},
 			},
