@@ -11,6 +11,19 @@ import (
 )
 
 const (
+	templateNotFoundID       = "abstract-beef-beyond-meat-abominations"
+	templateNotFoundName     = "my-awesome-mock-name"
+	templateNotFoundTemplate = `version: "0.1"
+name: not_found_workflow
+global_timeout: 600
+tasks:
+  - name: "not found"
+    worker: "{{.device_1}}"
+    actions:
+    - name: "not_found"
+      image: not-found
+      timeout: 60`
+
 	templateID1   = "7cd79119-1959-44eb-8b82-bc15bad4888e"
 	templateName1 = "template_1"
 	template1     = `version: "0.1"
@@ -124,6 +137,9 @@ func TestGetTemplate(t *testing.T) {
 	)
 	testCases := map[string]struct {
 		args args
+		id   string
+		name string
+		data string
 		err  bool
 	}{
 		"SuccessfulTemplateGet_Name": {
@@ -135,18 +151,18 @@ func TestGetTemplate(t *testing.T) {
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
-						if fields["id"] == templateID1 {
+						if fields["id"] == templateID1 || fields["name"] == templateName1 {
 							return templateID1, templateName1, template1, nil
 						}
-						if fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
-						}
-						return "", "", "", errors.New("failed to get template")
+						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Name{Name: templateName1}},
 			},
-			err: false,
+			id:   templateID1,
+			name: templateName1,
+			data: template1,
+			err:  false,
 		},
 
 		"FailedTemplateGet_Name": {
@@ -158,18 +174,18 @@ func TestGetTemplate(t *testing.T) {
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
-						if fields["id"] == templateID1 {
+						if fields["id"] == templateID1 || fields["name"] == templateName1 {
 							return templateID1, templateName1, template1, nil
 						}
-						if fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
-						}
-						return "", "", "", errors.New("failed to get template")
+						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Name{Name: templateName2}},
 			},
-			err: true,
+			id:   templateNotFoundID,
+			name: templateNotFoundName,
+			data: templateNotFoundTemplate,
+			err:  true,
 		},
 
 		"SuccessfulTemplateGet_ID": {
@@ -181,18 +197,18 @@ func TestGetTemplate(t *testing.T) {
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
-						if fields["id"] == templateID1 {
+						if fields["id"] == templateID1 || fields["name"] == templateName1 {
 							return templateID1, templateName1, template1, nil
 						}
-						if fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
-						}
-						return "", "", "", errors.New("failed to get template")
+						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Id{Id: templateID1}},
 			},
-			err: false,
+			id:   templateID1,
+			name: templateName1,
+			data: template1,
+			err:  false,
 		},
 
 		"FailedTemplateGet_ID": {
@@ -204,18 +220,18 @@ func TestGetTemplate(t *testing.T) {
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
-						if fields["id"] == templateID1 {
+						if fields["id"] == templateID1 || fields["name"] == templateName1 {
 							return templateID1, templateName1, template1, nil
 						}
-						if fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
-						}
-						return "", "", "", errors.New("failed to get template")
+						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Id{Id: templateID2}},
 			},
-			err: true,
+			id:   templateNotFoundID,
+			name: templateNotFoundName,
+			data: templateNotFoundTemplate,
+			err:  true,
 		},
 
 		"FailedTemplateGet_EmptyRequest": {
@@ -227,18 +243,18 @@ func TestGetTemplate(t *testing.T) {
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
-						if fields["id"] == templateID1 {
+						if fields["id"] == templateID1 || fields["name"] == templateName1 {
 							return templateID1, templateName1, template1, nil
 						}
-						if fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
-						}
-						return "", "", "", errors.New("failed to get template")
+						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{},
 			},
-			err: true,
+			id:   templateNotFoundID,
+			name: templateNotFoundName,
+			data: templateNotFoundTemplate,
+			err:  true,
 		},
 
 		"FailedTemplateGet_NilRequest": {
@@ -250,17 +266,17 @@ func TestGetTemplate(t *testing.T) {
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
 						t.Log("in get template func")
 
-						if fields["id"] == templateID1 {
+						if fields["id"] == templateID1 || fields["name"] == templateName1 {
 							return templateID1, templateName1, template1, nil
 						}
-						if fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
-						}
-						return "", "", "", errors.New("failed to get template")
+						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
 					},
 				},
 			},
-			err: true,
+			id:   templateNotFoundID,
+			name: templateNotFoundName,
+			data: templateNotFoundTemplate,
+			err:  true,
 		},
 	}
 
@@ -278,6 +294,9 @@ func TestGetTemplate(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEmpty(t, res)
 			}
+			assert.Equal(t, res.Id, tc.id)
+			assert.Equal(t, res.Name, tc.name)
+			assert.Equal(t, res.Data, tc.data)
 		})
 	}
 }
