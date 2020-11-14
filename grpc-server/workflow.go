@@ -25,8 +25,8 @@ var state = map[int32]workflow.State{
 }
 
 const (
-	errFailedToGetTemplate = "failed to get template with ID: %s"
-	errTemplateParsing     = "failed to parse template with ID: %s"
+	errFailedToGetTemplate = "failed to get template with ID %s"
+	errTemplateParsing     = "failed to parse template with ID %s"
 )
 
 // CreateWorkflow implements workflow.CreateWorkflow
