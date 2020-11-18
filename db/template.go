@@ -14,14 +14,14 @@ import (
 
 // CreateTemplate creates a new workflow template
 func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+	_, err := wflow.Parse([]byte(data))
+	if err != nil {
+		return err
+	}
+
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
-	}
-
-	_, err = wflow.Parse([]byte(data))
-	if err != nil {
-		return err
 	}
 
 	_, err = tx.Exec(`
