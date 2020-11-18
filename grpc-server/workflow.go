@@ -69,9 +69,8 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		if pqErr := db.Error(err); pqErr != nil {
 			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
 		}
-		e := errors.Wrap(err, "failed to create workflow")
-		l.Error(e)
-		return &workflow.CreateResponse{}, e
+		l.Error(err)
+		return &workflow.CreateResponse{}, err
 	}
 
 	l := logger.With("workflowID", id.String())

@@ -40,12 +40,12 @@ func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id
 
 	err = insertActionList(ctx, d.instance, data, id, tx)
 	if err != nil {
-		return errors.Wrap(err, "failed to insert in workflow_state")
+		return errors.Wrap(err, "failed to create workflow")
 
 	}
 	err = insertInWorkflow(ctx, d.instance, wf, tx)
 	if err != nil {
-		return errors.Wrap(err, "Failed to workflow")
+		return errors.Wrap(err, "failed to create workflow")
 
 	}
 	err = tx.Commit()
@@ -109,10 +109,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 
 		workerID, err := getWorkerID(ctx, db, task.WorkerAddr)
 		if err != nil {
-			if errors.Cause(err) == sql.ErrNoRows {
-				return errors.Wrapf(err, "hardware %s not found", task.WorkerAddr)
-			}
-			return err
+			return errors.WithMessage(err, "unable to insert into action list")
 		}
 		workerUID, err := uuid.Parse(workerID)
 		if err != nil {
@@ -690,7 +687,11 @@ func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, erro
 		data @> $1
 	`
 
-	return get(ctx, db, query, arg)
+	id, err := get(ctx, db, query, arg)
+	if errors.Cause(err) == sql.ErrNoRows {
+		err = errors.WithMessage(errors.New(mac), "mac")
+	}
+	return id, err
 }
 
 func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error) {
@@ -734,7 +735,11 @@ func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error)
         )
         `
 
-	return get(ctx, db, query, instance, hardwareOrManagement)
+	id, err := get(ctx, db, query, instance, hardwareOrManagement)
+	if errors.Cause(err) == sql.ErrNoRows {
+		err = errors.WithMessage(errors.New(ip), "ip")
+	}
+	return id, err
 }
 
 func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
@@ -744,10 +749,12 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 		if ip == nil || ip.To4() == nil {
 			return "", fmt.Errorf("invalid worker address: %s", addr)
 		}
-		return getWorkerIDbyIP(ctx, db, addr)
+		id, err := getWorkerIDbyIP(ctx, db, addr)
+		return id, errors.WithMessage(err, "no worker found")
 
 	}
-	return getWorkerIDbyMac(ctx, db, addr)
+	id, err := getWorkerIDbyMac(ctx, db, addr)
+	return id, errors.WithMessage(err, "no worker found")
 }
 
 func init() {
