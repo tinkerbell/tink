@@ -102,18 +102,11 @@ func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (st
 
 	buf := []byte{}
 	err := row.Scan(&buf)
-	if err == nil {
-		return string(buf), nil
-	}
-
-	if err != sql.ErrNoRows {
-		err = errors.Wrap(err, "SELECT")
+	if err != nil {
 		logger.Error(err)
-	} else {
-		err = nil
+		return "", errors.Wrap(err, "SELECT")
 	}
-
-	return "", err
+	return string(buf), nil
 }
 
 // buildGetCondition builds a where condition string in the format "column_name = 'field_value' AND"

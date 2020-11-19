@@ -49,7 +49,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, string, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
-		return "", "", "", errors.Wrap(err, "failed to build get condition")
+		return "", "", "", errors.Wrap(err, "failed to get template")
 	}
 
 	query := `
