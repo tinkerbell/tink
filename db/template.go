@@ -45,7 +45,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	return nil
 }
 
-// GetTemplate returns a workflow template
+// GetTemplate returns template which is not deleted
 func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, string, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
@@ -58,6 +58,34 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (stri
 	WHERE
 		` + getCondition + `
 		deleted_at IS NULL
+	`
+	row := d.instance.QueryRowContext(ctx, query)
+	id := []byte{}
+	name := []byte{}
+	data := []byte{}
+	err = row.Scan(&id, &name, &data)
+	if err == nil {
+		return string(id), string(name), string(data), nil
+	}
+	if err != sql.ErrNoRows {
+		err = errors.Wrap(err, "SELECT")
+		logger.Error(err)
+	}
+	return "", "", "", err
+}
+
+// GetTemplateForWorkflow returns a template for workflow
+func (d TinkDB) GetTemplateForWorkflow(ctx context.Context, fields map[string]string) (string, string, string, error) {
+	getCondition, err := buildGetCondition(fields)
+	if err != nil {
+		return "", "", "", errors.Wrap(err, "failed to get template")
+	}
+
+	query := `
+	SELECT id, name, data
+	FROM template
+	WHERE
+		` + getCondition + `
 	`
 	row := d.instance.QueryRowContext(ctx, query)
 	id := []byte{}

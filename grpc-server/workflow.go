@@ -48,8 +48,15 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	defer timer.ObserveDuration()
 
 	logger.Info(msg)
+	fields := map[string]string{
+		"id": in.GetTemplate(),
+	}
+	_, _, templateData, err := s.db.GetTemplate(ctx, fields)
+	if err != nil {
+		return &workflow.CreateResponse{}, errors.Wrapf(err, errFailedToGetTemplate, in.GetTemplate())
+	}
+	data, err := renderTemplate(in.GetTemplate(), templateData, []byte(in.Hardware))
 
-	data, err := createYaml(ctx, s.db, in.Template, in.Hardware)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		logger.Error(err)
@@ -102,7 +109,15 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 		}
 		l.Error(err)
 	}
-	yamlData, err := createYaml(ctx, s.db, w.Template, w.Hardware)
+
+	fields := map[string]string{
+		"id": w.Template,
+	}
+	_, _, templateData, err := s.db.GetTemplateForWorkflow(ctx, fields)
+	if err != nil {
+		return &workflow.Workflow{}, errors.Wrapf(err, errFailedToGetTemplate, w.Template)
+	}
+	data, err := renderTemplate(w.Template, templateData, []byte(w.Hardware))
 	if err != nil {
 		return &workflow.Workflow{}, err
 	}
@@ -111,7 +126,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 		Template: w.Template,
 		Hardware: w.Hardware,
 		State:    state[w.State],
-		Data:     yamlData,
+		Data:     data,
 	}
 	l := logger.With("workflowID", w.ID)
 	l.Info("done " + msg)
@@ -268,17 +283,6 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	logger.Info("done listing workflows events")
 	metrics.CacheHits.With(labels).Inc()
 	return nil
-}
-
-func createYaml(ctx context.Context, db db.Database, templateID string, devices string) (string, error) {
-	fields := map[string]string{
-		"id": templateID,
-	}
-	_, _, templateData, err := db.GetTemplate(ctx, fields)
-	if err != nil {
-		return "", errors.Wrapf(err, errFailedToGetTemplate, templateID)
-	}
-	return renderTemplate(templateID, templateData, []byte(devices))
 }
 
 func renderTemplate(templateID, templateData string, devices []byte) (string, error) {
