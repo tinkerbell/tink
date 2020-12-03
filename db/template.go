@@ -14,6 +14,12 @@ import (
 
 // CreateTemplate creates a new workflow template
 func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+	fields := map[string]string{
+		"name": name,
+	}
+	if d.getTemplateByName(ctx, fields) {
+		return errors.New("Template with name '" + name + "' already exist")
+	}
 	_, err := wflow.Parse([]byte(data))
 	if err != nil {
 		return err
@@ -23,7 +29,6 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
-
 	_, err = tx.Exec(`
 	INSERT INTO
 		template (created_at, updated_at, name, data, id)
@@ -74,6 +79,36 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (stri
 	return "", "", "", err
 }
 
+// check for existing template
+func (d TinkDB) getTemplateByName(ctx context.Context, fields map[string]string) bool {
+	getCondition, err := buildGetCondition(fields)
+	if err != nil {
+		return true
+	}
+
+	query := `
+	SELECT id, name, data
+	FROM template
+	WHERE
+		` + getCondition + `
+		deleted_at IS NULL
+	`
+	row := d.instance.QueryRowContext(ctx, query)
+	id := []byte{}
+	name := []byte{}
+	data := []byte{}
+	err = row.Scan(&id, &name, &data)
+	if err == nil {
+		return true
+	}
+	if err != sql.ErrNoRows {
+		err = errors.Wrap(err, "SELECT")
+		logger.Error(err)
+		return false
+	}
+	return false
+}
+
 // GetTemplateForWorkflow returns a template for workflow
 func (d TinkDB) GetTemplateForWorkflow(ctx context.Context, fields map[string]string) (string, string, string, error) {
 	getCondition, err := buildGetCondition(fields)
@@ -86,6 +121,7 @@ func (d TinkDB) GetTemplateForWorkflow(ctx context.Context, fields map[string]st
 	FROM template
 	WHERE
 		` + getCondition + `
+		created_at IS NOT NULL
 	`
 	row := d.instance.QueryRowContext(ctx, query)
 	id := []byte{}

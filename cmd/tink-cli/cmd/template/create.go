@@ -69,7 +69,7 @@ func readAll(reader io.Reader) []byte {
 func addFlags() {
 	flags := createCmd.PersistentFlags()
 	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
-	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric)")
+	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric and case sensitive)")
 	_ = createCmd.MarkPersistentFlagRequired(fName)
 }
 

@@ -36,6 +36,11 @@ func (d DB) GetTemplate(ctx context.Context, fields map[string]string) (string, 
 	return d.GetTemplateFunc(ctx, fields)
 }
 
+// GetTemplateForWorkflow returns a workflow template
+func (d DB) GetTemplateForWorkflow(ctx context.Context, fields map[string]string) (string, string, string, error) {
+	return d.GetTemplateFunc(ctx, fields)
+}
+
 // DeleteTemplate deletes a workflow template
 func (d DB) DeleteTemplate(ctx context.Context, name string) error {
 	if d.TemplateDB != nil {
