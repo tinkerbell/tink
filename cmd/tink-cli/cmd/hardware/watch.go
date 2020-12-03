@@ -76,7 +76,7 @@ var watchCmd = &cobra.Command{
 						log.Fatal(err)
 					}
 					stdoutLock.Lock()
-					fmt.Printf("%s\n\n", string(hw))
+					fmt.Printf("%s\n\n", strings.ReplaceAll(string(hw), "\\", ""))
 					stdoutLock.Unlock()
 					return nil
 				})

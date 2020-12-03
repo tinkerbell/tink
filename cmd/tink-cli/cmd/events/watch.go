@@ -3,6 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -53,10 +54,31 @@ var (
 	}
 )
 
+type event struct {
+	ID           string    `json:"id,omitempty"`
+	ResourceID   string    `json:"resource_id,omitempty"`
+	ResourceType string    `json:"resource_type,omitempty"`
+	EventType    string    `json:"event_type,omitempty"`
+	Data         string    `json:"data,omitempty"`
+	CreatedAt    time.Time `json:"created_at,omitempty"`
+}
+
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
 	Use:   "watch",
 	Short: "watch for events of given type(s) on given resource(s)",
+	Long: `Watch allows you to stream and watch for events of given type(s) on given resource(s):
+# Watch all resources and event types:
+$ tink events watch
+# Watch all resources for all event types and also receive events for last 15m (default 5m):
+$ tink events watch -m 15
+# Watch hardware resources for create, update and delete:
+$ tink events watch -r hardware
+# Watch hardware resources for create and delete:
+$ tink events watch -r hardware -e create -e delete
+# Watch template and hardware resources for all events:
+$ tink events watch -r hardware -r template
+`,
 	Example: `tink events watch [flags]
 tink events watch --resource-type workflow --resource-type hardware --event-type create`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -73,14 +95,35 @@ tink events watch --resource-type workflow --resource-type hardware --event-type
 
 		informer := informers.New()
 		err := informer.Start(ctx, req, func(e *events.Event) error {
-			event, _ := json.Marshal(e)
+			var encodedData string
+			var jsonData map[string]interface{}
+
+			if er := json.Unmarshal(e.Data, &jsonData); er == nil {
+				encodedData = base64.StdEncoding.EncodeToString(e.Data)
+			} else {
+				encodedData = strings.Trim(string(e.Data), "\"")
+			}
+
+			d, err := base64.StdEncoding.DecodeString(encodedData)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			event, _ := json.Marshal(event{
+				ID:           e.Id,
+				ResourceID:   e.ResourceId,
+				EventType:    e.EventType.String(),
+				ResourceType: e.ResourceType.String(),
+				Data:         strings.ReplaceAll(string(d), "\\", ""),
+				CreatedAt:    time.Unix(e.CreatedAt.Seconds, 0),
+			})
 			var prettyJSON bytes.Buffer
-			err := json.Indent(&prettyJSON, event, "", "\t")
+			err = json.Indent(&prettyJSON, event, "", "\t")
 			if err != nil {
 				return err
 			}
 			stdoutLock.Lock()
-			fmt.Println(prettyJSON.String())
+			fmt.Printf("%s\n\n", prettyJSON.String())
 			stdoutLock.Unlock()
 			return nil
 		})
