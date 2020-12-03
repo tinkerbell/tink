@@ -16,6 +16,7 @@ const (
 )
 
 func Test_docsCmd(t *testing.T) {
+	subCommand := "docs"
 	type args struct {
 		name string
 	}
@@ -31,7 +32,7 @@ func Test_docsCmd(t *testing.T) {
 			want: &cobra.Command{},
 			cmdFunc: func(t *testing.T, c *cobra.Command) {
 				root := c.Root()
-				root.SetArgs([]string{"docs"})
+				root.SetArgs([]string{subCommand})
 				if err := root.Execute(); err == nil {
 					t.Error("expected an error")
 				}
@@ -44,7 +45,7 @@ func Test_docsCmd(t *testing.T) {
 			cmdFunc: func(t *testing.T, c *cobra.Command) {
 				root := c.Root()
 				out := &bytes.Buffer{}
-				root.SetArgs([]string{"docs", "--help"})
+				root.SetArgs([]string{subCommand, "--help"})
 				root.SetOutput(out)
 				if err := root.Execute(); err != nil {
 					t.Error(err)
@@ -66,7 +67,7 @@ func Test_docsCmd(t *testing.T) {
 				defer os.RemoveAll(dir)
 
 				root := c.Root()
-				root.SetArgs([]string{"docs", "markdown", "--path", dir})
+				root.SetArgs([]string{subCommand, "markdown", "--path", dir})
 
 				if err := root.Execute(); err != nil {
 					t.Error(err)
@@ -96,7 +97,7 @@ func Test_docsCmd(t *testing.T) {
 				defer os.RemoveAll(dir)
 
 				root := c.Root()
-				root.SetArgs([]string{"docs", "man", "--path", dir})
+				root.SetArgs([]string{subCommand, "man", "--path", dir})
 
 				if err := root.Execute(); err != nil {
 					t.Error(err)
@@ -120,7 +121,7 @@ func Test_docsCmd(t *testing.T) {
 			want: &cobra.Command{},
 			cmdFunc: func(t *testing.T, c *cobra.Command) {
 				root := c.Root()
-				root.SetArgs([]string{"docs", "invalid"})
+				root.SetArgs([]string{subCommand, "invalid"})
 				if err := root.Execute(); err == nil {
 					t.Error("expected error")
 				}
