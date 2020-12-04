@@ -51,7 +51,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	fields := map[string]string{
 		"id": in.GetTemplate(),
 	}
-	_, _, templateData, err := s.db.GetTemplate(ctx, fields)
+	_, _, templateData, err := s.db.GetTemplate(ctx, fields, false)
 	if err != nil {
 		return &workflow.CreateResponse{}, errors.Wrapf(err, errFailedToGetTemplate, in.GetTemplate())
 	}
@@ -113,7 +113,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	fields := map[string]string{
 		"id": w.Template,
 	}
-	_, _, templateData, err := s.db.GetTemplateForWorkflow(ctx, fields)
+	_, _, templateData, err := s.db.GetTemplate(ctx, fields, true)
 	if err != nil {
 		return &workflow.Workflow{}, errors.Wrapf(err, errFailedToGetTemplate, w.Template)
 	}

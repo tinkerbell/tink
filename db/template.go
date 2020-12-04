@@ -14,17 +14,18 @@ import (
 
 // CreateTemplate creates a new workflow template
 func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
-	fields := map[string]string{
-		"name": name,
-	}
-	if d.getTemplateByName(ctx, fields) {
-		return errors.New("Template with name '" + name + "' already exist")
-	}
 	_, err := wflow.Parse([]byte(data))
 	if err != nil {
 		return err
 	}
 
+	fields := map[string]string{
+		"name": name,
+	}
+	_, _, _, err = d.GetTemplate(ctx, fields, false)
+	if err != sql.ErrNoRows {
+		return errors.New("Template with name '" + name + "' already exist")
+	}
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -51,78 +52,30 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 }
 
 // GetTemplate returns template which is not deleted
-func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, string, error) {
+func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
 		return "", "", "", errors.Wrap(err, "failed to get template")
 	}
 
-	query := `
+	var query string
+	if !deleted {
+		query = `
 	SELECT id, name, data
 	FROM template
 	WHERE
-		` + getCondition + `
+		` + getCondition + ` AND 
 		deleted_at IS NULL
 	`
-	row := d.instance.QueryRowContext(ctx, query)
-	id := []byte{}
-	name := []byte{}
-	data := []byte{}
-	err = row.Scan(&id, &name, &data)
-	if err == nil {
-		return string(id), string(name), string(data), nil
-	}
-	if err != sql.ErrNoRows {
-		err = errors.Wrap(err, "SELECT")
-		logger.Error(err)
-	}
-	return "", "", "", err
-}
-
-// check for existing template
-func (d TinkDB) getTemplateByName(ctx context.Context, fields map[string]string) bool {
-	getCondition, err := buildGetCondition(fields)
-	if err != nil {
-		return true
-	}
-
-	query := `
+	} else {
+		query = `
 	SELECT id, name, data
 	FROM template
 	WHERE
 		` + getCondition + `
-		deleted_at IS NULL
 	`
-	row := d.instance.QueryRowContext(ctx, query)
-	id := []byte{}
-	name := []byte{}
-	data := []byte{}
-	err = row.Scan(&id, &name, &data)
-	if err == nil {
-		return true
-	}
-	if err != sql.ErrNoRows {
-		err = errors.Wrap(err, "SELECT")
-		logger.Error(err)
-		return false
-	}
-	return false
-}
-
-// GetTemplateForWorkflow returns a template for workflow
-func (d TinkDB) GetTemplateForWorkflow(ctx context.Context, fields map[string]string) (string, string, string, error) {
-	getCondition, err := buildGetCondition(fields)
-	if err != nil {
-		return "", "", "", errors.Wrap(err, "failed to get template")
 	}
 
-	query := `
-	SELECT id, name, data
-	FROM template
-	WHERE
-		` + getCondition + `
-		created_at IS NOT NULL
-	`
 	row := d.instance.QueryRowContext(ctx, query)
 	id := []byte{}
 	name := []byte{}

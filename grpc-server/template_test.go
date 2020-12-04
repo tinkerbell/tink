@@ -148,7 +148,7 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
@@ -171,7 +171,7 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
@@ -194,7 +194,7 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
@@ -217,7 +217,7 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
@@ -240,7 +240,7 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
@@ -263,7 +263,7 @@ func TestGetTemplate(t *testing.T) {
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
