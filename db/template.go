@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -18,26 +20,33 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	if err != nil {
 		return err
 	}
-
+	filter := make(map[string]string)
+	filter["name"] = name
+	uuid, _, _, err := d.GetTemplate(ctx, filter)
+	if err != nil && !strings.Contains(err.Error(), "no rows in result set") {
+		return err
+	}
+	if uuid != "" {
+		err = fmt.Errorf("%s %s already exists", uuid, name)
+		return err
+	}
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
-
 	_, err = tx.Exec(`
-	INSERT INTO
-		template (created_at, updated_at, name, data, id)
-	VALUES
-		($1, $1, $2, $3, $4)
-	ON CONFLICT (id)
-	DO
-	UPDATE SET
-		(updated_at, deleted_at, name, data) = ($1, NULL, $2, $3);
-	`, time.Now(), name, data, id)
+  INSERT INTO
+    template (created_at, updated_at, name, data, id)
+  VALUES
+    ($1, $1, $2, $3, $4)
+  ON CONFLICT (id)
+  DO
+  UPDATE SET
+    (updated_at, deleted_at, name, data) = ($1, NULL, $2, $3);
+  `, time.Now(), name, data, id)
 	if err != nil {
 		return errors.Wrap(err, "INSERT")
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return errors.Wrap(err, "COMMIT")
