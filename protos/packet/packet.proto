@@ -83,7 +83,7 @@ message Metadata {
     bool allow_pxe = 4;
     bool rescue = 5;
 
-    OperatingSystem operating_system_version = 6;
+    OperatingSystem operating_system = 6;
     bool always_pxe = 7;
     string ipxe_script_url = 8;
     repeated IP ips = 9;
