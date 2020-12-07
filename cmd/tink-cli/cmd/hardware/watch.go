@@ -4,16 +4,20 @@ package hardware
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/client"
-	"github.com/tinkerbell/tink/pkg"
+	"github.com/tinkerbell/tink/client/informers"
+	"github.com/tinkerbell/tink/protos/events"
 	"github.com/tinkerbell/tink/protos/hardware"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // watchCmd represents the watch command
@@ -25,25 +29,59 @@ var watchCmd = &cobra.Command{
 		return verifyUUIDs(args)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		then := time.Now().Local().Add(time.Duration(int64(-5) * int64(time.Minute)))
 		stdoutLock := sync.Mutex{}
 		for _, id := range args {
 			go func(id string) {
-				stream, err := client.HardwareClient.Watch(context.Background(), &hardware.GetRequest{Id: id})
-				if err != nil {
-					log.Fatal(err)
+				req := &events.WatchRequest{
+					ResourceId: id,
+					EventTypes: []events.EventType{
+						events.EventType_EVENT_TYPE_CREATED,
+						events.EventType_EVENT_TYPE_UPDATED,
+						events.EventType_EVENT_TYPE_DELETED,
+					},
+					ResourceTypes:   []events.ResourceType{events.ResourceType_RESOURCE_TYPE_HARDWARE},
+					WatchEventsFrom: timestamppb.New(then),
 				}
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
 
-				var hw *hardware.Hardware
-				for hw, err = stream.Recv(); err == nil && hw != nil; hw, err = stream.Recv() {
-					stdoutLock.Lock()
-					b, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
+				informer := informers.New()
+				err := informer.Start(ctx, req, func(e *events.Event) error {
+					var encodedData string
+					var jsonData map[string]interface{}
+
+					if er := json.Unmarshal(e.Data, &jsonData); er == nil {
+						encodedData = base64.StdEncoding.EncodeToString(e.Data)
+					} else {
+						encodedData = strings.Trim(string(e.Data), "\"")
+					}
+
+					d, err := base64.StdEncoding.DecodeString(encodedData)
 					if err != nil {
 						log.Fatal(err)
 					}
-					fmt.Println(string(b))
+
+					hd := &struct {
+						Data *hardware.Hardware
+					}{}
+
+					err = json.Unmarshal(d, hd)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					hw, err := json.Marshal(hd.Data)
+					if err != nil {
+						log.Fatal(err)
+					}
+					stdoutLock.Lock()
+					fmt.Printf("%s\n\n", strings.ReplaceAll(string(hw), "\\", ""))
 					stdoutLock.Unlock()
-				}
+					return nil
+				})
 				if err != nil && err != io.EOF {
+					cancel()
 					log.Fatal(err)
 				}
 			}(id)

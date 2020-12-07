@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/packethost/pkg/log"
+	"github.com/tinkerbell/tink/client/listener"
 	"github.com/tinkerbell/tink/db"
 	rpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
@@ -45,6 +47,20 @@ func main() {
 		log.With("num_applied_migrations", numAppliedMigrations).Info("Migrations applied successfully")
 		os.Exit(0)
 	}
+
+	connInfo := fmt.Sprintf("dbname=%s user=%s password=%s sslmode=%s",
+		os.Getenv("PGDATABASE"),
+		os.Getenv("PGUSER"),
+		os.Getenv("PGPASSWORD"),
+		os.Getenv("PGSSLMODE"),
+	)
+	err = listener.Init(connInfo)
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+
+	go tinkDB.PurgeEvents(errCh)
 
 	numAvailableMigrations, err := tinkDB.CheckRequiredMigrations()
 	if err != nil {

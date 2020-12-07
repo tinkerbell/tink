@@ -12,7 +12,10 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	migrate "github.com/rubenv/sql-migrate"
+	"github.com/tinkerbell/tink/client/informers"
+	ev "github.com/tinkerbell/tink/db/events"
 	"github.com/tinkerbell/tink/db/migration"
+	"github.com/tinkerbell/tink/protos/events"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -20,6 +23,7 @@ var logger log.Logger
 
 // Database interface for tinkerbell database operations
 type Database interface {
+	eventsers
 	hardware
 	template
 	workflow
@@ -60,6 +64,10 @@ type workflow interface {
 	ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error
 }
 
+type eventsers interface {
+	Events(req *events.WatchRequest, fn func(n informers.Notification) error) error
+}
+
 // TinkDB implements the Database interface
 type TinkDB struct {
 	instance *sql.DB
@@ -87,6 +95,15 @@ func (t *TinkDB) CheckRequiredMigrations() (int, error) {
 		return 0, err
 	}
 	return len(migrations) - len(records), nil
+}
+
+// PurgeEvents periodically checks the events table and
+// purges the events that have passed the defined EVENTS_TTL.
+func (t *TinkDB) PurgeEvents(errCh chan<- error) {
+	err := ev.Purge(t.instance, logger)
+	if err != nil {
+		errCh <- err
+	}
 }
 
 // Error returns the underlying cause for error
