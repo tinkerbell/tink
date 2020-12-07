@@ -41,7 +41,7 @@ func (d DB) GetWorkflowsForWorker(id string) ([]string, error) {
 
 // GetWorkflow returns a workflow
 func (d DB) GetWorkflow(ctx context.Context, id string) (db.Workflow, error) {
-	return db.Workflow{}, nil
+	return d.GetWorkflowFunc(ctx, id)
 }
 
 // DeleteWorkflow deletes a workflow

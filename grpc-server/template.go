@@ -62,7 +62,7 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 		"id":   in.GetId(),
 		"name": in.GetName(),
 	}
-	id, n, d, err := s.db.GetTemplate(ctx, fields)
+	id, n, d, err := s.db.GetTemplate(ctx, fields, false)
 	logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()

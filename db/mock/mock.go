@@ -13,6 +13,7 @@ import (
 type DB struct {
 	// workflow
 	CreateWorkflowFunc               func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error
+	GetWorkflowFunc                  func(ctx context.Context, id string) (db.Workflow, error)
 	GetfromWfDataTableFunc           func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error)
 	InsertIntoWfDataTableFunc        func(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error
 	GetWorkflowMetadataFunc          func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error)
@@ -24,5 +25,5 @@ type DB struct {
 	InsertIntoWorkflowEventTableFunc func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error
 	// template
 	TemplateDB      map[string]interface{}
-	GetTemplateFunc func(ctx context.Context, fields map[string]string) (string, string, string, error)
+	GetTemplateFunc func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
 }

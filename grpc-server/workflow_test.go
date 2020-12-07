@@ -24,7 +24,7 @@ tasks:
     actions:
     - name: "hello_world"
       image: hello-world
-      timeout: 60`
+	  timeout: 60`
 )
 
 func TestCreateWorkflow(t *testing.T) {
@@ -44,7 +44,7 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedToGetTemplate": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						return "", "", "", errors.New("failed to get template")
 					},
 				},
@@ -58,7 +58,7 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						return "", "", templateData, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
@@ -75,7 +75,7 @@ func TestCreateWorkflow(t *testing.T) {
 		"SuccessCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						return "", "", templateData, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
@@ -99,6 +99,63 @@ func TestCreateWorkflow(t *testing.T) {
 			res, err := s.CreateWorkflow(ctx, &workflow.CreateRequest{
 				Hardware: tc.args.wfHardware,
 				Template: tc.args.wfTemplate,
+			})
+			if err != nil {
+				assert.Error(t, err)
+				assert.Empty(t, res)
+				assert.True(t, tc.want.expectedError)
+				return
+			}
+			assert.NoError(t, err)
+			assert.NotEmpty(t, res)
+			assert.False(t, tc.want.expectedError)
+		})
+	}
+}
+
+func TestGetWorkflow(t *testing.T) {
+	type (
+		args struct {
+			db                     mock.DB
+			wfTemplate, wfHardware string
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
+	}{
+		"SuccessGettingWorkflow": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
+						return db.Workflow{
+							ID:       workflowID,
+							Template: templateID,
+							Hardware: hw}, nil
+					},
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+						return "", "", templateData, nil
+					},
+				},
+				wfTemplate: templateID,
+				wfHardware: hw,
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(tc.args.db)
+			res, err := s.GetWorkflow(ctx, &workflow.GetRequest{
+				Id: workflowID,
 			})
 			if err != nil {
 				assert.Error(t, err)

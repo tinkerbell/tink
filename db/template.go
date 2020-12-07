@@ -19,11 +19,17 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 		return err
 	}
 
+	fields := map[string]string{
+		"name": name,
+	}
+	_, _, _, err = d.GetTemplate(ctx, fields, false)
+	if err != sql.ErrNoRows {
+		return errors.New("Template with name '" + name + "' already exist")
+	}
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
-
 	_, err = tx.Exec(`
 	INSERT INTO
 		template (created_at, updated_at, name, data, id)
@@ -45,20 +51,31 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	return nil
 }
 
-// GetTemplate returns a workflow template
-func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string) (string, string, string, error) {
+// GetTemplate returns template which is not deleted
+func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
 		return "", "", "", errors.Wrap(err, "failed to get template")
 	}
 
-	query := `
+	var query string
+	if !deleted {
+		query = `
+	SELECT id, name, data
+	FROM template
+	WHERE
+		` + getCondition + ` AND 
+		deleted_at IS NULL
+	`
+	} else {
+		query = `
 	SELECT id, name, data
 	FROM template
 	WHERE
 		` + getCondition + `
-		deleted_at IS NULL
 	`
+	}
+
 	row := d.instance.QueryRowContext(ctx, query)
 	id := []byte{}
 	name := []byte{}
