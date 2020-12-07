@@ -9,8 +9,9 @@ import (
 )
 
 type Template struct {
-	ID   uuid.UUID
-	Data string
+	ID      uuid.UUID
+	Data    string
+	Deleted bool
 }
 
 // CreateTemplate creates a new workflow template
@@ -20,12 +21,20 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 	}
 
 	if _, ok := d.TemplateDB[name]; ok {
-		return errors.New("Template name already exist in the database")
+		tmpl := d.TemplateDB[name]
+		switch stmpl := tmpl.(type) {
+		case Template:
+			if !stmpl.Deleted {
+				return errors.New("Template name already exist in the database")
+			}
+		default:
+			return errors.New("Not a Template type in the database")
+		}
 	}
-
 	d.TemplateDB[name] = Template{
-		ID:   id,
-		Data: data,
+		ID:      id,
+		Data:    data,
+		Deleted: false,
 	}
 
 	return nil

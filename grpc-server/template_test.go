@@ -83,7 +83,10 @@ func TestCreateTemplate(t *testing.T) {
 			args: args{
 				db: mock.DB{
 					TemplateDB: map[string]interface{}{
-						"template_1": template1,
+						"template_1": mock.Template{
+							Data:    template1,
+							Deleted: false,
+						},
 					},
 				},
 				name:     "template_2",
@@ -98,7 +101,10 @@ func TestCreateTemplate(t *testing.T) {
 			args: args{
 				db: mock.DB{
 					TemplateDB: map[string]interface{}{
-						"template_1": template1,
+						"template_1": mock.Template{
+							Data:    template1,
+							Deleted: false,
+						},
 					},
 				},
 				name:     "template_1",
@@ -106,6 +112,24 @@ func TestCreateTemplate(t *testing.T) {
 			},
 			want: want{
 				expectedError: true,
+			},
+		},
+
+		"SuccessfulTemplateCreationAfterDeletingWithSameName": {
+			args: args{
+				db: mock.DB{
+					TemplateDB: map[string]interface{}{
+						"template_1": mock.Template{
+							Data:    template1,
+							Deleted: true,
+						},
+					},
+				},
+				name:     "template_1",
+				template: template2,
+			},
+			want: want{
+				expectedError: false,
 			},
 		},
 	}
@@ -124,6 +148,7 @@ func TestCreateTemplate(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEmpty(t, res)
 			}
+			tc.args.db.ClearTemplateDB()
 		})
 	}
 }
