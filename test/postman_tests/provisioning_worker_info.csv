@@ -1,0 +1,7 @@
+﻿server_id,operating_system,notes
+ee49656e-a15d-4f82-9de1-2ca29b4861af,ubuntu_20_04,rhel_8 (no t3.small.x86 image present)
+0f974b08-043f-4f36-b518-dc1f800ee4dc,ubuntu_18_04,esxi_7.0 (no t3.small.x86 image present)
+0782b1fa-85f5-4a49-9403-b286c9979826,rhel_7,flatcar (no t3.small.x86 image present)
+b9ccfc6c-3043-431f-89c0-fa63c77ded7e,centos_8,nixos_19.03 (no t3.small.x86 image present)
+1ef7a71c-7a33-439b-85e2-8cbf09cb2ff0,debian_10,
+b24fe6ad-1e1f-4030-b822-96e7a2bf919b,windows_2016_standard,
