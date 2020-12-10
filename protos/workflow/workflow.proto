@@ -12,13 +12,13 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 /*
- * WorkflowSerive exposese various capabilities when it comes to starting and
+ * WorkflowService exposes various capabilities when it comes to starting and
  * monitoring a workflow
  */
 service WorkflowService {
   /*
    * CreateWorkflow targets a specific hardware and it starts from a particular
-   * template. From now one the selected hardware is capable of picking the
+   * template. The selected hardware is capable of picking the
    * workflow up for execution.
    */
   rpc CreateWorkflow(CreateRequest) returns (CreateResponse) {
@@ -172,7 +172,7 @@ message CreateRequest {
 }
 
 /*
- * This is the response returned after a successfull workflow creation. It
+ * This is the response returned after a successful workflow creation. It
  * contains the workflow id.
  */
 message CreateResponse {
@@ -238,7 +238,7 @@ message WorkflowActionStatus {
   string action_name = 3;
   /*
    * The state of the action. Those are the same described for workflow as
-   * well. pending, running, successfull and so on.
+   * well. pending, running, successful and so on.
    */
   State action_status = 4;
   /*
@@ -306,15 +306,15 @@ message WorkflowAction {
    */
   repeated string command = 5;
   /*
-   * On timeout used to be a way to execute an action if the current one timesout
+   * On timeout used to be a way to execute an action if the current one times out
    * but with the event system in place this is not needed anymore
    */
-  repeated string on_timeout = 6 [deprecated = true];
+  repeated string on_timeout = 6;
   /*
-   * On failure used to be a way to execute an action if the current one timesout
+   * On failure used to be a way to execute an action if the current one fails
    * but with the event system in place this is not needed anymore
    */
-  repeated string on_failure = 7 [deprecated = true];
+  repeated string on_failure = 7;
   string worker_id = 8;
   /*
    * You can mount directory from your host to the running action, mainly to

@@ -1,6 +1,6 @@
 /*
  * Hardware represents a single device managed by Tinkerbell.
- * It can be identifed with its own UUID but more in general it can be everything that has a Mac address.
+ * It can be identifed with its own UUID but more in general it can be everything that has a MAC address.
  */
 syntax = "proto3";
 
@@ -75,12 +75,13 @@ service HardwareService {
 
 /*
  * PushRequest is the body for the Push method. It contains information about
- * an hardware.
+ * a piece of hardware.
  */
 message PushRequest {
   /*
-   * hardware describes how the hardware you want to register to Tinkerbell looks like.
-   * Hostname, mac address, DHCP, network interfaces, metadata and so on.
+   * Hardware describes the hardware you want to register to Tinkerbell and
+   * what it looks like.
+   * Hostname, MAC address, DHCP, network interfaces, metadata and so on.
    */
   Hardware data = 1;
 }
@@ -116,12 +117,12 @@ message Hardware {
       int64 family = 4;
     }
     /*
-     * The mac address for your hardware.  It is important to get it
+     * The MAC address for your hardware.  It is important to get it
      * right because it is used from Tinkerbell to dispatch workflows to the
      * right destination.
      */
     string mac = 1;
-    reserved 2;
+    reserved 2; // obsolete ip
     /*
      * Hostname represents the hostname of your server
      */
@@ -226,7 +227,7 @@ message Hardware {
     reserved 1; // obsolete dhcp
     reserved 2; // obsolete netboot
     /*
-     * Configure the network interfaces you have in your hardware and how their
+     * Configure the network interfaces you have in your hardware and defines their
      * behavior.
      */
     repeated Interface interfaces = 3;

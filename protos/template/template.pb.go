@@ -1,4 +1,4 @@
-//*
+//
 // A template is a set of jobs and actions that can be performed to some
 // hardware.
 // It uses YAML to describe order and relation of those actions. Each action is
@@ -40,7 +40,7 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
-//*
+//
 // Empty represents an empty response
 type Empty struct {
 	state         protoimpl.MessageState
@@ -80,31 +80,31 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_template_template_proto_rawDescGZIP(), []int{0}
 }
 
-//*
+//
 // WorkflowTemplate describes the template itself.
 type WorkflowTemplate struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	//*
+	//
 	// The template identifier
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	//*
+	//
 	// The name of the template. You can see it as a friendly way to remember a
 	// template
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	//*
+	//
 	// When a template got created
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	//*
+	//
 	// The last time a template was modified
 	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	//*
+	//
 	// When a template got deleted. This is the value used to identify a deleted
 	// template as well. If empty the template can be used to generate workflows.
 	DeletedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
-	//*
+	//
 	// The content of the template in its YAML representation
 	Data string `protobuf:"bytes,7,opt,name=data,proto3" json:"data,omitempty"`
 }
@@ -629,19 +629,19 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type TemplateServiceClient interface {
-	//*
+	//
 	// CreateTemplate stores a template in the Tinkerbell server.
 	CreateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error)
-	//*
+	//
 	// GetTemplate returns a specific template via its identifier.
 	GetTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error)
-	//*
+	//
 	// DeleteTemplate deletes a template via its identifier.
 	DeleteTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error)
-	//*
+	//
 	// ListTemplates returns all the template stored in Tinkerbell server
 	ListTemplates(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error)
-	//*
+	//
 	// UpdateTemplate updates a template
 	// TODO: Read the code and figure out how an update work
 	UpdateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error)
@@ -725,19 +725,19 @@ func (c *templateServiceClient) UpdateTemplate(ctx context.Context, in *Workflow
 
 // TemplateServiceServer is the server API for TemplateService service.
 type TemplateServiceServer interface {
-	//*
+	//
 	// CreateTemplate stores a template in the Tinkerbell server.
 	CreateTemplate(context.Context, *WorkflowTemplate) (*CreateResponse, error)
-	//*
+	//
 	// GetTemplate returns a specific template via its identifier.
 	GetTemplate(context.Context, *GetRequest) (*WorkflowTemplate, error)
-	//*
+	//
 	// DeleteTemplate deletes a template via its identifier.
 	DeleteTemplate(context.Context, *GetRequest) (*Empty, error)
-	//*
+	//
 	// ListTemplates returns all the template stored in Tinkerbell server
 	ListTemplates(*ListRequest, TemplateService_ListTemplatesServer) error
-	//*
+	//
 	// UpdateTemplate updates a template
 	// TODO: Read the code and figure out how an update work
 	UpdateTemplate(context.Context, *WorkflowTemplate) (*Empty, error)
