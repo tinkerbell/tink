@@ -21,6 +21,7 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 )
 
 var (
@@ -71,6 +72,7 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, db *db.Tink
 	workflow.RegisterWorkflowServiceServer(s, server)
 	hardware.RegisterHardwareServiceServer(s, server)
 	events.RegisterEventsServiceServer(s, server)
+	reflection.Register(s)
 
 	grpc_prometheus.Register(s)
 
