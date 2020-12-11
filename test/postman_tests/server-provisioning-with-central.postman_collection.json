@@ -1,780 +1,711 @@
 {
-	"info": {
-		"_postman_id": "147131e0-6951-466f-8ec1-bec60c7c270f",
-		"name": "server-provisioning-with-central",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Provision Worker",
-			"item": [
-				{
-					"name": "Get Hardware Id to get Device Id",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "a25b2e7a-1bea-471c-be58-9b5e4f748c29",
-								"exec": [
-									"pm.variables.get(\"serverId\", data.server_id);",
-									"",
-									""
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"id": "9f9c0cea-ddb4-4647-a637-55712101a683",
-								"exec": [
-									"responseBody = pm.response.json();",
-									"var state = responseBody.state;",
-									"",
-									"// Check to see if the server is \"provisionable\"",
-									"if (state === \"provisionable\" && pm.response.to.have.status(200)) {",
-									"    console.log(\"start provisioning\")",
-									"    postman.setNextRequest(\"Provision Server with Operating System\");",
-									"} else {",
-									"    console.log(\"exiting tests\")",
-									"    postman.setNextRequest(null)",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"type": "text",
-								"value": "{{consumerToken}}"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"type": "text",
-								"value": "true"
-							},
-							{
-								"key": "X-Auth-Token",
-								"type": "text",
-								"value": "{{authToken}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/hardware/{{serverId}}",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"hardware",
-								"{{serverId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Provision Server with Operating System",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "6de02c4a-000c-4527-a943-c86d6a687a6b",
-								"exec": [
-									"pm.variables.set(\"serverId\", data.server_id);",
-									"pm.variables.set(\"operatingSystem\", data.operating_system);"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"id": "03543d24-9ca6-43b6-a01b-082269c26940",
-								"exec": [
-									"responseBody = pm.response.json();",
-									"",
-									"// TODO get device id, if it returns from the POST /devices call",
-									"// Try to get device id, if null return ReferenceError and exit tests",
-									"try {",
-									"    var deviceInstance = responseBody.instance.href;",
-									"    var deviceId = deviceInstance.substring(9)",
-									"    pm.environment.set(\"deviceId\", deviceId);",
-									"} catch (ReferenceError) {",
-									"    postman.setNextRequest(null)",
-									"    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
-									"}",
-									"",
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"value": "{{consumerToken}}"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"value": "true"
-							},
-							{
-								"key": "X-Auth-Token",
-								"value": "EY8N8EamAa4YxdXyNqYLP2L3zRRACBTF"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    // \"server_id\": \"{{serverId}}\",\n    \"hostname\": \"postman-dw2lab-api-test-{{$timestamp}}\",\n    \"facility\": \"dfw2rk59\",\n    \"plan\": \"t3.small.x86\",\n    \"operating_system\": \"{{operatingSystem}}\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/projects/{{staffProjectId}}/devices",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"projects",
-								"{{staffProjectId}}",
-								"devices"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"id": "44e6fe7e-898a-4fee-9c40-63c357034f09",
-						"type": "text/javascript",
-						"exec": [
-							""
-						]
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"id": "d6b40979-8350-4d9a-b466-f4c85500e183",
-						"type": "text/javascript",
-						"exec": [
-							""
-						]
-					}
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Server Action Reboot",
-			"item": [
-				{
-					"name": "Get Hardware Id to get Device Id",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "f8320712-9f8c-468f-be15-0690d4e3ef7f",
-								"exec": [
-									"pm.variables.get(\"serverId\", data.server_id);"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"id": "83560a82-fd0d-4171-986c-53aa591f7e54",
-								"exec": [
-									"responseBody = pm.response.json();",
-									"state = responseBody.state;",
-									"",
-									"// Try to get device id, if null return ReferenceError and exit tests",
-									"try {",
-									"    var deviceInstance = responseBody.instance.href;",
-									"    var deviceId = deviceInstance.substring(9)",
-									"    pm.environment.set(\"deviceId\", deviceId);",
-									"} catch (ReferenceError) {",
-									"    postman.setNextRequest(null)",
-									"    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
-									"}",
-									"",
-									"if (state === \"failed\") {",
-									"    console.log(\"Provisioned failed. Exiting tests.\")",
-									"    postman.setNextRequest(null)",
-									"} else if (state === \"provisioning\") {",
-									"    console.log(\"Rechecking status after 30 seconds\")",
-									"    setTimeout(30000)",
-									"    postman.setNextRequest(\"Get Hardware Id to get Device Id\");",
-									"} else if (state === \"in_use\") {",
-									"    postman.setNextRequest(\"Reboot Server\")",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"value": "4190f3e7124ceac9c4646aa5b7dad0d562445a5946990238d396e6a354397d60",
-								"type": "text"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"value": "true",
-								"type": "text"
-							},
-							{
-								"key": "X-Auth-Token",
-								"value": "{{authToken}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/hardware/{{serverId}}",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"hardware",
-								"{{serverId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Reboot Server",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "1e313fc9-5876-4ac1-9f7b-76618d170558",
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"id": "a5b45314-6224-4254-986a-20eb18896e61",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"value": "{{consumerToken}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"value": "true",
-								"type": "text"
-							},
-							{
-								"key": "X-Auth-Token",
-								"value": "{{authToken}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"facility\": \"dfw2rk59\",\n    \"plan\": \"t3.small.x86\",\n    \"operating_system\": \"ubuntu_18_04\",\n    \"server_id\": {{data.server_id}}\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/devices/{{deviceId}}/actions?=reboot",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"devices",
-								"{{deviceId}}",
-								"actions"
-							],
-							"query": [
-								{
-									"key": "",
-									"value": "reboot"
-								}
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Server Action Rescue",
-			"item": [
-				{
-					"name": "Get Hardware Id to get Device Id",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "57829584-3bf9-4ad0-9dfc-066527c19e47",
-								"exec": [
-									"pm.variables.get(\"serverId\", data.server_id);"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"id": "a4c548c9-777f-4f1e-aecf-d5114dc87716",
-								"exec": [
-									"responseBody = pm.response.json();",
-									"state = responseBody.state;",
-									"",
-									"// Try to get device id, if null return ReferenceError and exit tests",
-									"try {",
-									"    var deviceInstance = responseBody.instance.href;",
-									"    var deviceId = deviceInstance.substring(9)",
-									"    pm.environment.set(\"deviceId\", deviceId);",
-									"} catch (ReferenceError) {",
-									"    postman.setNextRequest(null)",
-									"    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
-									"}",
-									"",
-									"if (state === \"failed\") {",
-									"    console.log(\"Provisioned failed. Exiting tests.\")",
-									"    postman.setNextRequest(null)",
-									"} else if (state === \"provisioning\") {",
-									"    console.log(\"Rechecking status after 30 seconds\")",
-									"    setTimeout(30000)",
-									"    postman.setNextRequest(\"Get Hardware Id to get Device Id\");",
-									"} else if (state === \"in_use\") {",
-									"    postman.setNextRequest(\"Rescue Server\")",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"value": "{{consumerToken}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"value": "true",
-								"type": "text"
-							},
-							{
-								"key": "X-Auth-Token",
-								"value": "{{authToken}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/hardware/{{serverId}}",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"hardware",
-								"{{serverId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Rescue Server",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "99e9939c-c9c6-45f6-8355-1fa5305f3a2d",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"value": "{{consumerToken}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"value": "true",
-								"type": "text"
-							},
-							{
-								"key": "X-Auth-Token",
-								"value": "{{authToken}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/devices/{{deviceId}}/actions?=rescue",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"devices",
-								"{{deviceId}}",
-								"actions"
-							],
-							"query": [
-								{
-									"key": "",
-									"value": "rescue"
-								}
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Deprovision Server",
-			"item": [
-				{
-					"name": "Get Hardware Id to get Device Id",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "04c9a0c7-968e-49a9-8481-2ffd55b0d659",
-								"exec": [
-									"pm.variables.get(\"serverId\", data.server_id);"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"id": "e59b0c0f-9a80-4766-9574-bf3ab22c35f4",
-								"exec": [
-									"responseBody = pm.response.json();",
-									"state = responseBody.state;",
-									"",
-									"// Try to get device id, if null return ReferenceError and exit tests",
-									"try {",
-									"    var deviceInstance = responseBody.instance.href;",
-									"    var deviceId = deviceInstance.substring(9)",
-									"    pm.environment.set(\"deviceId\", deviceId);",
-									"} catch (ReferenceError) {",
-									"    postman.setNextRequest(null)",
-									"    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
-									"}",
-									"",
-									"if (state === \"failed\") {",
-									"    console.log(\"Provisioned failed. Exiting tests.\")",
-									"    postman.setNextRequest(null)",
-									"} else if (state === \"provisioning\") {",
-									"    console.log(\"Rechecking status after 30 seconds\")",
-									"    setTimeout(30000)",
-									"    postman.setNextRequest(\"Get Hardware Id to get Device Id\");",
-									"} else if (state === \"in_use\") {",
-									"    postman.setNextRequest(\"Deprovision Server\")",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"value": "{{consumerToken}}",
-								"type": "text"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"value": "true",
-								"type": "text"
-							},
-							{
-								"key": "X-Auth-Token",
-								"value": "{{authToken}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/hardware/{{serverId}}",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"hardware",
-								"{{serverId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Deprovision Server",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "X-Consumer-Token",
-								"type": "text",
-								"value": "{{consumerToken}}"
-							},
-							{
-								"key": "X-Packet-Staff",
-								"type": "text",
-								"value": "true"
-							},
-							{
-								"key": "X-Auth-Token",
-								"type": "text",
-								"value": "{{authToken}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{staffUrl}}/devices/{{deviceId}}",
-							"host": [
-								"{{staffUrl}}"
-							],
-							"path": [
-								"devices",
-								"{{deviceId}}"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"id": "ff34fa03-d916-4b0a-8daf-0aaed23c192e",
-						"type": "text/javascript",
-						"exec": [
-							""
-						]
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"id": "c96d8bc9-8302-49a4-8d02-daf09864f633",
-						"type": "text/javascript",
-						"exec": [
-							""
-						]
-					}
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Get Operating System",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"id": "f8320712-9f8c-468f-be15-0690d4e3ef7f",
-						"exec": [
-							"pm.variables.get(\"server_id\", data.server_id);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"id": "83560a82-fd0d-4171-986c-53aa591f7e54",
-						"exec": [
-							"response_body = pm.response.json();",
-							"device_instance = response_body.instance.href;",
-							"device_id = device_instance.substring(9)",
-							"pm.environment.set(\"device_id\", device_id);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "X-Consumer-Token",
-						"value": "{{consumerToken}}",
-						"type": "text"
-					},
-					{
-						"key": "X-Packet-Staff",
-						"value": "true",
-						"type": "text"
-					},
-					{
-						"key": "X-Auth-Token",
-						"value": "{{authToken}}",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{staffUrl}}/operating-systems",
-					"host": [
-						"{{staffUrl}}"
-					],
-					"path": [
-						"operating-systems"
-					]
-				}
-			},
-			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"id": "f482e3af-64bc-4570-8a16-51de61a988c1",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"id": "9691c4ff-13a2-4fdd-a7b6-0c59d002db42",
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
-	"protocolProfileBehavior": {}
+  "info": {
+    "_postman_id": "147131e0-6951-466f-8ec1-bec60c7c270f",
+    "name": "server-provisioning-with-central",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Provision Worker",
+      "item": [
+        {
+          "name": "Get Hardware Id to get Device Id",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "a25b2e7a-1bea-471c-be58-9b5e4f748c29",
+                "exec": [
+                  "pm.variables.get(\"serverId\", data.server_id);",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "9f9c0cea-ddb4-4647-a637-55712101a683",
+                "exec": [
+                  "responseBody = pm.response.json();",
+                  "var state = responseBody.state;",
+                  "",
+                  "// Check to see if the server is \"provisionable\"",
+                  "if (state === \"provisionable\" && pm.response.to.have.status(200)) {",
+                  "    console.log(\"start provisioning\")",
+                  "    postman.setNextRequest(\"Provision Server with Operating System\");",
+                  "} else {",
+                  "    console.log(\"exiting tests\")",
+                  "    postman.setNextRequest(null)",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "type": "text",
+                "value": "{{consumerToken}}"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "type": "text",
+                "value": "true"
+              },
+              {
+                "key": "X-Auth-Token",
+                "type": "text",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/hardware/{{serverId}}",
+              "host": ["{{staffUrl}}"],
+              "path": ["hardware", "{{serverId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Provision Server with Operating System",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "6de02c4a-000c-4527-a943-c86d6a687a6b",
+                "exec": [
+                  "pm.variables.set(\"serverId\", data.server_id);",
+                  "pm.variables.set(\"operatingSystem\", data.operating_system);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "03543d24-9ca6-43b6-a01b-082269c26940",
+                "exec": [
+                  "responseBody = pm.response.json();",
+                  "",
+                  "// TODO get device id, if it returns from the POST /devices call",
+                  "// Try to get device id, if null return ReferenceError and exit tests",
+                  "try {",
+                  "    var deviceInstance = responseBody.instance.href;",
+                  "    var deviceId = deviceInstance.substring(9)",
+                  "    pm.environment.set(\"deviceId\", deviceId);",
+                  "} catch (ReferenceError) {",
+                  "    postman.setNextRequest(null)",
+                  "    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
+                  "}",
+                  "",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "value": "{{consumerToken}}"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "value": "true"
+              },
+              {
+                "key": "X-Auth-Token",
+                "value": "EY8N8EamAa4YxdXyNqYLP2L3zRRACBTF"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    // \"server_id\": \"{{serverId}}\",\n    \"hostname\": \"postman-dw2lab-api-test-{{$timestamp}}\",\n    \"facility\": \"dfw2rk59\",\n    \"plan\": \"t3.small.x86\",\n    \"operating_system\": \"{{operatingSystem}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/projects/{{staffProjectId}}/devices",
+              "host": ["{{staffUrl}}"],
+              "path": ["projects", "{{staffProjectId}}", "devices"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "44e6fe7e-898a-4fee-9c40-63c357034f09",
+            "type": "text/javascript",
+            "exec": [""]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "d6b40979-8350-4d9a-b466-f4c85500e183",
+            "type": "text/javascript",
+            "exec": [""]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Server Action Reboot",
+      "item": [
+        {
+          "name": "Get Hardware Id to get Device Id",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "f8320712-9f8c-468f-be15-0690d4e3ef7f",
+                "exec": ["pm.variables.get(\"serverId\", data.server_id);"],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "83560a82-fd0d-4171-986c-53aa591f7e54",
+                "exec": [
+                  "responseBody = pm.response.json();",
+                  "state = responseBody.state;",
+                  "",
+                  "// Try to get device id, if null return ReferenceError and exit tests",
+                  "try {",
+                  "    var deviceInstance = responseBody.instance.href;",
+                  "    var deviceId = deviceInstance.substring(9)",
+                  "    pm.environment.set(\"deviceId\", deviceId);",
+                  "} catch (ReferenceError) {",
+                  "    postman.setNextRequest(null)",
+                  "    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
+                  "}",
+                  "",
+                  "if (state === \"failed\") {",
+                  "    console.log(\"Provisioned failed. Exiting tests.\")",
+                  "    postman.setNextRequest(null)",
+                  "} else if (state === \"provisioning\") {",
+                  "    console.log(\"Rechecking status after 30 seconds\")",
+                  "    setTimeout(30000)",
+                  "    postman.setNextRequest(\"Get Hardware Id to get Device Id\");",
+                  "} else if (state === \"in_use\") {",
+                  "    postman.setNextRequest(\"Reboot Server\")",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "value": "4190f3e7124ceac9c4646aa5b7dad0d562445a5946990238d396e6a354397d60",
+                "type": "text"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "value": "true",
+                "type": "text"
+              },
+              {
+                "key": "X-Auth-Token",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/hardware/{{serverId}}",
+              "host": ["{{staffUrl}}"],
+              "path": ["hardware", "{{serverId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reboot Server",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "1e313fc9-5876-4ac1-9f7b-76618d170558",
+                "exec": [""],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "a5b45314-6224-4254-986a-20eb18896e61",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "value": "{{consumerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "value": "true",
+                "type": "text"
+              },
+              {
+                "key": "X-Auth-Token",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"facility\": \"dfw2rk59\",\n    \"plan\": \"t3.small.x86\",\n    \"operating_system\": \"ubuntu_18_04\",\n    \"server_id\": {{data.server_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/devices/{{deviceId}}/actions?=reboot",
+              "host": ["{{staffUrl}}"],
+              "path": ["devices", "{{deviceId}}", "actions"],
+              "query": [
+                {
+                  "key": "",
+                  "value": "reboot"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Server Action Rescue",
+      "item": [
+        {
+          "name": "Get Hardware Id to get Device Id",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "57829584-3bf9-4ad0-9dfc-066527c19e47",
+                "exec": ["pm.variables.get(\"serverId\", data.server_id);"],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "a4c548c9-777f-4f1e-aecf-d5114dc87716",
+                "exec": [
+                  "responseBody = pm.response.json();",
+                  "state = responseBody.state;",
+                  "",
+                  "// Try to get device id, if null return ReferenceError and exit tests",
+                  "try {",
+                  "    var deviceInstance = responseBody.instance.href;",
+                  "    var deviceId = deviceInstance.substring(9)",
+                  "    pm.environment.set(\"deviceId\", deviceId);",
+                  "} catch (ReferenceError) {",
+                  "    postman.setNextRequest(null)",
+                  "    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
+                  "}",
+                  "",
+                  "if (state === \"failed\") {",
+                  "    console.log(\"Provisioned failed. Exiting tests.\")",
+                  "    postman.setNextRequest(null)",
+                  "} else if (state === \"provisioning\") {",
+                  "    console.log(\"Rechecking status after 30 seconds\")",
+                  "    setTimeout(30000)",
+                  "    postman.setNextRequest(\"Get Hardware Id to get Device Id\");",
+                  "} else if (state === \"in_use\") {",
+                  "    postman.setNextRequest(\"Rescue Server\")",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "value": "{{consumerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "value": "true",
+                "type": "text"
+              },
+              {
+                "key": "X-Auth-Token",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/hardware/{{serverId}}",
+              "host": ["{{staffUrl}}"],
+              "path": ["hardware", "{{serverId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rescue Server",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "99e9939c-c9c6-45f6-8355-1fa5305f3a2d",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "value": "{{consumerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "value": "true",
+                "type": "text"
+              },
+              {
+                "key": "X-Auth-Token",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/devices/{{deviceId}}/actions?=rescue",
+              "host": ["{{staffUrl}}"],
+              "path": ["devices", "{{deviceId}}", "actions"],
+              "query": [
+                {
+                  "key": "",
+                  "value": "rescue"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Deprovision Server",
+      "item": [
+        {
+          "name": "Get Hardware Id to get Device Id",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "04c9a0c7-968e-49a9-8481-2ffd55b0d659",
+                "exec": ["pm.variables.get(\"serverId\", data.server_id);"],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "e59b0c0f-9a80-4766-9574-bf3ab22c35f4",
+                "exec": [
+                  "responseBody = pm.response.json();",
+                  "state = responseBody.state;",
+                  "",
+                  "// Try to get device id, if null return ReferenceError and exit tests",
+                  "try {",
+                  "    var deviceInstance = responseBody.instance.href;",
+                  "    var deviceId = deviceInstance.substring(9)",
+                  "    pm.environment.set(\"deviceId\", deviceId);",
+                  "} catch (ReferenceError) {",
+                  "    postman.setNextRequest(null)",
+                  "    console.log(\"Unable to get device id.\\n Message: \" + ReferenceError)",
+                  "}",
+                  "",
+                  "if (state === \"failed\") {",
+                  "    console.log(\"Provisioned failed. Exiting tests.\")",
+                  "    postman.setNextRequest(null)",
+                  "} else if (state === \"provisioning\") {",
+                  "    console.log(\"Rechecking status after 30 seconds\")",
+                  "    setTimeout(30000)",
+                  "    postman.setNextRequest(\"Get Hardware Id to get Device Id\");",
+                  "} else if (state === \"in_use\") {",
+                  "    postman.setNextRequest(\"Deprovision Server\")",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "value": "{{consumerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "value": "true",
+                "type": "text"
+              },
+              {
+                "key": "X-Auth-Token",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/hardware/{{serverId}}",
+              "host": ["{{staffUrl}}"],
+              "path": ["hardware", "{{serverId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deprovision Server",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Consumer-Token",
+                "type": "text",
+                "value": "{{consumerToken}}"
+              },
+              {
+                "key": "X-Packet-Staff",
+                "type": "text",
+                "value": "true"
+              },
+              {
+                "key": "X-Auth-Token",
+                "type": "text",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{staffUrl}}/devices/{{deviceId}}",
+              "host": ["{{staffUrl}}"],
+              "path": ["devices", "{{deviceId}}"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "ff34fa03-d916-4b0a-8daf-0aaed23c192e",
+            "type": "text/javascript",
+            "exec": [""]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "c96d8bc9-8302-49a4-8d02-daf09864f633",
+            "type": "text/javascript",
+            "exec": [""]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Get Operating System",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "f8320712-9f8c-468f-be15-0690d4e3ef7f",
+            "exec": ["pm.variables.get(\"server_id\", data.server_id);"],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "83560a82-fd0d-4171-986c-53aa591f7e54",
+            "exec": [
+              "response_body = pm.response.json();",
+              "device_instance = response_body.instance.href;",
+              "device_id = device_instance.substring(9)",
+              "pm.environment.set(\"device_id\", device_id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Consumer-Token",
+            "value": "{{consumerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "X-Packet-Staff",
+            "value": "true",
+            "type": "text"
+          },
+          {
+            "key": "X-Auth-Token",
+            "value": "{{authToken}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{staffUrl}}/operating-systems",
+          "host": ["{{staffUrl}}"],
+          "path": ["operating-systems"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "f482e3af-64bc-4570-8a16-51de61a988c1",
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "9691c4ff-13a2-4fdd-a7b6-0c59d002db42",
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "protocolProfileBehavior": {}
 }
