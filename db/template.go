@@ -57,7 +57,7 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	SELECT id, name, data
 	FROM template
 	WHERE
-		` + getCondition + ` AND 
+		` + getCondition + ` AND
 		deleted_at IS NULL
 	`
 	} else {
@@ -79,7 +79,7 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
-		logger.Error(err)
+		d.logger.Error(err)
 	}
 	return "", "", "", err
 }
@@ -136,7 +136,7 @@ func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *time
 		err = rows.Scan(&id, &name, &createdAt, &updatedAt)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT")
-			logger.Error(err)
+			d.logger.Error(err)
 			return err
 		}
 
