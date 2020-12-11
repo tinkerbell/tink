@@ -19,13 +19,6 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 		return err
 	}
 
-	fields := map[string]string{
-		"name": name,
-	}
-	_, _, _, err = d.GetTemplate(ctx, fields, false)
-	if err != sql.ErrNoRows {
-		return errors.New("Template with name '" + name + "' already exist")
-	}
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
