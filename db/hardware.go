@@ -167,7 +167,7 @@ func (d TinkDB) GetAll(fn func([]byte) error) error {
 		err = rows.Scan(&buf)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT")
-			logger.Error(err)
+			d.logger.Error(err)
 			return err
 		}
 

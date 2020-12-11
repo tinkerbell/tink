@@ -28,7 +28,7 @@ func (d TinkDB) Events(req *events.WatchRequest, fn func(n informers.Notificatio
 		err = rows.Scan(&n.ID, &n.ResourceID, &n.ResourceType, &n.EventType, &n.CreatedAt, &n.Data)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT")
-			logger.Error(err)
+			d.logger.Error(err)
 			return err
 		}
 		n.Prefix()
