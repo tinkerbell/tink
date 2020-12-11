@@ -44,7 +44,7 @@ func MustParse(yamlContent []byte) *Workflow {
 }
 
 // MustParseFromFile parse a template from a file and it panics if any error is
-// deteced. Ideal to be used in testing.
+// detected. Ideal to be used in testing.
 func MustParseFromFile(path string) *Workflow {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
