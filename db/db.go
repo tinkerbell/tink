@@ -19,8 +19,6 @@ import (
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
-var logger log.Logger
-
 // Database interface for tinkerbell database operations
 type Database interface {
 	eventsers
@@ -71,17 +69,12 @@ type eventsers interface {
 // TinkDB implements the Database interface
 type TinkDB struct {
 	instance *sql.DB
+	logger   log.Logger
 }
 
 // Connect returns a connection to postgres database
-func Connect(lg log.Logger) *TinkDB {
-	logger = lg
-	db, err := sql.Open("postgres", "")
-	if err != nil {
-		logger.Error(err)
-		panic(err)
-	}
-	return &TinkDB{instance: db}
+func Connect(db *sql.DB, lg log.Logger) *TinkDB {
+	return &TinkDB{instance: db, logger: lg}
 }
 
 func (t *TinkDB) Migrate() (int, error) {
@@ -100,7 +93,7 @@ func (t *TinkDB) CheckRequiredMigrations() (int, error) {
 // PurgeEvents periodically checks the events table and
 // purges the events that have passed the defined EVENTS_TTL.
 func (t *TinkDB) PurgeEvents(errCh chan<- error) {
-	err := ev.Purge(t.instance, logger)
+	err := ev.Purge(t.instance, t.logger)
 	if err != nil {
 		errCh <- err
 	}
@@ -120,7 +113,6 @@ func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (st
 	buf := []byte{}
 	err := row.Scan(&buf)
 	if err != nil {
-		logger.Error(err)
 		return "", errors.Wrap(err, "SELECT")
 	}
 	return string(buf), nil

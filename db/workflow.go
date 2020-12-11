@@ -258,7 +258,7 @@ func (d TinkDB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataR
 
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
-		logger.Error(err)
+		d.logger.Error(err)
 	}
 
 	return []byte{}, nil
@@ -289,7 +289,7 @@ func (d TinkDB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowData
 
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from workflow_data")
-		logger.Error(err)
+		d.logger.Error(err)
 	}
 
 	return []byte{}, nil
@@ -319,7 +319,7 @@ func (d TinkDB) GetWorkflowsForWorker(id string) ([]string, error) {
 		err = rows.Scan(&workerID)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT from worflow_worker_map")
-			logger.Error(err)
+			d.logger.Error(err)
 			return nil, err
 		}
 		wfID = append(wfID, workerID)
@@ -350,7 +350,7 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
-		logger.Error(err)
+		d.logger.Error(err)
 	}
 
 	return Workflow{}, nil
@@ -422,7 +422,7 @@ func (d TinkDB) ListWorkflows(fn func(wf Workflow) error) error {
 		err = rows.Scan(&id, &tmp, &tar, &crAt, &upAt)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT")
-			logger.Error(err)
+			d.logger.Error(err)
 			return err
 		}
 
@@ -541,7 +541,7 @@ func (d TinkDB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.Workf
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from worflow_state")
-		logger.Error(err)
+		d.logger.Error(err)
 	}
 	return &pb.WorkflowContext{}, nil
 }
@@ -567,7 +567,7 @@ func (d TinkDB) GetWorkflowActions(ctx context.Context, wfID string) (*pb.Workfl
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from worflow_state")
-		logger.Error(err)
+		d.logger.Error(err)
 	}
 	return &pb.WorkflowActionList{}, nil
 }
@@ -623,7 +623,7 @@ func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionSt
 		err = rows.Scan(&id, &tName, &aName, &secs, &msg, &status, &evTime)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT")
-			logger.Error(err)
+			d.logger.Error(err)
 			return err
 		}
 		createdAt, _ := ptypes.TimestampProto(evTime)

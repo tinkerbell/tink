@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
@@ -34,7 +35,23 @@ func main() {
 	errCh := make(chan error, 2)
 	facility := os.Getenv("FACILITY")
 
-	tinkDB := db.Connect(logger)
+	// TODO(gianarb): I moved this up because we need to be sure that both
+	// connection, the one used for the resources and the one used for
+	// listening to events and notification are coming in the same way.
+	// BUT we should be using the right flags
+	connInfo := fmt.Sprintf("dbname=%s user=%s password=%s sslmode=%s",
+		os.Getenv("PGDATABASE"),
+		os.Getenv("PGUSER"),
+		os.Getenv("PGPASSWORD"),
+		os.Getenv("PGSSLMODE"),
+	)
+
+	dbCon, err := sql.Open("postgres", connInfo)
+	if err != nil {
+		logger.Error(err)
+		panic(err)
+	}
+	tinkDB := db.Connect(dbCon, logger)
 
 	_, onlyMigration := os.LookupEnv("ONLY_MIGRATION")
 	if onlyMigration {
@@ -48,12 +65,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	connInfo := fmt.Sprintf("dbname=%s user=%s password=%s sslmode=%s",
-		os.Getenv("PGDATABASE"),
-		os.Getenv("PGUSER"),
-		os.Getenv("PGPASSWORD"),
-		os.Getenv("PGSSLMODE"),
-	)
 	err = listener.Init(connInfo)
 	if err != nil {
 		log.Fatal(err)
