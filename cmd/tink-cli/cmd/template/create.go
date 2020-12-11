@@ -2,6 +2,7 @@ package template
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,21 +13,25 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/template"
+	"gopkg.in/yaml.v2"
 )
 
 var (
 	fPath        = "path"
-	fName        = "name"
 	filePath     string
 	templateName string
 )
+
+type TemplateName struct {
+	Name string `yaml:"name"`
+}
 
 // createCmd represents the create subcommand for template command
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "create a workflow template ",
 	Example: `tink template create [flags]
-cat /tmp/example.tmpl | tink template create -n example`,
+cat /tmp/example.tmpl | tink template create `,
 	PreRunE: func(c *cobra.Command, args []string) error {
 		if !isInputFromPipe() {
 			path, _ := c.Flags().GetString(fPath)
@@ -69,8 +74,6 @@ func readAll(reader io.Reader) []byte {
 func addFlags() {
 	flags := createCmd.PersistentFlags()
 	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
-	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric and case sensitive)")
-	_ = createCmd.MarkPersistentFlagRequired(fName)
 }
 
 func tryParseTemplate(data string) error {
@@ -78,7 +81,16 @@ func tryParseTemplate(data string) error {
 	if _, err := tmpl.Parse(data); err != nil {
 		return err
 	}
-	return nil
+	var templ TemplateName
+	err := yaml.Unmarshal([]byte(data), &templ)
+	if err != nil {
+		return err
+	}
+	if templ.Name != "" {
+		templateName = templ.Name
+		return nil
+	}
+	return errors.New("Template does not have `name` field which is mandatory")
 }
 
 func createTemplate(data []byte) {

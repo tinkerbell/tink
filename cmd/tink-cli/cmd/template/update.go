@@ -19,9 +19,8 @@ var updateCmd = &cobra.Command{
 	Short:   "update a template",
 	Example: "tink template update [id] [flags]",
 	PreRunE: func(c *cobra.Command, args []string) error {
-		name, _ := c.Flags().GetString(fName)
 		path, _ := c.Flags().GetString(fPath)
-		if name == "" && path == "" {
+		if path == "" {
 			return fmt.Errorf("%v requires at least one flag", c.UseLine())
 		}
 		return nil
@@ -46,19 +45,17 @@ var updateCmd = &cobra.Command{
 
 func updateTemplate(id string) {
 	req := template.WorkflowTemplate{Id: id}
-	if filePath == "" && templateName != "" {
-		req.Name = templateName
-	} else if filePath != "" && templateName == "" {
+	if filePath != "" {
 		data := readTemplateData()
 		if data != "" {
 			if err := tryParseTemplate(data); err != nil {
 				log.Fatal(err)
 			}
+			req.Name = templateName
 			req.Data = data
 		}
 	} else {
-		req.Name = templateName
-		req.Data = readTemplateData()
+		log.Fatal("Nothing is provided in the file path")
 	}
 
 	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)
