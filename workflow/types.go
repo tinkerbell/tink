@@ -14,8 +14,8 @@ type Task struct {
 	Name        string            `yaml:"name"`
 	WorkerAddr  string            `yaml:"worker"`
 	Actions     []Action          `yaml:"actions"`
-	Volumes     []string          `yaml:"volumes"`
-	Environment map[string]string `yaml:"environment"`
+	Volumes     []string          `yaml:"volumes,omitempty"`
+	Environment map[string]string `yaml:"environment,omitempty"`
 }
 
 // Action is the basic executional unit for a workflow
@@ -23,9 +23,9 @@ type Action struct {
 	Name        string            `yaml:"name"`
 	Image       string            `yaml:"image"`
 	Timeout     int64             `yaml:"timeout"`
-	Command     []string          `yaml:"command"`
-	OnTimeout   []string          `yaml:"on-timeout"`
-	OnFailure   []string          `yaml:"on-failure"`
+	Command     []string          `yaml:"command,omitempty"`
+	OnTimeout   []string          `yaml:"on-timeout,omitempty"`
+	OnFailure   []string          `yaml:"on-failure,omitempty"`
 	Volumes     []string          `yaml:"volumes,omitempty"`
 	Environment map[string]string `yaml:"environment,omitempty"`
 }
