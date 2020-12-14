@@ -6,8 +6,6 @@ func Get202010071530() *migrate.Migration {
 	return &migrate.Migration{
 		Id: "202010071530-init-events-table-and-triggers",
 		Up: []string{`
-SET ROLE tinkerbell;
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DO $$ BEGIN
