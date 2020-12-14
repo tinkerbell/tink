@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/packethost/pkg/log"
+	"github.com/pkg/errors"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/tinkerbell/tink/db"
@@ -52,16 +53,28 @@ func NewPostgresDatabaseClient(t *testing.T, ctx context.Context, req NewPostgre
 	if err != nil {
 		t.Error(err)
 	}
-	// TODO: not totally sure why this is needed yet.
-	time.Sleep(1 * time.Second)
-	if req.ApplyMigration {
+
+CHECK_DB:
+	for ii := 0; ii < 5; ii++ {
+		err = dbCon.Ping()
+		if err != nil {
+			t.Log(errors.Wrap(err, "db check"))
+			time.Sleep(1 * time.Second)
+			goto CHECK_DB
+		}
 	}
-	tinkDB := db.Connect(dbCon, log.Test(t, "db-test"))
-	n, err := tinkDB.Migrate()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	t.Log(fmt.Sprintf("applied %d migrations", n))
+
+	tinkDB := db.Connect(dbCon, log.Test(t, "db-test"))
+	if req.ApplyMigration {
+		n, err := tinkDB.Migrate()
+		if err != nil {
+			t.Error(err)
+		}
+		t.Log(fmt.Sprintf("applied %d migrations", n))
+	}
 	return dbCon, tinkDB, func() error {
 		return postgresC.Terminate(ctx)
 	}

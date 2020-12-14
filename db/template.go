@@ -84,8 +84,8 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	return "", "", "", err
 }
 
-// DeleteTemplate deletes a workflow template
-func (d TinkDB) DeleteTemplate(ctx context.Context, name string) error {
+// DeleteTemplate deletes a workflow template by id
+func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -97,7 +97,7 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, name string) error {
 		deleted_at = NOW()
 	WHERE
 		id = $1;
-	`, name)
+	`, id)
 	if err != nil {
 		return errors.Wrap(err, "UPDATE")
 	}
