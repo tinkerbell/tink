@@ -1,5 +1,7 @@
 package workflow
 
+import "time"
+
 // Workflow represents a workflow to be executed
 type Workflow struct {
 	Version       string `yaml:"version"`
@@ -28,4 +30,14 @@ type Action struct {
 	OnFailure   []string          `yaml:"on-failure,omitempty"`
 	Volumes     []string          `yaml:"volumes,omitempty"`
 	Environment map[string]string `yaml:"environment,omitempty"`
+}
+
+// Template represents a workflow template
+type Template struct {
+	ID        string    `json:"id,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	DeletedAt time.Time `json:"deleted_at,omitempty"`
+	Data      string    `json:"data,omitempty"`
 }
