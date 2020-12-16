@@ -1,6 +1,6 @@
 # Tinkerbell
 
-[![Build Status](https://github.com/tinkerbell/tink/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/tink/workflows/For%20each%20commit%20and%20PR/badge.svg)
+[![Build Status](https://github.com/tinkerbell/tink/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/tink/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/tinkerbell/tink/branch/master/graph/badge.svg)](https://codecov.io/gh/tinkerbell/tink)
 ![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4512/badge)](https://bestpractices.coreinfrastructure.org/projects/4512)
