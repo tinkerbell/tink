@@ -1,4 +1,4 @@
-package integration
+package db_test
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/go-cmp/cmp"
@@ -17,8 +16,6 @@ import (
 	"github.com/tinkerbell/tink/workflow"
 	"gopkg.in/yaml.v2"
 )
-
-var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func TestCreateTemplate(t *testing.T) {
 	ctx := context.Background()
@@ -181,7 +178,13 @@ func TestCreateTemplate_TwoTemplateWithSameNameButFirstOneIsDeleted(t *testing.T
 	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
-	defer cl()
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
 	w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
 	w.ID = "545f7ce9-5313-49c6-8704-0ed98814f1f7"
 	err := createTemplateFromWorkflowType(ctx, tinkDB, w)

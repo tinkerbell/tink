@@ -1,4 +1,4 @@
-package integration
+package db_test
 
 import (
 	"context"
@@ -22,6 +22,7 @@ type NewPostgresDatabaseRequest struct {
 // scene it is starting a Docker container that will get cleaned up when the
 // test is over. Tests using this function are safe to run in parallel
 func NewPostgresDatabaseClient(t *testing.T, ctx context.Context, req NewPostgresDatabaseRequest) (*sql.DB, *db.TinkDB, func() error) {
+	testcontainers.SkipIfProviderIsNotHealthy(t)
 	postgresC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:        "postgres:13.1",
@@ -54,14 +55,14 @@ func NewPostgresDatabaseClient(t *testing.T, ctx context.Context, req NewPostgre
 		t.Error(err)
 	}
 
-CHECK_DB:
 	for ii := 0; ii < 5; ii++ {
 		err = dbCon.Ping()
 		if err != nil {
 			t.Log(errors.Wrap(err, "db check"))
 			time.Sleep(1 * time.Second)
-			goto CHECK_DB
+			continue
 		}
+		break
 	}
 	if err != nil {
 		t.Fatal(err)

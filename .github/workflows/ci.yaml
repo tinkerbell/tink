@@ -24,7 +24,7 @@ jobs:
       with:
         version: v1.31
     - name: go test
-      run: go test -coverprofile=coverage.txt ./... ./db/_integration
+      run: go test -coverprofile=coverage.txt ./...
     - name: upload codecov
       run: bash <(curl -s https://codecov.io/bash)
     - uses: cachix/install-nix-action@v12
