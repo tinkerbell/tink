@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,6 +37,83 @@ tasks:
 
 	veryLongName = "this is a very long string, that is used to test if the name is too long hahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhuhahahehehohohuhu"
 )
+
+func TestMustParse(t *testing.T) {
+	table := []struct {
+		Name    string
+		Input   string
+		Recover func(t *testing.T)
+	}{
+		{
+			Name:  "parse-valid-template",
+			Input: validTemplate,
+			Recover: func(t *testing.T) {
+				if r := recover(); r != nil {
+					t.Errorf("panic not expected: %s", r)
+				}
+			},
+		},
+		{
+			Name:  "parse-invalid-template",
+			Input: invalidTemplate,
+			Recover: func(t *testing.T) {
+				if r := recover(); r == nil {
+					t.Errorf("panic expected but we didn't got one: %s", r)
+				}
+			},
+		},
+	}
+	for _, s := range table {
+		t.Run(s.Name, func(t *testing.T) {
+			defer s.Recover(t)
+			_ = MustParse([]byte(s.Input))
+		})
+	}
+}
+
+func TestMustParseFromFile(t *testing.T) {
+	table := []struct {
+		Name    string
+		Input   string
+		Recover func(t *testing.T)
+	}{
+		{
+			Name:  "parse-valid-template",
+			Input: validTemplate,
+			Recover: func(t *testing.T) {
+				if r := recover(); r != nil {
+					t.Errorf("panic not expected: %s", r)
+				}
+			},
+		},
+		{
+			Name:  "parse-invalid-template",
+			Input: invalidTemplate,
+			Recover: func(t *testing.T) {
+				if r := recover(); r == nil {
+					t.Errorf("panic expected but we didn't got one: %s", r)
+				}
+			},
+		},
+	}
+	for _, s := range table {
+		t.Run(s.Name, func(t *testing.T) {
+			defer s.Recover(t)
+			file, err := ioutil.TempFile(os.TempDir(), "tinktest")
+			if err != nil {
+				t.Error(err)
+			}
+			defer os.Remove(file.Name())
+
+			err = ioutil.WriteFile(file.Name(), []byte(s.Input), os.ModeAppend)
+			if err != nil {
+				t.Error(err)
+			}
+
+			_ = MustParseFromFile(file.Name())
+		})
+	}
+}
 
 func TestParse(t *testing.T) {
 	testcases := []struct {

@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"io/ioutil"
+
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -29,6 +31,26 @@ func Parse(yamlContent []byte) (*Workflow, error) {
 	}
 
 	return &workflow, nil
+}
+
+// MustParse parse a slice of bytes to a template. It an error occurs the
+// function triggers a panic. Common utility for testing purpose
+func MustParse(yamlContent []byte) *Workflow {
+	w, err := Parse(yamlContent)
+	if err != nil {
+		panic(err)
+	}
+	return w
+}
+
+// MustParseFromFile parse a template from a file and it panics if any error is
+// detected. Ideal to be used in testing.
+func MustParseFromFile(path string) *Workflow {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return MustParse(content)
 }
 
 // validate validates a workflow template against certain requirements
