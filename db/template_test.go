@@ -146,7 +146,12 @@ func TestCreateTemplate(t *testing.T) {
 			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
-			defer cl()
+			defer func() {
+				err := cl()
+				if err != nil {
+					t.Error(err)
+				}
+			}()
 			var wg sync.WaitGroup
 			wg.Add(len(s.Input))
 			for _, tt := range s.Input {
