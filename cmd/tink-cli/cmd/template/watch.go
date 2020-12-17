@@ -26,7 +26,7 @@ import (
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
 	Use:     "watch",
-	Short:   "register to watch an id for any changes",
+	Short:   "watch for events of given template(s)",
 	Example: "tink template watch 224ee6ab-ad62-4070-a900-ed816444cec0 cb76ae54-93e9-401c-a5b2-d455bb3800b1",
 	Args: func(_ *cobra.Command, args []string) error {
 		if len(args) < 1 {
