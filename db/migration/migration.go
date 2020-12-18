@@ -10,6 +10,7 @@ func GetMigrations() *migrate.MemoryMigrationSource {
 			Get202010221010(),
 			Get202012041103(),
 			Get202012091055(),
+			Get2020121691335(),
 		},
 	}
 }
