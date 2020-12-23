@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/template"
+	"github.com/tinkerbell/tink/workflow"
 )
 
 // updateCmd represents the get subcommand for template command
@@ -19,7 +20,7 @@ var updateCmd = &cobra.Command{
 	Short:   "update a template",
 	Example: "tink template update [id] [flags]",
 	PreRunE: func(c *cobra.Command, args []string) error {
-		path, _ := c.Flags().GetString(fPath)
+		path, _ := c.Flags().GetString(file)
 		if path == "" {
 			return fmt.Errorf("%v requires at least one flag", c.UseLine())
 		}
@@ -48,10 +49,11 @@ func updateTemplate(id string) {
 	if filePath != "" {
 		data := readTemplateData()
 		if data != "" {
-			if err := tryParseTemplate(data); err != nil {
+			wf, err := workflow.Parse([]byte(data))
+			if err != nil {
 				log.Fatal(err)
 			}
-			req.Name = templateName
+			req.Name = wf.Name
 			req.Data = data
 		}
 	} else {
@@ -81,8 +83,7 @@ func readTemplateData() string {
 
 func init() {
 	flags := updateCmd.PersistentFlags()
-	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
-	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric)")
+	flags.StringVarP(&filePath, "file", "", "", "path to the template file")
 
 	SubCommands = append(SubCommands, updateCmd)
 }
