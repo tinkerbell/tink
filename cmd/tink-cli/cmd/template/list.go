@@ -22,6 +22,11 @@ var (
 	updatedAt = "Updated At"
 )
 
+var (
+	quiet bool
+	t     table.Writer
+)
+
 // listCmd represents the list subcommand for template command
 var listCmd = &cobra.Command{
 	Use:     "list",
@@ -34,15 +39,19 @@ var listCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		t := table.NewWriter()
+		if quiet {
+			listTemplates()
+			return
+		}
+		t = table.NewWriter()
 		t.SetOutputMirror(os.Stdout)
 		t.AppendHeader(table.Row{id, name, createdAt, updatedAt})
-		listTemplates(cmd, t)
+		listTemplates()
 		t.Render()
 	},
 }
 
-func listTemplates(cmd *cobra.Command, t table.Writer) {
+func listTemplates() {
 	list, err := client.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
 		FilterBy: &template.ListRequest_Name{
 			Name: "*",
@@ -54,11 +63,7 @@ func listTemplates(cmd *cobra.Command, t table.Writer) {
 
 	var tmp *template.WorkflowTemplate
 	for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
-		cr := tmp.CreatedAt
-		up := tmp.UpdatedAt
-		t.AppendRows([]table.Row{
-			{tmp.Id, tmp.Name, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
-		})
+		printOutput(t, tmp)
 	}
 
 	if err != nil && err != io.EOF {
@@ -66,7 +71,24 @@ func listTemplates(cmd *cobra.Command, t table.Writer) {
 	}
 }
 
+func printOutput(t table.Writer, tmp *template.WorkflowTemplate) {
+	if quiet {
+		fmt.Println(tmp.Id)
+	} else {
+		cr := tmp.CreatedAt
+		up := tmp.UpdatedAt
+		t.AppendRows([]table.Row{
+			{tmp.Id, tmp.Name, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
+		})
+	}
+}
+
+func addListFlags() {
+	flags := listCmd.Flags()
+	flags.BoolVarP(&quiet, "quiet", "q", false, "only display template IDs")
+}
+
 func init() {
-	listCmd.DisableFlagsInUseLine = true
+	addListFlags()
 	SubCommands = append(SubCommands, listCmd)
 }
