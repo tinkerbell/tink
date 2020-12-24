@@ -8,8 +8,7 @@
         "version": "18.04",
         "os_slug": "ubuntu_18_04"
       },
-      "crypted_root_password":
-        "$6$xyz$/pdZy4hazXmqu1t0TACitLlKZPD4bFyRUw6ycXiOTdf4kcnkmpgmtg9zUpEE8rG9KtOWwX7kp1Gl96NCGbDk60",
+      "crypted_root_password": "$6$xyz$/pdZy4hazXmqu1t0TACitLlKZPD4bFyRUw6ycXiOTdf4kcnkmpgmtg9zUpEE8rG9KtOWwX7kp1Gl96NCGbDk60",
       "storage": {
         "disks": [
           {
