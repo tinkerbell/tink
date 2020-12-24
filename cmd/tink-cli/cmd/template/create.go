@@ -24,8 +24,14 @@ var (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "create a workflow template ",
-	Example: `tink template create [flags]
-cat /tmp/example.tmpl | tink template create -n example`,
+	Long: `The create command allows you create workflow templates:
+
+# Pipe the file to create a template:
+$ cat /tmp/example.tmpl | tink template create
+
+# Create template using the --file flag:
+$ tink template create --file /tmp/example.tmpl
+`,
 	PreRunE: func(c *cobra.Command, args []string) error {
 		if !isInputFromPipe() {
 			path, _ := c.Flags().GetString(file)
