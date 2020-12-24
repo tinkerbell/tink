@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -44,8 +45,9 @@ func Test_templateCmd(t *testing.T) {
 				if err := root.Execute(); err != nil {
 					t.Error(err)
 				}
-				if !strings.Contains(out.String(), "list all saved templates") {
-					t.Error("expected output should include list all saved templates")
+				want := "list all saved templates"
+				if !strings.Contains(out.String(), want) {
+					t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, out.String()))
 				}
 			},
 		},
@@ -61,8 +63,9 @@ func Test_templateCmd(t *testing.T) {
 				if err := root.Execute(); err != nil {
 					t.Error(err)
 				}
-				if !strings.Contains(out.String(), "create a workflow template") {
-					t.Error("expected output should include create a workflow template")
+				want := "Create template using the --file flag"
+				if !strings.Contains(out.String(), want) {
+					t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, out.String()))
 				}
 			},
 		},
@@ -78,8 +81,9 @@ func Test_templateCmd(t *testing.T) {
 				if err := root.Execute(); err != nil {
 					t.Error(err)
 				}
-				if !strings.Contains(out.String(), "delete a template") {
-					t.Error("expected output should include delete a template")
+				want := "delete a template"
+				if !strings.Contains(out.String(), want) {
+					t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, out.String()))
 				}
 			},
 		},
@@ -95,8 +99,9 @@ func Test_templateCmd(t *testing.T) {
 				if err := root.Execute(); err != nil {
 					t.Error(err)
 				}
-				if !strings.Contains(out.String(), "get a template") {
-					t.Error("expected output should include get a template")
+				want := "get a template"
+				if !strings.Contains(out.String(), want) {
+					t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, out.String()))
 				}
 			},
 		},
@@ -112,8 +117,9 @@ func Test_templateCmd(t *testing.T) {
 				if err := root.Execute(); err != nil {
 					t.Error(err)
 				}
-				if !strings.Contains(out.String(), "update a template") {
-					t.Error("expected output should include update a template")
+				want := "Update an existing template"
+				if !strings.Contains(out.String(), want) {
+					t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, out.String()))
 				}
 			},
 		},

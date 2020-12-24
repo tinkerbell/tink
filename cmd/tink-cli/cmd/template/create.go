@@ -15,10 +15,7 @@ import (
 	"github.com/tinkerbell/tink/workflow"
 )
 
-var (
-	file     = "file"
-	filePath string
-)
+var filePath string
 
 // createCmd represents the create subcommand for template command
 var createCmd = &cobra.Command{
@@ -34,8 +31,7 @@ $ tink template create --file /tmp/example.tmpl
 `,
 	PreRunE: func(c *cobra.Command, args []string) error {
 		if !isInputFromPipe() {
-			path, _ := c.Flags().GetString(file)
-			if path == "" {
+			if filePath == "" {
 				return errors.New("either pipe the template or provide the required '--file' flag")
 			}
 		}

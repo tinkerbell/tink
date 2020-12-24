@@ -18,15 +18,14 @@ import (
 var updateCmd = &cobra.Command{
 	Use:   "update [id] [flags]",
 	Short: "update a workflow template",
-	Long: `The update command allows you change the definition of an existing workflow template :
+	Long: `The update command allows you change the definition of an existing workflow template:
 
 # Update an existing template:
 $ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --file /tmp/example.tmpl
 `,
 	PreRunE: func(c *cobra.Command, args []string) error {
-		path, _ := c.Flags().GetString(file)
-		if path == "" {
-			return fmt.Errorf("%v requires at least one flag", c.UseLine())
+		if filePath == "" {
+			return fmt.Errorf("%v requires the '--file' flag", c.UseLine())
 		}
 		return nil
 	},
