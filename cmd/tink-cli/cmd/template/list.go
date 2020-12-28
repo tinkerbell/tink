@@ -63,7 +63,7 @@ func listTemplates() {
 
 	var tmp *template.WorkflowTemplate
 	for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
-		printOutput(t, tmp)
+		printOutput(tmp)
 	}
 
 	if err != nil && err != io.EOF {
@@ -71,7 +71,7 @@ func listTemplates() {
 	}
 }
 
-func printOutput(t table.Writer, tmp *template.WorkflowTemplate) {
+func printOutput(tmp *template.WorkflowTemplate) {
 	if quiet {
 		fmt.Println(tmp.Id)
 	} else {

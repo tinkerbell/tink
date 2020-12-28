@@ -15,6 +15,9 @@ import (
 )
 
 var (
+	quiet bool
+	t     table.Writer
+
 	hCreatedAt = "Created At"
 	hUpdatedAt = "Updated At"
 )
@@ -31,16 +34,19 @@ var listCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(c *cobra.Command, args []string) {
-		t := table.NewWriter()
+		if quiet {
+			listWorkflows()
+			return
+		}
+		t = table.NewWriter()
 		t.SetOutputMirror(os.Stdout)
 		t.AppendHeader(table.Row{hID, hTemplate, hDevice, hCreatedAt, hUpdatedAt})
-		listWorkflows(c, t)
+		listWorkflows()
 		t.Render()
-
 	},
 }
 
-func listWorkflows(c *cobra.Command, t table.Writer) {
+func listWorkflows() {
 	list, err := client.WorkflowClient.ListWorkflows(context.Background(), &workflow.Empty{})
 	if err != nil {
 		log.Fatal(err)
@@ -48,11 +54,7 @@ func listWorkflows(c *cobra.Command, t table.Writer) {
 
 	var wf *workflow.Workflow
 	for wf, err = list.Recv(); err == nil && wf.Id != ""; wf, err = list.Recv() {
-		cr := wf.CreatedAt
-		up := wf.UpdatedAt
-		t.AppendRows([]table.Row{
-			{wf.Id, wf.Template, wf.Hardware, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
-		})
+		printOutput(wf)
 	}
 
 	if err != nil && err != io.EOF {
@@ -60,7 +62,24 @@ func listWorkflows(c *cobra.Command, t table.Writer) {
 	}
 }
 
+func printOutput(wf *workflow.Workflow) {
+	if quiet {
+		fmt.Println(wf.Id)
+	} else {
+		cr := wf.CreatedAt
+		up := wf.UpdatedAt
+		t.AppendRows([]table.Row{
+			{wf.Id, wf.Template, wf.Hardware, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
+		})
+	}
+}
+
+func addListFlags() {
+	flags := listCmd.Flags()
+	flags.BoolVarP(&quiet, "quiet", "q", false, "only display workflow IDs")
+}
+
 func init() {
-	listCmd.DisableFlagsInUseLine = true
+	addListFlags()
 	SubCommands = append(SubCommands, listCmd)
 }
