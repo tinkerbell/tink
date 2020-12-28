@@ -30,7 +30,7 @@ var listCmd = &cobra.Command{
 	Deprecated: `This command is deprecated and it will change at some
 	point. Please try what follows:
 
-	# If you want to retrive a single workflow you know by ID
+	# If you want to retrieve a single workflow you know by ID
 	tink workflow get [id]
 	# You can print it in JSON and CSV as well
 	tink workflow get -o json [id]
