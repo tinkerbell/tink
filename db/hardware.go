@@ -27,6 +27,15 @@ func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
 		return errors.Wrap(err, "DELETE")
 	}
 
+	_, err = tx.Exec(`
+	DELETE FROM events
+	WHERE
+		resource_id = $1;
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "DELETE EVENTS")
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return errors.Wrap(err, "COMMIT")

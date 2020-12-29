@@ -369,7 +369,7 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, state int32) erro
 		workflow_id = $1;
 	`, id)
 	if err != nil {
-		return errors.Wrap(err, "Delete Workflow Error")
+		return errors.Wrap(err, "DELETE")
 	}
 
 	_, err = tx.Exec(`
@@ -378,7 +378,7 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, state int32) erro
 		workflow_id = $1;
 	`, id)
 	if err != nil {
-		return errors.Wrap(err, "Delete Workflow Error")
+		return errors.Wrap(err, "DELETE")
 	}
 
 	_, err = tx.Exec(`
@@ -389,7 +389,16 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, state int32) erro
 		id = $1;
 	`, id)
 	if err != nil {
-		return errors.Wrap(err, "UPDATE")
+		return errors.Wrap(err, "DELETE")
+	}
+
+	_, err = tx.Exec(`
+	DELETE FROM events
+	WHERE
+		resource_id = $1;
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "DELETE EVENTS")
 	}
 
 	err = tx.Commit()
