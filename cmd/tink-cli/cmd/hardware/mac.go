@@ -13,39 +13,33 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
-// macCmd represents the mac command
-var macCmd = &cobra.Command{
-	Use:     "mac",
-	Short:   "get hardware by any associated mac",
-	Example: "tink hardware mac 00:00:00:00:00:01 00:00:00:00:00:02",
-	Args: func(_ *cobra.Command, args []string) error {
-		for _, arg := range args {
-			if _, err := net.ParseMAC(arg); err != nil {
-				return fmt.Errorf("invalid mac: %s", arg)
+func NewGetByMACCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "mac",
+		Short:   "get hardware by any associated mac",
+		Example: "tink hardware mac 00:00:00:00:00:01 00:00:00:00:00:02",
+		Args: func(_ *cobra.Command, args []string) error {
+			for _, arg := range args {
+				if _, err := net.ParseMAC(arg); err != nil {
+					return fmt.Errorf("invalid mac: %s", arg)
+				}
 			}
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		for _, mac := range args {
-			hw, err := client.HardwareClient.ByMAC(context.Background(), &hardware.GetRequest{Mac: mac})
-			if err != nil {
-				log.Fatal(err)
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			for _, mac := range args {
+				hw, err := client.HardwareClient.ByMAC(context.Background(), &hardware.GetRequest{Mac: mac})
+				if err != nil {
+					log.Fatal(err)
+				}
+				if hw.GetId() == "" {
+					log.Fatal("MAC address not found in the database ", mac)
+				}
+				printOutput(data, hw, mac)
 			}
-			if hw.GetId() == "" {
-				log.Fatal("MAC address not found in the database ", mac)
-			}
-			printOutput(data, hw, mac)
-		}
-	},
-}
-
-func addMacFlags() {
-	flags := macCmd.Flags()
+		},
+	}
+	flags := cmd.Flags()
 	flags.BoolVarP(&data, "details", "d", false, "provide the complete hardware details in json format")
-}
-
-func init() {
-	addMacFlags()
-	SubCommands = append(SubCommands, macCmd)
+	return cmd
 }

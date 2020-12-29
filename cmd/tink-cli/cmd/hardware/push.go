@@ -23,46 +23,51 @@ var (
 )
 
 // pushCmd represents the push command
-var pushCmd = &cobra.Command{
-	Use:   "push",
-	Short: "push new hardware to tink",
-	Example: `cat /tmp/data.json | tink hardware push
+func NewPushCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "push",
+		Short: "push new hardware to tink",
+		Example: `cat /tmp/data.json | tink hardware push
 tink hardware push --file /tmp/data.json`,
-	PreRunE: func(c *cobra.Command, args []string) error {
-		if !isInputFromPipe() {
-			path, _ := c.Flags().GetString(sFile)
-			if path == "" {
-				return fmt.Errorf("either pipe the data or provide the required '--file' flag")
+		PreRunE: func(c *cobra.Command, args []string) error {
+			if !isInputFromPipe() {
+				path, _ := c.Flags().GetString(sFile)
+				if path == "" {
+					return fmt.Errorf("either pipe the data or provide the required '--file' flag")
+				}
 			}
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		var data string
-		if isInputFromPipe() {
-			data = readDataFromStdin()
-		} else {
-			data = readDataFromFile()
-		}
-		s := struct {
-			ID string
-		}{}
-		if json.NewDecoder(strings.NewReader(data)).Decode(&s) != nil {
-			log.Fatalf("invalid json: %s", data)
-		} else if s.ID == "" {
-			log.Fatalf("invalid json, ID is required: %s", data)
-		}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			var data string
+			if isInputFromPipe() {
+				data = readDataFromStdin()
+			} else {
+				data = readDataFromFile()
+			}
+			s := struct {
+				ID string
+			}{}
+			if json.NewDecoder(strings.NewReader(data)).Decode(&s) != nil {
+				log.Fatalf("invalid json: %s", data)
+			} else if s.ID == "" {
+				log.Fatalf("invalid json, ID is required: %s", data)
+			}
 
-		var hw pkg.HardwareWrapper
-		err := json.Unmarshal([]byte(data), &hw)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if _, err := client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: hw.Hardware}); err != nil {
-			log.Fatal(err)
-		}
-		log.Println("Hardware data pushed successfully")
-	},
+			var hw pkg.HardwareWrapper
+			err := json.Unmarshal([]byte(data), &hw)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if _, err := client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: hw.Hardware}); err != nil {
+				log.Fatal(err)
+			}
+			log.Println("Hardware data pushed successfully")
+		},
+	}
+	flags := cmd.PersistentFlags()
+	flags.StringVarP(&file, "file", "", "", "hardware data file")
+	return cmd
 }
 
 func isInputFromPipe() bool {
@@ -90,11 +95,4 @@ func readDataFromFile() string {
 		log.Fatal(err)
 	}
 	return string(data)
-}
-
-func init() {
-	flags := pushCmd.PersistentFlags()
-	flags.StringVarP(&file, "file", "", "", "hardware data file")
-
-	SubCommands = append(SubCommands, pushCmd)
 }

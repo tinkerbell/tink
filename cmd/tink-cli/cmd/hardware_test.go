@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/tinkerbell/tink/client"
 )
 
 func Test_hardwareCmd(t *testing.T) {
@@ -160,7 +161,7 @@ func Test_hardwareCmd(t *testing.T) {
 				Run:     func(_ *cobra.Command, _ []string) {},
 				Version: "test",
 			}
-			rootCmd.AddCommand(hardwareCmd)
+			rootCmd.AddCommand(NewHardwareCommand(&client.MetaClient{}))
 			tt.cmdFunc(t, rootCmd)
 		})
 	}

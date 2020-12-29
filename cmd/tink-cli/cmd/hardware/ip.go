@@ -16,38 +16,33 @@ import (
 var data bool
 
 // ipCmd represents the ip command
-var ipCmd = &cobra.Command{
-	Use:     "ip",
-	Short:   "get hardware by any associated ip",
-	Example: "tink hardware ip 10.0.0.2 10.0.0.3",
-	Args: func(_ *cobra.Command, args []string) error {
-		for _, arg := range args {
-			if net.ParseIP(arg) == nil {
-				return fmt.Errorf("invalid ip: %s", arg)
+func NewGetByIPCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "ip",
+		Short:   "get hardware by any associated ip",
+		Example: "tink hardware ip 10.0.0.2 10.0.0.3",
+		Args: func(_ *cobra.Command, args []string) error {
+			for _, arg := range args {
+				if net.ParseIP(arg) == nil {
+					return fmt.Errorf("invalid ip: %s", arg)
+				}
 			}
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		for _, ip := range args {
-			hw, err := client.HardwareClient.ByIP(context.Background(), &hardware.GetRequest{Ip: ip})
-			if err != nil {
-				log.Fatal(err)
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			for _, ip := range args {
+				hw, err := client.HardwareClient.ByIP(context.Background(), &hardware.GetRequest{Ip: ip})
+				if err != nil {
+					log.Fatal(err)
+				}
+				if hw.GetId() == "" {
+					log.Fatal("IP address not found in the database ", ip)
+				}
+				printOutput(data, hw, ip)
 			}
-			if hw.GetId() == "" {
-				log.Fatal("IP address not found in the database ", ip)
-			}
-			printOutput(data, hw, ip)
-		}
-	},
-}
-
-func addIPFlags() {
-	flags := ipCmd.Flags()
+		},
+	}
+	flags := cmd.Flags()
 	flags.BoolVarP(&data, "details", "d", false, "provide the complete hardware details in json format")
-}
-
-func init() {
-	addIPFlags()
-	SubCommands = append(SubCommands, ipCmd)
+	return cmd
 }

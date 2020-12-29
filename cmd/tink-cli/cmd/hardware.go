@@ -4,22 +4,32 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/hardware"
 )
 
-var hardwareCmd = &cobra.Command{
-	Use:     "hardware",
-	Short:   "tink hardware client",
-	Example: "tink hardware [command]",
-	Args: func(c *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return fmt.Errorf("%v requires arguments", c.UseLine())
-		}
-		return nil
-	},
-}
+func NewHardwareCommand(metaClient *client.MetaClient) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "hardware",
+		Short:   "tink hardware client",
+		Example: "tink hardware [command]",
+		Args: func(c *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("%v requires arguments", c.UseLine())
+			}
+			return nil
+		},
+	}
 
-func init() {
-	hardwareCmd.AddCommand(hardware.SubCommands...)
-	rootCmd.AddCommand(hardwareCmd)
+	cmd.AddCommand(get.NewGetCommand(hardware.NewGetHardwareOpt(metaClient).CmdOpt))
+	cmd.AddCommand(hardware.NewDeleteCmd())
+	cmd.AddCommand(hardware.NewGetByIDCmd())
+	cmd.AddCommand(hardware.NewGetByIPCmd())
+	cmd.AddCommand(hardware.NewListCmd())
+	cmd.AddCommand(hardware.NewGetByMACCmd())
+	cmd.AddCommand(hardware.NewPushCmd())
+	cmd.AddCommand(hardware.NewWatchCmd())
+
+	return cmd
 }
