@@ -3,6 +3,7 @@ package workflow
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 
@@ -19,6 +20,7 @@ const (
 	errActionDuplicateName    = "two actions in a task cannot have same name: %s"
 	errActionInvalidImage     = "invalid action image: %s"
 	errTemplateParsing        = "failed to parse template with ID %s"
+	errInvalidHardwareAddress = "failed to render template, invalid hardware address: %s"
 )
 
 // Parse parses the template yaml content into a Workflow
@@ -78,6 +80,13 @@ func RenderTemplate(templateID, templateData string, devices []byte) (string, er
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		return "", err
+	}
+
+	wf := MustParse(buf.Bytes())
+	for _, task := range wf.Tasks {
+		if task.WorkerAddr == "" {
+			return "", fmt.Errorf(errInvalidHardwareAddress, string(devices))
+		}
 	}
 	return buf.String(), nil
 }
