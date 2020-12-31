@@ -1,6 +1,9 @@
 package workflow
 
 import (
+	"bytes"
+	"encoding/json"
+	"html/template"
 	"io/ioutil"
 
 	"github.com/docker/distribution/reference"
@@ -15,6 +18,7 @@ const (
 	errTaskDuplicateName      = "two tasks in a template cannot have same name: %s"
 	errActionDuplicateName    = "two actions in a task cannot have same name: %s"
 	errActionInvalidImage     = "invalid action image: %s"
+	errTemplateParsing        = "failed to parse template with ID %s"
 )
 
 // Parse parses the template yaml content into a Workflow
@@ -51,6 +55,31 @@ func MustParseFromFile(path string) *Workflow {
 		panic(err)
 	}
 	return MustParse(content)
+}
+
+// RenderTemplate renders the workflow template wrt given hardware details
+func RenderTemplate(templateID, templateData string, devices []byte) (string, error) {
+	var hardware map[string]interface{}
+	err := json.Unmarshal(devices, &hardware)
+	if err != nil {
+		err = errors.Wrapf(err, errTemplateParsing, templateID)
+		return "", err
+	}
+
+	t := template.New("workflow-template")
+	_, err = t.Parse(string(templateData))
+	if err != nil {
+		err = errors.Wrapf(err, errTemplateParsing, templateID)
+		return "", err
+	}
+
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, hardware)
+	if err != nil {
+		err = errors.Wrapf(err, errTemplateParsing, templateID)
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // validate validates a workflow template against certain requirements
