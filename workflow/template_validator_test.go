@@ -3,8 +3,10 @@ package workflow
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -224,6 +226,41 @@ func TestValidateTemplate(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestRenderTemplate(t *testing.T) {
+	tests := []struct {
+		name          string
+		hwAddress     []byte
+		expectedError func(t *testing.T, err error)
+	}{
+		{
+			name:      "valid-hardware-address",
+			hwAddress: []byte("{\"device_1\":\"08:00:27:00:00:01\"}"),
+		},
+		{
+			name:      "invalid-hardware-address",
+			hwAddress: []byte("{\"invalid_device\":\"08:00:27:00:00:01\"}"),
+			expectedError: func(t *testing.T, err error) {
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), "invalid hardware address: {\"invalid_device\":\"08:00:27:00:00:01\"}") {
+					t.Errorf("\nexpected err: %s\ngot: %s", "invalid hardware address: {\"invalid_device\":\"08:00:27:00:00:01\"}", err)
+				}
+			},
+		},
+	}
+
+	templateID := uuid.New().String()
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := RenderTemplate(templateID, validTemplate, test.hwAddress)
+			if err != nil {
+				test.expectedError(t, err)
 			}
 		})
 	}

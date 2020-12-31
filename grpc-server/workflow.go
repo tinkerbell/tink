@@ -1,11 +1,8 @@
 package grpcserver
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"strconv"
-	"text/template"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -13,7 +10,7 @@ import (
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/metrics"
 	"github.com/tinkerbell/tink/protos/workflow"
-	workflowpb "github.com/tinkerbell/tink/protos/workflow"
+	wkf "github.com/tinkerbell/tink/workflow"
 )
 
 var state = map[int32]workflow.State{
@@ -24,10 +21,7 @@ var state = map[int32]workflow.State{
 	4: workflow.State_STATE_SUCCESS,
 }
 
-const (
-	errFailedToGetTemplate = "failed to get template with ID %s"
-	errTemplateParsing     = "failed to parse template with ID %s"
-)
+const errFailedToGetTemplate = "failed to get template with ID %s"
 
 // CreateWorkflow implements workflow.CreateWorkflow
 func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest) (*workflow.CreateResponse, error) {
@@ -55,7 +49,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	if err != nil {
 		return &workflow.CreateResponse{}, errors.Wrapf(err, errFailedToGetTemplate, in.GetTemplate())
 	}
-	data, err := renderTemplate(in.GetTemplate(), templateData, []byte(in.Hardware))
+	data, err := wkf.RenderTemplate(in.GetTemplate(), templateData, []byte(in.Hardware))
 
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -117,7 +111,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	if err != nil {
 		return &workflow.Workflow{}, errors.Wrapf(err, errFailedToGetTemplate, w.Template)
 	}
-	data, err := renderTemplate(w.Template, templateData, []byte(w.Hardware))
+	data, err := wkf.RenderTemplate(w.Template, templateData, []byte(w.Hardware))
 	if err != nil {
 		return &workflow.Workflow{}, err
 	}
@@ -181,7 +175,7 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowServic
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 	err := s.db.ListWorkflows(func(w db.Workflow) error {
-		wf := &workflowpb.Workflow{
+		wf := &workflow.Workflow{
 			Id:        w.ID,
 			Template:  w.Template,
 			Hardware:  w.Hardware,
@@ -263,7 +257,7 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
-	err := s.db.ShowWorkflowEvents(req.Id, func(w *workflowpb.WorkflowActionStatus) error {
+	err := s.db.ShowWorkflowEvents(req.Id, func(w *workflow.WorkflowActionStatus) error {
 		wfs := &workflow.WorkflowActionStatus{
 			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,
@@ -283,31 +277,4 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	logger.Info("done listing workflows events")
 	metrics.CacheHits.With(labels).Inc()
 	return nil
-}
-
-func renderTemplate(templateID, templateData string, devices []byte) (string, error) {
-	var hardware map[string]interface{}
-	err := json.Unmarshal(devices, &hardware)
-	if err != nil {
-		err = errors.Wrapf(err, errTemplateParsing, templateID)
-		logger.Error(err)
-		return "", err
-	}
-
-	t := template.New("workflow-template")
-	_, err = t.Parse(string(templateData))
-	if err != nil {
-		err = errors.Wrapf(err, errTemplateParsing, templateID)
-		logger.Error(err)
-		return "", nil
-	}
-
-	buf := new(bytes.Buffer)
-	err = t.Execute(buf, hardware)
-	if err != nil {
-		err = errors.Wrapf(err, errTemplateParsing, templateID)
-		logger.Error(err)
-		return "", err
-	}
-	return buf.String(), nil
 }

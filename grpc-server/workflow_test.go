@@ -24,7 +24,7 @@ tasks:
     actions:
     - name: "hello_world"
       image: hello-world
-	  timeout: 60`
+      timeout: 60`
 )
 
 func TestCreateWorkflow(t *testing.T) {
