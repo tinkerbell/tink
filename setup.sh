@@ -260,6 +260,12 @@ setup_osie() (
 			curl -fsSL 'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o ./osie.tar.gz
 			tar -zxf osie.tar.gz
 		else
+			if [ ! -f "$TB_OSIE_TAR" ]; then
+				echo "$ERR osie tar not found in the given location $TB_OSIE_TAR"
+				exit 1
+			else
+				echo "$INFO extracting osie tar"
+			fi
 			tar -zxf "$TB_OSIE_TAR"
 		fi
 
