@@ -15,6 +15,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.15.2
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/lib/pq v1.2.1-0.20191011153232-f91d3411e481
+	github.com/matryer/moq v0.1.4 // indirect
 	github.com/mattn/go-runewidth v0.0.5 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/packethost/pkg v0.0.0-20200903155310-0433e0605550
