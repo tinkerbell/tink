@@ -209,6 +209,45 @@ func TestCreateTemplate_TwoTemplateWithSameNameButFirstOneIsDeleted(t *testing.T
 	}
 }
 
+func TestDeleteTemplate(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+		ApplyMigration: true,
+	})
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+	w.ID = uuid.New().String()
+	w.Name = fmt.Sprintf("id_%d", rand.Int())
+
+	err := createTemplateFromWorkflowType(ctx, tinkDB, w)
+	if err != nil {
+		t.Error(err)
+	}
+	err = tinkDB.DeleteTemplate(ctx, w.ID)
+	if err != nil {
+		t.Error(err)
+	}
+
+	count := 0
+	err = tinkDB.ListTemplates("%", func(id, n string, in, del *timestamp.Timestamp) error {
+		count = count + 1
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 0 {
+		t.Errorf("expected 0 templates stored in the database after delete, but we got %d", count)
+	}
+}
+
 func createTemplateFromWorkflowType(ctx context.Context, tinkDB *db.TinkDB, tt *workflow.Workflow) error {
 	uID := uuid.MustParse(tt.ID)
 	content, err := yaml.Marshal(tt)
