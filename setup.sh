@@ -485,6 +485,12 @@ whats_next() (
 	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )
 
+setup_nat() (
+	iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+	iptables -A FORWARD -i eth0 -o eth1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+	iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+)
+
 do_setup() (
 	# perform some very rudimentary platform detection
 	lsb_dist=$(get_distribution)
@@ -502,7 +508,7 @@ do_setup() (
 	source "$ENV_FILE"
 
 	setup_networking "$lsb_dist" "$lsb_version"
-
+	setup_nat
 	setup_osie
 	generate_certificates
 	setup_docker_registry
