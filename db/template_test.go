@@ -36,7 +36,7 @@ func TestCreateTemplate(t *testing.T) {
 		ExpectedErr func(*testing.T, error)
 	}{
 		{
-			Name: "happy-path-single-crete-template",
+			Name: "happy-path-single-create-template",
 			Input: []*workflow.Workflow{
 				func() *workflow.Workflow {
 					w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
@@ -45,7 +45,7 @@ func TestCreateTemplate(t *testing.T) {
 				}(),
 			},
 			Expectation: func(t *testing.T, input []*workflow.Workflow, tinkDB *db.TinkDB) {
-				wID, wName, wData, err := tinkDB.GetTemplate(context.Background(), map[string]string{"id": input[0].ID}, false)
+				wID, wName, wData, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input[0].ID}, false)
 				if err != nil {
 					t.Error(err)
 				}
@@ -245,6 +245,122 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 	if count != 0 {
 		t.Errorf("expected 0 templates stored in the database after delete, but we got %d", count)
+	}
+}
+
+func TestGetTemplate(t *testing.T) {
+	ctx := context.Background()
+	expectation := func(t *testing.T, input *workflow.Workflow, tinkDB *db.TinkDB) {
+		wID, wName, wData, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input.ID}, false)
+		if err != nil {
+			t.Error(err)
+		}
+		w := workflow.MustParse([]byte(wData))
+		w.ID = wID
+		w.Name = wName
+		if dif := cmp.Diff(input, w); dif != "" {
+			t.Errorf(dif)
+		}
+	}
+	tests := []struct {
+		// Name identifies the single test in a table test scenario
+		Name string
+		// Input is a list of workflows that will be used to pre-populate the database
+		Input []*workflow.Workflow
+		// GetAsync if set to true gets all the templates concurrently
+		GetAsync bool
+		// Expectation is the function used to apply the assertions.
+		// You can use it to validate if you get template you expected
+		Expectation func(*testing.T, *workflow.Workflow, *db.TinkDB)
+	}{
+		{
+			Name: "get-template",
+			Input: []*workflow.Workflow{
+				func() *workflow.Workflow {
+					w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+					w.ID = "545f7ce9-5313-49c6-8704-0ed98814f1f7"
+					return w
+				}(),
+			},
+			Expectation: expectation,
+		},
+		{
+			Name:     "stress-get-template",
+			GetAsync: true,
+			Input: func() []*workflow.Workflow {
+				input := []*workflow.Workflow{}
+				for i := 0; i < 20; i++ {
+					w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+					w.ID = uuid.New().String()
+					w.Name = fmt.Sprintf("id_%d", rand.Int())
+					t.Log(w.Name)
+					input = append(input, w)
+				}
+				return input
+			}(),
+			Expectation: expectation,
+		},
+	}
+	for _, s := range tests {
+		t.Run(s.Name, func(t *testing.T) {
+			t.Parallel()
+			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+				ApplyMigration: true,
+			})
+			defer func() {
+				err := cl()
+				if err != nil {
+					t.Error(err)
+				}
+			}()
+
+			for _, in := range s.Input {
+				err := createTemplateFromWorkflowType(ctx, tinkDB, in)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(len(s.Input))
+			for _, in := range s.Input {
+				if s.GetAsync {
+					go func(t *testing.T, wf *workflow.Workflow, db *db.TinkDB) {
+						defer wg.Done()
+						s.Expectation(t, wf, db)
+					}(t, in, tinkDB)
+				} else {
+					wg.Done()
+					s.Expectation(t, in, tinkDB)
+				}
+			}
+			wg.Wait()
+		})
+	}
+}
+
+func TestGetTemplateWithInvalidID(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+		ApplyMigration: true,
+	})
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	id := uuid.New().String()
+	_, _, _, err := tinkDB.GetTemplate(ctx, map[string]string{"id": id}, false)
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+
+	want := "no rows in result set"
+	if !strings.Contains(err.Error(), want) {
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
 	}
 }
 
