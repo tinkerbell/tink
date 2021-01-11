@@ -164,7 +164,7 @@ func Test_workflowCmd(t *testing.T) {
 				Run:     func(_ *cobra.Command, _ []string) {},
 				Version: "test",
 			}
-			rootCmd.AddCommand(workflowCmd)
+			rootCmd.AddCommand(NewWorkflowCommand())
 			tt.cmdFunc(t, rootCmd)
 		})
 	}

@@ -11,33 +11,31 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
-// deleteCmd represents the delete subcommand for workflow command
-var deleteCmd = &cobra.Command{
-	Use:     "delete [id]",
-	Short:   "delete a workflow",
-	Example: "tink workflow delete [id]",
-	Args: func(c *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return fmt.Errorf("%v requires an argument", c.UseLine())
-		}
-		for _, arg := range args {
-			if _, err := uuid.Parse(arg); err != nil {
-				return fmt.Errorf("invalid uuid: %s", arg)
+func NewDeleteCommand(cl *client.MetaClient) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                   "delete [id]",
+		Short:                 "delete a workflow",
+		Example:               "tink workflow delete [id]",
+		DisableFlagsInUseLine: true,
+		Args: func(c *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("%v requires an argument", c.UseLine())
 			}
-		}
-		return nil
-	},
-	Run: func(c *cobra.Command, args []string) {
-		for _, arg := range args {
-			req := workflow.GetRequest{Id: arg}
-			if _, err := client.WorkflowClient.DeleteWorkflow(context.Background(), &req); err != nil {
-				log.Fatal(err)
+			for _, arg := range args {
+				if _, err := uuid.Parse(arg); err != nil {
+					return fmt.Errorf("invalid uuid: %s", arg)
+				}
 			}
-		}
-	},
-}
-
-func init() {
-	deleteCmd.DisableFlagsInUseLine = true
-	SubCommands = append(SubCommands, deleteCmd)
+			return nil
+		},
+		Run: func(c *cobra.Command, args []string) {
+			for _, arg := range args {
+				req := workflow.GetRequest{Id: arg}
+				if _, err := cl.WorkflowClient.DeleteWorkflow(context.Background(), &req); err != nil {
+					log.Fatal(err)
+				}
+			}
+		},
+	}
+	return cmd
 }

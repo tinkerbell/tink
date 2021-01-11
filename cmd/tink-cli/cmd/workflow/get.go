@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
@@ -21,7 +20,7 @@ var (
 )
 
 // getCmd represents the get subcommand for workflow command
-var getCmd = &cobra.Command{
+var GetCmd = &cobra.Command{
 	Use:     "get [id]",
 	Short:   "get a workflow",
 	Example: "tink workflow get [id]",
@@ -52,21 +51,15 @@ var getCmd = &cobra.Command{
 }
 
 func init() {
-	// If the variable TINK_CLI_VERSION is not set to 0.0.0 use the old get
-	// command
-	if v := os.Getenv("TINK_CLI_VERSION"); v != "0.0.0" {
-		getCmd = NewGetCommand()
-	}
-	SubCommands = append(SubCommands, getCmd)
 }
 
 // NewGetCommand create the generic get command with everything required by the
 // workflow resource to work
-func NewGetCommand() *cobra.Command {
+func NewGetCommand(cl *client.MetaClient) *cobra.Command {
 	cmd := get.NewGetCommand(get.CmdOpt{
 		Headers: []string{"ID", "Template ID", "State", "Created At", "Updated At"},
 		RetrieveData: func(ctx context.Context) ([]interface{}, error) {
-			list, err := client.WorkflowClient.ListWorkflows(ctx, &workflow.Empty{})
+			list, err := cl.WorkflowClient.ListWorkflows(ctx, &workflow.Empty{})
 			if err != nil {
 				return nil, err
 			}

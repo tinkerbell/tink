@@ -33,6 +33,7 @@ func Execute(version string, metaClient *client.MetaClient) error {
 	rootCmd.Version = version
 	rootCmd.AddCommand(NewHardwareCommand(metaClient))
 	rootCmd.AddCommand(NewGetTemplateCommand())
+	rootCmd.AddCommand(NewWorkflowCommand())
 	return rootCmd.Execute()
 }
 
