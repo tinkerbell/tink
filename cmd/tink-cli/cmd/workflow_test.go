@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Test_workflowCmd(t *testing.T) {
+func Test_NewWorkflowCommand(t *testing.T) {
 	subCommand := "workflow"
 	type args struct {
 		name string

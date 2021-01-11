@@ -32,7 +32,7 @@ func setupClient(_ *cobra.Command, _ []string) error {
 func Execute(version string, metaClient *client.MetaClient) error {
 	rootCmd.Version = version
 	rootCmd.AddCommand(NewHardwareCommand(metaClient))
-	rootCmd.AddCommand(NewGetTemplateCommand())
+	rootCmd.AddCommand(NewTemplateCommand())
 	rootCmd.AddCommand(NewWorkflowCommand())
 	return rootCmd.Execute()
 }

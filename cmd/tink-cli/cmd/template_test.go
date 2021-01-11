@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Test_templateCmd(t *testing.T) {
+func Test_NewTemplateCommand(t *testing.T) {
 	subCommand := "template"
 	type args struct {
 		name string
@@ -136,7 +136,7 @@ func Test_templateCmd(t *testing.T) {
 				Run:     func(_ *cobra.Command, _ []string) {},
 				Version: "test",
 			}
-			rootCmd.AddCommand(NewGetTemplateCommand())
+			rootCmd.AddCommand(NewTemplateCommand())
 			tt.cmdFunc(t, rootCmd)
 		})
 	}

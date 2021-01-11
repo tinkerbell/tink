@@ -9,7 +9,7 @@ import (
 	"github.com/tinkerbell/tink/client"
 )
 
-func Test_hardwareCmd(t *testing.T) {
+func Test_NewHardwareCommand(t *testing.T) {
 	subCommand := "hardware"
 	type args struct {
 		name string

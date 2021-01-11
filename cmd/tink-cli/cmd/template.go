@@ -9,7 +9,7 @@ import (
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/template"
 )
 
-func NewGetTemplateCommand() *cobra.Command {
+func NewTemplateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "template",
 		Short:   "tink template client",
