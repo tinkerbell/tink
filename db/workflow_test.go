@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/protos/hardware"
 	pb "github.com/tinkerbell/tink/protos/workflow"
@@ -222,6 +223,136 @@ func TestDeleteWorkflow(t *testing.T) {
 	}
 	if count != 0 {
 		t.Errorf("expected 0 workflows stored in the database after delete, but we got %d", count)
+	}
+}
+
+func TestGetWorkflow(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		// Name identifies the single test in a table test scenario
+		Name string
+		// GetAsync if set to true gets all the workflows concurrently
+		GetAsync bool
+		// Input is a struct that will be used to create a workflow and pre-populate the database
+		Input *input
+		// Expectation is the function used to apply the assertions.
+		// You can use it to validate if you get workflow you expected
+		Expectation func(t *testing.T, tinkDB *db.TinkDB, id string)
+	}{
+		{
+			Name: "get-workflow",
+			Input: &input{
+				workflowCount: 1,
+				devices:       "{\"device_1\":\"08:00:27:00:00:01\"}",
+				hardware:      readHardwareData("./testdata/hardware.json"),
+				template: func() *workflow.Workflow {
+					tmp := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+					tmp.ID = uuid.New().String()
+					tmp.Name = fmt.Sprintf("id_%d", rand.Int())
+					return tmp
+				}(),
+			},
+			Expectation: func(t *testing.T, tinkDB *db.TinkDB, id string) {
+				_, err := tinkDB.GetWorkflow(ctx, id)
+				if err != nil {
+					t.Error(err)
+				}
+			},
+		},
+		{
+			Name: "get-workflow-non-existing-id",
+			Input: &input{
+				devices:  "{\"device_1\":\"08:00:27:00:00:01\"}",
+				hardware: readHardwareData("./testdata/hardware.json"),
+				template: func() *workflow.Workflow {
+					tmp := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+					tmp.ID = uuid.New().String()
+					tmp.Name = fmt.Sprintf("id_%d", rand.Int())
+					return tmp
+				}(),
+			},
+			Expectation: func(t *testing.T, tinkDB *db.TinkDB, id string) {
+				wf, err := tinkDB.GetWorkflow(ctx, uuid.New().String())
+				if err != nil {
+					t.Error(err)
+				}
+				assert.Empty(t, wf)
+			},
+		},
+		{
+			Name:     "stress-get-workflow",
+			GetAsync: true,
+			Input: &input{
+				workflowCount: 20,
+				devices:       "{\"device_1\":\"08:00:27:00:00:01\"}",
+				hardware:      readHardwareData("./testdata/hardware.json"),
+				template: func() *workflow.Workflow {
+					tmp := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+					tmp.ID = uuid.New().String()
+					tmp.Name = fmt.Sprintf("id_%d", rand.Int())
+					return tmp
+				}(),
+			},
+			Expectation: func(t *testing.T, tinkDB *db.TinkDB, id string) {
+				_, err := tinkDB.GetWorkflow(ctx, id)
+				if err != nil {
+					t.Error(err)
+				}
+			},
+		},
+	}
+
+	for _, s := range tests {
+		t.Run(s.Name, func(t *testing.T) {
+			t.Parallel()
+			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+				ApplyMigration: true,
+			})
+			defer func() {
+				err := cl()
+				if err != nil {
+					t.Error(err)
+				}
+			}()
+
+			err := createHardware(ctx, tinkDB, s.Input.hardware)
+			if err != nil {
+				t.Error(err)
+			}
+			err = createTemplateFromWorkflowType(ctx, tinkDB, s.Input.template)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if s.Input.workflowCount == 0 {
+				s.Expectation(t, tinkDB, uuid.New().String())
+				return
+			}
+
+			wfIDs := []string{}
+			for i := 0; i < s.Input.workflowCount; i++ {
+				id, err := createWorkflow(ctx, tinkDB, s.Input)
+				if err != nil {
+					t.Error(err)
+				}
+				wfIDs = append(wfIDs, id)
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(s.Input.workflowCount)
+			for i := 0; i < s.Input.workflowCount; i++ {
+				if s.GetAsync {
+					go func(t *testing.T, tinkDB *db.TinkDB, wfID string) {
+						defer wg.Done()
+						s.Expectation(t, tinkDB, wfID)
+					}(t, tinkDB, wfIDs[i])
+				} else {
+					wg.Done()
+					s.Expectation(t, tinkDB, wfIDs[i])
+				}
+			}
+			wg.Wait()
+		})
 	}
 }
 

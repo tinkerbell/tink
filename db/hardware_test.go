@@ -211,6 +211,340 @@ func TestDeleteHardware(t *testing.T) {
 	}
 }
 
+func TestGetByID(t *testing.T) {
+	ctx := context.Background()
+	expectation := func(t *testing.T, input *hardware.Hardware, tinkDB *db.TinkDB) {
+		data, err := tinkDB.GetByID(ctx, input.Id)
+		if err != nil {
+			t.Error(err)
+		}
+		hw := &hardware.Hardware{}
+		if err := json.Unmarshal([]byte(data), hw); err != nil {
+			t.Error(err)
+		}
+		if dif := cmp.Diff(input, hw, cmp.Comparer(hardwareComparer)); dif != "" {
+			t.Errorf(dif)
+		}
+	}
+
+	tests := []struct {
+		// Name identifies the single test in a table test scenario
+		Name string
+		// GetAsync if set to true gets all the hardwares concurrently
+		GetAsync bool
+		// Input is a hardware that will be used to pre-populate the database
+		Input []*hardware.Hardware
+		// Expectation is the function used to apply the assertions.
+		// You can use it to validate if you get hardware you expected
+		Expectation func(*testing.T, *hardware.Hardware, *db.TinkDB)
+	}{
+		{
+			Name:        "get-hardware-by-id",
+			Input:       []*hardware.Hardware{readHardwareData("./testdata/hardware.json")},
+			Expectation: expectation,
+		},
+		{
+			Name:     "stress-get-hardware-by-id",
+			GetAsync: true,
+			Input: func() []*hardware.Hardware {
+				input := []*hardware.Hardware{}
+				for ii := 0; ii < 10; ii++ {
+					hw := readHardwareData("./testdata/hardware.json")
+					hw.Id = uuid.New().String()
+					hw.Network.Interfaces[0].Dhcp.Mac = strings.Replace(hw.Network.Interfaces[0].Dhcp.Mac, "00", fmt.Sprintf("0%d", ii), 1)
+				}
+				return input
+			}(),
+			Expectation: expectation,
+		},
+	}
+
+	for _, s := range tests {
+		t.Run(s.Name, func(t *testing.T) {
+			t.Parallel()
+			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+				ApplyMigration: true,
+			})
+			defer func() {
+				err := cl()
+				if err != nil {
+					t.Error(err)
+				}
+			}()
+
+			for _, hw := range s.Input {
+				err := createHardware(ctx, tinkDB, hw)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(len(s.Input))
+			for _, hw := range s.Input {
+				if s.GetAsync {
+					go func(t *testing.T, h *hardware.Hardware, db *db.TinkDB) {
+						defer wg.Done()
+						s.Expectation(t, h, db)
+					}(t, hw, tinkDB)
+				} else {
+					wg.Done()
+					s.Expectation(t, hw, tinkDB)
+				}
+			}
+			wg.Wait()
+		})
+	}
+}
+
+func TestGetByID_WithNonExistingID(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+		ApplyMigration: true,
+	})
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	_, err := tinkDB.GetByID(ctx, uuid.New().String())
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+
+	want := "no rows in result set"
+	if !strings.Contains(err.Error(), want) {
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+	}
+}
+
+func TestGetByIP(t *testing.T) {
+	ctx := context.Background()
+	expectation := func(t *testing.T, input *hardware.Hardware, tinkDB *db.TinkDB) {
+		data, err := tinkDB.GetByIP(ctx, input.Network.Interfaces[0].Dhcp.Ip.Address)
+		if err != nil {
+			t.Error(err)
+		}
+		hw := &hardware.Hardware{}
+		if err := json.Unmarshal([]byte(data), hw); err != nil {
+			t.Error(err)
+		}
+		if dif := cmp.Diff(input, hw, cmp.Comparer(hardwareComparer)); dif != "" {
+			t.Errorf(dif)
+		}
+	}
+
+	tests := []struct {
+		// Name identifies the single test in a table test scenario
+		Name string
+		// GetAsync if set to true gets all the hardwares concurrently
+		GetAsync bool
+		// Input is a hardware that will be used to pre-populate the database
+		Input []*hardware.Hardware
+		// Expectation is the function used to apply the assertions.
+		// You can use it to validate if you get hardware you expected
+		Expectation func(*testing.T, *hardware.Hardware, *db.TinkDB)
+	}{
+		{
+			Name:        "get-hardware-by-ip",
+			Input:       []*hardware.Hardware{readHardwareData("./testdata/hardware.json")},
+			Expectation: expectation,
+		},
+		{
+			Name:     "stress-get-hardware-by-ip",
+			GetAsync: true,
+			Input: func() []*hardware.Hardware {
+				input := []*hardware.Hardware{}
+				for ii := 0; ii < 10; ii++ {
+					hw := readHardwareData("./testdata/hardware.json")
+					hw.Id = uuid.New().String()
+					hw.Network.Interfaces[0].Dhcp.Ip.Address =
+						strings.Replace(hw.Network.Interfaces[0].Dhcp.Ip.Address, "1", fmt.Sprintf("%d", ii), 1)
+					hw.Network.Interfaces[0].Dhcp.Mac =
+						strings.Replace(hw.Network.Interfaces[0].Dhcp.Mac, "00", fmt.Sprintf("0%d", ii), 1)
+				}
+				return input
+			}(),
+			Expectation: expectation,
+		},
+	}
+
+	for _, s := range tests {
+		t.Run(s.Name, func(t *testing.T) {
+			t.Parallel()
+			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+				ApplyMigration: true,
+			})
+			defer func() {
+				err := cl()
+				if err != nil {
+					t.Error(err)
+				}
+			}()
+
+			for _, hw := range s.Input {
+				err := createHardware(ctx, tinkDB, hw)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(len(s.Input))
+			for _, hw := range s.Input {
+				if s.GetAsync {
+					go func(t *testing.T, h *hardware.Hardware, db *db.TinkDB) {
+						defer wg.Done()
+						s.Expectation(t, h, db)
+					}(t, hw, tinkDB)
+				} else {
+					wg.Done()
+					s.Expectation(t, hw, tinkDB)
+				}
+			}
+			wg.Wait()
+		})
+	}
+}
+
+func TestGetByIP_WithNonExistingIP(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+		ApplyMigration: true,
+	})
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	_, err := tinkDB.GetByIP(ctx, "192.168.1.5")
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+
+	want := "no rows in result set"
+	if !strings.Contains(err.Error(), want) {
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+	}
+}
+
+func TestGetByMAC(t *testing.T) {
+	ctx := context.Background()
+	expectation := func(t *testing.T, input *hardware.Hardware, tinkDB *db.TinkDB) {
+		data, err := tinkDB.GetByMAC(ctx, input.Network.Interfaces[0].Dhcp.Mac)
+		if err != nil {
+			t.Error(err)
+		}
+		hw := &hardware.Hardware{}
+		if err := json.Unmarshal([]byte(data), hw); err != nil {
+			t.Error(err)
+		}
+		if dif := cmp.Diff(input, hw, cmp.Comparer(hardwareComparer)); dif != "" {
+			t.Errorf(dif)
+		}
+	}
+
+	tests := []struct {
+		// Name identifies the single test in a table test scenario
+		Name string
+		// GetAsync if set to true gets all the hardwares concurrently
+		GetAsync bool
+		// Input is a hardware that will be used to pre-populate the database
+		Input []*hardware.Hardware
+		// Expectation is the function used to apply the assertions.
+		// You can use it to validate if you get hardware you expected
+		Expectation func(*testing.T, *hardware.Hardware, *db.TinkDB)
+	}{
+		{
+			Name:        "get-hardware-by-mac",
+			Input:       []*hardware.Hardware{readHardwareData("./testdata/hardware.json")},
+			Expectation: expectation,
+		},
+		{
+			Name:     "stress-get-hardware-by-mac",
+			GetAsync: true,
+			Input: func() []*hardware.Hardware {
+				input := []*hardware.Hardware{}
+				for ii := 0; ii < 10; ii++ {
+					hw := readHardwareData("./testdata/hardware.json")
+					hw.Id = uuid.New().String()
+					hw.Network.Interfaces[0].Dhcp.Mac =
+						strings.Replace(hw.Network.Interfaces[0].Dhcp.Mac, "00", fmt.Sprintf("0%d", ii), 1)
+				}
+				return input
+			}(),
+			Expectation: expectation,
+		},
+	}
+
+	for _, s := range tests {
+		t.Run(s.Name, func(t *testing.T) {
+			t.Parallel()
+			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+				ApplyMigration: true,
+			})
+			defer func() {
+				err := cl()
+				if err != nil {
+					t.Error(err)
+				}
+			}()
+
+			for _, hw := range s.Input {
+				err := createHardware(ctx, tinkDB, hw)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(len(s.Input))
+			for _, hw := range s.Input {
+				if s.GetAsync {
+					go func(t *testing.T, h *hardware.Hardware, db *db.TinkDB) {
+						defer wg.Done()
+						s.Expectation(t, h, db)
+					}(t, hw, tinkDB)
+				} else {
+					wg.Done()
+					s.Expectation(t, hw, tinkDB)
+				}
+			}
+			wg.Wait()
+		})
+	}
+}
+
+func TestGetByMAC_WithNonExistingMAC(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+		ApplyMigration: true,
+	})
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	_, err := tinkDB.GetByMAC(ctx, "08:00:27:00:00:01")
+	if err == nil {
+		t.Error("expected error, got nil")
+	}
+
+	want := "no rows in result set"
+	if !strings.Contains(err.Error(), want) {
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+	}
+}
+
 func readHardwareData(file string) *hardware.Hardware {
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
