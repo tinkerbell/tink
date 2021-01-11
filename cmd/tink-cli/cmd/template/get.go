@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 
 	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/table"
@@ -16,7 +15,7 @@ import (
 )
 
 // getCmd represents the get subcommand for template command
-var getCmd = &cobra.Command{
+var GetCmd = &cobra.Command{
 	Use:                   "get [id]",
 	Short:                 "get a template",
 	Example:               "tink template get [id]",
@@ -48,41 +47,36 @@ var getCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	// If the variable TINK_CLI_VERSION is not set to 0.0.0 use the old get
-	// command
-	if v := os.Getenv("TINK_CLI_VERSION"); v != "0.0.0" {
-		getCmd = get.NewGetCommand(get.CmdOpt{
-			Headers: []string{"ID", "Name", "Created At", "Updated At"},
-			RetrieveData: func(ctx context.Context) ([]interface{}, error) {
-				list, err := client.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
-					FilterBy: &template.ListRequest_Name{
-						Name: "*",
-					},
-				})
-				if err != nil {
-					return nil, err
-				}
+func NewGetTemplateCommand(metaClient *client.MetaClient) *cobra.Command {
+	return get.NewGetCommand(get.CmdOpt{
+		Headers: []string{"ID", "Name", "Created At", "Updated At"},
+		RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+			list, err := metaClient.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
+				FilterBy: &template.ListRequest_Name{
+					Name: "*",
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
 
-				data := []interface{}{}
-				var tmp *template.WorkflowTemplate
-				for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
-					data = append(data, tmp)
+			data := []interface{}{}
+			var tmp *template.WorkflowTemplate
+			for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
+				data = append(data, tmp)
+			}
+			if err != nil && err != io.EOF {
+				return nil, err
+			}
+			return data, nil
+		},
+		PopulateTable: func(data []interface{}, t table.Writer) error {
+			for _, v := range data {
+				if tmp, ok := v.(*template.WorkflowTemplate); ok {
+					t.AppendRow(table.Row{tmp.Id, tmp.Name, tmp.CreatedAt.AsTime().Unix(), tmp.UpdatedAt.AsTime().Unix()})
 				}
-				if err != nil && err != io.EOF {
-					return nil, err
-				}
-				return data, nil
-			},
-			PopulateTable: func(data []interface{}, t table.Writer) error {
-				for _, v := range data {
-					if tmp, ok := v.(*template.WorkflowTemplate); ok {
-						t.AppendRow(table.Row{tmp.Id, tmp.Name, tmp.CreatedAt.AsTime().Unix(), tmp.UpdatedAt.AsTime().Unix()})
-					}
-				}
-				return nil
-			},
-		})
-	}
-	SubCommands = append(SubCommands, getCmd)
+			}
+			return nil
+		},
+	})
 }

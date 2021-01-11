@@ -2,7 +2,6 @@ package template
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,47 +16,49 @@ import (
 
 var filePath string
 
-// createCmd represents the create subcommand for template command
-var createCmd = &cobra.Command{
-	Use:   "create",
-	Short: "create a workflow template ",
-	Long: `The create command allows you create workflow templates:
-
+func NewCreateCommand(cl *client.MetaClient) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "create a workflow template ",
+		Long: `The create command allows you create workflow templates:
 # Pipe the file to create a template:
 $ cat /tmp/example.tmpl | tink template create
-
 # Create template using the --file flag:
 $ tink template create --file /tmp/example.tmpl
 `,
-	PreRunE: func(c *cobra.Command, args []string) error {
-		if !isInputFromPipe() {
-			if filePath == "" {
-				return errors.New("either pipe the template or provide the required '--file' flag")
+		PreRunE: func(c *cobra.Command, args []string) error {
+			if !isInputFromPipe() {
+				if filePath == "" {
+					return fmt.Errorf("%v requires the '--file' flag", c.UseLine())
+				}
 			}
-		}
-		return nil
-	},
-	Run: func(c *cobra.Command, args []string) {
-		var reader io.Reader
-		if isInputFromPipe() {
-			reader = os.Stdin
-		} else {
-			f, err := os.Open(filePath)
-			if err != nil {
-				log.Fatal(err)
+			return nil
+		},
+		Run: func(c *cobra.Command, args []string) {
+			var reader io.Reader
+			if isInputFromPipe() {
+				reader = os.Stdin
+			} else {
+				f, err := os.Open(filePath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				reader = f
 			}
-			reader = f
-		}
 
-		data := readAll(reader)
-		if data != nil {
-			wf, err := workflow.Parse(data)
-			if err != nil {
-				log.Fatal(err)
+			data := readAll(reader)
+			if data != nil {
+				wf, err := workflow.Parse(data)
+				if err != nil {
+					log.Fatal(err)
+				}
+				createTemplate(wf.Name, data)
 			}
-			createTemplate(wf.Name, data)
-		}
-	},
+		},
+	}
+	flags := cmd.PersistentFlags()
+	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
+	return cmd
 }
 
 func readAll(reader io.Reader) []byte {
@@ -66,11 +67,6 @@ func readAll(reader io.Reader) []byte {
 		log.Fatal(err)
 	}
 	return data
-}
-
-func addFlags() {
-	flags := createCmd.PersistentFlags()
-	flags.StringVarP(&filePath, "file", "", "", "path to the template file")
 }
 
 func createTemplate(name string, data []byte) {
@@ -85,9 +81,4 @@ func createTemplate(name string, data []byte) {
 func isInputFromPipe() bool {
 	fileInfo, _ := os.Stdin.Stat()
 	return fileInfo.Mode()&os.ModeCharDevice == 0
-}
-
-func init() {
-	addFlags()
-	SubCommands = append(SubCommands, createCmd)
 }

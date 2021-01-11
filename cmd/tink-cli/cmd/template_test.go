@@ -136,7 +136,7 @@ func Test_templateCmd(t *testing.T) {
 				Run:     func(_ *cobra.Command, _ []string) {},
 				Version: "test",
 			}
-			rootCmd.AddCommand(templateCmd)
+			rootCmd.AddCommand(NewGetTemplateCommand())
 			tt.cmdFunc(t, rootCmd)
 		})
 	}

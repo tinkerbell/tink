@@ -15,39 +15,43 @@ import (
 )
 
 // updateCmd represents the get subcommand for template command
-var updateCmd = &cobra.Command{
-	Use:   "update [id] [flags]",
-	Short: "update a workflow template",
-	Long: `The update command allows you change the definition of an existing workflow template:
-
+func NewUpdateCommand(cl *client.MetaClient) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update [id] [flags]",
+		Short: "update a workflow template",
+		Long: `The update command allows you change the definition of an existing workflow template:
 # Update an existing template:
 $ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --file /tmp/example.tmpl
 `,
-	PreRunE: func(c *cobra.Command, args []string) error {
-		if filePath == "" {
-			return fmt.Errorf("%v requires the '--file' flag", c.UseLine())
-		}
-		return nil
-	},
-	Args: func(c *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return fmt.Errorf("%v requires argument", c.UseLine())
-		}
-		for _, arg := range args {
-			if _, err := uuid.Parse(arg); err != nil {
-				return fmt.Errorf("invalid uuid: %s", arg)
+		PreRunE: func(c *cobra.Command, args []string) error {
+			if filePath == "" {
+				return fmt.Errorf("%v requires the '--file' flag", c.UseLine())
 			}
-		}
-		return nil
-	},
-	Run: func(c *cobra.Command, args []string) {
-		for _, arg := range args {
-			updateTemplate(arg)
-		}
-	},
+			return nil
+		},
+		Args: func(c *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("%v requires argument", c.UseLine())
+			}
+			for _, arg := range args {
+				if _, err := uuid.Parse(arg); err != nil {
+					return fmt.Errorf("invalid uuid: %s", arg)
+				}
+			}
+			return nil
+		},
+		Run: func(c *cobra.Command, args []string) {
+			for _, arg := range args {
+				updateTemplate(cl, arg)
+			}
+		},
+	}
+
+	cmd.PersistentFlags().StringVarP(&filePath, "path", "p", "", "path to the template file")
+	return cmd
 }
 
-func updateTemplate(id string) {
+func updateTemplate(cl *client.MetaClient, id string) {
 	req := template.WorkflowTemplate{Id: id}
 	if filePath != "" {
 		data := readTemplateData()
@@ -63,7 +67,7 @@ func updateTemplate(id string) {
 		log.Fatal("Nothing is provided in the file path")
 	}
 
-	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)
+	_, err := cl.TemplateClient.UpdateTemplate(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,11 +86,4 @@ func readTemplateData() string {
 		log.Fatal(err)
 	}
 	return string(data)
-}
-
-func init() {
-	flags := updateCmd.PersistentFlags()
-	flags.StringVarP(&filePath, "file", "", "", "path to the template file")
-
-	SubCommands = append(SubCommands, updateCmd)
 }
