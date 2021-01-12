@@ -13,7 +13,7 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
-func NewStateCommand(cl *client.MetaClient) *cobra.Command {
+func NewStateCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "state [id]",
 		Short:   "get the current workflow state",

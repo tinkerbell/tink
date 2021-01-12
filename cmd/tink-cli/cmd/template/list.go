@@ -28,7 +28,7 @@ var (
 )
 
 // listCmd represents the list subcommand for template command
-func NewListCommand(cl *client.MetaClient) *cobra.Command {
+func NewListCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list all saved templates",
@@ -60,7 +60,7 @@ please familiarise and migrate your automation accordingly.`,
 	return cmd
 }
 
-func listTemplates(cl *client.MetaClient) {
+func listTemplates(cl *client.FullClient) {
 	list, err := cl.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
 		FilterBy: &template.ListRequest_Name{
 			Name: "*",

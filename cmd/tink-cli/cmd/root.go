@@ -29,9 +29,9 @@ func setupClient(_ *cobra.Command, _ []string) error {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute(version string, metaClient *client.MetaClient) error {
+func Execute(version string, cl *client.FullClient) error {
 	rootCmd.Version = version
-	rootCmd.AddCommand(NewHardwareCommand(metaClient))
+	rootCmd.AddCommand(NewHardwareCommand(cl))
 	rootCmd.AddCommand(NewTemplateCommand())
 	rootCmd.AddCommand(NewWorkflowCommand())
 	return rootCmd.Execute()

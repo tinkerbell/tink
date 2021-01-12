@@ -24,19 +24,19 @@ var (
 	EventsClient   events.EventsServiceClient
 )
 
-// MetaClient aggregates all the grpc clients available from Tinkerbell Server
-type MetaClient struct {
+// FullClient aggregates all the grpc clients available from Tinkerbell Server
+type FullClient struct {
 	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
 	HardwareClient hardware.HardwareServiceClient
 	EventsClient   events.EventsServiceClient
 }
 
-// NewMetaClientFromGlobal is a dirty hack that returns a MetaClient using the
+// NewFullClientFromGlobal is a dirty hack that returns a FullClient using the
 // global variables exposed by the client package. Globals should be avoided
 // and we will deprecated them at some point replacing this function with
-// NewMetaClient. If you are strating a new project please use the last one
-func NewMetaClientFromGlobal() (*MetaClient, error) {
+// NewFullClient. If you are strating a new project please use the last one
+func NewFullClientFromGlobal() (*FullClient, error) {
 	// This is required because we use init() too often, even more in the
 	// CLI and based on where you are sometime the clients are not initialised
 	if TemplateClient == nil {
@@ -45,7 +45,7 @@ func NewMetaClientFromGlobal() (*MetaClient, error) {
 			panic(err)
 		}
 	}
-	return &MetaClient{
+	return &FullClient{
 		TemplateClient: TemplateClient,
 		WorkflowClient: WorkflowClient,
 		HardwareClient: HardwareClient,
@@ -53,11 +53,11 @@ func NewMetaClientFromGlobal() (*MetaClient, error) {
 	}, nil
 }
 
-// NewMetaClient returns a MetaClient. A structure that contains all the
+// NewFullClient returns a FullClient. A structure that contains all the
 // clients made available from tink-server. This is the function you should use
-// instead of NewMetaClientFromGlobal that will be deprecated soon
-func NewMetaClient(conn grpc.ClientConnInterface) *MetaClient {
-	return &MetaClient{
+// instead of NewFullClientFromGlobal that will be deprecated soon
+func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
+	return &FullClient{
 		TemplateClient: template.NewTemplateServiceClient(conn),
 		WorkflowClient: workflow.NewWorkflowServiceClient(conn),
 		HardwareClient: hardware.NewHardwareServiceClient(conn),

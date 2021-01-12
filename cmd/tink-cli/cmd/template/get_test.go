@@ -50,7 +50,7 @@ func TestGetTemplate(t *testing.T) {
 
 	for _, s := range table {
 		t.Run(s.Name, func(t *testing.T) {
-			metaClient := &client.MetaClient{
+			cl := &client.FullClient{
 				TemplateClient: &template.TemplateServiceClientMock{
 					ListTemplatesFunc: func(ctx context.Context, in *template.ListRequest, opts ...grpc.CallOption) (template.TemplateService_ListTemplatesClient, error) {
 						return &template.TemplateService_ListTemplatesClientMock{
@@ -66,7 +66,7 @@ func TestGetTemplate(t *testing.T) {
 				},
 			}
 			stdout := bytes.NewBufferString("")
-			cmd := NewGetTemplateCommand(metaClient)
+			cmd := NewGetTemplateCommand(cl)
 			cmd.SetOut(stdout)
 			cmd.SetArgs(s.Args)
 			err := cmd.Execute()

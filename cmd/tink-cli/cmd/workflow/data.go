@@ -18,7 +18,7 @@ var (
 )
 
 // dataCmd represents the data subcommand for workflow command
-func NewDataCommand(cl *client.MetaClient) *cobra.Command {
+func NewDataCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "data [id]",
 		Short:   "get workflow data",

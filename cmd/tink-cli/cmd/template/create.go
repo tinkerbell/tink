@@ -16,7 +16,7 @@ import (
 
 var filePath string
 
-func NewCreateCommand(cl *client.MetaClient) *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "create a workflow template ",

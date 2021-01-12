@@ -22,21 +22,21 @@ func NewTemplateCommand() *cobra.Command {
 		},
 	}
 
-	metaClient, err := client.NewMetaClientFromGlobal()
+	cl, err := client.NewFullClientFromGlobal()
 	if err != nil {
 		panic(err)
 	}
 
-	cmd.AddCommand(template.NewCreateCommand(metaClient))
-	cmd.AddCommand(template.NewDeleteCommand(metaClient))
-	cmd.AddCommand(template.NewListCommand(metaClient))
-	cmd.AddCommand(template.NewUpdateCommand(metaClient))
+	cmd.AddCommand(template.NewCreateCommand(cl))
+	cmd.AddCommand(template.NewDeleteCommand(cl))
+	cmd.AddCommand(template.NewListCommand(cl))
+	cmd.AddCommand(template.NewUpdateCommand(cl))
 
 	// If the variable TINK_CLI_VERSION is not set to 0.0.0 use the old get
 	// command. This is a way to keep retro-compatibility with the old get command.
 	getCmd := template.GetCmd
 	if v := os.Getenv("TINK_CLI_VERSION"); v != "0.0.0" {
-		getCmd = template.NewGetTemplateCommand(metaClient)
+		getCmd = template.NewGetTemplateCommand(cl)
 	}
 	cmd.AddCommand(getCmd)
 	return cmd

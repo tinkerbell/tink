@@ -12,7 +12,7 @@ import (
 )
 
 // deleteCmd represents the delete subcommand for template command
-func NewDeleteCommand(cl *client.MetaClient) *cobra.Command {
+func NewDeleteCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "delete [id]",
 		Short:                 "delete a template",

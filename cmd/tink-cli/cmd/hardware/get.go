@@ -12,15 +12,15 @@ import (
 
 type GetHardware struct {
 	get.CmdOpt
-	metaClient *client.MetaClient
+	cl *client.FullClient
 }
 
-func NewGetHardwareOpt(metaClient *client.MetaClient) GetHardware {
+func NewGetHardwareOpt(cl *client.FullClient) GetHardware {
 	gh := GetHardware{
 		CmdOpt: get.CmdOpt{
 			Headers: []string{"ID", "MAC Address", "IP address", "Hostname"},
 		},
-		metaClient: metaClient,
+		cl: cl,
 	}
 	gh.CmdOpt.PopulateTable = gh.PopulateTable
 	gh.CmdOpt.RetrieveData = gh.RetrieveData
@@ -28,7 +28,7 @@ func NewGetHardwareOpt(metaClient *client.MetaClient) GetHardware {
 }
 
 func (h *GetHardware) RetrieveData(ctx context.Context) ([]interface{}, error) {
-	list, err := h.metaClient.HardwareClient.All(ctx, &hardware.Empty{})
+	list, err := h.cl.HardwareClient.All(ctx, &hardware.Empty{})
 	if err != nil {
 		return nil, err
 	}

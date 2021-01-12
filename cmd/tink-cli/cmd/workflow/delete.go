@@ -11,7 +11,7 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
-func NewDeleteCommand(cl *client.MetaClient) *cobra.Command {
+func NewDeleteCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "delete [id]",
 		Short:                 "delete a workflow",

@@ -22,7 +22,7 @@ var (
 	hStatus        = "Action Status"
 )
 
-func NewShowCommand(cl *client.MetaClient) *cobra.Command {
+func NewShowCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "events [id]",
 		Short:                 "show all events for a workflow",
@@ -46,7 +46,7 @@ func NewShowCommand(cl *client.MetaClient) *cobra.Command {
 	return cmd
 }
 
-func listEvents(cl *client.MetaClient, t table.Writer, args []string) {
+func listEvents(cl *client.FullClient, t table.Writer, args []string) {
 	for _, arg := range args {
 		req := workflow.GetRequest{Id: arg}
 		events, err := cl.WorkflowClient.ShowWorkflowEvents(context.Background(), &req)

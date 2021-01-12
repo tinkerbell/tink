@@ -22,23 +22,23 @@ func NewWorkflowCommand() *cobra.Command {
 		},
 	}
 
-	metaClient, err := client.NewMetaClientFromGlobal()
+	cl, err := client.NewFullClientFromGlobal()
 	if err != nil {
 		panic(err)
 	}
 
-	cmd.AddCommand(workflow.NewCreateCommand(metaClient))
-	cmd.AddCommand(workflow.NewDataCommand(metaClient))
-	cmd.AddCommand(workflow.NewDeleteCommand(metaClient))
-	cmd.AddCommand(workflow.NewShowCommand(metaClient))
-	cmd.AddCommand(workflow.NewListCommand(metaClient))
-	cmd.AddCommand(workflow.NewStateCommand(metaClient))
+	cmd.AddCommand(workflow.NewCreateCommand(cl))
+	cmd.AddCommand(workflow.NewDataCommand(cl))
+	cmd.AddCommand(workflow.NewDeleteCommand(cl))
+	cmd.AddCommand(workflow.NewShowCommand(cl))
+	cmd.AddCommand(workflow.NewListCommand(cl))
+	cmd.AddCommand(workflow.NewStateCommand(cl))
 
 	// If the variable TINK_CLI_VERSION is not set to 0.0.0 use the old get
 	// command
 	getCmd := workflow.GetCmd
 	if v := os.Getenv("TINK_CLI_VERSION"); v != "0.0.0" {
-		getCmd = workflow.NewGetCommand(metaClient)
+		getCmd = workflow.NewGetCommand(cl)
 	}
 	cmd.AddCommand(getCmd)
 	return cmd

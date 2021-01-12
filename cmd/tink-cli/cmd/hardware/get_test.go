@@ -76,7 +76,7 @@ func TestGetHardware(t *testing.T) {
 
 	for _, s := range table {
 		t.Run(s.Name, func(t *testing.T) {
-			metaClient := &client.MetaClient{
+			cl := &client.FullClient{
 				HardwareClient: &hardware_proto.HardwareServiceClientMock{
 					AllFunc: func(ctx context.Context, in *hardware_proto.Empty, opts ...grpc.CallOption) (hardware_proto.HardwareService_AllClient, error) {
 						return &hardware_proto.HardwareService_AllClientMock{
@@ -92,7 +92,7 @@ func TestGetHardware(t *testing.T) {
 				},
 			}
 			stdout := bytes.NewBufferString("")
-			cmd := get.NewGetCommand(NewGetHardwareOpt(metaClient).CmdOpt)
+			cmd := get.NewGetCommand(NewGetHardwareOpt(cl).CmdOpt)
 			cmd.SetOut(stdout)
 			cmd.SetArgs(s.Args)
 			err := cmd.Execute()

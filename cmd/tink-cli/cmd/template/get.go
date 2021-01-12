@@ -47,11 +47,11 @@ var GetCmd = &cobra.Command{
 	},
 }
 
-func NewGetTemplateCommand(metaClient *client.MetaClient) *cobra.Command {
+func NewGetTemplateCommand(cl *client.FullClient) *cobra.Command {
 	return get.NewGetCommand(get.CmdOpt{
 		Headers: []string{"ID", "Name", "Created At", "Updated At"},
 		RetrieveData: func(ctx context.Context) ([]interface{}, error) {
-			list, err := metaClient.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
+			list, err := cl.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
 				FilterBy: &template.ListRequest_Name{
 					Name: "*",
 				},

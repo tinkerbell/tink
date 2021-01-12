@@ -23,7 +23,7 @@ var (
 )
 
 // listCmd represents the list subcommand for workflow command
-func NewListCommand(cl *client.MetaClient) *cobra.Command {
+func NewListCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list all workflows",
@@ -62,7 +62,7 @@ func NewListCommand(cl *client.MetaClient) *cobra.Command {
 	return cmd
 }
 
-func listWorkflows(cl *client.MetaClient) {
+func listWorkflows(cl *client.FullClient) {
 	list, err := cl.WorkflowClient.ListWorkflows(context.Background(), &workflow.Empty{})
 	if err != nil {
 		log.Fatal(err)

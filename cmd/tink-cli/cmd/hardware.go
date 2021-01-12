@@ -9,7 +9,7 @@ import (
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/hardware"
 )
 
-func NewHardwareCommand(metaClient *client.MetaClient) *cobra.Command {
+func NewHardwareCommand(cl *client.FullClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "hardware",
 		Short:   "tink hardware client",
@@ -22,7 +22,7 @@ func NewHardwareCommand(metaClient *client.MetaClient) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(get.NewGetCommand(hardware.NewGetHardwareOpt(metaClient).CmdOpt))
+	cmd.AddCommand(get.NewGetCommand(hardware.NewGetHardwareOpt(cl).CmdOpt))
 	cmd.AddCommand(hardware.NewDeleteCmd())
 	cmd.AddCommand(hardware.NewGetByIDCmd())
 	cmd.AddCommand(hardware.NewGetByIPCmd())

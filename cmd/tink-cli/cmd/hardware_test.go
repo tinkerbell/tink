@@ -161,7 +161,7 @@ func Test_NewHardwareCommand(t *testing.T) {
 				Run:     func(_ *cobra.Command, _ []string) {},
 				Version: "test",
 			}
-			rootCmd.AddCommand(NewHardwareCommand(&client.MetaClient{}))
+			rootCmd.AddCommand(NewHardwareCommand(&client.FullClient{}))
 			tt.cmdFunc(t, rootCmd)
 		})
 	}

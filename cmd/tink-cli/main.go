@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if err := cmd.Execute(version, client.NewMetaClient(conn)); err != nil {
+	if err := cmd.Execute(version, client.NewFullClient(conn)); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
