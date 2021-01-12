@@ -5,9 +5,10 @@ package template
 
 import (
 	"context"
+	"sync"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"sync"
 )
 
 // Ensure, that TemplateServiceClientMock does implement TemplateServiceClient.

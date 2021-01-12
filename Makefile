@@ -54,3 +54,7 @@ test:
 verify:
 	goimports -d .
 	golint ./...
+
+protos/gen_mock:
+	go generate ./protos/**/*
+	goimports -w ./protos/**/mock.go

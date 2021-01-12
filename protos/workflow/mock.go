@@ -5,9 +5,10 @@ package workflow
 
 import (
 	"context"
+	"sync"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"sync"
 )
 
 // Ensure, that WorkflowServiceClientMock does implement WorkflowServiceClient.
