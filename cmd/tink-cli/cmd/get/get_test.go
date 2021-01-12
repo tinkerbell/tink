@@ -17,7 +17,8 @@ func TestNewGetCommand(t *testing.T) {
 		Name         string
 		ExpectStdout string
 		Args         []string
-		Opt          CmdOpt
+		Opt          Options
+		Skip         string
 		Run          func(t *testing.T, cmd *cobra.Command, stdout, stderr io.Reader)
 	}{
 		{
@@ -28,7 +29,7 @@ func TestNewGetCommand(t *testing.T) {
 | 10   | hello |
 +------+-------+
 `,
-			Opt: CmdOpt{
+			Opt: Options{
 				Headers: []string{"name", "id"},
 				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
 					data := []interface{}{
@@ -53,7 +54,7 @@ func TestNewGetCommand(t *testing.T) {
 +----+-------+
 `,
 			Args: []string{"--no-headers"},
-			Opt: CmdOpt{
+			Opt: Options{
 				Headers: []string{"name", "id"},
 				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
 					data := []interface{}{
@@ -75,7 +76,58 @@ func TestNewGetCommand(t *testing.T) {
 			Name:         "happy-path-json",
 			ExpectStdout: `{"data":[["10","hello"]]}`,
 			Args:         []string{"--format", "json"},
-			Opt: CmdOpt{
+			Opt: Options{
+				Headers: []string{"name", "id"},
+				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+					data := []interface{}{
+						[]string{"10", "hello"},
+					}
+					return data, nil
+				},
+				PopulateTable: func(data []interface{}, w table.Writer) error {
+					for _, v := range data {
+						if vv, ok := v.([]string); ok {
+							w.AppendRow(table.Row{vv[0], vv[1]})
+						}
+					}
+					return nil
+				},
+			},
+		},
+		{
+			Name: "happy-path-json-no-headers",
+			Skip: "The JSON format is rusty and custom because we table library we use do not support JSON right now. This feature is not implemented",
+		},
+		{
+			Name: "happy-path-csv-no-headers",
+			ExpectStdout: `10,hello
+`,
+			Args: []string{"--format", "csv", "--no-headers"},
+			Opt: Options{
+				Headers: []string{"name", "id"},
+				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+					data := []interface{}{
+						[]string{"10", "hello"},
+					}
+					return data, nil
+				},
+				PopulateTable: func(data []interface{}, w table.Writer) error {
+					for _, v := range data {
+						if vv, ok := v.([]string); ok {
+							w.AppendRow(table.Row{vv[0], vv[1]})
+						}
+					}
+					return nil
+				},
+			},
+		},
+		{
+			Name: "happy-path-csv",
+			ExpectStdout: `name,id
+10,hello
+`,
+			Args: []string{"--format", "csv"},
+			Opt: Options{
 				Headers: []string{"name", "id"},
 				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
 					data := []interface{}{
@@ -97,6 +149,9 @@ func TestNewGetCommand(t *testing.T) {
 
 	for _, s := range table {
 		t.Run(s.Name, func(t *testing.T) {
+			if s.Skip != "" {
+				t.Skip(s.Skip)
+			}
 			stdout := bytes.NewBufferString("")
 			cmd := NewGetCommand(s.Opt)
 			cmd.SetOut(stdout)

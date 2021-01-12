@@ -11,19 +11,19 @@ import (
 )
 
 type GetHardware struct {
-	get.CmdOpt
+	get.Options
 	cl *client.FullClient
 }
 
-func NewGetHardwareOpt(cl *client.FullClient) GetHardware {
+func NewGetHardware(cl *client.FullClient) GetHardware {
 	gh := GetHardware{
-		CmdOpt: get.CmdOpt{
+		Options: get.Options{
 			Headers: []string{"ID", "MAC Address", "IP address", "Hostname"},
 		},
 		cl: cl,
 	}
-	gh.CmdOpt.PopulateTable = gh.PopulateTable
-	gh.CmdOpt.RetrieveData = gh.RetrieveData
+	gh.Options.PopulateTable = gh.PopulateTable
+	gh.Options.RetrieveData = gh.RetrieveData
 	return gh
 }
 

@@ -48,7 +48,7 @@ var GetCmd = &cobra.Command{
 }
 
 func NewGetTemplateCommand(cl *client.FullClient) *cobra.Command {
-	return get.NewGetCommand(get.CmdOpt{
+	return get.NewGetCommand(get.Options{
 		Headers: []string{"ID", "Name", "Created At", "Updated At"},
 		RetrieveData: func(ctx context.Context) ([]interface{}, error) {
 			list, err := cl.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{

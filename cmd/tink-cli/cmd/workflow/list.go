@@ -34,10 +34,10 @@ func NewListCommand(cl *client.FullClient) *cobra.Command {
 	# If you want to retrieve a single workflow you know by ID
 	tink workflow get [id]
 	# You can print it in JSON and CSV as well
-	tink workflow get -o json [id]
+	tink workflow get --format json [id]
 
 	# Get a list of available workflows
-	tink workflow get [id]
+	tink workflow get
 `,
 		Args: func(c *cobra.Command, args []string) error {
 			if len(args) != 0 {

@@ -56,7 +56,7 @@ func init() {
 // NewGetCommand create the generic get command with everything required by the
 // workflow resource to work
 func NewGetCommand(cl *client.FullClient) *cobra.Command {
-	cmd := get.NewGetCommand(get.CmdOpt{
+	cmd := get.NewGetCommand(get.Options{
 		Headers: []string{"ID", "Template ID", "State", "Created At", "Updated At"},
 		RetrieveData: func(ctx context.Context) ([]interface{}, error) {
 			list, err := cl.WorkflowClient.ListWorkflows(ctx, &workflow.Empty{})

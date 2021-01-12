@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CmdOpt struct {
+type Options struct {
 	// Headers is the list of headers you want to print as part of the list
 	Headers []string
 	// RetrieveData reaches out to Tinkerbell and it gets the required data
@@ -24,17 +24,14 @@ type CmdOpt struct {
 	NoHeaders bool
 }
 
-const shortDescr = `
-Display one or many resources`
+const shortDescr = `display one or many resources`
 
-const longDescr = `
-Prints a table contains the most important information about a specific
+const longDescr = `Prints a table containing the most important information about a specific
 resource. You can specify the kind of output you want to receive. It can be
-table or csv or json.
+table, csv or json.
 `
 
-const exampleDescr = `
-# List all hardware in table output format.
+const exampleDescr = `# List all hardware in table output format.
 tink hardware get
 
 # List all workflow in csv output format.
@@ -44,7 +41,7 @@ tink template get --format csv
 tink workflow get --format json [id]
 `
 
-func NewGetCommand(opt CmdOpt) *cobra.Command {
+func NewGetCommand(opt Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "get",
 		Short:                 shortDescr,

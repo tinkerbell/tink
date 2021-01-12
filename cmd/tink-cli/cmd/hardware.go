@@ -22,7 +22,7 @@ func NewHardwareCommand(cl *client.FullClient) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(get.NewGetCommand(hardware.NewGetHardwareOpt(cl).CmdOpt))
+	cmd.AddCommand(get.NewGetCommand(hardware.NewGetHardware(cl).Options))
 	cmd.AddCommand(hardware.NewDeleteCmd())
 	cmd.AddCommand(hardware.NewGetByIDCmd())
 	cmd.AddCommand(hardware.NewGetByIPCmd())
