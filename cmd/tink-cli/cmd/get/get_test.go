@@ -74,7 +74,7 @@ func TestNewGetCommand(t *testing.T) {
 		{
 			Name:         "happy-path-json",
 			ExpectStdout: `{"data":[["10","hello"]]}`,
-			Args:         []string{"--output", "json"},
+			Args:         []string{"--format", "json"},
 			Opt: CmdOpt{
 				Headers: []string{"name", "id"},
 				RetrieveData: func(ctx context.Context) ([]interface{}, error) {

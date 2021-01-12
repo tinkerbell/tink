@@ -51,7 +51,7 @@ func TestGetHardware(t *testing.T) {
 		},
 		{
 			Name: "get-json",
-			Args: []string{"-o", "json"},
+			Args: []string{"--format", "json"},
 			ReturnedHardwares: []*hardware_proto.Hardware{
 				{
 					Network: &hardware_proto.Hardware_Network{

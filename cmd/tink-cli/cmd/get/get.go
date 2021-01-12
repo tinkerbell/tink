@@ -17,9 +17,9 @@ type CmdOpt struct {
 	// PopulateTable populates a table with the data retrieved with the RetrieveData function.
 	PopulateTable func([]interface{}, table.Writer) error
 
-	// Output specifies the output you want the list of resources printed
+	// Format specifies the format you want the list of resources printed
 	// out. By default it is table but it can be JSON ar CSV.
-	Output string
+	Format string
 	// NoHeaders does not print the header line
 	NoHeaders bool
 }
@@ -38,10 +38,10 @@ const exampleDescr = `
 tink hardware get
 
 # List all workflow in csv output format.
-tink template get -o csv
+tink template get --format csv
 
 # List a single template in json output format.
-tink workflow get -o json [id]
+tink workflow get --format json [id]
 `
 
 func NewGetCommand(opt CmdOpt) *cobra.Command {
@@ -74,7 +74,7 @@ func NewGetCommand(opt CmdOpt) *cobra.Command {
 				return err
 			}
 
-			switch opt.Output {
+			switch opt.Format {
 			case "json":
 				// TODO(gianarb): the table library we use do
 				// not support JSON right now. I am not even
@@ -94,7 +94,7 @@ func NewGetCommand(opt CmdOpt) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.PersistentFlags().StringVarP(&opt.Output, "output", "o", "table", "Output type")
-	cmd.PersistentFlags().BoolVar(&opt.NoHeaders, "no-headers", false, "Output type")
+	cmd.PersistentFlags().StringVarP(&opt.Format, "format", "", "table", "The format you expect the list to be printed out. Currently supported format are table, JSON and CSV")
+	cmd.PersistentFlags().BoolVar(&opt.NoHeaders, "no-headers", false, "Table contains an header with the columns' name. You can disable it from behing printed out")
 	return cmd
 }
