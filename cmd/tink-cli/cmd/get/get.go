@@ -3,6 +3,7 @@ package get
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/jedib0t/go-pretty/table"
@@ -14,6 +15,8 @@ type Options struct {
 	Headers []string
 	// RetrieveData reaches out to Tinkerbell and it gets the required data
 	RetrieveData func(context.Context) ([]interface{}, error)
+	// RetrieveByID is used when a get command has a list of arguments
+	RetrieveByID func(context.Context, string) (interface{}, error)
 	// PopulateTable populates a table with the data retrieved with the RetrieveData function.
 	PopulateTable func([]interface{}, table.Writer) error
 
@@ -49,10 +52,26 @@ func NewGetCommand(opt Options) *cobra.Command {
 		Example:               exampleDescr,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+			var data []interface{}
+
 			t := table.NewWriter()
 			t.SetOutputMirror(cmd.OutOrStdout())
 
-			data, err := opt.RetrieveData(cmd.Context())
+			if len(args) != 0 {
+				if opt.RetrieveByID == nil {
+					return errors.New("Get by ID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
+				}
+				for _, requestedID := range args {
+					s, err := opt.RetrieveByID(cmd.Context(), requestedID)
+					if err != nil {
+						continue
+					}
+					data = append(data, s)
+				}
+			} else {
+				data, err = opt.RetrieveData(cmd.Context())
+			}
 			if err != nil {
 				return err
 			}

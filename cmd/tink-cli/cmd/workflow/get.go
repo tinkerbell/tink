@@ -75,6 +75,11 @@ func NewGetCommand(cl *client.FullClient) *cobra.Command {
 			}
 			return data, nil
 		},
+		RetrieveByID: func(ctx context.Context, requestedID string) (interface{}, error) {
+			return cl.WorkflowClient.GetWorkflow(ctx, &workflow.GetRequest{
+				Id: requestedID,
+			})
+		},
 		PopulateTable: func(data []interface{}, t table.Writer) error {
 			for _, v := range data {
 				if w, ok := v.(*workflow.Workflow); ok {

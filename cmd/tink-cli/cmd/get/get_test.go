@@ -48,6 +48,33 @@ func TestNewGetCommand(t *testing.T) {
 			},
 		},
 		{
+			Name: "get-by-id",
+			Args: []string{"30"},
+			ExpectStdout: `+------+-------+
+| NAME | ID    |
++------+-------+
+| 30   | hello |
++------+-------+
+`,
+			Opt: Options{
+				Headers: []string{"name", "id"},
+				RetrieveByID: func(ctx context.Context, arg string) (interface{}, error) {
+					if arg != "30" {
+						t.Errorf("expected 30 as arg got %s", arg)
+					}
+					return []string{"30", "hello"}, nil
+				},
+				PopulateTable: func(data []interface{}, w table.Writer) error {
+					for _, v := range data {
+						if vv, ok := v.([]string); ok {
+							w.AppendRow(table.Row{vv[0], vv[1]})
+						}
+					}
+					return nil
+				},
+			},
+		},
+		{
 			Name: "happy-path-no-headers",
 			ExpectStdout: `+----+-------+
 | 10 | hello |

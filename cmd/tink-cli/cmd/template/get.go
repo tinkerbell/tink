@@ -70,6 +70,13 @@ func NewGetTemplateCommand(cl *client.FullClient) *cobra.Command {
 			}
 			return data, nil
 		},
+		RetrieveByID: func(ctx context.Context, requestedID string) (interface{}, error) {
+			return cl.TemplateClient.GetTemplate(context.Background(), &template.GetRequest{
+				GetBy: &template.GetRequest_Id{
+					Id: requestedID,
+				},
+			})
+		},
 		PopulateTable: func(data []interface{}, t table.Writer) error {
 			for _, v := range data {
 				if tmp, ok := v.(*template.WorkflowTemplate); ok {

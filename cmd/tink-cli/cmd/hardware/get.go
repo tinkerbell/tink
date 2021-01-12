@@ -24,7 +24,12 @@ func NewGetHardware(cl *client.FullClient) GetHardware {
 	}
 	gh.Options.PopulateTable = gh.PopulateTable
 	gh.Options.RetrieveData = gh.RetrieveData
+	gh.Options.RetrieveByID = gh.RetrieveByID
 	return gh
+}
+
+func (h *GetHardware) RetrieveByID(ctx context.Context, requiredID string) (interface{}, error) {
+	return h.cl.HardwareClient.ByID(ctx, &hardware.GetRequest{Id: requiredID})
 }
 
 func (h *GetHardware) RetrieveData(ctx context.Context) ([]interface{}, error) {
