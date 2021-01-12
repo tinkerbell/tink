@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -233,17 +233,35 @@ func TestValidateTemplate(t *testing.T) {
 
 func TestRenderTemplate(t *testing.T) {
 	tests := []struct {
-		name          string
-		hwAddress     []byte
-		expectedError func(t *testing.T, err error)
+		name             string
+		hwAddress        []byte
+		templateID       string
+		templateData     string
+		expectedError    func(t *testing.T, err error)
+		expectedTemplate string
 	}{
 		{
-			name:      "valid-hardware-address",
-			hwAddress: []byte("{\"device_1\":\"08:00:27:00:00:01\"}"),
+			name:         "valid-hardware-address",
+			hwAddress:    []byte("{\"device_1\":\"08:00:27:00:00:01\"}"),
+			templateID:   "49748301-d0d9-4ee9-84df-b64e6e1ef3dd",
+			templateData: validTemplate,
+			expectedTemplate: `
+version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world"
+    worker: "08:00:27:00:00:01"
+    actions:
+    - name: "hello_world"
+      image: hello-world
+      timeout: 60
+`,
 		},
 		{
-			name:      "invalid-hardware-address",
-			hwAddress: []byte("{\"invalid_device\":\"08:00:27:00:00:01\"}"),
+			name:         "invalid-hardware-address",
+			templateData: validTemplate,
+			hwAddress:    []byte("{\"invalid_device\":\"08:00:27:00:00:01\"}"),
 			expectedError: func(t *testing.T, err error) {
 				if err == nil {
 					t.Error("expected error, got nil")
@@ -253,14 +271,45 @@ func TestRenderTemplate(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:       "template with << should not be escaped in any way",
+			hwAddress:  []byte("{\"device_1\":\"08:00:27:00:00:01\"}"),
+			templateID: "98788301-d0d9-4ee9-84df-b64e6e1ef1cc",
+			templateData: `
+version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world<<"
+    worker: "{{.device_1}}"
+    actions:
+    - name: "hello_world"
+      image: hello-world
+      timeout: 60
+`,
+			expectedTemplate: `
+version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world<<"
+    worker: "08:00:27:00:00:01"
+    actions:
+    - name: "hello_world"
+      image: hello-world
+      timeout: 60
+`,
+		},
 	}
 
-	templateID := uuid.New().String()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := RenderTemplate(templateID, validTemplate, test.hwAddress)
+			temp, err := RenderTemplate(test.templateID, test.templateData, test.hwAddress)
 			if err != nil {
 				test.expectedError(t, err)
+			}
+			if diff := cmp.Diff(test.expectedTemplate, temp); diff != "" {
+				t.Error(diff)
 			}
 		})
 	}
