@@ -68,7 +68,7 @@ func RenderTemplate(templateID, templateData string, devices []byte) (string, er
 		return "", err
 	}
 
-	t := template.New("workflow-template")
+	t := template.New("workflow-template").Option("missingkey=error")
 	_, err = t.Parse(string(templateData))
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)

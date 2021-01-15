@@ -237,7 +237,6 @@ func TestRenderTemplate(t *testing.T) {
 		hwAddress        []byte
 		templateID       string
 		templateData     string
-		skip             string
 		expectedError    func(t *testing.T, err error)
 		expectedTemplate string
 	}{
@@ -262,14 +261,13 @@ tasks:
 		{
 			name:         "invalid-hardware-address",
 			templateData: validTemplate,
-			skip:         "Not sure if this is an expected error or not but this test is not well written",
 			hwAddress:    []byte("{\"invalid_device\":\"08:00:27:00:00:01\"}"),
 			expectedError: func(t *testing.T, err error) {
 				if err == nil {
 					t.Error("expected error, got nil")
 				}
-				if !strings.Contains(err.Error(), "invalid hardware address: {\"invalid_device\":\"08:00:27:00:00:01\"}") {
-					t.Errorf("\nexpected err: %s\ngot: %s", "invalid hardware address: {\"invalid_device\":\"08:00:27:00:00:01\"}", err)
+				if !strings.Contains(err.Error(), `executing "workflow-template" at <.device_1>: map has no entry for key "device_1"`) {
+					t.Errorf("\nexpected err: %s\ngot: %s", `executing "workflow-template" at <.device_1>: map has no entry for key "device_1"`, err)
 				}
 			},
 		},
@@ -306,9 +304,6 @@ tasks:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.skip != "" {
-				t.Skip(test.skip)
-			}
 			temp, err := RenderTemplate(test.templateID, test.templateData, test.hwAddress)
 			if test.expectedError != nil {
 				test.expectedError(t, err)
