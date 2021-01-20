@@ -56,14 +56,17 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, db *db.Tink
 		db:      db,
 		dbReady: true,
 	}
-	if cert := os.Getenv("TINKERBELL_TLS_CERT"); cert != "" {
-		server.cert = []byte(cert)
-		server.modT = time.Now()
-	} else {
-		tlsCert, certPEM, modT := getCerts(facility, logger)
-		params = append(params, grpc.Creds(credentials.NewServerTLSFromCert(&tlsCert)))
-		server.cert = certPEM
-		server.modT = modT
+
+	if tlsEnabled := strings.ToLower(os.Getenv("TINK_TLS_ENABLED")); tlsEnabled != "false" {
+		if cert := os.Getenv("TINKERBELL_TLS_CERT"); cert != "" {
+			server.cert = []byte(cert)
+			server.modT = time.Now()
+		} else {
+			tlsCert, certPEM, modT := getCerts(facility, logger)
+			params = append(params, grpc.Creds(credentials.NewServerTLSFromCert(&tlsCert)))
+			server.cert = certPEM
+			server.modT = modT
+		}
 	}
 
 	// register servers

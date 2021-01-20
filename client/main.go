@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -104,33 +105,39 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 
 // GetConnection returns a gRPC client connection
 func GetConnection() (*grpc.ClientConn, error) {
-	certURL := os.Getenv("TINKERBELL_CERT_URL")
-	if certURL == "" {
-		return nil, errors.New("undefined TINKERBELL_CERT_URL")
-	}
-	resp, err := http.Get(certURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "fetch cert")
-	}
-	defer resp.Body.Close()
+	var dialOpts grpc.DialOption
+	if tlsEnabled := strings.ToLower(os.Getenv("TINK_TLS_ENABLED")); tlsEnabled == "false" {
+		dialOpts = grpc.WithInsecure()
+	} else {
+		certURL := os.Getenv("TINKERBELL_CERT_URL")
+		if certURL == "" {
+			return nil, errors.New("undefined TINKERBELL_CERT_URL")
+		}
+		resp, err := http.Get(certURL)
+		if err != nil {
+			return nil, errors.Wrap(err, "fetch cert")
+		}
+		defer resp.Body.Close()
 
-	certs, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "read cert")
-	}
+		certs, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, errors.Wrap(err, "read cert")
+		}
 
-	cp := x509.NewCertPool()
-	ok := cp.AppendCertsFromPEM(certs)
-	if !ok {
-		return nil, errors.Wrap(err, "parse cert")
+		cp := x509.NewCertPool()
+		ok := cp.AppendCertsFromPEM(certs)
+		if !ok {
+			return nil, errors.Wrap(err, "parse cert")
+		}
+		creds := credentials.NewClientTLSFromCert(cp, "")
+		dialOpts = grpc.WithTransportCredentials(creds)
 	}
 
 	grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 	if grpcAuthority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
-	creds := credentials.NewClientTLSFromCert(cp, "")
-	conn, err := grpc.Dial(grpcAuthority, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(grpcAuthority, dialOpts)
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to tinkerbell server")
 	}
