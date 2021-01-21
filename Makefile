@@ -44,7 +44,7 @@ crosscompile: $(crossbinaries)
 $(binaries) $(crossbinaries):
 	$(FLAGS) go build $(LDFLAGS) -o $@ ./$(@D)
 
-run: $(binaries)
+run: cmd/tink-cli/tink-cli-linux-amd64 cmd/tink-server/tink-server-linux-amd64 cmd/tink-worker/tink-worker-linux-amd64
 	docker-compose up -d --build db
 	docker-compose up --build tinkerbell boots
 test:
