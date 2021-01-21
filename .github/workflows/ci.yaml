@@ -72,10 +72,37 @@ jobs:
     steps:
     - name: fake
       run: echo ":+1:"
-  docker-images:
+  crosscompile:
     runs-on: ubuntu-latest
     needs:
       - validation
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.14.6'
+    - run: make crosscompile -j$(nproc)
+    - name: Upload tink-cli binaries
+      uses: actions/upload-artifact@v2
+      with:
+          name: tink-cli
+          path: cmd/tink-cli/tink-cli-*
+    - name: Upload tink-server binaries
+      uses: actions/upload-artifact@v2
+      with:
+          name: tink-server
+          path: cmd/tink-server/tink-server-*
+    - name: Upload tink-worker binaries
+      uses: actions/upload-artifact@v2
+      with:
+          name: tink-worker
+          path: cmd/tink-worker/tink-worker-*
+  docker-images:
+    runs-on: ubuntu-latest
+    needs:
+      - crosscompile
     strategy:
       matrix:
         include:
