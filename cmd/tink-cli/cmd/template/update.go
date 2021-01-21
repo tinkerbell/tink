@@ -11,18 +11,21 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/template"
+	"github.com/tinkerbell/tink/workflow"
 )
 
 // updateCmd represents the get subcommand for template command
 var updateCmd = &cobra.Command{
-	Use:     "update [id] [flags]",
-	Short:   "update a template",
-	Example: "tink template update [id] [flags]",
+	Use:   "update [id] [flags]",
+	Short: "update a workflow template",
+	Long: `The update command allows you change the definition of an existing workflow template:
+
+# Update an existing template:
+$ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --file /tmp/example.tmpl
+`,
 	PreRunE: func(c *cobra.Command, args []string) error {
-		name, _ := c.Flags().GetString(fName)
-		path, _ := c.Flags().GetString(fPath)
-		if name == "" && path == "" {
-			return fmt.Errorf("%v requires at least one flag", c.UseLine())
+		if filePath == "" {
+			return fmt.Errorf("%v requires the '--file' flag", c.UseLine())
 		}
 		return nil
 	},
@@ -46,19 +49,18 @@ var updateCmd = &cobra.Command{
 
 func updateTemplate(id string) {
 	req := template.WorkflowTemplate{Id: id}
-	if filePath == "" && templateName != "" {
-		req.Name = templateName
-	} else if filePath != "" && templateName == "" {
+	if filePath != "" {
 		data := readTemplateData()
 		if data != "" {
-			if err := tryParseTemplate(data); err != nil {
+			wf, err := workflow.Parse([]byte(data))
+			if err != nil {
 				log.Fatal(err)
 			}
+			req.Name = wf.Name
 			req.Data = data
 		}
 	} else {
-		req.Name = templateName
-		req.Data = readTemplateData()
+		log.Fatal("Nothing is provided in the file path")
 	}
 
 	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)
@@ -84,8 +86,7 @@ func readTemplateData() string {
 
 func init() {
 	flags := updateCmd.PersistentFlags()
-	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
-	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric)")
+	flags.StringVarP(&filePath, "file", "", "", "path to the template file")
 
 	SubCommands = append(SubCommands, updateCmd)
 }

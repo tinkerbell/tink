@@ -2,36 +2,37 @@ package template
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	tt "text/template"
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/template"
+	"github.com/tinkerbell/tink/workflow"
 )
 
-var (
-	fPath        = "path"
-	fName        = "name"
-	filePath     string
-	templateName string
-)
+var filePath string
 
 // createCmd represents the create subcommand for template command
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "create a workflow template ",
-	Example: `tink template create [flags]
-cat /tmp/example.tmpl | tink template create -n example`,
+	Long: `The create command allows you create workflow templates:
+
+# Pipe the file to create a template:
+$ cat /tmp/example.tmpl | tink template create
+
+# Create template using the --file flag:
+$ tink template create --file /tmp/example.tmpl
+`,
 	PreRunE: func(c *cobra.Command, args []string) error {
 		if !isInputFromPipe() {
-			path, _ := c.Flags().GetString(fPath)
-			if path == "" {
-				return fmt.Errorf("either pipe the template or provide the required '--path' flag")
+			if filePath == "" {
+				return errors.New("either pipe the template or provide the required '--file' flag")
 			}
 		}
 		return nil
@@ -50,10 +51,11 @@ cat /tmp/example.tmpl | tink template create -n example`,
 
 		data := readAll(reader)
 		if data != nil {
-			if err := tryParseTemplate(string(data)); err != nil {
+			wf, err := workflow.Parse(data)
+			if err != nil {
 				log.Fatal(err)
 			}
-			createTemplate(data)
+			createTemplate(wf.Name, data)
 		}
 	},
 }
@@ -68,21 +70,11 @@ func readAll(reader io.Reader) []byte {
 
 func addFlags() {
 	flags := createCmd.PersistentFlags()
-	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
-	flags.StringVarP(&templateName, "name", "n", "", "unique name for the template (alphanumeric and case sensitive)")
-	_ = createCmd.MarkPersistentFlagRequired(fName)
+	flags.StringVarP(&filePath, "file", "", "", "path to the template file")
 }
 
-func tryParseTemplate(data string) error {
-	tmpl := *tt.New("")
-	if _, err := tmpl.Parse(data); err != nil {
-		return err
-	}
-	return nil
-}
-
-func createTemplate(data []byte) {
-	req := template.WorkflowTemplate{Name: templateName, Data: string(data)}
+func createTemplate(name string, data []byte) {
+	req := template.WorkflowTemplate{Name: name, Data: string(data)}
 	res, err := client.TemplateClient.CreateTemplate(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
