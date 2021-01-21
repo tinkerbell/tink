@@ -11,10 +11,9 @@ MAKEFLAGS += --no-builtin-rules
 SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
-server := cmd/tink-server
-cli := cmd/tink-cli
-worker := cmd/tink-worker
-
+server := cmd/tink-server/tink-server
+cli := cmd/tink-cli/tink-cli
+worker := cmd/tink-worker/tink-worker
 binaries := $(server) $(cli) $(worker)
 
 version := $(shell git rev-parse --short HEAD)
@@ -33,7 +32,7 @@ cli: $(cli)
 worker : $(worker)
 
 $(server) $(cli) $(worker):
-	go build $(LDFLAGS) -o $@ ./$@
+	go build $(LDFLAGS) -o $@ ./$(@D)
 
 run: $(binaries)
 	docker-compose up -d --build db
