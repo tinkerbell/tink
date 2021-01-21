@@ -34,6 +34,19 @@ worker : $(worker)
 $(server) $(cli) $(worker):
 	go build $(LDFLAGS) -o $@ ./$(@D)
 
+crossbinaries := $(addsuffix -linux-,$(binaries))
+crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=arm64) $(crossbinaries:=armv6) $(crossbinaries:=armv7)
+crosscompile: $(crossbinaries)
+.PHONY: crosscompile $(crossbinaries)
+
+%-386:   FLAGS=GOARCH=386
+%-amd64: FLAGS=GOARCH=amd64
+%-arm64: FLAGS=GOARCH=arm64
+%-armv6: FLAGS=GOARCH=arm GOARM=6
+%-armv7: FLAGS=GOARCH=arm GOARM=7
+$(crossbinaries):
+	$(FLAGS) GOOS=linux go build $(LDFLAGS) -o $@ ./$(@D)
+
 run: $(binaries)
 	docker-compose up -d --build db
 	docker-compose up --build tinkerbell boots
