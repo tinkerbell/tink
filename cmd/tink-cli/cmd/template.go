@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/template"
 )
 
@@ -36,7 +37,7 @@ func NewTemplateCommand() *cobra.Command {
 	// command. This is a way to keep retro-compatibility with the old get command.
 	getCmd := template.GetCmd
 	if v := os.Getenv("TINK_CLI_VERSION"); v != "0.0.0" {
-		getCmd = template.NewGetTemplateCommand(cl)
+		getCmd = get.NewGetCommand(template.NewGetOptions())
 	}
 	cmd.AddCommand(getCmd)
 	return cmd

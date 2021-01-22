@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/workflow"
 )
 
@@ -38,7 +39,7 @@ func NewWorkflowCommand() *cobra.Command {
 	// command
 	getCmd := workflow.GetCmd
 	if v := os.Getenv("TINK_CLI_VERSION"); v != "0.0.0" {
-		getCmd = workflow.NewGetCommand(cl)
+		getCmd = get.NewGetCommand(workflow.NewGetOptions())
 	}
 	cmd.AddCommand(getCmd)
 	return cmd

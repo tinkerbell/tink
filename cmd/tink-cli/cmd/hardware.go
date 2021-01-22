@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/hardware"
 )
 
-func NewHardwareCommand(cl *client.FullClient) *cobra.Command {
+func NewHardwareCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "hardware",
 		Short:   "tink hardware client",
@@ -22,7 +21,7 @@ func NewHardwareCommand(cl *client.FullClient) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(get.NewGetCommand(hardware.NewGetHardware(cl).Options))
+	cmd.AddCommand(get.NewGetCommand(hardware.NewGetOptions()))
 	cmd.AddCommand(hardware.NewDeleteCmd())
 	cmd.AddCommand(hardware.NewGetByIDCmd())
 	cmd.AddCommand(hardware.NewGetByIPCmd())

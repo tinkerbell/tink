@@ -92,7 +92,9 @@ func TestGetHardware(t *testing.T) {
 				},
 			}
 			stdout := bytes.NewBufferString("")
-			cmd := get.NewGetCommand(NewGetHardware(cl).Options)
+			g := NewGetOptions()
+			g.SetFullClient(cl)
+			cmd := get.NewGetCommand(g)
 			cmd.SetOut(stdout)
 			cmd.SetArgs(s.Args)
 			err := cmd.Execute()

@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
+	"github.com/tinkerbell/tink/client"
 )
 
 func TestNewGetCommand(t *testing.T) {
@@ -31,7 +32,7 @@ func TestNewGetCommand(t *testing.T) {
 `,
 			Opt: Options{
 				Headers: []string{"name", "id"},
-				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+				RetrieveData: func(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
 					data := []interface{}{
 						[]string{"10", "hello"},
 					}
@@ -58,7 +59,7 @@ func TestNewGetCommand(t *testing.T) {
 `,
 			Opt: Options{
 				Headers: []string{"name", "id"},
-				RetrieveByID: func(ctx context.Context, arg string) (interface{}, error) {
+				RetrieveByID: func(ctx context.Context, cl *client.FullClient, arg string) (interface{}, error) {
 					if arg != "30" {
 						t.Errorf("expected 30 as arg got %s", arg)
 					}
@@ -83,7 +84,7 @@ func TestNewGetCommand(t *testing.T) {
 			Args: []string{"--no-headers"},
 			Opt: Options{
 				Headers: []string{"name", "id"},
-				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+				RetrieveData: func(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
 					data := []interface{}{
 						[]string{"10", "hello"},
 					}
@@ -105,7 +106,7 @@ func TestNewGetCommand(t *testing.T) {
 			Args:         []string{"--format", "json"},
 			Opt: Options{
 				Headers: []string{"name", "id"},
-				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+				RetrieveData: func(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
 					data := []interface{}{
 						[]string{"10", "hello"},
 					}
@@ -132,7 +133,7 @@ func TestNewGetCommand(t *testing.T) {
 			Args: []string{"--format", "csv", "--no-headers"},
 			Opt: Options{
 				Headers: []string{"name", "id"},
-				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+				RetrieveData: func(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
 					data := []interface{}{
 						[]string{"10", "hello"},
 					}
@@ -156,7 +157,7 @@ func TestNewGetCommand(t *testing.T) {
 			Args: []string{"--format", "csv"},
 			Opt: Options{
 				Headers: []string{"name", "id"},
-				RetrieveData: func(ctx context.Context) ([]interface{}, error) {
+				RetrieveData: func(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
 					data := []interface{}{
 						[]string{"10", "hello"},
 					}
@@ -180,6 +181,7 @@ func TestNewGetCommand(t *testing.T) {
 				t.Skip(s.Skip)
 			}
 			stdout := bytes.NewBufferString("")
+			s.Opt.SetFullClient(&client.FullClient{})
 			cmd := NewGetCommand(s.Opt)
 			cmd.SetOut(stdout)
 			cmd.SetArgs(s.Args)

@@ -3,28 +3,42 @@ package get
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
+	"github.com/tinkerbell/tink/client"
+	"google.golang.org/grpc"
 )
 
 type Options struct {
 	// Headers is the list of headers you want to print as part of the list
 	Headers []string
 	// RetrieveData reaches out to Tinkerbell and it gets the required data
-	RetrieveData func(context.Context) ([]interface{}, error)
+	RetrieveData func(context.Context, *client.FullClient) ([]interface{}, error)
 	// RetrieveByID is used when a get command has a list of arguments
-	RetrieveByID func(context.Context, string) (interface{}, error)
+	RetrieveByID func(context.Context, *client.FullClient, string) (interface{}, error)
 	// PopulateTable populates a table with the data retrieved with the RetrieveData function.
 	PopulateTable func([]interface{}, table.Writer) error
+
+	clientConnOpt *client.ConnOptions
+	fullClient    *client.FullClient
 
 	// Format specifies the format you want the list of resources printed
 	// out. By default it is table but it can be JSON ar CSV.
 	Format string
 	// NoHeaders does not print the header line
 	NoHeaders bool
+}
+
+func (o *Options) SetClientConnOpt(co *client.ConnOptions) {
+	o.clientConnOpt = co
+}
+
+func (o *Options) SetFullClient(cl *client.FullClient) {
+	o.fullClient = cl
 }
 
 const shortDescr = `display one or many resources`
@@ -51,6 +65,33 @@ func NewGetCommand(opt Options) *cobra.Command {
 		Long:                  longDescr,
 		Example:               exampleDescr,
 		DisableFlagsInUseLine: true,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if opt.fullClient != nil {
+				return nil
+			}
+			if opt.clientConnOpt == nil {
+				opt.SetClientConnOpt(&client.ConnOptions{})
+			}
+			opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if opt.fullClient == nil {
+				var err error
+				var conn *grpc.ClientConn
+				conn, err = client.NewClientConn(opt.clientConnOpt)
+				if err != nil {
+					println("Flag based client configuration failed with err: %s. Trying with env var legacy method...", err)
+					// Fallback to legacy Setup via env var
+					conn, err = client.GetConnection()
+					if err != nil {
+						return errors.Wrap(err, "failed to setup connection to tink-server")
+					}
+				}
+				opt.SetFullClient(client.NewFullClient(conn))
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			var data []interface{}
@@ -63,14 +104,14 @@ func NewGetCommand(opt Options) *cobra.Command {
 					return errors.New("Get by ID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
 				}
 				for _, requestedID := range args {
-					s, err := opt.RetrieveByID(cmd.Context(), requestedID)
+					s, err := opt.RetrieveByID(cmd.Context(), opt.fullClient, requestedID)
 					if err != nil {
 						continue
 					}
 					data = append(data, s)
 				}
 			} else {
-				data, err = opt.RetrieveData(cmd.Context())
+				data, err = opt.RetrieveData(cmd.Context(), opt.fullClient)
 			}
 			if err != nil {
 				return err

@@ -53,44 +53,53 @@ var GetCmd = &cobra.Command{
 func init() {
 }
 
-// NewGetCommand create the generic get command with everything required by the
-// workflow resource to work
-func NewGetCommand(cl *client.FullClient) *cobra.Command {
-	cmd := get.NewGetCommand(get.Options{
-		Headers: []string{"ID", "Template ID", "State", "Created At", "Updated At"},
-		RetrieveData: func(ctx context.Context) ([]interface{}, error) {
-			list, err := cl.WorkflowClient.ListWorkflows(ctx, &workflow.Empty{})
-			if err != nil {
-				return nil, err
-			}
+type getWorkflow struct {
+	get.Options
+}
 
-			data := []interface{}{}
-
-			var w *workflow.Workflow
-			for w, err = list.Recv(); err == nil && w.Id != ""; w, err = list.Recv() {
-				data = append(data, w)
-			}
-			if err != nil && err != io.EOF {
-				return nil, err
-			}
-			return data, nil
-		},
-		RetrieveByID: func(ctx context.Context, requestedID string) (interface{}, error) {
-			return cl.WorkflowClient.GetWorkflow(ctx, &workflow.GetRequest{
-				Id: requestedID,
-			})
-		},
-		PopulateTable: func(data []interface{}, t table.Writer) error {
-			for _, v := range data {
-				if w, ok := v.(*workflow.Workflow); ok {
-					t.AppendRow(table.Row{w.Id, w.Template,
-						w.State.String(),
-						w.CreatedAt.AsTime().Unix,
-						w.UpdatedAt.AsTime().Unix})
-				}
-			}
-			return nil
-		},
+func (h *getWorkflow) RetrieveByID(ctx context.Context, cl *client.FullClient, requestedID string) (interface{}, error) {
+	return cl.WorkflowClient.GetWorkflow(ctx, &workflow.GetRequest{
+		Id: requestedID,
 	})
-	return cmd
+}
+
+func (h *getWorkflow) RetrieveData(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
+	list, err := cl.WorkflowClient.ListWorkflows(ctx, &workflow.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	data := []interface{}{}
+
+	var w *workflow.Workflow
+	for w, err = list.Recv(); err == nil && w.Id != ""; w, err = list.Recv() {
+		data = append(data, w)
+	}
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (h *getWorkflow) PopulateTable(data []interface{}, t table.Writer) error {
+	for _, v := range data {
+		if w, ok := v.(*workflow.Workflow); ok {
+			t.AppendRow(table.Row{w.Id, w.Template,
+				w.State.String(),
+				w.CreatedAt.AsTime().Unix,
+				w.UpdatedAt.AsTime().Unix})
+		}
+	}
+	return nil
+}
+
+func NewGetOptions() get.Options {
+	h := getWorkflow{}
+	opt := get.Options{
+		Headers:       []string{"ID", "Template ID", "State", "Created At", "Updated At"},
+		RetrieveByID:  h.RetrieveByID,
+		RetrieveData:  h.RetrieveData,
+		PopulateTable: h.PopulateTable,
+	}
+	return opt
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	"github.com/tinkerbell/tink/protos/events"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
@@ -63,6 +64,42 @@ func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 		HardwareClient: hardware.NewHardwareServiceClient(conn),
 		EventsClient:   events.NewEventsServiceClient(conn),
 	}
+}
+
+type ConnOptions struct {
+	CertURL       string
+	GRPCAuthority string
+}
+
+func (o *ConnOptions) SetFlags(flagSet *pflag.FlagSet) {
+	flagSet.StringVar(&o.CertURL, "tinkerbell-cert-url", "http://127.0.0.1:42114/cert", "The URL where the certificate is located")
+	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Link to tink-server grcp api")
+}
+
+func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
+	resp, err := http.Get(opt.CertURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetch cert")
+	}
+	defer resp.Body.Close()
+
+	certs, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "read cert")
+	}
+
+	cp := x509.NewCertPool()
+	ok := cp.AppendCertsFromPEM(certs)
+	if !ok {
+		return nil, errors.Wrap(err, "parse cert")
+	}
+
+	creds := credentials.NewClientTLSFromCert(cp, "")
+	conn, err := grpc.Dial(opt.GRPCAuthority, grpc.WithTransportCredentials(creds))
+	if err != nil {
+		return nil, errors.Wrap(err, "connect to tinkerbell server")
+	}
+	return conn, nil
 }
 
 // GetConnection returns a gRPC client connection

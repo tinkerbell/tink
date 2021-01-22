@@ -10,30 +10,27 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
-type GetHardware struct {
+type getHardware struct {
 	get.Options
-	cl *client.FullClient
 }
 
-func NewGetHardware(cl *client.FullClient) GetHardware {
-	gh := GetHardware{
-		Options: get.Options{
-			Headers: []string{"ID", "MAC Address", "IP address", "Hostname"},
-		},
-		cl: cl,
+func NewGetOptions() get.Options {
+	gh := getHardware{}
+	opt := get.Options{
+		Headers:       []string{"ID", "MAC Address", "IP address", "Hostname"},
+		PopulateTable: gh.PopulateTable,
+		RetrieveData:  gh.RetrieveData,
+		RetrieveByID:  gh.RetrieveByID,
 	}
-	gh.Options.PopulateTable = gh.PopulateTable
-	gh.Options.RetrieveData = gh.RetrieveData
-	gh.Options.RetrieveByID = gh.RetrieveByID
-	return gh
+	return opt
 }
 
-func (h *GetHardware) RetrieveByID(ctx context.Context, requiredID string) (interface{}, error) {
-	return h.cl.HardwareClient.ByID(ctx, &hardware.GetRequest{Id: requiredID})
+func (h *getHardware) RetrieveByID(ctx context.Context, cl *client.FullClient, requiredID string) (interface{}, error) {
+	return cl.HardwareClient.ByID(ctx, &hardware.GetRequest{Id: requiredID})
 }
 
-func (h *GetHardware) RetrieveData(ctx context.Context) ([]interface{}, error) {
-	list, err := h.cl.HardwareClient.All(ctx, &hardware.Empty{})
+func (h *getHardware) RetrieveData(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
+	list, err := cl.HardwareClient.All(ctx, &hardware.Empty{})
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +45,7 @@ func (h *GetHardware) RetrieveData(ctx context.Context) ([]interface{}, error) {
 	return data, nil
 }
 
-func (h *GetHardware) PopulateTable(data []interface{}, t table.Writer) error {
+func (h *getHardware) PopulateTable(data []interface{}, t table.Writer) error {
 	for _, v := range data {
 		if hw, ok := v.(*hardware.Hardware); ok {
 			// TODO(gianarb): I think we should

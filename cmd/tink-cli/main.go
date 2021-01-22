@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd"
 )
 
@@ -12,11 +11,7 @@ import (
 var version = "devel"
 
 func main() {
-	conn, err := client.GetConnection()
-	if err != nil {
-		panic(err)
-	}
-	if err := cmd.Execute(version, client.NewFullClient(conn)); err != nil {
+	if err := cmd.Execute(version); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
