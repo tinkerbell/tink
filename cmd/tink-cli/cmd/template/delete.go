@@ -12,7 +12,7 @@ import (
 )
 
 // deleteCmd represents the delete subcommand for template command
-func NewDeleteCommand(cl *client.FullClient) *cobra.Command {
+func NewDeleteCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "delete [id]",
 		Short:                 "delete a template",
@@ -36,7 +36,7 @@ func NewDeleteCommand(cl *client.FullClient) *cobra.Command {
 						Id: arg,
 					},
 				}
-				if _, err := cl.TemplateClient.DeleteTemplate(context.Background(), &req); err != nil {
+				if _, err := client.TemplateClient.DeleteTemplate(context.Background(), &req); err != nil {
 					log.Fatal(err)
 				}
 			}

@@ -23,7 +23,7 @@ var (
 )
 
 // listCmd represents the list subcommand for workflow command
-func NewListCommand(cl *client.FullClient) *cobra.Command {
+func NewListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list all workflows",
@@ -47,13 +47,13 @@ func NewListCommand(cl *client.FullClient) *cobra.Command {
 		},
 		Run: func(c *cobra.Command, args []string) {
 			if quiet {
-				listWorkflows(cl)
+				listWorkflows()
 				return
 			}
 			t = table.NewWriter()
 			t.SetOutputMirror(os.Stdout)
 			t.AppendHeader(table.Row{hID, hTemplate, hDevice, hCreatedAt, hUpdatedAt})
-			listWorkflows(cl)
+			listWorkflows()
 			t.Render()
 		},
 	}
@@ -62,8 +62,8 @@ func NewListCommand(cl *client.FullClient) *cobra.Command {
 	return cmd
 }
 
-func listWorkflows(cl *client.FullClient) {
-	list, err := cl.WorkflowClient.ListWorkflows(context.Background(), &workflow.Empty{})
+func listWorkflows() {
+	list, err := client.WorkflowClient.ListWorkflows(context.Background(), &workflow.Empty{})
 	if err != nil {
 		log.Fatal(err)
 	}

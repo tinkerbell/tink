@@ -13,7 +13,7 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
-func NewStateCommand(cl *client.FullClient) *cobra.Command {
+func NewStateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "state [id]",
 		Short:   "get the current workflow state",
@@ -30,7 +30,7 @@ func NewStateCommand(cl *client.FullClient) *cobra.Command {
 				t := table.NewWriter()
 				t.SetOutputMirror(os.Stdout)
 				t.AppendHeader(table.Row{"Field Name", "Values"})
-				wf, err := cl.WorkflowClient.GetWorkflowContext(context.Background(), &req)
+				wf, err := client.WorkflowClient.GetWorkflowContext(context.Background(), &req)
 				if err != nil {
 					log.Fatal(err)
 				}

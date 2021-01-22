@@ -22,7 +22,7 @@ var (
 	hStatus        = "Action Status"
 )
 
-func NewShowCommand(cl *client.FullClient) *cobra.Command {
+func NewShowCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "events [id]",
 		Short:                 "show all events for a workflow",
@@ -38,7 +38,7 @@ func NewShowCommand(cl *client.FullClient) *cobra.Command {
 			t := table.NewWriter()
 			t.SetOutputMirror(os.Stdout)
 			t.AppendHeader(table.Row{hWorkerID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
-			listEvents(cl, t, args)
+			listEvents(t, args)
 			t.Render()
 
 		},
@@ -46,10 +46,10 @@ func NewShowCommand(cl *client.FullClient) *cobra.Command {
 	return cmd
 }
 
-func listEvents(cl *client.FullClient, t table.Writer, args []string) {
+func listEvents(t table.Writer, args []string) {
 	for _, arg := range args {
 		req := workflow.GetRequest{Id: arg}
-		events, err := cl.WorkflowClient.ShowWorkflowEvents(context.Background(), &req)
+		events, err := client.WorkflowClient.ShowWorkflowEvents(context.Background(), &req)
 		if err != nil {
 			log.Fatal(err)
 		}

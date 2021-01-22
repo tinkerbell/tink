@@ -11,7 +11,7 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
-func NewDeleteCommand(cl *client.FullClient) *cobra.Command {
+func NewDeleteCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "delete [id]",
 		Short:                 "delete a workflow",
@@ -31,7 +31,7 @@ func NewDeleteCommand(cl *client.FullClient) *cobra.Command {
 		Run: func(c *cobra.Command, args []string) {
 			for _, arg := range args {
 				req := workflow.GetRequest{Id: arg}
-				if _, err := cl.WorkflowClient.DeleteWorkflow(context.Background(), &req); err != nil {
+				if _, err := client.WorkflowClient.DeleteWorkflow(context.Background(), &req); err != nil {
 					log.Fatal(err)
 				}
 			}

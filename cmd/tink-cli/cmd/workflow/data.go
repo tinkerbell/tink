@@ -18,7 +18,7 @@ var (
 )
 
 // dataCmd represents the data subcommand for workflow command
-func NewDataCommand(cl *client.FullClient) *cobra.Command {
+func NewDataCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "data [id]",
 		Short:   "get workflow data",
@@ -40,11 +40,11 @@ func NewDataCommand(cl *client.FullClient) *cobra.Command {
 				var res *workflow.GetWorkflowDataResponse
 				var err error
 				if needsMetadata {
-					res, err = cl.WorkflowClient.GetWorkflowMetadata(context.Background(), req)
+					res, err = client.WorkflowClient.GetWorkflowMetadata(context.Background(), req)
 				} else if versionOnly {
-					res, err = cl.WorkflowClient.GetWorkflowDataVersion(context.Background(), req)
+					res, err = client.WorkflowClient.GetWorkflowDataVersion(context.Background(), req)
 				} else {
-					res, err = cl.WorkflowClient.GetWorkflowData(context.Background(), req)
+					res, err = client.WorkflowClient.GetWorkflowData(context.Background(), req)
 				}
 
 				if err != nil {

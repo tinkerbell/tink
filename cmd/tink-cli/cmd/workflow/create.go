@@ -17,7 +17,7 @@ var (
 	hardware  string
 )
 
-func NewCreateCommand(cl *client.FullClient) *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "create",
 		Short:   "create a workflow",
@@ -28,7 +28,7 @@ func NewCreateCommand(cl *client.FullClient) *cobra.Command {
 			return err
 		},
 		Run: func(c *cobra.Command, args []string) {
-			createWorkflow(cl, args)
+			createWorkflow(args)
 		},
 	}
 	flags := cmd.PersistentFlags()
@@ -40,9 +40,9 @@ func NewCreateCommand(cl *client.FullClient) *cobra.Command {
 	return cmd
 }
 
-func createWorkflow(cl *client.FullClient, args []string) {
+func createWorkflow(args []string) {
 	req := workflow.CreateRequest{Template: template, Hardware: hardware}
-	res, err := cl.WorkflowClient.CreateWorkflow(context.Background(), &req)
+	res, err := client.WorkflowClient.CreateWorkflow(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
 	}

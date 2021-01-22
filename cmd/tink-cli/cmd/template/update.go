@@ -15,7 +15,7 @@ import (
 )
 
 // updateCmd represents the get subcommand for template command
-func NewUpdateCommand(cl *client.FullClient) *cobra.Command {
+func NewUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update [id] [flags]",
 		Short: "update a workflow template",
@@ -42,7 +42,7 @@ $ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --file /tmp/example.
 		},
 		Run: func(c *cobra.Command, args []string) {
 			for _, arg := range args {
-				updateTemplate(cl, arg)
+				updateTemplate(arg)
 			}
 		},
 	}
@@ -51,7 +51,7 @@ $ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --file /tmp/example.
 	return cmd
 }
 
-func updateTemplate(cl *client.FullClient, id string) {
+func updateTemplate(id string) {
 	req := template.WorkflowTemplate{Id: id}
 	if filePath != "" {
 		data := readTemplateData()
@@ -67,7 +67,7 @@ func updateTemplate(cl *client.FullClient, id string) {
 		log.Fatal("Nothing is provided in the file path")
 	}
 
-	_, err := cl.TemplateClient.UpdateTemplate(context.Background(), &req)
+	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)
 	if err != nil {
 		log.Fatal(err)
 	}

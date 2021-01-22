@@ -28,7 +28,7 @@ var (
 )
 
 // listCmd represents the list subcommand for template command
-func NewListCommand(cl *client.FullClient) *cobra.Command {
+func NewListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list all saved templates",
@@ -46,13 +46,13 @@ please familiarise and migrate your automation accordingly.`,
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if quiet {
-				listTemplates(cl)
+				listTemplates()
 				return
 			}
 			t = table.NewWriter()
 			t.SetOutputMirror(os.Stdout)
 			t.AppendHeader(table.Row{id, name, createdAt, updatedAt})
-			listTemplates(cl)
+			listTemplates()
 			t.Render()
 		},
 	}
@@ -60,8 +60,8 @@ please familiarise and migrate your automation accordingly.`,
 	return cmd
 }
 
-func listTemplates(cl *client.FullClient) {
-	list, err := cl.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
+func listTemplates() {
+	list, err := client.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
 		FilterBy: &template.ListRequest_Name{
 			Name: "*",
 		},

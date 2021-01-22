@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/workflow"
 )
@@ -23,17 +22,12 @@ func NewWorkflowCommand() *cobra.Command {
 		},
 	}
 
-	cl, err := client.NewFullClientFromGlobal()
-	if err != nil {
-		panic(err)
-	}
-
-	cmd.AddCommand(workflow.NewCreateCommand(cl))
-	cmd.AddCommand(workflow.NewDataCommand(cl))
-	cmd.AddCommand(workflow.NewDeleteCommand(cl))
-	cmd.AddCommand(workflow.NewShowCommand(cl))
-	cmd.AddCommand(workflow.NewListCommand(cl))
-	cmd.AddCommand(workflow.NewStateCommand(cl))
+	cmd.AddCommand(workflow.NewCreateCommand())
+	cmd.AddCommand(workflow.NewDataCommand())
+	cmd.AddCommand(workflow.NewDeleteCommand())
+	cmd.AddCommand(workflow.NewShowCommand())
+	cmd.AddCommand(workflow.NewListCommand())
+	cmd.AddCommand(workflow.NewStateCommand())
 
 	// If the variable TINK_CLI_VERSION is not set to 0.0.0 use the old get
 	// command
