@@ -32,3 +32,8 @@ func TestMigrationFuncNamesMatchIDs(t *testing.T) {
 	}
 
 }
+
+func TestGetMigrations(t *testing.T) {
+	m := GetMigrations()
+	assert.Len(t, m.Migrations, len(migrations))
+}
