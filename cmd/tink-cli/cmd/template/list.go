@@ -28,27 +28,36 @@ var (
 )
 
 // listCmd represents the list subcommand for template command
-var listCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "list all saved templates",
-	Example: "tink template list",
-	Args: func(c *cobra.Command, args []string) error {
-		if len(args) != 0 {
-			return fmt.Errorf("%v takes no arguments", c.UseLine())
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		if quiet {
+func NewListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "list",
+		Short:   "list all saved templates",
+		Example: "tink template list",
+		Deprecated: `This command is deprecated and it will be removed soon in favor of
+
+$ tink template get
+
+please familiarise and migrate your automation accordingly.`,
+		Args: func(c *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return fmt.Errorf("%v takes no arguments", c.UseLine())
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if quiet {
+				listTemplates()
+				return
+			}
+			t = table.NewWriter()
+			t.SetOutputMirror(os.Stdout)
+			t.AppendHeader(table.Row{id, name, createdAt, updatedAt})
 			listTemplates()
-			return
-		}
-		t = table.NewWriter()
-		t.SetOutputMirror(os.Stdout)
-		t.AppendHeader(table.Row{id, name, createdAt, updatedAt})
-		listTemplates()
-		t.Render()
-	},
+			t.Render()
+		},
+	}
+	cmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "only display template IDs")
+	return cmd
 }
 
 func listTemplates() {
@@ -81,14 +90,4 @@ func printOutput(tmp *template.WorkflowTemplate) {
 			{tmp.Id, tmp.Name, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
 		})
 	}
-}
-
-func addListFlags() {
-	flags := listCmd.Flags()
-	flags.BoolVarP(&quiet, "quiet", "q", false, "only display template IDs")
-}
-
-func init() {
-	addListFlags()
-	SubCommands = append(SubCommands, listCmd)
 }

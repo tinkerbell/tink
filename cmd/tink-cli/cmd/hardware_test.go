@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Test_hardwareCmd(t *testing.T) {
+func Test_NewHardwareCommand(t *testing.T) {
 	subCommand := "hardware"
 	type args struct {
 		name string
@@ -160,7 +160,7 @@ func Test_hardwareCmd(t *testing.T) {
 				Run:     func(_ *cobra.Command, _ []string) {},
 				Version: "test",
 			}
-			rootCmd.AddCommand(hardwareCmd)
+			rootCmd.AddCommand(NewHardwareCommand())
 			tt.cmdFunc(t, rootCmd)
 		})
 	}

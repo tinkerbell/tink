@@ -18,21 +18,25 @@ var (
 	t     table.Writer
 )
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "list all known hardware",
-	Run: func(cmd *cobra.Command, args []string) {
-		if quiet {
+func NewListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "list all known hardware",
+		Run: func(cmd *cobra.Command, args []string) {
+			if quiet {
+				listHardware()
+				return
+			}
+			t = table.NewWriter()
+			t.SetOutputMirror(os.Stdout)
+			t.AppendHeader(table.Row{"ID", "MAC Address", "IP address", "Hostname"})
 			listHardware()
-			return
-		}
-		t = table.NewWriter()
-		t.SetOutputMirror(os.Stdout)
-		t.AppendHeader(table.Row{"ID", "MAC Address", "IP address", "Hostname"})
-		listHardware()
-		t.Render()
-	},
+			t.Render()
+		},
+	}
+	flags := cmd.Flags()
+	flags.BoolVarP(&quiet, "quiet", "q", false, "only display hardware IDs")
+	return cmd
 }
 
 func listHardware() {
@@ -54,14 +58,4 @@ func listHardware() {
 	if err != nil && err != io.EOF {
 		log.Fatal(err)
 	}
-}
-
-func addListFlags() {
-	flags := listCmd.Flags()
-	flags.BoolVarP(&quiet, "quiet", "q", false, "only display hardware IDs")
-}
-
-func init() {
-	addListFlags()
-	SubCommands = append(SubCommands, listCmd)
 }

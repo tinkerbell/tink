@@ -23,27 +23,43 @@ var (
 )
 
 // listCmd represents the list subcommand for workflow command
-var listCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "list all workflows",
-	Example: "tink workflow list",
-	Args: func(c *cobra.Command, args []string) error {
-		if len(args) != 0 {
-			return fmt.Errorf("%v takes no arguments", c.UseLine())
-		}
-		return nil
-	},
-	Run: func(c *cobra.Command, args []string) {
-		if quiet {
+func NewListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "list",
+		Short:   "list all workflows",
+		Example: "tink workflow list",
+		Deprecated: `This command is deprecated and it will change at some
+	point. Please try what follows:
+
+	# If you want to retrieve a single workflow you know by ID
+	tink workflow get [id]
+	# You can print it in JSON and CSV as well
+	tink workflow get --format json [id]
+
+	# Get a list of available workflows
+	tink workflow get
+`,
+		Args: func(c *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				return fmt.Errorf("%v takes no arguments", c.UseLine())
+			}
+			return nil
+		},
+		Run: func(c *cobra.Command, args []string) {
+			if quiet {
+				listWorkflows()
+				return
+			}
+			t = table.NewWriter()
+			t.SetOutputMirror(os.Stdout)
+			t.AppendHeader(table.Row{hID, hTemplate, hDevice, hCreatedAt, hUpdatedAt})
 			listWorkflows()
-			return
-		}
-		t = table.NewWriter()
-		t.SetOutputMirror(os.Stdout)
-		t.AppendHeader(table.Row{hID, hTemplate, hDevice, hCreatedAt, hUpdatedAt})
-		listWorkflows()
-		t.Render()
-	},
+			t.Render()
+		},
+	}
+	flags := cmd.Flags()
+	flags.BoolVarP(&quiet, "quiet", "q", false, "only display workflow IDs")
+	return cmd
 }
 
 func listWorkflows() {
@@ -72,14 +88,4 @@ func printOutput(wf *workflow.Workflow) {
 			{wf.Id, wf.Template, wf.Hardware, time.Unix(cr.Seconds, 0), time.Unix(up.Seconds, 0)},
 		})
 	}
-}
-
-func addListFlags() {
-	flags := listCmd.Flags()
-	flags.BoolVarP(&quiet, "quiet", "q", false, "only display workflow IDs")
-}
-
-func init() {
-	addListFlags()
-	SubCommands = append(SubCommands, listCmd)
 }
