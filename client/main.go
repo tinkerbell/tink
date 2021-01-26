@@ -1,7 +1,10 @@
 package client
 
 import (
+	"crypto/x509"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/pkg/errors"
@@ -11,6 +14,7 @@ import (
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // gRPC clients
@@ -63,15 +67,35 @@ func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 }
 
 type ConnOptions struct {
+	CertURL       string
 	GRPCAuthority string
 }
 
 func (o *ConnOptions) SetFlags(flagSet *pflag.FlagSet) {
+	flagSet.StringVar(&o.CertURL, "tinkerbell-cert-url", "http://127.0.0.1:42114/cert", "The URL where the certificate is located")
 	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Link to tink-server grcp api")
 }
 
 func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(opt.GRPCAuthority)
+	resp, err := http.Get(opt.CertURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetch cert")
+	}
+	defer resp.Body.Close()
+
+	certs, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "read cert")
+	}
+
+	cp := x509.NewCertPool()
+	ok := cp.AppendCertsFromPEM(certs)
+	if !ok {
+		return nil, errors.Wrap(err, "parse cert")
+	}
+
+	creds := credentials.NewClientTLSFromCert(cp, "")
+	conn, err := grpc.Dial(opt.GRPCAuthority, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to tinkerbell server")
 	}
@@ -80,11 +104,33 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 
 // GetConnection returns a gRPC client connection
 func GetConnection() (*grpc.ClientConn, error) {
+	certURL := os.Getenv("TINKERBELL_CERT_URL")
+	if certURL == "" {
+		return nil, errors.New("undefined TINKERBELL_CERT_URL")
+	}
+	resp, err := http.Get(certURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetch cert")
+	}
+	defer resp.Body.Close()
+
+	certs, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "read cert")
+	}
+
+	cp := x509.NewCertPool()
+	ok := cp.AppendCertsFromPEM(certs)
+	if !ok {
+		return nil, errors.Wrap(err, "parse cert")
+	}
+
 	grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 	if grpcAuthority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
-	conn, err := grpc.Dial(grpcAuthority)
+	creds := credentials.NewClientTLSFromCert(cp, "")
+	conn, err := grpc.Dial(grpcAuthority, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to tinkerbell server")
 	}
