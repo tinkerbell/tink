@@ -21,6 +21,7 @@ mkShell {
     go
     gotools
     jq
+    nixfmt
     nodePackages.prettier
     protobuf
     protoc-gen-doc
