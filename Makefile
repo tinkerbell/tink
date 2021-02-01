@@ -5,9 +5,9 @@ MAKEFLAGS += --no-builtin-rules
 # This avoids a failure to then skip building on next run if the output is created by shell redirection for example
 # Not really necessary for now, but just good to have already if it becomes necessary later.
 .DELETE_ON_ERROR:
-# Treat the whole recipe as a one shell script/invocation instead of one-per-line 
+# Treat the whole recipe as a one shell script/invocation instead of one-per-line
 .ONESHELL:
-# Use bash instead of plain sh 
+# Use bash instead of plain sh
 SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
@@ -58,3 +58,11 @@ verify:
 protos/gen_mock:
 	go generate ./protos/**/*
 	goimports -w ./protos/**/mock.go
+
+grpc/gen_doc:
+	protoc \
+		-I./protos \
+		-I./protos/third_party \
+		--doc_out=./doc \
+		--doc_opt=html,index.html \
+		protos/hardware/*.proto protos/template/*.proto protos/workflow/*.proto
