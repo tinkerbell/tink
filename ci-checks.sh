@@ -22,4 +22,12 @@ if ! git ls-files '*.sh' | xargs shellcheck; then
 	failed=1
 fi
 
+if ! nixfmt shell.nix; then
+	failed=1
+fi
+
+if ! git diff | (! grep .); then
+	failed=1
+fi
+
 exit "$failed"
