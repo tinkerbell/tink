@@ -140,7 +140,7 @@ func TestCreateTemplate(t *testing.T) {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.CreateTemplate(ctx, &pb.WorkflowTemplate{Name: tc.args.name, Data: tc.args.template})
 			if tc.want.expectedError {
 				assert.Error(t, err)
@@ -311,7 +311,7 @@ func TestGetTemplate(t *testing.T) {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetTemplate(ctx, tc.args.getRequest)
 			if tc.err {
 				assert.Error(t, err)

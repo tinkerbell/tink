@@ -24,11 +24,6 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var (
-	logger         log.Logger
-	grpcListenAddr = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
-)
-
 // Server is the gRPC server for tinkerbell
 type server struct {
 	cert []byte
@@ -42,25 +37,34 @@ type server struct {
 
 	watchLock sync.RWMutex
 	watch     map[string]chan string
+
+	logger log.Logger
+}
+
+type ConfigGRPCServer struct {
+	Facility      string
+	TLSCert       string
+	GRPCAuthority string
+	DB            *db.TinkDB
 }
 
 // SetupGRPC setup and return a gRPC server
-func SetupGRPC(ctx context.Context, log log.Logger, facility string, db *db.TinkDB, errCh chan<- error) ([]byte, time.Time) {
+func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer, errCh chan<- error) ([]byte, time.Time) {
 	params := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 	}
-	logger = log
-	metrics.SetupMetrics(facility, logger)
+	metrics.SetupMetrics(config.Facility, logger)
 	server := &server{
-		db:      db,
+		db:      config.DB,
 		dbReady: true,
+		logger:  logger,
 	}
-	if cert := os.Getenv("TINKERBELL_TLS_CERT"); cert != "" {
+	if cert := config.TLSCert; cert != "" {
 		server.cert = []byte(cert)
 		server.modT = time.Now()
 	} else {
-		tlsCert, certPEM, modT := getCerts(facility, logger)
+		tlsCert, certPEM, modT := getCerts(config.Facility, logger)
 		params = append(params, grpc.Creds(credentials.NewServerTLSFromCert(&tlsCert)))
 		server.cert = certPEM
 		server.modT = modT
@@ -77,11 +81,7 @@ func SetupGRPC(ctx context.Context, log log.Logger, facility string, db *db.Tink
 	grpc_prometheus.Register(s)
 
 	go func() {
-		logger.Info("serving grpc")
-		if grpcListenAddr == "" {
-			grpcListenAddr = ":42113"
-		}
-		lis, err := net.Listen("tcp", grpcListenAddr)
+		lis, err := net.Listen("tcp", config.GRPCAuthority)
 		if err != nil {
 			err = errors.Wrap(err, "failed to listen")
 			logger.Error(err)

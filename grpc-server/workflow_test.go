@@ -95,7 +95,7 @@ func TestCreateWorkflow(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.CreateWorkflow(ctx, &workflow.CreateRequest{
 				Hardware: tc.args.wfHardware,
 				Template: tc.args.wfTemplate,
@@ -153,7 +153,7 @@ func TestGetWorkflow(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflow(ctx, &workflow.GetRequest{
 				Id: workflowID,
 			})

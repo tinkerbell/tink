@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/db"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc/codes"
@@ -38,7 +39,7 @@ func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.W
 		if err != nil {
 			return status.Errorf(codes.Aborted, err.Error())
 		}
-		if isApplicableToSend(context.Background(), wfContext, req.WorkerId, s.db) {
+		if isApplicableToSend(context.Background(), s.logger, wfContext, req.WorkerId, s.db) {
 			if err := stream.Send(wfContext); err != nil {
 				return err
 			}
@@ -92,7 +93,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidActionName)
 	}
 
-	l := logger.With("actionName", req.GetActionName(), "workflowID", req.GetWorkflowId())
+	l := s.logger.With("actionName", req.GetActionName(), "workflowID", req.GetWorkflowId())
 	l.Info(fmt.Sprintf(msgReceivedStatus, req.GetActionStatus()))
 
 	wfContext, err := s.db.GetWorkflowContexts(context, wfID)
@@ -134,7 +135,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 		return &pb.Empty{}, status.Error(codes.Aborted, err.Error())
 	}
 
-	l = logger.With(
+	l = s.logger.With(
 		"workflowID", wfContext.GetWorkflowId(),
 		"currentWorker", wfContext.GetCurrentWorker(),
 		"currentTask", wfContext.GetCurrentTask(),
@@ -216,7 +217,7 @@ func getWorkflowActions(context context.Context, db db.Database, wfID string) (*
 
 // isApplicableToSend checks if a particular workflow context is applicable or if it is needed to
 // be sent to a worker based on the state of the current action and the targeted workerID
-func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, workerID string, db db.Database) bool {
+func isApplicableToSend(context context.Context, logger log.Logger, wfContext *pb.WorkflowContext, workerID string, db db.Database) bool {
 	if wfContext.GetCurrentActionState() == pb.State_STATE_FAILED ||
 		wfContext.GetCurrentActionState() == pb.State_STATE_TIMEOUT {
 		return false
