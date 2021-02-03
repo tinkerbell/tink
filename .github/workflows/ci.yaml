@@ -136,7 +136,7 @@ jobs:
           name: ${{ matrix.binary}}
           path: cmd/${{ matrix.binary }}
     - name: Fix Permissions
-      run: chmod +x cmd/${{ matrix.binary }}*
+      run: chmod +x cmd/${{ matrix.binary }}/${{ matrix.binary }}*
     - name: ${{ matrix.repository }}
       uses: docker/build-push-action@v2
       with:
