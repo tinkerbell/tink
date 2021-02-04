@@ -25,7 +25,7 @@ var (
 	EventsClient   events.EventsServiceClient
 )
 
-// FullClient aggregates all the grpc clients available from Tinkerbell Server
+// FullClient aggregates all the gRPC clients available from Tinkerbell Server
 type FullClient struct {
 	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
@@ -35,8 +35,8 @@ type FullClient struct {
 
 // NewFullClientFromGlobal is a dirty hack that returns a FullClient using the
 // global variables exposed by the client package. Globals should be avoided
-// and we will deprecated them at some point replacing this function with
-// NewFullClient. If you are strating a new project please use the last one
+// and we will deprecate them at some point replacing this function with
+// NewFullClient. If you are starting a new project please use NewFullClient instead.
 func NewFullClientFromGlobal() (*FullClient, error) {
 	// This is required because we use init() too often, even more in the
 	// CLI and based on where you are sometime the clients are not initialised

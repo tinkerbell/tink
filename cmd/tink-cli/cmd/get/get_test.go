@@ -124,7 +124,7 @@ func TestNewGetCommand(t *testing.T) {
 		},
 		{
 			Name: "happy-path-json-no-headers",
-			Skip: "The JSON format is rusty and custom because we table library we use do not support JSON right now. This feature is not implemented",
+			Skip: "The JSON format is rusty and custom because the table library we use does not support JSON right now. This feature is not implemented.",
 		},
 		{
 			Name: "happy-path-csv-no-headers",
@@ -198,5 +198,4 @@ func TestNewGetCommand(t *testing.T) {
 			}
 		})
 	}
-
 }

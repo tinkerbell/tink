@@ -27,8 +27,8 @@ func NewTemplateCommand() *cobra.Command {
 	cmd.AddCommand(template.NewListCommand())
 	cmd.AddCommand(template.NewUpdateCommand())
 
-	// If the variable TINK_CLI_VERSION is not set to 0.0.0 use the old get
-	// command. This is a way to keep retro-compatibility with the old get command.
+	// If the variable TINK_CLI_VERSION is set to 0.0.0 use the old get command.
+	// This is a way to keep retro-compatibility with the old get command.
 	getCmd := template.GetCmd
 	if v := os.Getenv("TINK_CLI_VERSION"); v != "0.0.0" {
 		getCmd = get.NewGetCommand(template.NewGetOptions())
