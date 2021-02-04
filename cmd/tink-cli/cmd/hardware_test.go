@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -112,8 +113,9 @@ func Test_NewHardwareCommand(t *testing.T) {
 				if err := root.Execute(); err != nil {
 					t.Error(err)
 				}
-				if !strings.Contains(out.String(), "delete hardware by id") {
-					t.Error("expected output should include delete hardware by id")
+				want := "Deletes one or more resources"
+				if !strings.Contains(out.String(), want) {
+					t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, out.String()))
 				}
 			},
 		},
