@@ -3,9 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // DeleteFromDB : delete data from hardware table
@@ -15,7 +18,7 @@ func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	_, err = tx.Exec(`
+	res, err := tx.Exec(`
 	UPDATE hardware
 	SET
 		deleted_at = NOW()
@@ -25,6 +28,10 @@ func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
 
 	if err != nil {
 		return errors.Wrap(err, "DELETE")
+	}
+
+	if count, _ := res.RowsAffected(); count == int64(0) {
+		return status.Error(codes.NotFound, fmt.Sprintf("not found, id:%s", id))
 	}
 
 	err = tx.Commit()
