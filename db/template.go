@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -10,6 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	wflow "github.com/tinkerbell/tink/workflow"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // CreateTemplate creates a new workflow template
@@ -91,7 +94,7 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	_, err = tx.Exec(`
+	res, err := tx.Exec(`
 	UPDATE template
 	SET
 		deleted_at = NOW()
@@ -100,6 +103,10 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 	`, id)
 	if err != nil {
 		return errors.Wrap(err, "UPDATE")
+	}
+
+	if count, _ := res.RowsAffected(); count == int64(0) {
+		return status.Error(codes.NotFound, fmt.Sprintf("not found, id:%s", id))
 	}
 
 	err = tx.Commit()
