@@ -48,7 +48,7 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.PGUSer, "postgres-user", "tinkerbell", "The Postgres database username")
 	fs.StringVar(&c.PGPassword, "postgres-password", "tinkerbell", "The Postgres database password")
 	fs.StringVar(&c.PGSSLMode, "postgres-sslmode", "disable", "Enable or disable SSL mode in postgres")
-	fs.BoolVar(&c.OnlyMigration, "only-migration", false, "When enabled it ")
+	fs.BoolVar(&c.OnlyMigration, "only-migration", false, "When enabled the server applies the migration to postgres database and it exits")
 	fs.StringVar(&c.GRPCAuthority, "grpc-authority", ":42113", "The address used to expose the gRPC server")
 	fs.StringVar(&c.TLSCert, "tls-cert", "", "")
 	fs.StringVar(&c.CertDir, "cert-dir", "", "")
