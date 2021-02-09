@@ -28,4 +28,5 @@ type Action struct {
 	OnFailure   []string          `yaml:"on-failure,omitempty"`
 	Volumes     []string          `yaml:"volumes,omitempty"`
 	Environment map[string]string `yaml:"environment,omitempty"`
+	Pid         string            `yaml:"pid,omitempty"`
 }

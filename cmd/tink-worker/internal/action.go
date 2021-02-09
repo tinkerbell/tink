@@ -37,6 +37,14 @@ func (w *Worker) createContainer(ctx context.Context, cmd []string, wfID string,
 		Privileged: true,
 		Binds:      []string{wfDir + ":/workflow"},
 	}
+
+	// Retrieve the PID configuration
+	pidConfig := action.GetPid()
+	if pidConfig != "" {
+		w.logger.With("pid", pidConfig).Info("creating container")
+		hostConfig.PidMode = container.PidMode(pidConfig)
+	}
+
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 	w.logger.With("command", cmd).Info("creating container")
 	resp, err := w.registryClient.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())
