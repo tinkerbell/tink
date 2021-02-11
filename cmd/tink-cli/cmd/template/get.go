@@ -60,7 +60,7 @@ func (h *getTemplate) RetrieveByID(ctx context.Context, cl *client.FullClient, r
 }
 
 func (h *getTemplate) RetrieveData(ctx context.Context, cl *client.FullClient) ([]interface{}, error) {
-	list, err := cl.TemplateClient.ListTemplates(context.Background(), &template.ListRequest{
+	list, err := cl.TemplateClient.ListTemplates(ctx, &template.ListRequest{
 		FilterBy: &template.ListRequest_Name{
 			Name: "*",
 		},
@@ -88,6 +88,7 @@ func (h *getTemplate) PopulateTable(data []interface{}, t table.Writer) error {
 	}
 	return nil
 }
+
 func NewGetOptions() get.Options {
 	h := getTemplate{}
 	return get.Options{

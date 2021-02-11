@@ -17,6 +17,8 @@ import (
 	"github.com/pkg/errors"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 	wflow "github.com/tinkerbell/tink/workflow"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Workflow represents a workflow instance in database
@@ -382,7 +384,7 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, state int32) erro
 		return errors.Wrap(err, "Delete Workflow Error")
 	}
 
-	_, err = tx.Exec(`
+	res, err := tx.Exec(`
 	UPDATE workflow
 	SET
 		deleted_at = NOW()
@@ -391,6 +393,10 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, state int32) erro
 	`, id)
 	if err != nil {
 		return errors.Wrap(err, "UPDATE")
+	}
+
+	if count, _ := res.RowsAffected(); count == int64(0) {
+		return status.Error(codes.NotFound, fmt.Sprintf("not found, id:%s", id))
 	}
 
 	err = tx.Commit()
