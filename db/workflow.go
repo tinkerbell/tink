@@ -164,6 +164,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 				OnFailure:   ac.OnFailure,
 				Environment: envs,
 				Volumes:     ac.Volumes,
+				Pid:         ac.Pid,
 			}
 			actionList = append(actionList, &action)
 		}

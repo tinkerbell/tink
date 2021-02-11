@@ -325,6 +325,10 @@ message WorkflowAction {
    * Set environment variables usable from the action itself.
    */
   repeated string environment = 10;
+    /*
+   * Set the namespace that the process IDs will be in.
+   */
+  string pid = 11;
 }
 
 /*
