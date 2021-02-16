@@ -42,7 +42,6 @@ resource, including related events.
 
 # Describe template resource
 tink template describe --show-events 8ae1cc24-6a9c-11eb-a0fc-0242ac120005
-
 ID:             8ae1cc24-6a9c-11eb-a0fc-0242ac120005
 Template:       46b4948d-c762-4f99-9152-49a70c0732e1
 Hardware:       b97263cc-b9be-4cdf-92c1-5030fce5d7ea
