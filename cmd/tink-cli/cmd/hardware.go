@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/delete"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/describe"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/hardware"
 )
@@ -23,6 +24,7 @@ func NewHardwareCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(get.NewGetCommand(hardware.NewGetOptions()))
+	cmd.AddCommand(describe.NewDescribeCommand(hardware.NewDescribeOptions()))
 	cmd.AddCommand(delete.NewDeleteCommand(hardware.NewDeleteOptions()))
 	cmd.AddCommand(hardware.NewGetByIDCmd())
 	cmd.AddCommand(hardware.NewGetByIPCmd())

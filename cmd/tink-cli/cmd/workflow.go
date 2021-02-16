@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/describe"
+
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/delete"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
@@ -25,6 +27,7 @@ func NewWorkflowCommand() *cobra.Command {
 
 	cmd.AddCommand(workflow.NewCreateCommand())
 	cmd.AddCommand(workflow.NewDataCommand())
+	cmd.AddCommand(describe.NewDescribeCommand(workflow.NewDescribeOptions()))
 	cmd.AddCommand(delete.NewDeleteCommand(workflow.NewDeleteOptions()))
 	cmd.AddCommand(workflow.NewShowCommand())
 	cmd.AddCommand(workflow.NewListCommand())
