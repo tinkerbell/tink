@@ -81,6 +81,19 @@ func (t *TinkDB) Migrate() (int, error) {
 	return migrate.Exec(t.instance, "postgres", migration.GetMigrations(), migrate.Up)
 }
 
+// WithMigrations applies only the given migrations.
+// It is required to unit test migrations.
+func (t *TinkDB) WithMigrations(migrations []func() *migrate.Migration) error {
+	source := &migrate.MemoryMigrationSource{
+		Migrations: make([]*migrate.Migration, len(migrations)),
+	}
+	for i := range migrations {
+		source.Migrations[i] = migrations[i]()
+	}
+	_, err := migrate.Exec(t.instance, "postgres", source, migrate.Up)
+	return err
+}
+
 func (t *TinkDB) CheckRequiredMigrations() (int, error) {
 	migrations := migration.GetMigrations().Migrations
 	records, err := migrate.GetMigrationRecords(t.instance, "postgres")

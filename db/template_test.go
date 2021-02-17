@@ -13,8 +13,11 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"github.com/tinkerbell/tink/db"
+	"github.com/tinkerbell/tink/db/migration"
 	"github.com/tinkerbell/tink/workflow"
 	"gopkg.in/yaml.v2"
+
+	migrate "github.com/rubenv/sql-migrate"
 )
 
 func TestCreateTemplate(t *testing.T) {
@@ -361,6 +364,77 @@ func TestGetTemplateWithInvalidID(t *testing.T) {
 	want := "no rows in result set"
 	if !strings.Contains(err.Error(), want) {
 		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+	}
+}
+
+func TestTemplateRevisionMigration(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{})
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	err := tinkDB.WithMigrations([]func() *migrate.Migration{
+		migration.Get202009171251,
+		migration.Get202010071530,
+		migration.Get202010221010,
+		migration.Get202012041103,
+		migration.Get202012091055,
+		migration.Get2020121691335,
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	// create a few templates
+	w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+	for i := 1; i <= 5; i++ {
+		id := uuid.New().String()
+		w.ID = id
+		w.Name = fmt.Sprintf("id_%d", rand.Int())
+		err := createTemplateFromWorkflowType(ctx, tinkDB, w)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
+	// check if the templates have been created successfully
+	count := 0
+	err = tinkDB.ListTemplates("%", func(id, n string, in, del *timestamp.Timestamp) error {
+		count = count + 1
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 5 {
+		t.Errorf("expected %d templates stored in the database but we got %d", 5, count)
+	}
+
+	// apply template-revision migration
+	err = tinkDB.WithMigrations([]func() *migrate.Migration{migration.Get202102111035})
+	if err != nil {
+		t.Error(err)
+	}
+
+	// validate if the migration was successful
+	revisionCount := 0
+	err = tinkDB.ListTemplates("%", func(id, n string, in, del *timestamp.Timestamp) error {
+		err := tinkDB.ListTemplateRevisions(id, func(id string, r int, tCr *timestamp.Timestamp) error {
+			revisionCount = revisionCount + 1
+			return nil
+		})
+		return err
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	if revisionCount != 5 {
+		t.Errorf("expected %d template revisions stored in the database but we got %d", 5, revisionCount)
 	}
 }
 

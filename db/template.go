@@ -203,3 +203,44 @@ func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id
 	}
 	return nil
 }
+
+// ListTemplateRevisions returns revisions saved for a given template
+func (d TinkDB) ListTemplateRevisions(id string, fn func(id string, revision int, tCr *timestamp.Timestamp) error) error {
+	rows, err := d.instance.Query(`
+		SELECT revision, created_at
+		FROM template_revisions
+		WHERE
+			template_id ILIKE $1
+		AND
+			deleted_at IS NULL;
+	`, id)
+
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var (
+		revision  int
+		createdAt time.Time
+	)
+	for rows.Next() {
+		err = rows.Scan(&revision, &createdAt)
+		if err != nil {
+			err = errors.Wrap(err, "SELECT")
+			d.logger.Error(err)
+			return err
+		}
+
+		tCr, _ := ptypes.TimestampProto(createdAt)
+		err = fn(id, revision, tCr)
+		if err != nil {
+			return err
+		}
+	}
+	err = rows.Err()
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	return err
+}
