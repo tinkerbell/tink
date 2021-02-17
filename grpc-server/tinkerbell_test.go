@@ -28,17 +28,17 @@ const (
 
 var wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
 
-func testServer(db db.Database) *server {
+func testServer(t *testing.T, db db.Database) *server {
+	l, _ := log.Init("github.com/tinkerbell/tink")
 	return &server{
-		db: db,
+		logger: l,
+		db:     db,
 	}
 }
 
 func TestMain(m *testing.M) {
-
 	l, _ := log.Init("github.com/tinkerbell/tink")
-	logger = l.Package("grpcserver")
-	metrics.SetupMetrics("onprem", logger)
+	metrics.SetupMetrics("onprem", l.Package("grpcserver"))
 	os.Exit(m.Run())
 }
 
@@ -122,7 +122,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowContextList(ctx, &pb.WorkflowContextRequest{WorkerId: tc.args.workerID})
 			if err != nil {
 				assert.Error(t, err)
@@ -205,7 +205,7 @@ func TestGetWorkflowActions(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -546,7 +546,7 @@ func TestReportActionStatus(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.ReportActionStatus(ctx,
 				&pb.WorkflowActionStatus{
 					WorkflowId:   tc.args.workflowID,
@@ -626,7 +626,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.UpdateWorkflowData(
 				ctx, &pb.UpdateWorkflowDataRequest{
 					WorkflowId: tc.args.workflowID,
@@ -715,7 +715,7 @@ func TestGetWorkflowData(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
 	defer cancel()
 	for name, tc := range testCases {
-		s := testServer(tc.args.db)
+		s := testServer(t, tc.args.db)
 		t.Run(name, func(t *testing.T) {
 			res, err := s.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
@@ -798,7 +798,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := getWorkflowsForWorker(s.db, tc.args.workerID)
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -886,7 +886,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowMetadata(ctx, &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -957,7 +957,7 @@ func TestGetWorkflowDataVersion(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowDataVersion(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
 			assert.Equal(t, tc.want.version, res.Version)
 			if err != nil {
@@ -1166,13 +1166,14 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 	}
 
+	logger, _ := log.Init("test")
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			wfContext, _ := s.db.GetWorkflowContexts(ctx, workflowID)
-			res := isApplicableToSend(ctx, wfContext, workerID, s.db)
+			res := isApplicableToSend(ctx, logger, wfContext, workerID, s.db)
 			assert.Equal(t, tc.want.isApplicable, res)
 		})
 	}
@@ -1262,7 +1263,7 @@ func TestIsLastAction(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			wfContext, _ := s.db.GetWorkflowContexts(ctx, workflowID)
 			actions, _ := s.db.GetWorkflowActions(ctx, workflowID)
 			res := isLastAction(wfContext, actions)
