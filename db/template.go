@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -26,16 +27,21 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
+
+	revision, err := writeTemplateRevision(ctx, d.instance, tx, id, data)
+	if err != nil {
+		return errors.Wrap(err, "INSERT")
+	}
 	_, err = tx.Exec(`
-	INSERT INTO
-		template (created_at, updated_at, name, data, id)
-	VALUES
-		($1, $1, $2, $3, $4)
-	ON CONFLICT (id)
-	DO
-	UPDATE SET
-		(updated_at, deleted_at, name, data) = ($1, NULL, $2, $3);
-	`, time.Now(), name, data, id)
+		INSERT INTO
+			template (created_at, updated_at, name, revision, id)
+		VALUES
+			($1, $1, $2, $3, $4)
+		ON CONFLICT (id)
+		DO
+		UPDATE SET
+			(updated_at, deleted_at, name, revision) = ($1, NULL, $2, $3);
+	`, time.Now(), name, revision, id)
 	if err != nil {
 		return errors.Wrap(err, "INSERT")
 	}
@@ -57,7 +63,7 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	var query string
 	if !deleted {
 		query = `
-	SELECT id, name, data
+	SELECT id, name, revision
 	FROM template
 	WHERE
 		` + getCondition + ` AND
@@ -65,7 +71,7 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	`
 	} else {
 		query = `
-	SELECT id, name, data
+	SELECT id, name, revision
 	FROM template
 	WHERE
 		` + getCondition + `
@@ -75,10 +81,17 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	row := d.instance.QueryRowContext(ctx, query)
 	id := []byte{}
 	name := []byte{}
-	data := []byte{}
-	err = row.Scan(&id, &name, &data)
+	revision := 0
+	err = row.Scan(&id, &name, &revision)
 	if err == nil {
-		return string(id), string(name), string(data), nil
+		data, err := getTemplate(ctx, d.instance, string(id), revision)
+		if err == nil {
+			return string(id), string(name), data, nil
+		}
+		if err != sql.ErrNoRows {
+			d.logger.Error(err)
+			return "", "", "", errors.Wrap(err, "SELECT")
+		}
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
@@ -92,6 +105,17 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
+	}
+
+	_, err = tx.Exec(`
+	UPDATE template_revisions
+	SET
+		deleted_at = NOW()
+	WHERE
+		template_id = $1;
+	`, id)
+	if err != nil {
+		return errors.Wrap(err, "UPDATE")
 	}
 
 	res, err := tx.Exec(`
@@ -169,30 +193,17 @@ func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	if data == "" && name != "" {
-		_, err = tx.Exec(`
+	revision, err := writeTemplateRevision(ctx, d.instance, tx, id, data)
+	if err != nil {
+		return errors.Wrap(err, "UPDATE")
+	}
+	_, err = tx.Exec(`
 		UPDATE template
 		SET
-			updated_at = NOW(), name = $2
-		WHERE
-			id = $1;`, id, name)
-	} else if data != "" && name == "" {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), data = $2
-		WHERE
-			id = $1;`, id, data)
-	} else {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), name = $2, data = $3
+			updated_at = NOW(), name = $2, revision = $3
 		WHERE
 			id = $1;
-		`, id, name, data)
-	}
-
+		`, id, name, revision)
 	if err != nil {
 		return errors.Wrap(err, "UPDATE")
 	}
@@ -243,4 +254,47 @@ func (d TinkDB) ListTemplateRevisions(id string, fn func(id string, revision int
 		err = nil
 	}
 	return err
+}
+
+func writeTemplateRevision(ctx context.Context, db *sql.DB, tx *sql.Tx, templateID uuid.UUID, data string) (int, error) {
+	revision, err := getLatestRevision(ctx, db, templateID)
+	if err != nil {
+		return revision, err
+	}
+
+	_, err = tx.Exec(`
+		INSERT INTO template_revisions (template_id, revision, data)
+		VALUES ($1, $2, $3)`, templateID, revision+1, data)
+	if err != nil {
+		return revision, errors.Wrap(err, "INSERT")
+	}
+	return revision + 1, nil
+}
+
+func getLatestRevision(ctx context.Context, db *sql.DB, templateID uuid.UUID) (int, error) {
+	query := `
+		SELECT COUNT(revision) FROM template_revisions
+		WHERE template_id='` + templateID.String() + `' AND deleted_at IS NULL;
+	`
+	row := db.QueryRowContext(ctx, query)
+	var revision int
+	err := row.Scan(&revision)
+	return revision, err
+}
+
+func getTemplate(ctx context.Context, db *sql.DB, id string, r int) (string, error) {
+	query := `SELECT data FROM template_revisions
+			WHERE template_id='` + id + `' AND revision=` + strconv.Itoa(r) +
+		` AND deleted_at is NULL`
+
+	row := db.QueryRowContext(ctx, query)
+	data := []byte{}
+	err := row.Scan(&data)
+	if err == nil {
+		return string(data), nil
+	}
+	if err != sql.ErrNoRows {
+		return "", errors.Wrap(err, "SELECT")
+	}
+	return "", err
 }

@@ -96,6 +96,10 @@ message WorkflowTemplate {
    * The content of the template in its YAML representation
    */
   string data = 7;
+  /*
+   * The current revision of a template.
+   */
+   int32 revision = 8;
 }
 
 /*
