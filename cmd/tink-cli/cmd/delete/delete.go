@@ -89,7 +89,7 @@ func NewDeleteCommand(opt Options) *cobra.Command {
 				var conn *grpc.ClientConn
 				conn, err = client.NewClientConn(opt.clientConnOpt)
 				if err != nil {
-					println("Flag based client configuration failed with err: %s. Trying with env var legacy method...", err)
+					fmt.Fprintf(cmd.ErrOrStderr(), "Flag based client configuration failed with err: %s. Trying with env var legacy method...", err)
 					// Fallback to legacy Setup via env var
 					conn, err = client.GetConnection()
 					if err != nil {
