@@ -69,10 +69,6 @@ func NewGetCommand(opt Options) *cobra.Command {
 			if opt.fullClient != nil {
 				return nil
 			}
-			if opt.clientConnOpt == nil {
-				opt.SetClientConnOpt(&client.ConnOptions{})
-			}
-			opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -153,5 +149,9 @@ func NewGetCommand(opt Options) *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVarP(&opt.Format, "format", "", "table", "The format you expect the list to be printed out. Currently supported format are table, JSON and CSV")
 	cmd.PersistentFlags().BoolVar(&opt.NoHeaders, "no-headers", false, "Table contains an header with the columns' name. You can disable it from being printed out")
+	if opt.clientConnOpt == nil {
+		opt.SetClientConnOpt(&client.ConnOptions{})
+	}
+	opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 	return cmd
 }
