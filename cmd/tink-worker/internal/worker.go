@@ -94,7 +94,7 @@ func (w *Worker) captureLogs(ctx context.Context, id string) {
 	}
 }
 
-func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAction) (pb.State, error) {
+func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAction, captureLogs bool) (pb.State, error) {
 	l := w.logger.With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
 
 	cli := w.registryClient
@@ -124,8 +124,10 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 
 	failedActionStatus := make(chan pb.State)
 
-	// capturing logs of action container in a go-routine
-	go w.captureLogs(ctx, id)
+	if captureLogs {
+		// capturing logs of action container in a go-routine
+		go w.captureLogs(ctx, id)
+	}
 
 	status, waitErr := waitContainer(timeCtx, cli, id)
 	defer func() {
@@ -182,7 +184,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 }
 
 // ProcessWorkflowActions gets all Workflow contexts and processes their actions
-func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string) error {
+func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, captureActionLogs bool) error {
 	l := w.logger.With("workerID", workerID)
 
 	for {
@@ -292,7 +294,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string) er
 
 				// start executing the action
 				start := time.Now()
-				status, err := w.execute(ctx, wfID, action)
+				status, err := w.execute(ctx, wfID, action, captureActionLogs)
 				elapsed := time.Since(start)
 
 				actionStatus := &pb.WorkflowActionStatus{
