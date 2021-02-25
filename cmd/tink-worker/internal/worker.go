@@ -101,7 +101,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	if err := w.regConn.pullImage(ctx, cli, action.GetImage()); err != nil {
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER PULL")
 	}
-	id, err := w.createContainer(ctx, action.Command, wfID, action)
+	id, err := w.createContainer(ctx, action.Command, wfID, action, captureLogs)
 	if err != nil {
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER CREATE")
 	}
@@ -143,12 +143,13 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	l.With("status", status.String()).Info("container removed")
 	if status != pb.State_STATE_SUCCESS {
 		if status == pb.State_STATE_TIMEOUT && action.OnTimeout != nil {
-			id, err = w.createContainer(ctx, action.OnTimeout, wfID, action)
+			id, err = w.createContainer(ctx, action.OnTimeout, wfID, action, captureLogs)
 			if err != nil {
 				l.Error(errors.Wrap(err, errCreateContainer))
 			}
 			l.With("containerID", id, "status", status.String(), "command", action.GetOnTimeout()).Info("container created")
 			failedActionStatus := make(chan pb.State)
+			// TODD(jwb) Need to handle this capture logs as well
 			go w.captureLogs(ctx, id)
 			go waitFailedContainer(ctx, l, cli, id, failedActionStatus)
 			err = startContainer(ctx, l, cli, id)
@@ -159,11 +160,12 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 			l.With("status", onTimeoutStatus).Info("action timeout")
 		} else {
 			if action.OnFailure != nil {
-				id, err = w.createContainer(ctx, action.OnFailure, wfID, action)
+				id, err = w.createContainer(ctx, action.OnFailure, wfID, action, captureLogs)
 				if err != nil {
 					l.Error(errors.Wrap(err, errFailedToRunCmd))
 				}
 				l.With("containerID", id, "actionStatus", status.String(), "command", action.GetOnFailure()).Info("container created")
+				// TODO(jwb) - Handle logging here too
 				go w.captureLogs(ctx, id)
 				go waitFailedContainer(ctx, l, cli, id, failedActionStatus)
 				err = startContainer(ctx, l, cli, id)
