@@ -77,10 +77,6 @@ func NewDeleteCommand(opt Options) *cobra.Command {
 			if opt.fullClient != nil {
 				return nil
 			}
-			if opt.clientConnOpt == nil {
-				opt.SetClientConnOpt(&client.ConnOptions{})
-			}
-			opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -119,5 +115,9 @@ func NewDeleteCommand(opt Options) *cobra.Command {
 			return nil
 		},
 	}
+	if opt.clientConnOpt == nil {
+		opt.SetClientConnOpt(&client.ConnOptions{})
+	}
+	opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 	return cmd
 }
