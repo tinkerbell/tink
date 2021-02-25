@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
@@ -86,8 +87,8 @@ func (h *getWorkflow) PopulateTable(data []interface{}, t table.Writer) error {
 		if w, ok := v.(*workflow.Workflow); ok {
 			t.AppendRow(table.Row{w.Id, w.Template,
 				w.State.String(),
-				w.CreatedAt.AsTime().Unix,
-				w.UpdatedAt.AsTime().Unix})
+				w.CreatedAt.AsTime().UTC().Format(time.RFC3339),
+				w.UpdatedAt.AsTime().UTC().Format(time.RFC3339)})
 		}
 	}
 	return nil
