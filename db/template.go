@@ -217,15 +217,9 @@ func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id
 
 // ListTemplateRevisions returns revisions saved for a given template
 func (d TinkDB) ListTemplateRevisions(id string, fn func(id string, revision int, tCr *timestamp.Timestamp) error) error {
-	rows, err := d.instance.Query(`
-		SELECT revision, created_at
-		FROM template_revisions
-		WHERE
-			template_id ILIKE $1
-		AND
-			deleted_at IS NULL;
-	`, id)
-
+	query := `SELECT revision, created_at FROM template_revisions
+		WHERE template_id='` + id + `' AND deleted_at IS NULL;`
+	rows, err := d.instance.Query(query)
 	if err != nil {
 		return err
 	}

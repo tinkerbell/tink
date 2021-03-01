@@ -2,6 +2,7 @@ package db_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -58,6 +59,18 @@ func TestCreateTemplate(t *testing.T) {
 				if dif := cmp.Diff(input[0], w); dif != "" {
 					t.Errorf(dif)
 				}
+
+				count := 0
+				err = tinkDB.ListTemplateRevisions(input[0].ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+					count = count + 1
+					return nil
+				})
+				if err != nil {
+					t.Error(err)
+				}
+				if count != len(input) {
+					t.Errorf("expected %d template revisions stored in the database but we got %d", len(input), count)
+				}
 			},
 		},
 		{
@@ -106,6 +119,18 @@ func TestCreateTemplate(t *testing.T) {
 				if wName != "updated-name" {
 					t.Errorf("expected name to be \"%s\", got \"%s\"", "updated-name", wName)
 				}
+
+				count := 0
+				err = tinkDB.ListTemplateRevisions(input[0].ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+					count = count + 1
+					return nil
+				})
+				if err != nil {
+					t.Error(err)
+				}
+				if count != 2 {
+					t.Errorf("expected %d template revisions stored in the database but we got %d", len(input), count)
+				}
 			},
 		},
 		{
@@ -138,6 +163,20 @@ func TestCreateTemplate(t *testing.T) {
 				}
 				if len(input) != count {
 					t.Errorf("expected %d templates stored in the database but we got %d", len(input), count)
+				}
+
+				revisions := 0
+				for _, w := range input {
+					err := tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+						revisions = revisions + 1
+						return nil
+					})
+					if err != nil {
+						t.Error(err)
+					}
+				}
+				if revisions != len(input) {
+					t.Errorf("expected %d template revisions stored in the database but we got %d", len(input), revisions)
 				}
 			},
 		},
@@ -233,6 +272,19 @@ func TestDeleteTemplate(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	revisions := 0
+	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+		revisions = revisions + 1
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	if revisions != 1 {
+		t.Errorf("expected 1 template revisions stored in the database but we got %d", revisions)
+	}
+
 	err = tinkDB.DeleteTemplate(ctx, w.ID)
 	if err != nil {
 		t.Error(err)
@@ -248,6 +300,18 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 	if count != 0 {
 		t.Errorf("expected 0 templates stored in the database after delete, but we got %d", count)
+	}
+
+	revisions = 0
+	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+		revisions = revisions + 1
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	if revisions != 0 {
+		t.Errorf("expected 0 template revisions stored in the database but we got %d", revisions)
 	}
 }
 
@@ -364,6 +428,66 @@ func TestGetTemplateWithInvalidID(t *testing.T) {
 	want := "no rows in result set"
 	if !strings.Contains(err.Error(), want) {
 		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+	}
+}
+
+func TestUpdateTemplate(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+		ApplyMigration: true,
+	})
+	defer func() {
+		err := cl()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	// create template
+	w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+	w.ID = uuid.New().String()
+	w.Name = fmt.Sprintf("id_%d", rand.Int())
+	err := createTemplateFromWorkflowType(ctx, tinkDB, w)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// validate revisions
+	revisions := 0
+	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+		revisions = revisions + 1
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	if revisions != 1 {
+		t.Errorf("expected 1 template revisions stored in the database but we got %d", revisions)
+	}
+
+	// update template
+	w.Name = "updated-template-name"
+	data, err := json.Marshal(w)
+	if err != nil {
+		t.Error(err)
+	}
+	err = tinkDB.UpdateTemplate(ctx, w.Name, string(data), uuid.MustParse(w.ID))
+	if err != nil {
+		t.Error(err)
+	}
+
+	// revalidate revisions
+	revisions = 0
+	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+		revisions = revisions + 1
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	if revisions != 2 {
+		t.Errorf("expected 2 template revisions stored in the database but we got %d", revisions)
 	}
 }
 

@@ -42,6 +42,7 @@ type template interface {
 	DeleteTemplate(ctx context.Context, name string) error
 	ListTemplates(in string, fn func(id, n string, in, del *timestamp.Timestamp) error) error
 	UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error
+	ListTemplateRevisions(id string, fn func(id string, revision int, tCr *timestamp.Timestamp) error) error
 }
 
 type workflow interface {

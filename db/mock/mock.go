@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
 	"github.com/tinkerbell/tink/db"
 	pb "github.com/tinkerbell/tink/protos/workflow"
@@ -23,7 +24,9 @@ type DB struct {
 	GetWorkflowActionsFunc           func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error)
 	UpdateWorkflowStateFunc          func(ctx context.Context, wfContext *pb.WorkflowContext) error
 	InsertIntoWorkflowEventTableFunc func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error
+
 	// template
-	TemplateDB      map[string]interface{}
-	GetTemplateFunc func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
+	TemplateDB                map[string]interface{}
+	GetTemplateFunc           func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
+	ListTemplateRevisionsFunc func(id string, fn func(id string, revision int, tCr *timestamp.Timestamp) error) error
 }
