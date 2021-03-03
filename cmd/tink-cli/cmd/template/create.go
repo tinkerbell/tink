@@ -57,7 +57,7 @@ $ tink template create --file /tmp/example.tmpl
 		},
 	}
 	flags := cmd.PersistentFlags()
-	flags.StringVarP(&filePath, "path", "p", "", "path to the template file")
+	flags.StringVar(&filePath, "file", "./template.yaml", "path to the template file")
 	return cmd
 }
 
