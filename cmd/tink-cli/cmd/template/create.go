@@ -10,9 +10,26 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/create"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/workflow"
 )
+
+type createTmpl struct {
+	create.Options
+}
+
+func (c *createTmpl) CreateByStdin(ctx context.Context, cl *client.FullClient, data []byte) (interface{}, error) {
+	return cl.TemplateClient.CreateTemplate(ctx, &template.WorkflowTemplate{Data: string(data)})
+}
+
+func NewCreateOptions() create.Options {
+	t := createTmpl{}
+	return create.Options{
+		Resource:      "TEMPLATE",
+		CreateByStdin: t.CreateByStdin,
+	}
+}
 
 var filePath string
 
