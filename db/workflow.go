@@ -350,13 +350,13 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 	if err == nil {
 		return Workflow{ID: id, Template: tmp, Hardware: tar}, nil
 	}
-
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
+		return Workflow{}, err
 	}
 
-	return Workflow{}, nil
+	return Workflow{}, errors.New("Workflow with id " + id + " does not exist")
 }
 
 // DeleteWorkflow deletes a workflow
@@ -549,8 +549,9 @@ func (d TinkDB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.Workf
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from worflow_state")
 		d.logger.Error(err)
+		return &pb.WorkflowContext{}, err
 	}
-	return &pb.WorkflowContext{}, nil
+	return &pb.WorkflowContext{}, errors.New("Workflow with id " + wfID + " does not exist")
 }
 
 // GetWorkflowActions : gives you the action list of workflow
