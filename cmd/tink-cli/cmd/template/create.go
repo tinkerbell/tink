@@ -24,11 +24,7 @@ func (c *createTmpl) CreateByStdin(ctx context.Context, cl *client.FullClient, d
 }
 
 func NewCreateOptions() create.Options {
-	t := createTmpl{}
-	return create.Options{
-		Resource:      "TEMPLATE",
-		CreateByStdin: t.CreateByStdin,
-	}
+	return create.Options{}
 }
 
 var filePath string

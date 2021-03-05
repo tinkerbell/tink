@@ -1,38 +1,42 @@
 package create
 
 import (
-	"context"
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/tinkerbell/tink/client"
 	"google.golang.org/grpc"
 )
 
-type ResourceType string
-
 var (
-	Resources = map[ResourceType]int32{
-		"HARDWARE": 0,
-		"TEMPLATE": 1,
-		"WORKFLOW": 2,
-	}
+	ErrStdinCollisionWithStdinAndFilePath = fmt.Errorf("It looks like you are passing input even as stdin and as file. You have to choose one of them.")
 )
 
-// Options struct
 type Options struct {
-
-	// Based on this the Create function will be called
-	Resource ResourceType
-	// CreateByStdin is used for creation of Hardware and Template resources
-	CreateByStdin func(context.Context, *client.FullClient, []byte) (interface{}, error)
-
-	// CreateByFlags is used for Workflow resource creation
-	CreateByFlags func(context.Context, *client.FullClient) (interface{}, error)
-
-	clientConnOpt *client.ConnOptions
-	fullClient    *client.FullClient
+	FilePath string
+	FlagSet  *pflag.FlagSet
+	// MergeValidateAndCreateFunc contains the logic coming from the
+	// actual resource itself. It gets a reader with the content
+	// coming from stdin or from the specified file.
+	// If the reader is empty it means that all the values are coming
+	// from flags. It is reponsability for this function to parse the
+	// input, validate it, merge them accordigly and save them.
+	// It returns an error to notify that something didn't go as expected for example:
+	// * The reader is empty and there are no flags, so there is
+	// nothing to do, input is not valid.
+	// * The resuled object is invalid
+	// * Error from the grpc-server
+	// It returns the ID of the created resource and it will get
+	// printed to stdout.
+	MergeValidateAndCreateFunc func(io.Reader) (id string, err error)
+	clientConnOpt              *client.ConnOptions
+	fullClient                 *client.FullClient
 }
 
 // SetClientConnOpt set client options
@@ -56,7 +60,7 @@ Created Template: 8ae1cc24-6a9c-11eb-a0fc-0242ac120005
 
 # Create template resource (not found)
 tink template create < <path to template file>
-Error	file not found or 
+Error	file not found or
 `
 
 const exampleDescr = `# Create template resource
@@ -102,19 +106,33 @@ func NewCreateCommand(opt Options) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if opt.CreateByStdin == nil {
-				return errors.New("createByStdin is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one")
+			stdin, err := ioutil.ReadAll(cmd.InOrStdin())
+			if err != nil {
+				return nil
 			}
-			for _, data := range args {
-				resourceID, err := opt.CreateByStdin(cmd.Context(), opt.fullClient, []byte(data))
+
+			if len(stdin) != 0 && opt.FilePath != "" {
+				return ErrStdinCollisionWithStdinAndFilePath
+			}
+			var in io.Reader
+			in = bytes.NewReader(stdin)
+			if opt.FilePath != "" {
+				f, err := os.Open(opt.FilePath)
 				if err != nil {
 					return err
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "Created\t%s\n", resourceID)
+				in = f
 			}
+			id, err := opt.MergeValidateAndCreateFunc(in)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(cmd.OutOrStdout(), id)
 			return nil
 		},
 	}
+	cmd.PersistentFlags().StringVar(&opt.FilePath, "file", "", "Location of the file used as input.")
+	cmd.PersistentFlags().AddFlagSet(opt.FlagSet)
 	if opt.clientConnOpt == nil {
 		opt.SetClientConnOpt(&client.ConnOptions{})
 	}
