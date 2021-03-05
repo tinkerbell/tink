@@ -69,7 +69,7 @@ func (d DB) ClearTemplateDB() {
 	d.TemplateDB = make(map[string]interface{})
 }
 
-// ListTemplateRevisions returns revisions saved for a given template
-func (d DB) ListTemplateRevisions(id string, fn func(id string, revision int, tCr *timestamp.Timestamp) error) error {
+// ListRevisionsByTemplateID returns revisions saved for a given template
+func (d DB) ListRevisionsByTemplateID(id string, fn func(revision int, tCr *timestamp.Timestamp) error) error {
 	return nil
 }

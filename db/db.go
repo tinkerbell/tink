@@ -42,7 +42,7 @@ type template interface {
 	DeleteTemplate(ctx context.Context, name string) error
 	ListTemplates(in string, fn func(id, n string, in, del *timestamp.Timestamp) error) error
 	UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error
-	ListTemplateRevisions(id string, fn func(id string, revision int, tCr *timestamp.Timestamp) error) error
+	ListRevisionsByTemplateID(id string, fn func(revision int, tCr *timestamp.Timestamp) error) error
 }
 
 type workflow interface {
@@ -80,19 +80,6 @@ func Connect(db *sql.DB, lg log.Logger) *TinkDB {
 
 func (t *TinkDB) Migrate() (int, error) {
 	return migrate.Exec(t.instance, "postgres", migration.GetMigrations(), migrate.Up)
-}
-
-// WithMigrations applies only the given migrations.
-// It is required to unit test migrations.
-func (t *TinkDB) WithMigrations(migrations []func() *migrate.Migration) error {
-	source := &migrate.MemoryMigrationSource{
-		Migrations: make([]*migrate.Migration, len(migrations)),
-	}
-	for i := range migrations {
-		source.Migrations[i] = migrations[i]()
-	}
-	_, err := migrate.Exec(t.instance, "postgres", source, migrate.Up)
-	return err
 }
 
 func (t *TinkDB) CheckRequiredMigrations() (int, error) {

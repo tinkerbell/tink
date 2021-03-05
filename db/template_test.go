@@ -2,12 +2,14 @@ package db_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/go-cmp/cmp"
@@ -61,7 +63,7 @@ func TestCreateTemplate(t *testing.T) {
 				}
 
 				count := 0
-				err = tinkDB.ListTemplateRevisions(input[0].ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+				err = tinkDB.ListRevisionsByTemplateID(input[0].ID, func(revision int, tCr *timestamp.Timestamp) error {
 					count = count + 1
 					return nil
 				})
@@ -121,7 +123,7 @@ func TestCreateTemplate(t *testing.T) {
 				}
 
 				count := 0
-				err = tinkDB.ListTemplateRevisions(input[0].ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+				err = tinkDB.ListRevisionsByTemplateID(input[0].ID, func(revision int, tCr *timestamp.Timestamp) error {
 					count = count + 1
 					return nil
 				})
@@ -167,7 +169,7 @@ func TestCreateTemplate(t *testing.T) {
 
 				revisions := 0
 				for _, w := range input {
-					err := tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+					err := tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
 						revisions = revisions + 1
 						return nil
 					})
@@ -274,7 +276,7 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 
 	revisions := 0
-	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -303,7 +305,7 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 
 	revisions = 0
-	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -455,7 +457,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 	// validate revisions
 	revisions := 0
-	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -479,7 +481,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 	// revalidate revisions
 	revisions = 0
-	err = tinkDB.ListTemplateRevisions(w.ID, func(id string, revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -494,7 +496,7 @@ func TestUpdateTemplate(t *testing.T) {
 func TestTemplateRevisionMigration(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{})
+	db, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{})
 	defer func() {
 		err := cl()
 		if err != nil {
@@ -502,28 +504,25 @@ func TestTemplateRevisionMigration(t *testing.T) {
 		}
 	}()
 
-	err := tinkDB.WithMigrations([]func() *migrate.Migration{
-		migration.Get202009171251,
-		migration.Get202010071530,
-		migration.Get202010221010,
-		migration.Get202012041103,
-		migration.Get202012091055,
-		migration.Get2020121691335,
-	})
+	// apply old migrations
+	_, err := migrate.Exec(db, "postgres", migrate.MemoryMigrationSource{
+		Migrations: []*migrate.Migration{
+			migration.Get202009171251(),
+			migration.Get202010071530(),
+			migration.Get202010221010(),
+			migration.Get202012041103(),
+			migration.Get202012091055(),
+			migration.Get2020121691335(),
+		},
+	}, migrate.Up)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// create a few templates
-	w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
-	for i := 1; i <= 5; i++ {
-		id := uuid.New().String()
-		w.ID = id
-		w.Name = fmt.Sprintf("id_%d", rand.Int())
-		err := createTemplateFromWorkflowType(ctx, tinkDB, w)
-		if err != nil {
-			t.Error(err)
-		}
+	err = createTemplatesFromSQL(ctx, db)
+	if err != nil {
+		t.Error(err)
 	}
 
 	// check if the templates have been created successfully
@@ -540,7 +539,17 @@ func TestTemplateRevisionMigration(t *testing.T) {
 	}
 
 	// apply template-revision migration
-	err = tinkDB.WithMigrations([]func() *migrate.Migration{migration.Get202102111035})
+	_, err = migrate.Exec(db, "postgres", migrate.MemoryMigrationSource{
+		Migrations: []*migrate.Migration{
+			migration.Get202009171251(),
+			migration.Get202010071530(),
+			migration.Get202010221010(),
+			migration.Get202012041103(),
+			migration.Get202012091055(),
+			migration.Get2020121691335(),
+			migration.Get202102111035(),
+		},
+	}, migrate.Up)
 	if err != nil {
 		t.Error(err)
 	}
@@ -548,7 +557,7 @@ func TestTemplateRevisionMigration(t *testing.T) {
 	// validate if the migration was successful
 	revisionCount := 0
 	err = tinkDB.ListTemplates("%", func(id, n string, in, del *timestamp.Timestamp) error {
-		err := tinkDB.ListTemplateRevisions(id, func(id string, r int, tCr *timestamp.Timestamp) error {
+		err := tinkDB.ListRevisionsByTemplateID(id, func(revision int, tCr *timestamp.Timestamp) error {
 			revisionCount = revisionCount + 1
 			return nil
 		})
@@ -560,6 +569,39 @@ func TestTemplateRevisionMigration(t *testing.T) {
 	if revisionCount != 5 {
 		t.Errorf("expected %d template revisions stored in the database but we got %d", 5, revisionCount)
 	}
+}
+
+// The TestTemplateRevisionMigration fails if we create templates using CreateTemplate
+// because it already relies on revision. Even if we don't apply the migration,
+// the Go code assumes revision to be in place. In order to fix that you have to add
+// a template not via code but with a SQL query.
+func createTemplatesFromSQL(ctx context.Context, db *sql.DB) error {
+	w := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return err
+	}
+	for i := 1; i <= 5; i++ {
+		id := uuid.New().String()
+		w.ID = id
+		w.Name = fmt.Sprintf("id_%d", rand.Int())
+		data, err := json.Marshal(w)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(`
+		INSERT INTO template (id, name, data, created_at, updated_at, deleted_at)
+		VALUES ($1, $2, $3, $4, $4, NULL)
+	`, w.ID, w.Name, string(data), time.Now())
+		if err != nil {
+			return err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func createTemplateFromWorkflowType(ctx context.Context, tinkDB *db.TinkDB, tt *workflow.Workflow) error {

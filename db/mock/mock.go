@@ -26,7 +26,7 @@ type DB struct {
 	InsertIntoWorkflowEventTableFunc func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error
 
 	// template
-	TemplateDB                map[string]interface{}
-	GetTemplateFunc           func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
-	ListTemplateRevisionsFunc func(id string, fn func(id string, revision int, tCr *timestamp.Timestamp) error) error
+	TemplateDB                    map[string]interface{}
+	GetTemplateFunc               func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
+	ListRevisionsByTemplateIDFunc func(id string, fn func(revision int, tCr *timestamp.Timestamp) error) error
 }
