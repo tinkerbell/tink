@@ -147,6 +147,18 @@ func TestGetWorkflow(t *testing.T) {
 				expectedError: false,
 			},
 		},
+		"WorkflowDoesNotExist": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
+						return db.Workflow{}, errors.New("Workflow with id " + workflowID + " does not exist")
+					},
+				},
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
@@ -155,6 +167,55 @@ func TestGetWorkflow(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflow(ctx, &workflow.GetRequest{
+				Id: workflowID,
+			})
+			if err != nil {
+				assert.Error(t, err)
+				assert.Empty(t, res)
+				assert.True(t, tc.want.expectedError)
+				return
+			}
+			assert.NoError(t, err)
+			assert.NotEmpty(t, res)
+			assert.False(t, tc.want.expectedError)
+		})
+	}
+}
+
+func TestGetWorkflowContext(t *testing.T) {
+	type (
+		args struct {
+			db mock.DB
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
+	}{
+		"WorkflowDoesNotExist": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, workflowID string) (*workflow.WorkflowContext, error) {
+						w := workflow.WorkflowContext{}
+						return &w, errors.New("Workflow with id " + workflowID + " does not exist")
+					},
+				},
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(t, tc.args.db)
+			res, err := s.GetWorkflowContext(ctx, &workflow.GetRequest{
 				Id: workflowID,
 			})
 			if err != nil {

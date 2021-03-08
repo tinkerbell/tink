@@ -216,6 +216,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
 		}
 		l.Error(err)
+		return &workflow.WorkflowContext{}, err
 	}
 	wf := &workflow.WorkflowContext{
 		WorkflowId:           w.WorkflowId,
