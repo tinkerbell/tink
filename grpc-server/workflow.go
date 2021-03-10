@@ -102,8 +102,8 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
 		}
 		l.Error(err)
+		return &workflow.Workflow{}, err
 	}
-
 	fields := map[string]string{
 		"id": w.Template,
 	}
@@ -200,7 +200,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
 
-	const msg = "getting a workflow"
+	const msg = "getting a workflow context"
 	labels["op"] = "get"
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -216,6 +216,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
 		}
 		l.Error(err)
+		return &workflow.WorkflowContext{}, err
 	}
 	wf := &workflow.WorkflowContext{
 		WorkflowId:           w.WorkflowId,
