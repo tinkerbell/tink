@@ -166,3 +166,13 @@ func (s *server) UpdateTemplate(ctx context.Context, in *template.WorkflowTempla
 	}
 	return &template.Empty{}, err
 }
+
+// ListRevisionsByTemplateID returns all the revisions stored for a given template.
+func (s *server) ListRevisionsByTemplateID(in *template.GetRevisionRequest, stream template.TemplateService_ListRevisionsByTemplateIDServer) error {
+	return nil
+}
+
+// GetRevision returns a specific template revision.
+func (s *server) GetRevision(ctx context.Context, in *template.GetRevisionRequest) (*template.WorkflowTemplate, error) {
+	return nil, nil
+}

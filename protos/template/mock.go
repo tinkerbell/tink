@@ -4,10 +4,10 @@
 package template
 
 import (
-	"context"
-	"sync"
+	context "context"
+	sync "sync"
 
-	"google.golang.org/grpc"
+	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -17,31 +17,37 @@ var _ TemplateServiceClient = &TemplateServiceClientMock{}
 
 // TemplateServiceClientMock is a mock implementation of TemplateServiceClient.
 //
-//     func TestSomethingThatUsesTemplateServiceClient(t *testing.T) {
+// 	func TestSomethingThatUsesTemplateServiceClient(t *testing.T) {
 //
-//         // make and configure a mocked TemplateServiceClient
-//         mockedTemplateServiceClient := &TemplateServiceClientMock{
-//             CreateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
-// 	               panic("mock out the CreateTemplate method")
-//             },
-//             DeleteTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the DeleteTemplate method")
-//             },
-//             GetTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
-// 	               panic("mock out the GetTemplate method")
-//             },
-//             ListTemplatesFunc: func(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error) {
-// 	               panic("mock out the ListTemplates method")
-//             },
-//             UpdateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the UpdateTemplate method")
-//             },
-//         }
+// 		// make and configure a mocked TemplateServiceClient
+// 		mockedTemplateServiceClient := &TemplateServiceClientMock{
+// 			CreateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
+// 				panic("mock out the CreateTemplate method")
+// 			},
+// 			DeleteTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the DeleteTemplate method")
+// 			},
+// 			GetRevisionFunc: func(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
+// 				panic("mock out the GetRevision method")
+// 			},
+// 			GetTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
+// 				panic("mock out the GetTemplate method")
+// 			},
+// 			ListRevisionsByTemplateIDFunc: func(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (TemplateService_ListRevisionsByTemplateIDClient, error) {
+// 				panic("mock out the ListRevisionsByTemplateID method")
+// 			},
+// 			ListTemplatesFunc: func(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error) {
+// 				panic("mock out the ListTemplates method")
+// 			},
+// 			UpdateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the UpdateTemplate method")
+// 			},
+// 		}
 //
-//         // use mockedTemplateServiceClient in code that requires TemplateServiceClient
-//         // and then make assertions.
+// 		// use mockedTemplateServiceClient in code that requires TemplateServiceClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type TemplateServiceClientMock struct {
 	// CreateTemplateFunc mocks the CreateTemplate method.
 	CreateTemplateFunc func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error)
@@ -49,8 +55,14 @@ type TemplateServiceClientMock struct {
 	// DeleteTemplateFunc mocks the DeleteTemplate method.
 	DeleteTemplateFunc func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error)
 
+	// GetRevisionFunc mocks the GetRevision method.
+	GetRevisionFunc func(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error)
+
 	// GetTemplateFunc mocks the GetTemplate method.
 	GetTemplateFunc func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error)
+
+	// ListRevisionsByTemplateIDFunc mocks the ListRevisionsByTemplateID method.
+	ListRevisionsByTemplateIDFunc func(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (TemplateService_ListRevisionsByTemplateIDClient, error)
 
 	// ListTemplatesFunc mocks the ListTemplates method.
 	ListTemplatesFunc func(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error)
@@ -78,12 +90,30 @@ type TemplateServiceClientMock struct {
 			// Opts is the opts argument value.
 			Opts []grpc.CallOption
 		}
+		// GetRevision holds details about calls to the GetRevision method.
+		GetRevision []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// In is the in argument value.
+			In *GetRevisionRequest
+			// Opts is the opts argument value.
+			Opts []grpc.CallOption
+		}
 		// GetTemplate holds details about calls to the GetTemplate method.
 		GetTemplate []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// In is the in argument value.
 			In *GetRequest
+			// Opts is the opts argument value.
+			Opts []grpc.CallOption
+		}
+		// ListRevisionsByTemplateID holds details about calls to the ListRevisionsByTemplateID method.
+		ListRevisionsByTemplateID []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// In is the in argument value.
+			In *GetRevisionRequest
 			// Opts is the opts argument value.
 			Opts []grpc.CallOption
 		}
@@ -106,11 +136,13 @@ type TemplateServiceClientMock struct {
 			Opts []grpc.CallOption
 		}
 	}
-	lockCreateTemplate sync.RWMutex
-	lockDeleteTemplate sync.RWMutex
-	lockGetTemplate    sync.RWMutex
-	lockListTemplates  sync.RWMutex
-	lockUpdateTemplate sync.RWMutex
+	lockCreateTemplate            sync.RWMutex
+	lockDeleteTemplate            sync.RWMutex
+	lockGetRevision               sync.RWMutex
+	lockGetTemplate               sync.RWMutex
+	lockListRevisionsByTemplateID sync.RWMutex
+	lockListTemplates             sync.RWMutex
+	lockUpdateTemplate            sync.RWMutex
 }
 
 // CreateTemplate calls CreateTemplateFunc.
@@ -191,6 +223,45 @@ func (mock *TemplateServiceClientMock) DeleteTemplateCalls() []struct {
 	return calls
 }
 
+// GetRevision calls GetRevisionFunc.
+func (mock *TemplateServiceClientMock) GetRevision(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
+	if mock.GetRevisionFunc == nil {
+		panic("TemplateServiceClientMock.GetRevisionFunc: method is nil but TemplateServiceClient.GetRevision was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		In   *GetRevisionRequest
+		Opts []grpc.CallOption
+	}{
+		Ctx:  ctx,
+		In:   in,
+		Opts: opts,
+	}
+	mock.lockGetRevision.Lock()
+	mock.calls.GetRevision = append(mock.calls.GetRevision, callInfo)
+	mock.lockGetRevision.Unlock()
+	return mock.GetRevisionFunc(ctx, in, opts...)
+}
+
+// GetRevisionCalls gets all the calls that were made to GetRevision.
+// Check the length with:
+//     len(mockedTemplateServiceClient.GetRevisionCalls())
+func (mock *TemplateServiceClientMock) GetRevisionCalls() []struct {
+	Ctx  context.Context
+	In   *GetRevisionRequest
+	Opts []grpc.CallOption
+} {
+	var calls []struct {
+		Ctx  context.Context
+		In   *GetRevisionRequest
+		Opts []grpc.CallOption
+	}
+	mock.lockGetRevision.RLock()
+	calls = mock.calls.GetRevision
+	mock.lockGetRevision.RUnlock()
+	return calls
+}
+
 // GetTemplate calls GetTemplateFunc.
 func (mock *TemplateServiceClientMock) GetTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
 	if mock.GetTemplateFunc == nil {
@@ -227,6 +298,45 @@ func (mock *TemplateServiceClientMock) GetTemplateCalls() []struct {
 	mock.lockGetTemplate.RLock()
 	calls = mock.calls.GetTemplate
 	mock.lockGetTemplate.RUnlock()
+	return calls
+}
+
+// ListRevisionsByTemplateID calls ListRevisionsByTemplateIDFunc.
+func (mock *TemplateServiceClientMock) ListRevisionsByTemplateID(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (TemplateService_ListRevisionsByTemplateIDClient, error) {
+	if mock.ListRevisionsByTemplateIDFunc == nil {
+		panic("TemplateServiceClientMock.ListRevisionsByTemplateIDFunc: method is nil but TemplateServiceClient.ListRevisionsByTemplateID was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		In   *GetRevisionRequest
+		Opts []grpc.CallOption
+	}{
+		Ctx:  ctx,
+		In:   in,
+		Opts: opts,
+	}
+	mock.lockListRevisionsByTemplateID.Lock()
+	mock.calls.ListRevisionsByTemplateID = append(mock.calls.ListRevisionsByTemplateID, callInfo)
+	mock.lockListRevisionsByTemplateID.Unlock()
+	return mock.ListRevisionsByTemplateIDFunc(ctx, in, opts...)
+}
+
+// ListRevisionsByTemplateIDCalls gets all the calls that were made to ListRevisionsByTemplateID.
+// Check the length with:
+//     len(mockedTemplateServiceClient.ListRevisionsByTemplateIDCalls())
+func (mock *TemplateServiceClientMock) ListRevisionsByTemplateIDCalls() []struct {
+	Ctx  context.Context
+	In   *GetRevisionRequest
+	Opts []grpc.CallOption
+} {
+	var calls []struct {
+		Ctx  context.Context
+		In   *GetRevisionRequest
+		Opts []grpc.CallOption
+	}
+	mock.lockListRevisionsByTemplateID.RLock()
+	calls = mock.calls.ListRevisionsByTemplateID
+	mock.lockListRevisionsByTemplateID.RUnlock()
 	return calls
 }
 
@@ -314,37 +424,37 @@ var _ TemplateService_ListTemplatesClient = &TemplateService_ListTemplatesClient
 
 // TemplateService_ListTemplatesClientMock is a mock implementation of TemplateService_ListTemplatesClient.
 //
-//     func TestSomethingThatUsesTemplateService_ListTemplatesClient(t *testing.T) {
+// 	func TestSomethingThatUsesTemplateService_ListTemplatesClient(t *testing.T) {
 //
-//         // make and configure a mocked TemplateService_ListTemplatesClient
-//         mockedTemplateService_ListTemplatesClient := &TemplateService_ListTemplatesClientMock{
-//             CloseSendFunc: func() error {
-// 	               panic("mock out the CloseSend method")
-//             },
-//             ContextFunc: func() context.Context {
-// 	               panic("mock out the Context method")
-//             },
-//             HeaderFunc: func() (metadata.MD, error) {
-// 	               panic("mock out the Header method")
-//             },
-//             RecvFunc: func() (*WorkflowTemplate, error) {
-// 	               panic("mock out the Recv method")
-//             },
-//             RecvMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the RecvMsg method")
-//             },
-//             SendMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the SendMsg method")
-//             },
-//             TrailerFunc: func() metadata.MD {
-// 	               panic("mock out the Trailer method")
-//             },
-//         }
+// 		// make and configure a mocked TemplateService_ListTemplatesClient
+// 		mockedTemplateService_ListTemplatesClient := &TemplateService_ListTemplatesClientMock{
+// 			CloseSendFunc: func() error {
+// 				panic("mock out the CloseSend method")
+// 			},
+// 			ContextFunc: func() context.Context {
+// 				panic("mock out the Context method")
+// 			},
+// 			HeaderFunc: func() (metadata.MD, error) {
+// 				panic("mock out the Header method")
+// 			},
+// 			RecvFunc: func() (*WorkflowTemplate, error) {
+// 				panic("mock out the Recv method")
+// 			},
+// 			RecvMsgFunc: func(m interface{}) error {
+// 				panic("mock out the RecvMsg method")
+// 			},
+// 			SendMsgFunc: func(m interface{}) error {
+// 				panic("mock out the SendMsg method")
+// 			},
+// 			TrailerFunc: func() metadata.MD {
+// 				panic("mock out the Trailer method")
+// 			},
+// 		}
 //
-//         // use mockedTemplateService_ListTemplatesClient in code that requires TemplateService_ListTemplatesClient
-//         // and then make assertions.
+// 		// use mockedTemplateService_ListTemplatesClient in code that requires TemplateService_ListTemplatesClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type TemplateService_ListTemplatesClientMock struct {
 	// CloseSendFunc mocks the CloseSend method.
 	CloseSendFunc func() error

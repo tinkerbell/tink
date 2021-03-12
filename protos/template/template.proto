@@ -57,6 +57,22 @@ service TemplateService {
    * TODO: Read the code and figure out how an update work
    */
   rpc UpdateTemplate(WorkflowTemplate) returns (Empty);
+  /*
+   * ListRevisionsByTemplateID returns all the revisions stored for a given template.
+   */
+  rpc ListRevisionsByTemplateID(GetRevisionRequest) returns (stream WorkflowTemplate) {
+    option (google.api.http) = {
+      get: "/v1/templates/{template_id}/revisions"
+    };
+  };
+  /*
+   * GetRevision returns a specific template revision.
+   */
+  rpc GetRevision(GetRevisionRequest) returns (WorkflowTemplate) {
+    option (google.api.http) = {
+      get: "/v1/templates/{template_id}/revisions/{revision}"
+    };
+  };
 }
 
 /*
@@ -99,7 +115,7 @@ message WorkflowTemplate {
   /*
    * The current revision of a template.
    */
-   int32 revision = 8;
+  int32 revision = 8;
 }
 
 /*
@@ -136,3 +152,18 @@ message ListRequest {
     string name = 1;
   }
 }
+
+/*
+ * GetRevisionRequest enables you to get template revisions.
+ */
+ message GetRevisionRequest {
+  /*
+   * The template identifier.
+   */
+  string template_id = 1;
+  /*
+   * The revision number.
+   */
+  int32 revision = 2;
+}
+
