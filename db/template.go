@@ -81,10 +81,10 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	row := d.instance.QueryRowContext(ctx, query)
 	id := []byte{}
 	name := []byte{}
-	revision := 0
+	var revision int32
 	err = row.Scan(&id, &name, &revision)
 	if err == nil {
-		data, err := getTemplate(ctx, d.instance, string(id), revision)
+		data, err := d.GetRevision(ctx, string(id), revision)
 		if err == nil {
 			return string(id), string(name), data, nil
 		}
@@ -216,7 +216,7 @@ func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id
 }
 
 // ListRevisionsByTemplateID returns revisions saved for a given template
-func (d TinkDB) ListRevisionsByTemplateID(id string, fn func(revision int, tCr *timestamp.Timestamp) error) error {
+func (d TinkDB) ListRevisionsByTemplateID(id string, fn func(revision int32, tCr *timestamp.Timestamp) error) error {
 	query := `SELECT revision, created_at FROM template_revisions
 		WHERE template_id='` + id + `' AND deleted_at IS NULL;`
 	rows, err := d.instance.Query(query)
@@ -226,7 +226,7 @@ func (d TinkDB) ListRevisionsByTemplateID(id string, fn func(revision int, tCr *
 	defer rows.Close()
 
 	var (
-		revision  int
+		revision  int32
 		createdAt time.Time
 	)
 	for rows.Next() {
@@ -250,8 +250,26 @@ func (d TinkDB) ListRevisionsByTemplateID(id string, fn func(revision int, tCr *
 	return err
 }
 
+// GetRevision returns a specific template revision.
+func (d TinkDB) GetRevision(ctx context.Context, templateID string, revision int32) (string, error) {
+	query := `SELECT data FROM template_revisions
+			WHERE template_id='` + templateID + `' AND revision=` + strconv.Itoa(int(revision)) +
+		` AND deleted_at is NULL`
+
+	row := d.instance.QueryRowContext(ctx, query)
+	data := []byte{}
+	err := row.Scan(&data)
+	if err == nil {
+		return string(data), nil
+	}
+	if err != sql.ErrNoRows {
+		return "", errors.Wrap(err, "SELECT")
+	}
+	return "", err
+}
+
 func writeTemplateRevision(ctx context.Context, db *sql.DB, tx *sql.Tx, templateID uuid.UUID, data string) (int, error) {
-	revision, err := getLatestRevision(ctx, db, templateID)
+	revision, err := getLatestRevisionNumber(ctx, db, templateID)
 	if err != nil {
 		return revision, err
 	}
@@ -265,7 +283,7 @@ func writeTemplateRevision(ctx context.Context, db *sql.DB, tx *sql.Tx, template
 	return revision + 1, nil
 }
 
-func getLatestRevision(ctx context.Context, db *sql.DB, templateID uuid.UUID) (int, error) {
+func getLatestRevisionNumber(ctx context.Context, db *sql.DB, templateID uuid.UUID) (int, error) {
 	query := `
 		SELECT COUNT(revision) FROM template_revisions
 		WHERE template_id='` + templateID.String() + `' AND deleted_at IS NULL;
@@ -274,21 +292,4 @@ func getLatestRevision(ctx context.Context, db *sql.DB, templateID uuid.UUID) (i
 	var revision int
 	err := row.Scan(&revision)
 	return revision, err
-}
-
-func getTemplate(ctx context.Context, db *sql.DB, id string, r int) (string, error) {
-	query := `SELECT data FROM template_revisions
-			WHERE template_id='` + id + `' AND revision=` + strconv.Itoa(r) +
-		` AND deleted_at is NULL`
-
-	row := db.QueryRowContext(ctx, query)
-	data := []byte{}
-	err := row.Scan(&data)
-	if err == nil {
-		return string(data), nil
-	}
-	if err != sql.ErrNoRows {
-		return "", errors.Wrap(err, "SELECT")
-	}
-	return "", err
 }

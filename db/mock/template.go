@@ -70,6 +70,11 @@ func (d DB) ClearTemplateDB() {
 }
 
 // ListRevisionsByTemplateID returns revisions saved for a given template
-func (d DB) ListRevisionsByTemplateID(id string, fn func(revision int, tCr *timestamp.Timestamp) error) error {
+func (d DB) ListRevisionsByTemplateID(id string, fn func(revision int32, tCr *timestamp.Timestamp) error) error {
 	return nil
+}
+
+// GetRevision returns a specific template revision.
+func (d DB) GetRevision(ctx context.Context, id string, r int32) (string, error) {
+	return d.GetRevisionFunc(ctx, id, r)
 }

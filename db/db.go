@@ -42,7 +42,8 @@ type template interface {
 	DeleteTemplate(ctx context.Context, name string) error
 	ListTemplates(in string, fn func(id, n string, in, del *timestamp.Timestamp) error) error
 	UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error
-	ListRevisionsByTemplateID(id string, fn func(revision int, tCr *timestamp.Timestamp) error) error
+	ListRevisionsByTemplateID(id string, fn func(revision int32, tCr *timestamp.Timestamp) error) error
+	GetRevision(ctx context.Context, templateID string, revision int32) (string, error)
 }
 
 type workflow interface {

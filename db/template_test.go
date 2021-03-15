@@ -63,7 +63,7 @@ func TestCreateTemplate(t *testing.T) {
 				}
 
 				count := 0
-				err = tinkDB.ListRevisionsByTemplateID(input[0].ID, func(revision int, tCr *timestamp.Timestamp) error {
+				err = tinkDB.ListRevisionsByTemplateID(input[0].ID, func(revision int32, tCr *timestamp.Timestamp) error {
 					count = count + 1
 					return nil
 				})
@@ -123,7 +123,7 @@ func TestCreateTemplate(t *testing.T) {
 				}
 
 				count := 0
-				err = tinkDB.ListRevisionsByTemplateID(input[0].ID, func(revision int, tCr *timestamp.Timestamp) error {
+				err = tinkDB.ListRevisionsByTemplateID(input[0].ID, func(revision int32, tCr *timestamp.Timestamp) error {
 					count = count + 1
 					return nil
 				})
@@ -169,7 +169,7 @@ func TestCreateTemplate(t *testing.T) {
 
 				revisions := 0
 				for _, w := range input {
-					err := tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
+					err := tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int32, tCr *timestamp.Timestamp) error {
 						revisions = revisions + 1
 						return nil
 					})
@@ -276,7 +276,7 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 
 	revisions := 0
-	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int32, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -305,7 +305,7 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 
 	revisions = 0
-	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int32, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -457,7 +457,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 	// validate revisions
 	revisions := 0
-	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int32, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -481,7 +481,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 	// revalidate revisions
 	revisions = 0
-	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int, tCr *timestamp.Timestamp) error {
+	err = tinkDB.ListRevisionsByTemplateID(w.ID, func(revision int32, tCr *timestamp.Timestamp) error {
 		revisions = revisions + 1
 		return nil
 	})
@@ -557,7 +557,7 @@ func TestTemplateRevisionMigration(t *testing.T) {
 	// validate if the migration was successful
 	revisionCount := 0
 	err = tinkDB.ListTemplates("%", func(id, n string, in, del *timestamp.Timestamp) error {
-		err := tinkDB.ListRevisionsByTemplateID(id, func(revision int, tCr *timestamp.Timestamp) error {
+		err := tinkDB.ListRevisionsByTemplateID(id, func(revision int32, tCr *timestamp.Timestamp) error {
 			revisionCount = revisionCount + 1
 			return nil
 		})

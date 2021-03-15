@@ -169,10 +169,57 @@ func (s *server) UpdateTemplate(ctx context.Context, in *template.WorkflowTempla
 
 // ListRevisionsByTemplateID returns all the revisions stored for a given template.
 func (s *server) ListRevisionsByTemplateID(in *template.GetRevisionRequest, stream template.TemplateService_ListRevisionsByTemplateIDServer) error {
+	s.logger.Info("listrevisionsbytemplateid")
+	labels := prometheus.Labels{"method": "ListRevisionsByTemplateID", "op": "list"}
+	metrics.CacheTotals.With(labels).Inc()
+	metrics.CacheInFlight.With(labels).Inc()
+	defer metrics.CacheInFlight.With(labels).Dec()
+
+	s.dbLock.RLock()
+	ready := s.dbReady
+	s.dbLock.RUnlock()
+	if !ready {
+		metrics.CacheStalls.With(labels).Inc()
+		return errors.New("DB is not ready")
+	}
+
+	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
+	defer timer.ObserveDuration()
+	err := s.db.ListRevisionsByTemplateID(in.TemplateId, func(revision int32, crTime *timestamp.Timestamp) error {
+		return stream.Send(&template.WorkflowTemplate{Id: in.TemplateId, Revision: revision, CreatedAt: crTime})
+	})
+
+	if err != nil {
+		metrics.CacheErrors.With(labels).Inc()
+		return err
+	}
+
+	metrics.CacheHits.With(labels).Inc()
 	return nil
 }
 
 // GetRevision returns a specific template revision.
 func (s *server) GetRevision(ctx context.Context, in *template.GetRevisionRequest) (*template.WorkflowTemplate, error) {
-	return nil, nil
+	s.logger.Info("getrevision")
+	labels := prometheus.Labels{"method": "GetRevision", "op": "get"}
+	metrics.CacheInFlight.With(labels).Inc()
+	defer metrics.CacheInFlight.With(labels).Dec()
+
+	const msg = "getting a template revision"
+	metrics.CacheTotals.With(labels).Inc()
+	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
+	defer timer.ObserveDuration()
+
+	s.logger.Info(msg)
+	data, err := s.db.GetRevision(ctx, in.TemplateId, in.Revision)
+	s.logger.Info("done " + msg)
+	if err != nil {
+		metrics.CacheErrors.With(labels).Inc()
+		l := s.logger
+		if pqErr := db.Error(err); pqErr != nil {
+			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
+		}
+		l.Error(err)
+	}
+	return &template.WorkflowTemplate{Id: in.TemplateId, Revision: in.Revision, Data: data}, err
 }

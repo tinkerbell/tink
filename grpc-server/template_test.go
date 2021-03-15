@@ -325,3 +325,70 @@ func TestGetTemplate(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRevision(t *testing.T) {
+	type (
+		args struct {
+			db         mock.DB
+			templateID string
+			revision   int32
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		data string
+		err  bool
+	}{
+		"get-revision-success": {
+			args: args{
+				db: mock.DB{
+					GetRevisionFunc: func(ctx context.Context, tID string, r int32) (string, error) {
+						if tID == templateID1 {
+							return template1, nil
+						}
+						return templateNotFoundTemplate, errors.New("failed to get template")
+					},
+				},
+				templateID: templateID1,
+				revision:   1,
+			},
+			data: template1,
+			err:  false,
+		},
+		"get-revision-failed": {
+			args: args{
+				db: mock.DB{
+					GetRevisionFunc: func(ctx context.Context, tID string, r int32) (string, error) {
+						if tID == templateID1 {
+							return template1, nil
+						}
+						return templateNotFoundTemplate, errors.New("failed to get template")
+					},
+				},
+				templateID: templateNotFoundID,
+				revision:   1,
+			},
+			data: templateNotFoundTemplate,
+			err:  true,
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			s := testServer(t, tc.args.db)
+			res, err := s.GetRevision(ctx, &pb.GetRevisionRequest{
+				TemplateId: tc.args.templateID,
+				Revision:   tc.args.revision,
+			})
+			if tc.err {
+				assert.Error(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.NotEmpty(t, res)
+			}
+			assert.Equal(t, res.Data, tc.data)
+		})
+	}
+}
