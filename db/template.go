@@ -22,6 +22,14 @@ type Template struct {
 	Revision       int32
 }
 
+// RevisionUnknown should be used while trying to GetTemplate
+// and you are not sure of the template current revision.
+//
+// GetTemplate checks if the requested revision is RevisionUnknown.
+// If so, it gets the current template revision and returns the data.
+// Uses given revision otherwise.
+const RevisionUnknown = -1
+
 // CreateTemplate creates a new workflow template
 func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	_, err := wflow.Parse([]byte(data))
@@ -60,7 +68,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 }
 
 // GetTemplate returns template which is not deleted
-func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (Template, error) {
+func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool, revision int32) (Template, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
 		return Template{}, errors.Wrap(err, "failed to get template")
@@ -87,16 +95,19 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	row := d.instance.QueryRowContext(ctx, query)
 	id := []byte{}
 	name := []byte{}
-	var revision int32
-	err = row.Scan(&id, &name, &revision)
+	var r int32
+	err = row.Scan(&id, &name, &r)
 	if err == nil {
-		data, err := d.GetRevision(ctx, string(id), revision)
+		if revision != RevisionUnknown {
+			r = revision
+		}
+		data, err := d.GetRevision(ctx, string(id), r)
 		if err == nil {
 			return Template{
 					ID:       string(id),
 					Name:     string(name),
 					Data:     data,
-					Revision: revision,
+					Revision: r,
 				},
 				nil
 		}

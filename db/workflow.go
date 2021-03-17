@@ -23,7 +23,7 @@ import (
 
 // Workflow represents a workflow instance in database
 type Workflow struct {
-	State                  int32
+	State, Revision        int32
 	ID, Hardware, Template string
 	CreatedAt, UpdatedAt   *timestamp.Timestamp
 }
@@ -60,14 +60,14 @@ func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id
 func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 	INSERT INTO
-		workflow (created_at, updated_at, template, devices, id)
+		workflow (created_at, updated_at, template, devices, id, revision)
 	VALUES
-		($1, $1, $2, $3, $4)
+		($1, $1, $2, $3, $4, $5)
 	ON CONFLICT (id)
 	DO
 	UPDATE SET
-		(updated_at, deleted_at, template, devices) = ($1, NULL, $2, $3);
-	`, time.Now(), wf.Template, wf.Hardware, wf.ID)
+		(updated_at, deleted_at, template, devices, revision) = ($1, NULL, $2, $3, $5);
+	`, time.Now(), wf.Template, wf.Hardware, wf.ID, wf.Revision)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow")
 	}
@@ -337,7 +337,7 @@ func (d TinkDB) GetWorkflowsForWorker(id string) ([]string, error) {
 // GetWorkflow returns a workflow
 func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 	query := `
-	SELECT template, devices
+	SELECT template, devices, revision
 	FROM workflow
 	WHERE
 		id = $1
@@ -346,9 +346,10 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 	`
 	row := d.instance.QueryRowContext(ctx, query, id)
 	var tmp, tar string
-	err := row.Scan(&tmp, &tar)
+	var r int32
+	err := row.Scan(&tmp, &tar, &r)
 	if err == nil {
-		return Workflow{ID: id, Template: tmp, Hardware: tar}, nil
+		return Workflow{ID: id, Template: tmp, Hardware: tar, Revision: r}, nil
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")

@@ -357,7 +357,7 @@ func TestGetWorkflow(t *testing.T) {
 }
 
 func createWorkflow(ctx context.Context, tinkDB *db.TinkDB, in *input) (string, error) {
-	tmp, err := tinkDB.GetTemplate(context.Background(), map[string]string{"id": in.template.ID}, false)
+	tmp, err := tinkDB.GetTemplate(context.Background(), map[string]string{"id": in.template.ID}, false, db.RevisionUnknown)
 	if err != nil {
 		return "", err
 	}

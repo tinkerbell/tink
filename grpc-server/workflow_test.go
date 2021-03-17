@@ -44,7 +44,7 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedToGetTemplate": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool, revision int32) (db.Template, error) {
 						return db.Template{}, errors.New("failed to get template")
 					},
 				},
@@ -58,7 +58,7 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool, revision int32) (db.Template, error) {
 						return db.Template{Data: templateData}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
@@ -75,7 +75,7 @@ func TestCreateWorkflow(t *testing.T) {
 		"SuccessCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool, revision int32) (db.Template, error) {
 						return db.Template{Data: templateData}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
@@ -136,7 +136,7 @@ func TestGetWorkflow(t *testing.T) {
 							Template: templateID,
 							Hardware: hw}, nil
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool, revision int32) (db.Template, error) {
 						return db.Template{Data: templateData}, nil
 					},
 				},

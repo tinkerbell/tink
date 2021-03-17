@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS template_revisions(
 CREATE INDEX IF NOT EXISTS idx_template_revisions_template_id ON template_revisions (template_id);
 
 ALTER TABLE template ADD COLUMN revision INT DEFAULT 1;
+ALTER TABLE workflow ADD COLUMN revision INT DEFAULT 1;
 
 CREATE OR REPLACE FUNCTION migrate_to_template_revisions()
 RETURNS void AS $$

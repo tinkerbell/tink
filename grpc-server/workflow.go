@@ -45,7 +45,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	fields := map[string]string{
 		"id": in.GetTemplate(),
 	}
-	t, err := s.db.GetTemplate(ctx, fields, false)
+	t, err := s.db.GetTemplate(ctx, fields, false, db.RevisionUnknown)
 	if err != nil {
 		return &workflow.CreateResponse{}, errors.Wrapf(err, errFailedToGetTemplate, in.GetTemplate())
 	}
@@ -61,6 +61,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		ID:       id.String(),
 		Template: in.Template,
 		Hardware: in.Hardware,
+		Revision: t.Revision,
 		State:    workflow.State_value[workflow.State_STATE_PENDING.String()],
 	}
 	err = s.db.CreateWorkflow(ctx, wf, data, id)
@@ -74,7 +75,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		return &workflow.CreateResponse{}, err
 	}
 
-	l := s.logger.With("workflowID", id.String())
+	l := s.logger.With("workflowID", id.String(), "templateID", in.Template, "revision", t.Revision)
 	l.Info("done " + msg)
 	return &workflow.CreateResponse{Id: id.String()}, err
 }
@@ -107,7 +108,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	fields := map[string]string{
 		"id": w.Template,
 	}
-	t, err := s.db.GetTemplate(ctx, fields, true)
+	t, err := s.db.GetTemplate(ctx, fields, true, w.Revision)
 	if err != nil {
 		return &workflow.Workflow{}, errors.Wrapf(err, errFailedToGetTemplate, w.Template)
 	}
@@ -240,7 +241,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	return wf, err
 }
 
-// ShowWorflowevents  implements workflow.ShowWorflowEvents
+// ShowWorkflowevents  implements workflow.ShowWorkflowEvents
 func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowService_ShowWorkflowEventsServer) error {
 	s.logger.Info("List workflows Events")
 	labels := prometheus.Labels{"method": "ShowWorkflowEvents", "op": "list"}

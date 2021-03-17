@@ -51,7 +51,7 @@ func TestCreateTemplate(t *testing.T) {
 				}(),
 			},
 			Expectation: func(t *testing.T, input []*workflow.Workflow, tinkDB *db.TinkDB) {
-				tmp, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input[0].ID}, false)
+				tmp, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input[0].ID}, false, db.RevisionUnknown)
 				if err != nil {
 					t.Error(err)
 				}
@@ -114,7 +114,7 @@ func TestCreateTemplate(t *testing.T) {
 				}(),
 			},
 			Expectation: func(t *testing.T, input []*workflow.Workflow, tinkDB *db.TinkDB) {
-				tmp, err := tinkDB.GetTemplate(context.Background(), map[string]string{"id": input[0].ID}, false)
+				tmp, err := tinkDB.GetTemplate(context.Background(), map[string]string{"id": input[0].ID}, false, db.RevisionUnknown)
 				if err != nil {
 					t.Error(err)
 				}
@@ -320,7 +320,7 @@ func TestDeleteTemplate(t *testing.T) {
 func TestGetTemplate(t *testing.T) {
 	ctx := context.Background()
 	expectation := func(t *testing.T, input *workflow.Workflow, tinkDB *db.TinkDB) {
-		tmp, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input.ID}, false)
+		tmp, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input.ID}, false, db.RevisionUnknown)
 		if err != nil {
 			t.Error(err)
 		}
@@ -422,7 +422,7 @@ func TestGetTemplateWithInvalidID(t *testing.T) {
 	}()
 
 	id := uuid.New().String()
-	_, err := tinkDB.GetTemplate(ctx, map[string]string{"id": id}, false)
+	_, err := tinkDB.GetTemplate(ctx, map[string]string{"id": id}, false, db.RevisionUnknown)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
