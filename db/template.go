@@ -16,6 +16,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Template represents a template revision
+type Template struct {
+	ID, Name, Data string
+	Revision       int32
+}
+
 // CreateTemplate creates a new workflow template
 func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	_, err := wflow.Parse([]byte(data))
@@ -54,10 +60,10 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 }
 
 // GetTemplate returns template which is not deleted
-func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (Template, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
-		return "", "", "", errors.Wrap(err, "failed to get template")
+		return Template{}, errors.Wrap(err, "failed to get template")
 	}
 
 	var query string
@@ -86,18 +92,24 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	if err == nil {
 		data, err := d.GetRevision(ctx, string(id), revision)
 		if err == nil {
-			return string(id), string(name), data, nil
+			return Template{
+					ID:       string(id),
+					Name:     string(name),
+					Data:     data,
+					Revision: revision,
+				},
+				nil
 		}
 		if err != sql.ErrNoRows {
 			d.logger.Error(err)
-			return "", "", "", errors.Wrap(err, "SELECT")
+			return Template{}, errors.Wrap(err, "SELECT")
 		}
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
 	}
-	return "", "", "", err
+	return Template{}, err
 }
 
 // DeleteTemplate deletes a workflow template by id

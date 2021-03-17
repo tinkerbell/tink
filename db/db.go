@@ -38,7 +38,7 @@ type hardware interface {
 
 type template interface {
 	CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error
-	GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
+	GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (Template, error)
 	DeleteTemplate(ctx context.Context, name string) error
 	ListTemplates(in string, fn func(id, n string, in, del *timestamp.Timestamp) error) error
 	UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error

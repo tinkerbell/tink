@@ -27,7 +27,7 @@ type DB struct {
 
 	// template
 	TemplateDB                    map[string]interface{}
-	GetTemplateFunc               func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
+	GetTemplateFunc               func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error)
 	ListRevisionsByTemplateIDFunc func(id string, fn func(revision int32, tCr *timestamp.Timestamp) error) error
 	GetRevisionFunc               func(ctx context.Context, id string, r int32) (string, error)
 }

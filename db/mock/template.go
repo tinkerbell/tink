@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
+	"github.com/tinkerbell/tink/db"
 )
 
 type Template struct {
@@ -41,7 +42,7 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 }
 
 // GetTemplate returns a workflow template
-func (d DB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+func (d DB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
 	return d.GetTemplateFunc(ctx, fields, deleted)
 }
 

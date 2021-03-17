@@ -44,8 +44,8 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedToGetTemplate": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", "", errors.New("failed to get template")
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+						return db.Template{}, errors.New("failed to get template")
 					},
 				},
 				wfTemplate: templateID,
@@ -58,8 +58,8 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+						return db.Template{Data: templateData}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
 						return errors.New("failed to create a workfow")
@@ -75,8 +75,8 @@ func TestCreateWorkflow(t *testing.T) {
 		"SuccessCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+						return db.Template{Data: templateData}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
 						return nil
@@ -136,8 +136,8 @@ func TestGetWorkflow(t *testing.T) {
 							Template: templateID,
 							Hardware: hw}, nil
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (db.Template, error) {
+						return db.Template{Data: templateData}, nil
 					},
 				},
 				wfTemplate: templateID,

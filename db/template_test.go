@@ -51,13 +51,13 @@ func TestCreateTemplate(t *testing.T) {
 				}(),
 			},
 			Expectation: func(t *testing.T, input []*workflow.Workflow, tinkDB *db.TinkDB) {
-				wID, wName, wData, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input[0].ID}, false)
+				tmp, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input[0].ID}, false)
 				if err != nil {
 					t.Error(err)
 				}
-				w := workflow.MustParse([]byte(wData))
-				w.ID = wID
-				w.Name = wName
+				w := workflow.MustParse([]byte(tmp.Data))
+				w.ID = tmp.ID
+				w.Name = tmp.Name
 				if dif := cmp.Diff(input[0], w); dif != "" {
 					t.Errorf(dif)
 				}
@@ -114,12 +114,12 @@ func TestCreateTemplate(t *testing.T) {
 				}(),
 			},
 			Expectation: func(t *testing.T, input []*workflow.Workflow, tinkDB *db.TinkDB) {
-				_, wName, _, err := tinkDB.GetTemplate(context.Background(), map[string]string{"id": input[0].ID}, false)
+				tmp, err := tinkDB.GetTemplate(context.Background(), map[string]string{"id": input[0].ID}, false)
 				if err != nil {
 					t.Error(err)
 				}
-				if wName != "updated-name" {
-					t.Errorf("expected name to be \"%s\", got \"%s\"", "updated-name", wName)
+				if tmp.Name != "updated-name" {
+					t.Errorf("expected name to be \"%s\", got \"%s\"", "updated-name", tmp.Name)
 				}
 
 				count := 0
@@ -320,13 +320,13 @@ func TestDeleteTemplate(t *testing.T) {
 func TestGetTemplate(t *testing.T) {
 	ctx := context.Background()
 	expectation := func(t *testing.T, input *workflow.Workflow, tinkDB *db.TinkDB) {
-		wID, wName, wData, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input.ID}, false)
+		tmp, err := tinkDB.GetTemplate(ctx, map[string]string{"id": input.ID}, false)
 		if err != nil {
 			t.Error(err)
 		}
-		w := workflow.MustParse([]byte(wData))
-		w.ID = wID
-		w.Name = wName
+		w := workflow.MustParse([]byte(tmp.Data))
+		w.ID = tmp.ID
+		w.Name = tmp.Name
 		if dif := cmp.Diff(input, w); dif != "" {
 			t.Errorf(dif)
 		}
@@ -422,7 +422,7 @@ func TestGetTemplateWithInvalidID(t *testing.T) {
 	}()
 
 	id := uuid.New().String()
-	_, _, _, err := tinkDB.GetTemplate(ctx, map[string]string{"id": id}, false)
+	_, err := tinkDB.GetTemplate(ctx, map[string]string{"id": id}, false)
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
