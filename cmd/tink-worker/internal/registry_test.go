@@ -10,7 +10,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/packethost/pkg/log"
-	//"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -69,6 +68,8 @@ func TestPullImageAnyFailure(t *testing.T) {
 			err := rcon.pullImage(ctx, cli, test.testName)
 			if test.testErr != nil {
 				assert.Equal(t, err.Error(), test.testErr.Error())
+			} else {
+				assert.Equal(t, err, test.testErr)
 			}
 		})
 	}
