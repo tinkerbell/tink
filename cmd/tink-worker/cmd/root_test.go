@@ -129,7 +129,7 @@ func Test_tryClientConnection(t *testing.T) {
 
 			got1, err := tryClientConnection(tArgs.logger, tArgs.retryInterval, tArgs.retries)
 
-			if !reflect.DeepEqual(got1, tt.want1) {
+			if got1 == nil || tt.want1 == nil {
 				t.Errorf("tryClientConnection got1 = %v, want1: %v", got1, tt.want1)
 			}
 
