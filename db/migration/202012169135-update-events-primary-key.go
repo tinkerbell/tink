@@ -12,9 +12,9 @@ import migrate "github.com/rubenv/sql-migrate"
 //
 // The migration changes the primary key on events table from 'created_at' to `id`,
 // which will always be unique for each event generated at any point in time.
-func Get2020121691335() *migrate.Migration {
+func Get202012169135() *migrate.Migration {
 	return &migrate.Migration{
-		Id: "2020121691335-update-events-primary-key",
+		Id: "202012169135-update-events-primary-key",
 		Up: []string{`
 			ALTER TABLE events DROP CONSTRAINT events_pkey;
 			ALTER TABLE events ADD PRIMARY KEY (id);

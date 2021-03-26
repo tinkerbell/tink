@@ -10,7 +10,7 @@ var migrations = []func() *migrate.Migration{
 	Get202010221010,
 	Get202012041103,
 	Get202012091055,
-	Get2020121691335,
+	Get202012169135,
 }
 
 func GetMigrations() *migrate.MemoryMigrationSource {
