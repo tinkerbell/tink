@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tinkerbell/tink/client/listener"
 	"github.com/tinkerbell/tink/db"
 	rpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
@@ -167,13 +166,6 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				logger.With("num_applied_migrations", numAppliedMigrations).Info("Migrations applied successfully")
 				return nil
 			}
-
-			err = listener.Init(connInfo)
-			if err != nil {
-				return err
-			}
-
-			go tinkDB.PurgeEvents(errCh)
 
 			numAvailableMigrations, err := tinkDB.CheckRequiredMigrations()
 			if err != nil {
