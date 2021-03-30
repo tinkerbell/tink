@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -20,6 +19,17 @@ type RegistryConnDetails struct {
 	user,
 	pwd string
 	logger log.Logger
+}
+
+// ImagePullStatus is the status of the downloaded Image chunk
+type ImagePullStatus struct {
+	Status         string `json:"status"`
+	Error          string `json:"error"`
+	Progress       string `json:"progress"`
+	ProgressDetail struct {
+		Current int `json:"current"`
+		Total   int `json:"total"`
+	} `json:"progressDetail"`
 }
 
 // NewRegistryConnDetails creates a new RegistryConnDetails
@@ -46,8 +56,12 @@ func (r *RegistryConnDetails) NewClient() (*client.Client, error) {
 	return c, nil
 }
 
+type imagePuller interface {
+	ImagePull(context.Context, string, types.ImagePullOptions) (io.ReadCloser, error)
+}
+
 // pullImage outputs to stdout the contents of the requested image (relative to the registry)
-func (r *RegistryConnDetails) pullImage(ctx context.Context, cli *client.Client, image string) error {
+func (r *RegistryConnDetails) pullImage(ctx context.Context, cli imagePuller, image string) error {
 	authConfig := types.AuthConfig{
 		Username:      r.user,
 		Password:      r.pwd,
@@ -64,8 +78,18 @@ func (r *RegistryConnDetails) pullImage(ctx context.Context, cli *client.Client,
 		return errors.Wrap(err, "DOCKER PULL")
 	}
 	defer out.Close()
-	if _, err := io.Copy(os.Stdout, out); err != nil {
-		return err
+	fd := json.NewDecoder(out)
+	var status *ImagePullStatus
+	for {
+		if err := fd.Decode(&status); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return errors.Wrap(err, "DOCKER PULL")
+		}
+		if status.Error != "" {
+			return errors.Wrap(errors.New(status.Error), "DOCKER PULL")
+		}
 	}
 	return nil
 }
