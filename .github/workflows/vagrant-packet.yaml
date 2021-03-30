@@ -7,7 +7,7 @@ on:
 jobs:
   vagrant-setup:
     if: contains(github.event.pull_request.labels.*.name, 'ci-check/vagrant-setup')
-    runs-on: self-hosted
+    runs-on: vagrant
     steps:
     - name: Checkout
       uses: actions/checkout@v2
