@@ -74,7 +74,7 @@ func (s *server) GetWorkflowContextList(context context.Context, req *pb.Workflo
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions
 func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest) (*pb.WorkflowActionList, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
 	return getWorkflowActions(context, s.db, wfID)
@@ -83,13 +83,13 @@ func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowAct
 // ReportActionStatus implements tinkerbell.ReportActionStatus
 func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*pb.Empty, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
-	if len(req.GetTaskName()) == 0 {
+	if req.GetTaskName() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidTaskName)
 	}
-	if len(req.GetActionName()) == 0 {
+	if req.GetActionName() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidActionName)
 	}
 
@@ -151,7 +151,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 // UpdateWorkflowData updates workflow ephemeral data
 func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataRequest) (*pb.Empty, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return &pb.Empty{}, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
 	_, ok := workflowData[wfID]
@@ -168,7 +168,7 @@ func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkf
 // GetWorkflowData gets the ephemeral data for a workflow
 func (s *server) GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
 	data, err := s.db.GetfromWfDataTable(context, req)
@@ -197,7 +197,7 @@ func (s *server) GetWorkflowDataVersion(context context.Context, req *pb.GetWork
 }
 
 func getWorkflowsForWorker(db db.Database, id string) ([]string, error) {
-	if len(id) == 0 {
+	if id == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkerID)
 	}
 	wfs, err := db.GetWorkflowsForWorker(id)
