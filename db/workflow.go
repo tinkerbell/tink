@@ -337,7 +337,7 @@ func (d TinkDB) GetWorkflowsForWorker(id string) ([]string, error) {
 // GetWorkflow returns a workflow
 func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 	query := `
-	SELECT template, devices
+	SELECT template, devices, created_at, updated_at
 	FROM workflow
 	WHERE
 		id = $1
@@ -345,10 +345,21 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 		deleted_at IS NULL;
 	`
 	row := d.instance.QueryRowContext(ctx, query, id)
-	var tmp, tar string
-	err := row.Scan(&tmp, &tar)
+	var (
+		tmp, tar   string
+		crAt, upAt time.Time
+	)
+	err := row.Scan(&tmp, &tar, &crAt, &upAt)
 	if err == nil {
-		return Workflow{ID: id, Template: tmp, Hardware: tar}, nil
+		createdAt, _ := ptypes.TimestampProto(crAt)
+		updatedAt, _ := ptypes.TimestampProto(upAt)
+		return Workflow{
+			ID:        id,
+			Template:  tmp,
+			Hardware:  tar,
+			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
+		}, nil
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")

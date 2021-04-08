@@ -109,11 +109,13 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	}
 
 	wf := &workflow.Workflow{
-		Id:       w.ID,
-		Template: w.Template,
-		Hardware: w.Hardware,
-		State:    getWorkflowState(s.db, ctx, in.Id),
-		Data:     data,
+		Id:        w.ID,
+		Template:  w.Template,
+		Hardware:  w.Hardware,
+		State:     getWorkflowState(s.db, ctx, in.Id),
+		CreatedAt: w.CreatedAt,
+		UpdatedAt: w.UpdatedAt,
+		Data:      data,
 	}
 	l := s.logger.With("workflowID", w.ID)
 	l.Info("done " + msg)
