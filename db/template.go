@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	tb "github.com/tinkerbell/tink/protos/template"
 	wflow "github.com/tinkerbell/tink/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,16 +49,16 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 }
 
 // GetTemplate returns template which is not deleted
-func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
-		return "", "", "", errors.Wrap(err, "failed to get template")
+		return &tb.WorkflowTemplate{}, errors.Wrap(err, "failed to get template")
 	}
 
 	var query string
 	if !deleted {
 		query = `
-	SELECT id, name, data
+	SELECT id, name, data, created_at, updated_at
 	FROM template
 	WHERE
 		` + getCondition + ` AND
@@ -65,7 +66,7 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	`
 	} else {
 		query = `
-	SELECT id, name, data
+	SELECT id, name, data, created_at, updated_at
 	FROM template
 	WHERE
 		` + getCondition + `
@@ -73,18 +74,30 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	}
 
 	row := d.instance.QueryRowContext(ctx, query)
-	id := []byte{}
-	name := []byte{}
-	data := []byte{}
-	err = row.Scan(&id, &name, &data)
+	var (
+		id        string
+		name      string
+		data      string
+		createdAt time.Time
+		updatedAt time.Time
+	)
+	err = row.Scan(&id, &name, &data, &createdAt, &updatedAt)
 	if err == nil {
-		return string(id), string(name), string(data), nil
+		crAt, _ := ptypes.TimestampProto(createdAt)
+		upAt, _ := ptypes.TimestampProto(updatedAt)
+		return &tb.WorkflowTemplate{
+			Id:        id,
+			Name:      name,
+			Data:      data,
+			CreatedAt: crAt,
+			UpdatedAt: upAt,
+		}, nil
 	}
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
 	}
-	return "", "", "", err
+	return &tb.WorkflowTemplate{}, err
 }
 
 // DeleteTemplate deletes a workflow template by id

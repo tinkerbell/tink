@@ -37,11 +37,11 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	fields := map[string]string{
 		"id": in.GetTemplate(),
 	}
-	_, _, templateData, err := s.db.GetTemplate(ctx, fields, false)
+	wtmpl, err := s.db.GetTemplate(ctx, fields, false)
 	if err != nil {
 		return &workflow.CreateResponse{}, errors.Wrapf(err, errFailedToGetTemplate, in.GetTemplate())
 	}
-	data, err := wkf.RenderTemplate(in.GetTemplate(), templateData, []byte(in.Hardware))
+	data, err := wkf.RenderTemplate(in.GetTemplate(), wtmpl.GetData(), []byte(in.Hardware))
 
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
@@ -99,11 +99,11 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	fields := map[string]string{
 		"id": w.Template,
 	}
-	_, _, templateData, err := s.db.GetTemplate(ctx, fields, true)
+	wtmpl, err := s.db.GetTemplate(ctx, fields, true)
 	if err != nil {
 		return &workflow.Workflow{}, errors.Wrapf(err, errFailedToGetTemplate, w.Template)
 	}
-	data, err := wkf.RenderTemplate(w.Template, templateData, []byte(w.Hardware))
+	data, err := wkf.RenderTemplate(w.Template, wtmpl.GetData(), []byte(w.Hardware))
 	if err != nil {
 		return &workflow.Workflow{}, err
 	}

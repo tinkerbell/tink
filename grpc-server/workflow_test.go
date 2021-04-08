@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/db/mock"
+	tb "github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -44,8 +45,12 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedToGetTemplate": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", "", errors.New("failed to get template")
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: "",
+						}, errors.New("failed to get template")
 					},
 				},
 				wfTemplate: templateID,
@@ -58,8 +63,12 @@ func TestCreateWorkflow(t *testing.T) {
 		"FailedCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
 						return errors.New("failed to create a workfow")
@@ -75,8 +84,12 @@ func TestCreateWorkflow(t *testing.T) {
 		"SuccessCreatingWorkflow": {
 			args: args{
 				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
 						return nil
@@ -145,8 +158,12 @@ func TestGetWorkflow(t *testing.T) {
 							TotalNumberOfActions: 1,
 						}, nil
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
 					},
 				},
 				state:      workflow.State_STATE_SUCCESS,
@@ -186,8 +203,12 @@ func TestGetWorkflow(t *testing.T) {
 							TotalNumberOfActions: 2,
 						}, nil
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
 					},
 				},
 				state:      workflow.State_STATE_RUNNING,
