@@ -18,6 +18,13 @@ It is comprised of following five major components:
 The workflow engine is comprised of a server and a CLI, which communicates over gRPC.
 The CLI is used to create a workflow and its building blocks: templates and targeted hardware.
 
+## Building
+
+Use `make help` Luke.
+The most interesting targets are `make all` (or just `make`) and `make images`.
+`make all` builds all the binaries for your host OS and CPU to enable running directly.
+`make images` will build all the binaries for Linux/x86_64 and build docker images with them.
+
 ## Workflow
 
 A workflow is a framework responsible for handling flexible, bare metal provisioning, that is...
