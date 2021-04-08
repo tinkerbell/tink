@@ -37,6 +37,14 @@ crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=
 $(binaries) $(crossbinaries):
 	$(FLAGS) go build $(LDFLAGS) -o $@ ./$(@D)
 
+.PHONY: images tink-cli-image tink-server-image tink-worker-image
+tink-cli-image: cmd/tink-cli/tink-cli-linux-amd64
+	docker build -t tink-cli -f cmd/tink-cli/Dockerfile
+tink-server-image: cmd/tink-server/tink-server-linux-amd64
+	docker build -t tink-server -f cmd/tink-server/Dockerfile
+tink-worker-image: cmd/tink-worker/tink-worker-linux-amd64
+	docker build -t tink-worker -f cmd/tink-worker/Dockerfile
+
 protos/gen_mock:
 	go generate ./protos/**/*
 	goimports -w ./protos/**/mock.go
