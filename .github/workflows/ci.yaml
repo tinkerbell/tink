@@ -140,8 +140,7 @@ jobs:
     - name: ${{ matrix.repository }}
       uses: docker/build-push-action@v2
       with:
-        context: .
-        file: cmd/${{ matrix.binary }}/Dockerfile
+        context: cmd/${{ matrix.binary }}/
         cache-from: type=registry,ref=${{ matrix.repository }}:latest
         push: ${{ startsWith(github.ref, 'refs/heads/master') }}
         tags: ${{ steps.docker-image-tag.outputs.tags }}

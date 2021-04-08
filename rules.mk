@@ -39,11 +39,11 @@ $(binaries) $(crossbinaries):
 
 .PHONY: images tink-cli-image tink-server-image tink-worker-image
 tink-cli-image: cmd/tink-cli/tink-cli-linux-amd64
-	docker build -t tink-cli -f cmd/tink-cli/Dockerfile
+	docker build -t tink-cli cmd/tink-cli/
 tink-server-image: cmd/tink-server/tink-server-linux-amd64
-	docker build -t tink-server -f cmd/tink-server/Dockerfile
+	docker build -t tink-server cmd/tink-server/
 tink-worker-image: cmd/tink-worker/tink-worker-linux-amd64
-	docker build -t tink-worker -f cmd/tink-worker/Dockerfile
+	docker build -t tink-worker cmd/tink-worker/
 
 protos/gen_mock:
 	go generate ./protos/**/*
