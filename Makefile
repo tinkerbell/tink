@@ -24,7 +24,7 @@ endif
 LDFLAGS := -ldflags "-X main.version=$(version)"
 export CGO_ENABLED := 0
 
-all: $(binaries)
+all: $(binaries) ## Build all binaries for host OS and CPU
 
 .PHONY: server $(binaries) cli worker test
 server: $(server)
@@ -33,7 +33,7 @@ worker : $(worker)
 
 crossbinaries := $(addsuffix -linux-,$(binaries))
 crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=arm64) $(crossbinaries:=armv6) $(crossbinaries:=armv7)
-crosscompile: $(crossbinaries)
+crosscompile: $(crossbinaries) ## Build all binaries for Linux OS and all supported CPU arches
 .PHONY: crosscompile $(crossbinaries)
 
 %-386:   FLAGS=GOOS=linux GOARCH=386
@@ -44,11 +44,11 @@ crosscompile: $(crossbinaries)
 $(binaries) $(crossbinaries):
 	$(FLAGS) go build $(LDFLAGS) -o $@ ./$(@D)
 
-test:
+test: ## Run tests
 	go clean -testcache
 	go test ./... -v
 
-verify:
+verify: ## Run lint like checkers
 	goimports -d .
 	golint ./...
 
@@ -63,3 +63,6 @@ grpc/gen_doc:
 		--doc_out=./doc \
 		--doc_opt=html,index.html \
 		protos/hardware/*.proto protos/template/*.proto protos/workflow/*.proto
+
+help: ## Print this help
+	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
