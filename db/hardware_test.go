@@ -565,3 +565,10 @@ func createHardware(ctx context.Context, db *db.TinkDB, hw *hardware.Hardware) e
 	}
 	return db.InsertIntoDB(ctx, string(data))
 }
+
+func hardwareComparer(in *hardware.Hardware, hw *hardware.Hardware) bool {
+	return in.Id == hw.Id &&
+		in.Version == hw.Version &&
+		strings.EqualFold(in.Metadata, hw.Metadata) &&
+		strings.EqualFold(in.Network.Interfaces[0].Dhcp.Mac, hw.Network.Interfaces[0].Dhcp.Mac)
+}
