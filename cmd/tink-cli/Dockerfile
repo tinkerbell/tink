@@ -5,4 +5,4 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 
 RUN apk add --no-cache --update --upgrade ca-certificates
-COPY cmd/tink-cli/tink-cli-linux-${TARGETARCH:-amd64}${TARGETVARIANT} /usr/bin/tink
+COPY tink-cli-linux-${TARGETARCH:-amd64}${TARGETVARIANT} /usr/bin/tink
