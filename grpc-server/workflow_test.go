@@ -136,6 +136,14 @@ func TestGetWorkflow(t *testing.T) {
 							Template: templateID,
 							Hardware: hw}, nil
 					},
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*workflow.WorkflowContext, error) {
+						return &workflow.WorkflowContext{
+							WorkflowId:           wfID,
+							CurrentActionState:   workflow.State_STATE_SUCCESS,
+							CurrentActionIndex:   0,
+							TotalNumberOfActions: 1,
+						}, nil
+					},
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
 						return "", "", templateData, nil
 					},

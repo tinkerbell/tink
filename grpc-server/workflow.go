@@ -274,13 +274,18 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	return nil
 }
 
+// This function will provide the workflow state on the basis of the state of the actions
+// For e.g. : If an action has Tailed or Timeout then the workflow state will also be
+// considered as Failed/Timeout. And If an action is successful then the workflow state
+// will be considered as Running until the last action of the workflow is executed successfully.
+
 func getWorkflowState(db db.Database, ctx context.Context, id string) workflow.State {
-	wfctx, _ := db.GetWorkflowContexts(ctx, id)
-	if wfctx.CurrentActionState != workflow.State_STATE_SUCCESS {
-		return wfctx.CurrentActionState
+	wfCtx, _ := db.GetWorkflowContexts(ctx, id)
+	if wfCtx.CurrentActionState != workflow.State_STATE_SUCCESS {
+		return wfCtx.CurrentActionState
 	} else {
-		wfacts, _ := db.GetWorkflowActions(ctx, id)
-		if isLastAction(wfctx, wfacts) {
+		//wfacts, _ := db.GetWorkflowActions(ctx, id)
+		if wfCtx.GetCurrentActionIndex() == wfCtx.GetTotalNumberOfActions()-1 {
 			return workflow.State_STATE_SUCCESS
 		} else {
 			return workflow.State_STATE_RUNNING
