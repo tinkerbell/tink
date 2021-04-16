@@ -42,7 +42,7 @@ generate_password() (
 	head -c 12 /dev/urandom | sha256sum | cut -d' ' -f1
 )
 
-generate_envrc() (
+generate_env() (
 	local tink_interface=$1
 
 	validate_tinkerbell_network_interface "$tink_interface"
@@ -89,7 +89,7 @@ main() (
 		exit 1
 	fi
 
-	generate_envrc "$1"
+	generate_env "$1"
 )
 
 main "$@"

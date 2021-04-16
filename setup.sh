@@ -500,7 +500,7 @@ do_setup() (
 	check_prerequisites "$lsb_dist" "$lsb_version"
 
 	if [ ! -f "$ENV_FILE" ]; then
-		echo "$ERR Run './generate-envrc.sh network-interface > \"$ENV_FILE\"' before continuing."
+		echo "$ERR Run './generate-env.sh network-interface > \"$ENV_FILE\"' before continuing."
 		exit 1
 	fi
 
