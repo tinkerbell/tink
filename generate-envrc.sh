@@ -85,7 +85,7 @@ EOF
 
 main() (
 	if [ -z "${1:-}" ]; then
-		err "Usage: $0 network-interface-name > envrc"
+		err "Usage: $0 network-interface-name > .env"
 		exit 1
 	fi
 
