@@ -118,6 +118,7 @@ func TestGetWorkflow(t *testing.T) {
 		args struct {
 			db                     mock.DB
 			wfTemplate, wfHardware string
+			state                  workflow.State
 		}
 		want struct {
 			expectedError bool
@@ -148,6 +149,7 @@ func TestGetWorkflow(t *testing.T) {
 						return "", "", templateData, nil
 					},
 				},
+				state:      workflow.State_STATE_SUCCESS,
 				wfTemplate: templateID,
 				wfHardware: hw,
 			},
@@ -167,6 +169,35 @@ func TestGetWorkflow(t *testing.T) {
 				expectedError: true,
 			},
 		},
+		"GetWorkflowState": {
+			args: args{
+				db: mock.DB{
+					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
+						return db.Workflow{
+							ID:       workflowID,
+							Template: templateID,
+							Hardware: hw}, nil
+					},
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*workflow.WorkflowContext, error) {
+						return &workflow.WorkflowContext{
+							WorkflowId:           wfID,
+							CurrentActionState:   workflow.State_STATE_SUCCESS,
+							CurrentActionIndex:   0,
+							TotalNumberOfActions: 2,
+						}, nil
+					},
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+						return "", "", templateData, nil
+					},
+				},
+				state:      workflow.State_STATE_RUNNING,
+				wfTemplate: templateID,
+				wfHardware: hw,
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
@@ -183,6 +214,7 @@ func TestGetWorkflow(t *testing.T) {
 				assert.True(t, tc.want.expectedError)
 				return
 			}
+			assert.Equal(t, tc.args.state, res.State)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, res)
 			assert.False(t, tc.want.expectedError)
