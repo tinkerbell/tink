@@ -13,14 +13,6 @@ import (
 	wkf "github.com/tinkerbell/tink/workflow"
 )
 
-var state = map[int32]workflow.State{
-	0: workflow.State_STATE_PENDING,
-	1: workflow.State_STATE_RUNNING,
-	2: workflow.State_STATE_FAILED,
-	3: workflow.State_STATE_TIMEOUT,
-	4: workflow.State_STATE_SUCCESS,
-}
-
 const errFailedToGetTemplate = "failed to get template with ID %s"
 
 // CreateWorkflow implements workflow.CreateWorkflow
@@ -115,11 +107,12 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	if err != nil {
 		return &workflow.Workflow{}, err
 	}
+
 	wf := &workflow.Workflow{
 		Id:       w.ID,
 		Template: w.Template,
 		Hardware: w.Hardware,
-		State:    state[w.State],
+		State:    getWorkflowState(s.db, ctx, in.Id),
 		Data:     data,
 	}
 	l := s.logger.With("workflowID", w.ID)
@@ -181,6 +174,7 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowServic
 			Hardware:  w.Hardware,
 			CreatedAt: w.CreatedAt,
 			UpdatedAt: w.UpdatedAt,
+			State:     getWorkflowState(s.db, stream.Context(), w.ID),
 		}
 		return stream.Send(wf)
 	})
@@ -278,4 +272,22 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 	s.logger.Info("done listing workflows events")
 	metrics.CacheHits.With(labels).Inc()
 	return nil
+}
+
+// This function will provide the workflow state on the basis of the state of the actions
+// For e.g. : If an action has Failed or Timeout then the workflow state will also be
+// considered as Failed/Timeout. And If an action is successful then the workflow state
+// will be considered as Running until the last action of the workflow is executed successfully.
+
+func getWorkflowState(db db.Database, ctx context.Context, id string) workflow.State {
+	wfCtx, _ := db.GetWorkflowContexts(ctx, id)
+	if wfCtx.CurrentActionState != workflow.State_STATE_SUCCESS {
+		return wfCtx.CurrentActionState
+	} else {
+		if wfCtx.GetCurrentActionIndex() == wfCtx.GetTotalNumberOfActions()-1 {
+			return workflow.State_STATE_SUCCESS
+		} else {
+			return workflow.State_STATE_RUNNING
+		}
+	}
 }
