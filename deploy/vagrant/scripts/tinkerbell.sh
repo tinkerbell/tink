@@ -98,12 +98,12 @@ main() (
 	ensure_docker_exists
 	ensure_docker-compose_exists
 
-	if [ ! -f ./envrc ]; then
-		./generate-envrc.sh eth1 >envrc
+	if [ ! -f ./.env ]; then
+		./generate-env.sh eth1 >.env
 	fi
 
 	# shellcheck disable=SC1091
-	. ./envrc
+	. ./.env
 
 	make_certs_writable
 

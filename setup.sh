@@ -8,7 +8,7 @@ set -eu
 # See https://tinkerbell.org/setup for the installation steps.
 
 # file to hold all environment variables
-ENV_FILE=envrc
+ENV_FILE=.env
 
 SCRATCH=$(mktemp -d -t tmp.XXXXXXXXXX)
 readonly SCRATCH
@@ -480,7 +480,7 @@ check_prerequisites() (
 )
 
 whats_next() (
-	echo "$NEXT  1. Enter /vagrant/deploy and run: source ../envrc; docker-compose up -d"
+	echo "$NEXT  1. Enter /vagrant/deploy and run: source ../.env; docker-compose up -d"
 	echo "$BLANK 2. Try executing your first workflow."
 	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )
@@ -500,7 +500,7 @@ do_setup() (
 	check_prerequisites "$lsb_dist" "$lsb_version"
 
 	if [ ! -f "$ENV_FILE" ]; then
-		echo "$ERR Run './generate-envrc.sh network-interface > \"$ENV_FILE\"' before continuing."
+		echo "$ERR Run './generate-env.sh network-interface > \"$ENV_FILE\"' before continuing."
 		exit 1
 	fi
 
