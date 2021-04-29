@@ -9,18 +9,18 @@ By participating, you're expected to uphold this code.
 
 ## Table of Contents
 
-* [Choose something to work on](#choose-something-to-work-on)
-  * [Get help](#get-help)
-* [Contributing](#contributing)
-  * [File an issue](#file-an-issue)
-  * [Submit a change](#submit-a-change)
-  * [Code style guide](#code-style-guide)
-* [Understanding code structure](#understanding-code-structure)
-  * [cmd](#cmd)
-  * [db](#db)
-  * [deploy](#deploy)
-  * [grpc-server](#grpc-server)
-  * [protos](#protos)
+-   [Choose something to work on](#choose-something-to-work-on)
+    -   [Get help](#get-help)
+-   [Contributing](#contributing)
+    -   [File an issue](#file-an-issue)
+    -   [Submit a change](#submit-a-change)
+    -   [Code style guide](#code-style-guide)
+-   [Understanding code structure](#understanding-code-structure)
+    -   [cmd](#cmd)
+    -   [db](#db)
+    -   [deploy](#deploy)
+    -   [grpc-server](#grpc-server)
+    -   [protos](#protos)
 
 ## Choose something to work on
 
@@ -29,15 +29,16 @@ Each repository has beginner-friendly issues that are a great place to get start
 For example, a list of issues for Tink repository can be found [here](https://github.com/tinkerbell/tink/issues).
 If there is something that you find interesting and would like to work on, go ahead.
 You can filter issues with label "[good first issue](https://github.com/tinkerbell/tink/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)", which are relatively self sufficient issues and great for first time contributors.
-  - If you are going to pick up an issue, it would be good to add a comment stating the intention.
-  - If the contribution is a big change/new feature, please raise an issue and discuss the needs, design in the issue in detail.
+
+-   If you are going to pick up an issue, it would be good to add a comment stating the intention.
+-   If the contribution is a big change/new feature, please raise an issue and discuss the needs, design in the issue in detail.
 
 ### Get help
 
 Do reach out on Slack or Twitter and we are happy to help.
 
-  - Drop by the [Slack channel](https://eqix-metal-community.slack.com).
-  - Say "Hi!" on [Twitter](https://twitter.com/tinkerbell_oss).
+-   Drop by the [Slack channel](https://eqix-metal-community.slack.com).
+-   Say "Hi!" on [Twitter](https://twitter.com/tinkerbell_oss).
 
 ## Contributing
 
@@ -75,15 +76,15 @@ It will help you identify parts of the code that are not yet covered in unit tes
 
 ## Understanding code structure
 
-This is a nonexhaustive list important packages that happen to cover most of the code base. 
+This is a nonexhaustive list important packages that happen to cover most of the code base.
 
 ### cmd
 
 The `cmd` package is home for three core binaries for Tinkerbell:
 
-- `tink-cli` - the CLI for interacting with the `tink-server`
-- `tink-server` - the tink API server
-- `tink-worker` - responsible for executing the workload
+-   `tink-cli` - the CLI for interacting with the `tink-server`
+-   `tink-server` - the tink API server
+-   `tink-worker` - responsible for executing the workload
 
 ```
 .
@@ -163,5 +164,3 @@ Also, both `go`, and `protoc` are required by `protoc.sh`.
 │   ├── template
 │   └── workflow
 ```
-
-
