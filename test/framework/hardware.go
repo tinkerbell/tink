@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
 func readHwData(file string) ([]byte, error) {
-	f, err := os.Open(file)
+	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
 		return []byte(""), err
 	}
