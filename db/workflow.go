@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -19,6 +18,7 @@ import (
 	wflow "github.com/tinkerbell/tink/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Workflow represents a workflow instance in database
@@ -351,8 +351,8 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 	)
 	err := row.Scan(&tmp, &tar, &crAt, &upAt)
 	if err == nil {
-		createdAt, _ := ptypes.TimestampProto(crAt)
-		updatedAt, _ := ptypes.TimestampProto(upAt)
+		createdAt := timestamppb.New(crAt)
+		updatedAt := timestamppb.New(upAt)
 		return Workflow{
 			ID:        id,
 			Template:  tmp,
@@ -449,8 +449,8 @@ func (d TinkDB) ListWorkflows(fn func(wf Workflow) error) error {
 			Template: tmp,
 			Hardware: tar,
 		}
-		wf.CreatedAt, _ = ptypes.TimestampProto(crAt)
-		wf.UpdatedAt, _ = ptypes.TimestampProto(upAt)
+		wf.CreatedAt = timestamppb.New(crAt)
+		wf.UpdatedAt = timestamppb.New(upAt)
 		err = fn(wf)
 		if err != nil {
 			return err
@@ -645,7 +645,7 @@ func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionSt
 			d.logger.Error(err)
 			return err
 		}
-		createdAt, _ := ptypes.TimestampProto(evTime)
+		createdAt := timestamppb.New(evTime)
 		wfs := &pb.WorkflowActionStatus{
 			WorkerId:     id,
 			TaskName:     tName,
