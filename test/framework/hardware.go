@@ -15,7 +15,10 @@ func readHwData(file string) ([]byte, error) {
 	if err != nil {
 		return []byte(""), err
 	}
-	defer f.Close()
+
+	defer func() {
+		err = f.Close()
+	}()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {

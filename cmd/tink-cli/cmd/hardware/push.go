@@ -88,7 +88,10 @@ func readDataFromFile() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
+
+	defer func() {
+		err = f.Close()
+	}()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
