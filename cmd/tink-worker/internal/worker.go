@@ -400,7 +400,9 @@ func getWorkflowData(ctx context.Context, logger log.Logger, client pb.WorkflowS
 	if len(res.GetData()) != 0 {
 		wfDir := dataDir + string(os.PathSeparator) + workflowID
 		f := openDataFile(wfDir, l)
-		defer f.Close()
+		defer func() {
+			f.Close()
+		}()
 
 		_, err := f.Write(res.GetData())
 		if err != nil {
@@ -420,7 +422,9 @@ func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.Workfl
 
 	wfDir := dataDir + string(os.PathSeparator) + actionStatus.GetWorkflowId()
 	f := openDataFile(wfDir, l)
-	defer f.Close()
+	defer func() {
+		f.Close()
+	}()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {

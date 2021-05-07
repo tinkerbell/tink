@@ -29,7 +29,7 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 				return errors.New("Template name already exist in the database")
 			}
 		default:
-			return errors.New("not a template type in the database")
+			return errors.New("Not a Template type in the database")
 		}
 	}
 	d.TemplateDB[name] = Template{
