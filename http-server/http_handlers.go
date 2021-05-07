@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	tt "html/template"
 	"io"
 	"net/http"
-	tt "text/template"
 
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
