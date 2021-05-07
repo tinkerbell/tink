@@ -8,7 +8,7 @@ import (
 	"net/http"
 	tt "text/template"
 
-	"github.com/golang/protobuf/jsonpb" // nolint:staticcheck
+	"github.com/gogo/protobuf/jsonpb"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 	"github.com/tinkerbell/tink/pkg"

@@ -261,7 +261,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 						os.Exit(1)
 					}
 
-					f.Close()
+					err = f.Close()
 					if err != nil {
 						l.Error(err)
 						os.Exit(1)
