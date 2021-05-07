@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	tt "html/template"
 	"io"
 	"net/http"
-	tt "text/template"
 
 	"github.com/golang/protobuf/jsonpb" // nolint:staticcheck
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"

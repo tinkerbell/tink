@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
-	"text/template"
 
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
