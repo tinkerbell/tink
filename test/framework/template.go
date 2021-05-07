@@ -14,7 +14,9 @@ func readTemplateData(file string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer func() {
+		f.Close()
+	}()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
