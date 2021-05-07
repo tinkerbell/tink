@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	tt "text/template"
+	tt "html/template"
 
 	"github.com/golang/protobuf/jsonpb" // nolint:staticcheck
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"

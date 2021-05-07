@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"text/template"
+	"html/template"
 
 	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"

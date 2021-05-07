@@ -26,7 +26,7 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 		switch stmpl := tmpl.(type) {
 		case Template:
 			if !stmpl.Deleted {
-				return errors.New("Template name already exist in the database")
+				return errors.New("template name already exist in the database")
 			}
 		default:
 			return errors.New("not a template type in the database")
