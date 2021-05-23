@@ -133,10 +133,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - $TINKERBELL_HOST_IP:80:80/tcp
-      - 67:67/udp
-      - 69:69/udp
 
   nginx:
     image: nginx:alpine
