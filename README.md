@@ -21,9 +21,9 @@ The Tinkerbell community meets bi-weekly on Tuesday. The meeting details can be 
 
 Community Resources:
 
-- [Community Slack](https://eqix-metal-community.slack.com/)
-- [CNCF #tinkerbell](https://app.slack.com/client/T08PSQ7BQ/C01SRB41GMT)
-- [YouTube Channel (demos, meeting recordings, virtual meetups)](https://www.youtube.com/channel/UCTzWInTQPvzH21KHS8jrq7A/featured)
+-   [Community Slack](https://eqix-metal-community.slack.com/)
+-   [CNCF #tinkerbell](https://app.slack.com/client/T08PSQ7BQ/C01SRB41GMT)
+-   [YouTube Channel (demos, meeting recordings, virtual meetups)](https://www.youtube.com/channel/UCTzWInTQPvzH21KHS8jrq7A/featured)
 
 ## What's Powering Tinkerbell?
 
