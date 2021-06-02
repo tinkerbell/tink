@@ -7,6 +7,24 @@
 
 This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style! This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
+## License
+
+Tinkerbell is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for the full license text. Some of the projects used by the Tinkerbell project may be governed by a different license, please refer to its specific license.
+
+Tinkerbell is part of the CNCF Projects.
+
+[![CNCF](https://github.com/cncf/artwork/blob/master/other/cncf/horizontal/color/cncf-color.png)](https://landscape.cncf.io/?selected=tinkerbell)
+
+## Community
+
+The Tinkerbell community meets bi-weekly on Tuesday. The meeting details can be found [here][7].
+
+Community Resources:
+
+-   [Community Slack](https://eqix-metal-community.slack.com/)
+-   [CNCF #tinkerbell](https://app.slack.com/client/T08PSQ7BQ/C01SRB41GMT)
+-   [YouTube Channel (demos, meeting recordings, virtual meetups)](https://www.youtube.com/channel/UCTzWInTQPvzH21KHS8jrq7A/featured)
+
 ## What's Powering Tinkerbell?
 
 The Tinkerbell stack consists of several microservices, and a gRPC API:
@@ -60,3 +78,4 @@ For complete documentation, please visit the Tinkerbell project hosted at [tinke
 [4]: https://github.com/tinkerbell/osie
 [5]: https://github.com/tinkerbell/hook
 [6]: https://github.com/tinkerbell/pbnj
+[7]: https://docs.google.com/document/d/1cEObfvQ9Tdp8zIIIg9O7P5i3CKaSj2t3JTxEufDxwWs/
