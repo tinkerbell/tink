@@ -7,6 +7,9 @@ services:
 
   tinkerbell:
     build: .
+    command:
+      - --tls-cert=/certs/${FACILITY:-onprem}/bundle.pem
+      - --tls-key=/certs/${FACILITY:-onprem}/server-key.pem
     environment:
       FACILITY: ${FACILITY:-lab1}
       PACKET_ENV: ${PACKET_ENV:-testing}
