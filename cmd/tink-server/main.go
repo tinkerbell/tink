@@ -2,17 +2,13 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/packethost/pkg/log"
 	"github.com/spf13/cobra"
@@ -41,7 +37,6 @@ type DaemonConfig struct {
 	TLSCert               string
 	TLSKey                string
 	CACert                string
-	CertDir               string
 	HTTPAuthority         string
 	HTTPBasicAuthUsername string
 	HTTPBasicAuthPassword string
@@ -58,7 +53,6 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.TLSCert, "tls-cert", "", "")
 	fs.StringVar(&c.TLSKey, "tls-key", "", "")
 	fs.StringVar(&c.CACert, "ca-cert", "", "")
-	fs.StringVar(&c.CertDir, "cert-dir", "", "")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
 }
 
@@ -85,9 +79,6 @@ func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
 	}
 	if tlsCert := os.Getenv("TINKERBELL_TLS_CERT"); tlsCert != "" {
 		c.TLSCert = tlsCert
-	}
-	if certDir := os.Getenv("TINKERBELL_CERTS_DIR"); certDir != "" {
-		c.CertDir = certDir
 	}
 	if grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY"); grpcAuthority != "" {
 		c.GRPCAuthority = grpcAuthority
@@ -183,26 +174,25 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				logger.Info("Your database schema is not up to date. Please apply migrations running tink-server with env var ONLY_MIGRATION set.")
 			}
 
-			tlsCert, certPEM, modT, err := getCerts(config)
-			if err != nil {
+			if err := rpcServer.SetupGRPC(ctx, logger, &rpcServer.ConfigGRPCServer{
+				Facility:      config.Facility,
+				TLSCert:       config.TLSCert,
+				TLSKey:        config.TLSKey,
+				GRPCAuthority: config.GRPCAuthority,
+				DB:            tinkDB,
+			}, errCh); err != nil {
 				logger.Fatal(err)
 			}
 
-			rpcServer.SetupGRPC(ctx, logger, &rpcServer.ConfigGRPCServer{
-				Facility:      config.Facility,
-				TLSCert:       tlsCert,
-				GRPCAuthority: config.GRPCAuthority,
-				DB:            tinkDB,
-			}, errCh)
-
-			httpServer.SetupHTTP(ctx, logger, &httpServer.HTTPServerConfig{
-				CertPEM:               certPEM,
-				ModTime:               modT,
+			if err := httpServer.SetupHTTP(ctx, logger, &httpServer.HTTPServerConfig{
+				CACertPath:            config.CACert,
 				GRPCAuthority:         config.GRPCAuthority,
 				HTTPAuthority:         config.HTTPAuthority,
 				HTTPBasicAuthUsername: config.HTTPBasicAuthUsername,
 				HTTPBasicAuthPassword: config.HTTPBasicAuthPassword,
-			}, errCh)
+			}, errCh); err != nil {
+				logger.Fatal(err)
+			}
 
 			<-ctx.Done()
 			select {
@@ -272,80 +262,4 @@ func applyViper(v *viper.Viper, cmd *cobra.Command) error {
 	}
 
 	return nil
-}
-
-func getCerts(config *DaemonConfig) (tls.Certificate, []byte, time.Time, error) {
-	var (
-		modT        time.Time
-		caCertBytes []byte
-	)
-
-	if config.CACert != "" {
-		// TODO: verify this doesn't mess up the file path if CertDir is not specified and file is absolute
-		ca, modified, err := readFromFile(filepath.Join(config.CertDir, config.CACert))
-		if err != nil {
-			return tls.Certificate{}, nil, modT, fmt.Errorf("failed to read ca cert: %w", err)
-		}
-
-		if modified.After(modT) {
-			modT = modified
-		}
-
-		caCertBytes = ca
-	}
-
-	// TODO: verify this doesn't mess up the file path if CertDir is not specified and file is absolute
-	tlsCertBytes, modified, err := readFromFile(filepath.Join(config.CertDir, config.TLSCert))
-	if err != nil {
-		return tls.Certificate{}, tlsCertBytes, modT, fmt.Errorf("failed to read tls cert: %w", err)
-	}
-
-	if modified.After(modT) {
-		modT = modified
-	}
-
-	// TODO: verify this doesn't mess up the file path if CertDir is not specified and file is absolute
-	tlsKeyBytes, modified, err := readFromFile(filepath.Join(config.CertDir, config.TLSKey))
-	if err != nil {
-		return tls.Certificate{}, tlsCertBytes, modT, fmt.Errorf("failed to read tls key: %w", err)
-	}
-
-	if modified.After(modT) {
-		modT = modified
-	}
-
-	// If we read in a separate ca certificate, concatenate it with the tls cert
-	if len(caCertBytes) > 0 {
-		tlsCertBytes = append(tlsCertBytes, caCertBytes...)
-	}
-
-	cert, err := tls.X509KeyPair(tlsCertBytes, tlsKeyBytes)
-	if err != nil {
-		return cert, tlsCertBytes, modT, fmt.Errorf("failed to ingest TLS files: %w", err)
-	}
-
-	return cert, tlsCertBytes, modT, nil
-}
-
-func readFromFile(filePath string) ([]byte, time.Time, error) {
-	var modified time.Time
-
-	f, err := os.Open(filePath)
-	if err != nil {
-		return nil, modified, err
-	}
-
-	stat, err := f.Stat()
-	if err != nil {
-		return nil, modified, err
-	}
-
-	modified = stat.ModTime()
-
-	contents, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, modified, err
-	}
-
-	return contents, modified, nil
 }

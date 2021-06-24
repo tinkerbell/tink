@@ -2,7 +2,6 @@ package grpcserver
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"sync"
 
@@ -19,7 +18,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-// Server is the gRPC server for tinkerbell
+// Server is the gRPC server for tinkerbell.
 type server struct {
 	db   db.Database
 	quit <-chan struct{}
@@ -35,17 +34,23 @@ type server struct {
 
 type ConfigGRPCServer struct {
 	Facility      string
-	TLSCert       tls.Certificate
+	TLSCert       string
+	TLSKey        string
 	GRPCAuthority string
 	DB            *db.TinkDB
 }
 
-// SetupGRPC setup and return a gRPC server
-func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer, errCh chan<- error) {
+// SetupGRPC setup and return a gRPC server.
+func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer, errCh chan<- error) error {
+	creds, err := credentials.NewServerTLSFromFile(config.TLSCert, config.TLSKey)
+	if err != nil {
+		return err
+	}
+
 	params := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
-		grpc.Creds(credentials.NewServerTLSFromCert(&config.TLSCert)),
+		grpc.Creds(creds),
 	}
 
 	metrics.SetupMetrics(config.Facility, logger)
@@ -64,14 +69,12 @@ func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer,
 
 	grpc_prometheus.Register(s)
 
-	go func() {
-		lis, err := net.Listen("tcp", config.GRPCAuthority)
-		if err != nil {
-			err = errors.Wrap(err, "failed to listen")
-			logger.Error(err)
-			panic(err)
-		}
+	lis, err := net.Listen("tcp", config.GRPCAuthority)
+	if err != nil {
+		return errors.Wrap(err, "failed to listen")
+	}
 
+	go func() {
 		errCh <- s.Serve(lis)
 	}()
 
@@ -79,4 +82,6 @@ func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer,
 		<-ctx.Done()
 		s.GracefulStop()
 	}()
+
+	return nil
 }

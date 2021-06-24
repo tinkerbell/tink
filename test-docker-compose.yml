@@ -8,7 +8,8 @@ services:
   tinkerbell:
     build: .
     command:
-      - --tls-cert=/certs/${FACILITY:-onprem}/bundle.pem
+      - --ca-cert=/certs/${FACILITY:-onprem}/ca.pem
+      - --tls-cert=/certs/${FACILITY:-onprem}/server.pem
       - --tls-key=/certs/${FACILITY:-onprem}/server-key.pem
     environment:
       FACILITY: ${FACILITY:-lab1}

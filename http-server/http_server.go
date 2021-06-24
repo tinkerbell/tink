@@ -1,10 +1,8 @@
 package httpserver
 
 import (
-	"bytes"
 	"context"
 	"crypto/subtle"
-	"crypto/x509"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -27,8 +25,7 @@ var (
 )
 
 type HTTPServerConfig struct {
-	CertPEM               []byte
-	ModTime               time.Time
+	CACertPath            string
 	GRPCAuthority         string
 	HTTPAuthority         string
 	HTTPBasicAuthUsername string
@@ -36,44 +33,37 @@ type HTTPServerConfig struct {
 }
 
 // SetupHTTP setup and return an HTTP server
-func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, errCh chan<- error) {
+func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, errCh chan<- error) error {
 	logger = lg
 
-	cp := x509.NewCertPool()
-	ok := cp.AppendCertsFromPEM(config.CertPEM)
-	if !ok {
-		logger.Error(errors.New("parse cert"))
+	creds, err := credentials.NewClientTLSFromFile(config.CACertPath, "")
+	if err != nil {
+		return err
 	}
 
-	creds := credentials.NewClientTLSFromCert(cp, "")
-
 	mux := grpcRuntime.NewServeMux()
-
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
-
 	grpcEndpoint := config.GRPCAuthority
+
 	host, _, err := net.SplitHostPort(grpcEndpoint)
 	if err != nil {
-		logger.Error(err)
+		return err
 	}
 	if host == "" {
 		grpcEndpoint = "localhost" + grpcEndpoint
 	}
-	err = RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
-	if err != nil {
-		logger.Error(err)
+	if err := RegisterHardwareServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts); err != nil {
+		return err
 	}
-	err = RegisterTemplateHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
-	if err != nil {
-		logger.Error(err)
+	if err := RegisterTemplateHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts); err != nil {
+		return err
 	}
-	err = RegisterWorkflowSvcHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts)
-	if err != nil {
-		logger.Error(err)
+	if err := RegisterWorkflowSvcHandlerFromEndpoint(ctx, mux, grpcEndpoint, dialOpts); err != nil {
+		return err
 	}
 
 	http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, "server.pem", config.ModTime, bytes.NewReader(config.CertPEM))
+		http.ServeFile(w, r, config.CACertPath)
 	})
 	http.Handle("/metrics", promhttp.Handler())
 	setupGitRevJSON()
@@ -98,6 +88,8 @@ func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, err
 			logger.Error(err)
 		}
 	}()
+
+	return nil
 }
 
 func versionHandler(w http.ResponseWriter, r *http.Request) {
