@@ -240,17 +240,6 @@ func (s *server) DeprecatedWatch(in *hardware.GetRequest, stream hardware.Hardwa
 	}
 }
 
-// TODO: is this used anywhere?
-// // Cert returns the public cert that can be served to clients
-// func (s *server) Cert() []byte {
-// 	return s.cert
-// }
-
-// // ModTime returns the modified-time of the grpc cert
-// func (s *server) ModTime() time.Time {
-// 	return s.modT
-// }
-
 func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardware.Empty, error) {
 	s.logger.Info("delete")
 	labels := prometheus.Labels{"method": "Delete", "op": ""}

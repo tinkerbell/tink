@@ -21,9 +21,6 @@ import (
 
 // Server is the gRPC server for tinkerbell
 type server struct {
-	//cert []byte
-	//modT time.Time
-
 	db   db.Database
 	quit <-chan struct{}
 
