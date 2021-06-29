@@ -4,6 +4,7 @@ all: cli server worker ## Build all binaries for host OS and CPU
 
 crosscompile: $(crossbinaries) ## Build all binaries for Linux and all supported CPU arches
 images: tink-cli-image tink-server-image tink-worker-image ## Build all docker images
+run: crosscompile run-stack ## Builds and runs the Tink stack (tink, db, cli) via docker-compose
 
 test: ## Run tests
 	go clean -testcache
