@@ -16,7 +16,7 @@ type Template struct {
 }
 
 // CreateTemplate creates a new workflow template
-func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+func (d *DB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	if d.TemplateDB == nil {
 		d.TemplateDB = make(map[string]interface{})
 	}
@@ -66,6 +66,6 @@ func (d DB) UpdateTemplate(ctx context.Context, name string, data string, id uui
 }
 
 // ClearTemplateDB clear all the templates
-func (d DB) ClearTemplateDB() {
+func (d *DB) ClearTemplateDB() {
 	d.TemplateDB = make(map[string]interface{})
 }

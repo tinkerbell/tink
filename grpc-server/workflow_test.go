@@ -31,7 +31,7 @@ tasks:
 func TestCreateWorkflow(t *testing.T) {
 	type (
 		args struct {
-			db                     mock.DB
+			db                     *mock.DB
 			wfTemplate, wfHardware string
 		}
 		want struct {
@@ -44,7 +44,7 @@ func TestCreateWorkflow(t *testing.T) {
 	}{
 		"FailedToGetTemplate": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 						return &tb.WorkflowTemplate{
 							Id:   "",
@@ -62,7 +62,7 @@ func TestCreateWorkflow(t *testing.T) {
 		},
 		"FailedCreatingWorkflow": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 						return &tb.WorkflowTemplate{
 							Id:   "",
@@ -83,7 +83,7 @@ func TestCreateWorkflow(t *testing.T) {
 		},
 		"SuccessCreatingWorkflow": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 						return &tb.WorkflowTemplate{
 							Id:   "",
@@ -129,7 +129,7 @@ func TestCreateWorkflow(t *testing.T) {
 func TestGetWorkflow(t *testing.T) {
 	type (
 		args struct {
-			db                     mock.DB
+			db                     *mock.DB
 			wfTemplate, wfHardware string
 			state                  workflow.State
 		}
@@ -143,7 +143,7 @@ func TestGetWorkflow(t *testing.T) {
 	}{
 		"SuccessGettingWorkflow": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
 						return db.Workflow{
 							ID:       workflowID,
@@ -176,7 +176,7 @@ func TestGetWorkflow(t *testing.T) {
 		},
 		"WorkflowDoesNotExist": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
 						return db.Workflow{}, errors.New("Workflow with id " + workflowID + " does not exist")
 					},
@@ -188,7 +188,7 @@ func TestGetWorkflow(t *testing.T) {
 		},
 		"GetWorkflowState": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
 						return db.Workflow{
 							ID:       workflowID,
@@ -246,7 +246,7 @@ func TestGetWorkflow(t *testing.T) {
 func TestGetWorkflowContext(t *testing.T) {
 	type (
 		args struct {
-			db mock.DB
+			db *mock.DB
 		}
 		want struct {
 			expectedError bool
@@ -258,7 +258,7 @@ func TestGetWorkflowContext(t *testing.T) {
 	}{
 		"WorkflowDoesNotExist": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, workflowID string) (*workflow.WorkflowContext, error) {
 						w := workflow.WorkflowContext{}
 						return &w, errors.New("Workflow with id " + workflowID + " does not exist")

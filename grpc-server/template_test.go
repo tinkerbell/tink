@@ -54,7 +54,7 @@ tasks:
 func TestCreateTemplate(t *testing.T) {
 	type (
 		args struct {
-			db       mock.DB
+			db       *mock.DB
 			name     string
 			template string
 		}
@@ -68,7 +68,7 @@ func TestCreateTemplate(t *testing.T) {
 	}{
 		"SuccessfulTemplateCreation": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: make(map[string]interface{}),
 				},
 				name:     "template_1",
@@ -81,7 +81,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		"SuccessfulMultipleTemplateCreation": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						"template_1": mock.Template{
 							Data:    template1,
@@ -99,7 +99,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		"FailedMultipleTemplateCreationWithSameName": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						"template_1": mock.Template{
 							Data:    template1,
@@ -117,7 +117,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		"SuccessfulTemplateCreationAfterDeletingWithSameName": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						"template_1": mock.Template{
 							Data:    template1,
@@ -156,7 +156,7 @@ func TestCreateTemplate(t *testing.T) {
 func TestGetTemplate(t *testing.T) {
 	type (
 		args struct {
-			db         mock.DB
+			db         *mock.DB
 			getRequest *pb.GetRequest
 		}
 	)
@@ -169,7 +169,7 @@ func TestGetTemplate(t *testing.T) {
 	}{
 		"SuccessfulTemplateGet_Name": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
@@ -200,7 +200,7 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_Name": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
@@ -231,7 +231,7 @@ func TestGetTemplate(t *testing.T) {
 
 		"SuccessfulTemplateGet_ID": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
@@ -262,7 +262,7 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_ID": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
@@ -293,7 +293,7 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_EmptyRequest": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
@@ -324,7 +324,7 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_NilRequest": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
