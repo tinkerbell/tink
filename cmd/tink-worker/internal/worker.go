@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -473,7 +474,7 @@ func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowServic
 }
 
 func openDataFile(wfDir string, l log.Logger) *os.File {
-	f, err := os.OpenFile(wfDir+string(os.PathSeparator)+dataFile, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		l.Error(err)
 		os.Exit(1)
