@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -14,6 +13,7 @@ import (
 	wflow "github.com/tinkerbell/tink/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // CreateTemplate creates a new workflow template
@@ -83,8 +83,8 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	)
 	err = row.Scan(&id, &name, &data, &createdAt, &updatedAt)
 	if err == nil {
-		crAt, _ := ptypes.TimestampProto(createdAt)
-		upAt, _ := ptypes.TimestampProto(updatedAt)
+		crAt := timestamppb.New(createdAt)
+		upAt := timestamppb.New(updatedAt)
 		return &tb.WorkflowTemplate{
 			Id:        id,
 			Name:      name,
@@ -160,8 +160,8 @@ func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *time
 			return err
 		}
 
-		tCr, _ := ptypes.TimestampProto(createdAt)
-		tUp, _ := ptypes.TimestampProto(updatedAt)
+		tCr := timestamppb.New(createdAt)
+		tUp := timestamppb.New(updatedAt)
 		err = fn(id, name, tCr, tUp)
 		if err != nil {
 			return err
