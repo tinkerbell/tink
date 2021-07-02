@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -110,7 +111,7 @@ func getCerts(facility string, logger log.Logger) (tls.Certificate, []byte, time
 		certsDir += "/"
 	}
 
-	certFile, err := os.Open(certsDir + "bundle.pem")
+	certFile, err := os.Open(filepath.Clean(certsDir + "bundle.pem"))
 	if err != nil {
 		err = errors.Wrap(err, "failed to open TLS cert")
 		logger.Error(err)
@@ -131,7 +132,7 @@ func getCerts(facility string, logger log.Logger) (tls.Certificate, []byte, time
 		logger.Error(err)
 		panic(err)
 	}
-	keyPEM, err := ioutil.ReadFile(certsDir + "server-key.pem")
+	keyPEM, err := ioutil.ReadFile(filepath.Clean(certsDir + "server-key.pem"))
 	if err != nil {
 		err = errors.Wrap(err, "failed to read TLS key")
 		logger.Error(err)

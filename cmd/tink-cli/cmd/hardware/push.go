@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -84,7 +85,7 @@ func readDataFromStdin() string {
 }
 
 func readDataFromFile() string {
-	f, err := os.Open(file)
+	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
 		log.Fatal(err)
 	}
