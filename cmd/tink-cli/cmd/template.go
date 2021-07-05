@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/describe"
+
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/delete"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
@@ -24,6 +26,7 @@ func NewTemplateCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(template.NewCreateCommand())
+	cmd.AddCommand(describe.NewDescribeCommand(template.NewDescribeOptions()))
 	cmd.AddCommand(delete.NewDeleteCommand(template.NewDeleteOptions()))
 	cmd.AddCommand(template.NewListCommand())
 	cmd.AddCommand(template.NewUpdateCommand())
