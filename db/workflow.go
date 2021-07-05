@@ -762,7 +762,7 @@ func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error)
 }
 
 func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
-	_, err := net.ParseMAC(addr)
+	parsedMAC, err := net.ParseMAC(addr)
 	if err != nil {
 		ip := net.ParseIP(addr)
 		if ip == nil || ip.To4() == nil {
@@ -772,7 +772,7 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 		return id, errors.WithMessage(err, "no worker found")
 
 	}
-	id, err := getWorkerIDbyMac(ctx, db, addr)
+	id, err := getWorkerIDbyMac(ctx, db, parsedMAC.String())
 	return id, errors.WithMessage(err, "no worker found")
 }
 
