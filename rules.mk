@@ -45,6 +45,9 @@ tink-server-image: cmd/tink-server/tink-server-linux-amd64
 tink-worker-image: cmd/tink-worker/tink-worker-linux-amd64
 	docker build -t tink-worker cmd/tink-worker/
 
+run-stack:
+	docker-compose up --build
+
 protos/gen_mock:
 	go generate ./protos/**/*
 	goimports -w ./protos/**/mock.go
