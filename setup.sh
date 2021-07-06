@@ -263,9 +263,8 @@ setup_osie() (
 			if [ ! -f "$TB_OSIE_TAR" ]; then
 				echo "$ERR osie tar not found in the given location $TB_OSIE_TAR"
 				exit 1
-			else
-				echo "$INFO extracting osie tar"
 			fi
+			echo "$INFO extracting osie tar"
 			tar -zxf "$TB_OSIE_TAR"
 		fi
 
