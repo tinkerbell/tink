@@ -8,7 +8,6 @@ import (
 	"net/http"
 	tt "text/template"
 
-	"github.com/golang/protobuf/jsonpb" // nolint:staticcheck
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 	"github.com/tinkerbell/tink/pkg"
@@ -18,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // RegisterHardwareServiceHandlerFromEndpoint serves Hardware requests at the
@@ -366,13 +366,13 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		var tmp *template.WorkflowTemplate
 		err = nil
 		for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
-			m := jsonpb.Marshaler{OrigName: true}
-			s, err := m.MarshalToString(tmp)
+			m := protojson.MarshalOptions{UseProtoNames: true}
+			s, err := m.Marshal(tmp)
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, http.StatusOK, s)
+			writeResponse(w, http.StatusOK, string(s))
 		}
 
 		if err != nil && err != io.EOF {
@@ -490,13 +490,13 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var wf *workflow.Workflow
 		err = nil
 		for wf, err = list.Recv(); err == nil && wf.Id != ""; wf, err = list.Recv() {
-			m := jsonpb.Marshaler{OrigName: true}
-			s, err := m.MarshalToString(wf)
+			m := protojson.MarshalOptions{UseProtoNames: true}
+			s, err := m.Marshal(wf)
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, http.StatusOK, s)
+			writeResponse(w, http.StatusOK, string(s))
 		}
 
 		if err != nil && err != io.EOF {
@@ -528,13 +528,13 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		m := jsonpb.Marshaler{OrigName: true, EmitDefaults: true}
-		s, err := m.MarshalToString(wfc)
+		m := protojson.MarshalOptions{UseProtoNames: true, EmitUnpopulated: true}
+		s, err := m.Marshal(wfc)
 		if err != nil {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		writeResponse(w, http.StatusOK, s)
+		writeResponse(w, http.StatusOK, string(s))
 	})
 
 	// workflow events handler | GET /v1/workflows/{id}/events
@@ -563,13 +563,13 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		var event *workflow.WorkflowActionStatus
 		err = nil
 		for event, err = events.Recv(); err == nil && event != nil; event, err = events.Recv() {
-			m := jsonpb.Marshaler{OrigName: true, EmitDefaults: true}
-			s, err := m.MarshalToString(event)
+			m := protojson.MarshalOptions{UseProtoNames: true, EmitUnpopulated: true}
+			s, err := m.Marshal(event)
 			if err != nil {
 				writeResponse(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			writeResponse(w, http.StatusOK, s)
+			writeResponse(w, http.StatusOK, string(s))
 		}
 		if err != nil && err != io.EOF {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
