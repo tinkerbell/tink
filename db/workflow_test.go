@@ -67,6 +67,33 @@ func TestCreateWorkflow(t *testing.T) {
 			},
 		},
 		{
+			Name: "create-single-workflow-with-upper-case-worker-address",
+			Input: &input{
+				workflowCount: 1,
+				devices:       "{\"device_1\":\"AE:FB:27:a1:C4:02\"}",
+				hardware:      readHardwareData("./testdata/hardware_2.json"),
+				template: func() *workflow.Workflow {
+					tmp := workflow.MustParseFromFile("./testdata/template_happy_path_1.yaml")
+					tmp.ID = uuid.New().String()
+					tmp.Name = fmt.Sprintf("id_%d", rand.Int())
+					return tmp
+				}(),
+			},
+			Expectation: func(t *testing.T, in *input, tinkDB *db.TinkDB) {
+				count := 0
+				err := tinkDB.ListWorkflows(func(wf db.Workflow) error {
+					count = count + 1
+					return nil
+				})
+				if err != nil {
+					t.Error(err)
+				}
+				if count != in.workflowCount {
+					t.Errorf("expected %d workflows stored in the database but we got %d", in.workflowCount, count)
+				}
+			},
+		},
+		{
 			Name: "create-fails-invalid-worker-address",
 			Input: &input{
 				workflowCount: 0,

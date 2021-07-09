@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
@@ -39,7 +40,7 @@ $ tink template create --file /tmp/example.tmpl
 			if isInputFromPipe() {
 				reader = os.Stdin
 			} else {
-				f, err := os.Open(filePath)
+				f, err := os.Open(filepath.Clean(filePath))
 				if err != nil {
 					log.Fatal(err)
 				}
