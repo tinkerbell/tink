@@ -68,6 +68,34 @@ The most interesting targets are `make all` (or just `make`) and `make images`.
 `make all` builds all the binaries for your host OS and CPU to enable running directly.
 `make images` will build all the binaries for Linux/x86_64 and build docker images with them.
 
+## Configuring OpenTelemetry
+
+Rather than adding a bunch of command line options or a config file, OpenTelemetry
+is configured via environment variables. The most relevant ones are below, for others
+see https://github.com/tobert/otel-launcher-go/tree/temp-hack-for-tinkerbell-prs
+
+Notes:
+   * we're using a branch of Lightstep's otel-launcher-go modified to work with any OTLP provider
+   * currently this is just for tracing, metrics needs to be discussed with the community
+
+| Env Variable                      | Required | Default   |
+|-----------------------------------|----------|---------- |
+|`OTEL_EXPORTER_OTLP_SPAN_ENDPOINT` | n        | localhost |
+|`OTEL_EXPORTER_OTLP_SPAN_INSECURE` | n        | false     |
+|`OTEL_EXPORTER_OTLP_HEADERS`       | n        | {}        |
+|`OTEL_LOG_LEVEL`                   | n        | info      |
+
+To work with a local [opentelemetry-collector](https://github.com/open-telemetry/opentelemetry-collector),
+try the following. For examples of how to set up the collector to relay to various services
+take a look at [otel-cli](https://github.com/packethost/otel-cli)
+
+```
+export OTEL_EXPORTER_OTLP_SPAN_ENDPOINT=localhost
+export OTEL_EXPORTER_OTLP_SPAN_INSECURE=true
+./cmd/tink-server/tink-server <stuff>
+```
+
+
 ## Website
 
 For complete documentation, please visit the Tinkerbell project hosted at [tinkerbell.org](https://tinkerbell.org).
