@@ -38,7 +38,7 @@ func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string,
 		NetworkMode: "host",
 		Binds:       []string{"/var/run/docker.sock:/var/run/docker.sock:rw", "/worker:/worker:rw"},
 	}
-	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, workerID)
+	resp, err := cli.ContainerCreate(ctx, config, hostConfig, nil, nil, workerID)
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
 	}

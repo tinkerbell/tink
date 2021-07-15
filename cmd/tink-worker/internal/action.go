@@ -52,7 +52,7 @@ func (w *Worker) createContainer(ctx context.Context, cmd []string, wfID string,
 
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 	w.logger.With("command", cmd).Info("creating container")
-	resp, err := w.registryClient.ContainerCreate(ctx, config, hostConfig, nil, action.GetName())
+	resp, err := w.registryClient.ContainerCreate(ctx, config, hostConfig, nil, nil, action.GetName())
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
 	}
