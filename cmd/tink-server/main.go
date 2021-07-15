@@ -17,6 +17,7 @@ import (
 	"github.com/tinkerbell/tink/db"
 	rpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
+	"github.com/tobert/otel-launcher-go/launcher"
 )
 
 var (
@@ -101,6 +102,11 @@ func main() {
 		panic(err)
 	}
 	defer logger.Close()
+
+	otel := launcher.ConfigureOpentelemetry(
+		launcher.WithServiceName("github.com/tinkerbell/tink"),
+	)
+	defer otel.Shutdown()
 
 	config := &DaemonConfig{}
 
