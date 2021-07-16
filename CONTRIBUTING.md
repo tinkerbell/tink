@@ -16,6 +16,7 @@ By participating, you're expected to uphold this code.
 -   [Contributing](#contributing)
     -   [File an issue](#file-an-issue)
     -   [Submit a change](#submit-a-change)
+        -   [DCO Sign Off](#DCO-Sign-Off)
         -   [Environment Details](#Environment-Details)
     -   [Code style guide](#code-style-guide)
 -   [Understanding code structure](#understanding-code-structure)
@@ -60,6 +61,10 @@ There are [multiple repositories](https://github.com/tinkerbell) within the Tink
 Before you submit a change, you must fork the repository and submit a pull request with the change(s).
 Please ensure that you adhere to the prompted submission guidelines while raising a pull request.
 We will try to review and provide feedback as soon as possible.
+
+### DCO Sign Off
+
+Please read and understand the DCO found [here](docs/DCO.md).
 
 ### Environment Details
 
