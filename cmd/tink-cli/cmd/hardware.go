@@ -31,7 +31,6 @@ func NewHardwareCommand() *cobra.Command {
 	cmd.AddCommand(hardware.NewListCmd())
 	cmd.AddCommand(hardware.NewGetByMACCmd())
 	cmd.AddCommand(hardware.NewPushCmd())
-	cmd.AddCommand(hardware.NewWatchCmd())
 
 	return cmd
 }

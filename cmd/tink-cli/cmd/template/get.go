@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/table"
@@ -83,7 +84,9 @@ func (h *getTemplate) RetrieveData(ctx context.Context, cl *client.FullClient) (
 func (h *getTemplate) PopulateTable(data []interface{}, t table.Writer) error {
 	for _, v := range data {
 		if tmp, ok := v.(*template.WorkflowTemplate); ok {
-			t.AppendRow(table.Row{tmp.Id, tmp.Name, tmp.CreatedAt.AsTime().Unix(), tmp.UpdatedAt.AsTime().Unix()})
+			t.AppendRow(table.Row{tmp.Id, tmp.Name,
+				tmp.CreatedAt.AsTime().Format(time.RFC3339),
+				tmp.UpdatedAt.AsTime().Format(time.RFC3339)})
 		}
 	}
 	return nil

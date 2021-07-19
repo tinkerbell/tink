@@ -4,13 +4,14 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/protos/template"
 )
 
 func readTemplateData(file string) (string, error) {
-	f, err := os.Open(file)
+	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
 		return "", err
 	}

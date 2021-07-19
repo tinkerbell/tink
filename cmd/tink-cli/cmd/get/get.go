@@ -69,10 +69,6 @@ func NewGetCommand(opt Options) *cobra.Command {
 			if opt.fullClient != nil {
 				return nil
 			}
-			if opt.clientConnOpt == nil {
-				opt.SetClientConnOpt(&client.ConnOptions{})
-			}
-			opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -81,7 +77,7 @@ func NewGetCommand(opt Options) *cobra.Command {
 				var conn *grpc.ClientConn
 				conn, err = client.NewClientConn(opt.clientConnOpt)
 				if err != nil {
-					println("Flag based client configuration failed with err: %s. Trying with env var legacy method...", err)
+					fmt.Fprintf(cmd.ErrOrStderr(), "Flag based client configuration failed with err: %s. Trying with env var legacy method...", err)
 					// Fallback to legacy Setup via env var
 					conn, err = client.GetConnection()
 					if err != nil {
@@ -153,5 +149,9 @@ func NewGetCommand(opt Options) *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVarP(&opt.Format, "format", "", "table", "The format you expect the list to be printed out. Currently supported format are table, JSON and CSV")
 	cmd.PersistentFlags().BoolVar(&opt.NoHeaders, "no-headers", false, "Table contains an header with the columns' name. You can disable it from being printed out")
+	if opt.clientConnOpt == nil {
+		opt.SetClientConnOpt(&client.ConnOptions{})
+	}
+	opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 	return cmd
 }

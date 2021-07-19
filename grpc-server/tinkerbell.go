@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/db"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc/codes"
@@ -38,7 +39,7 @@ func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.W
 		if err != nil {
 			return status.Errorf(codes.Aborted, err.Error())
 		}
-		if isApplicableToSend(context.Background(), wfContext, req.WorkerId, s.db) {
+		if isApplicableToSend(context.Background(), s.logger, wfContext, req.WorkerId, s.db) {
 			if err := stream.Send(wfContext); err != nil {
 				return err
 			}
@@ -73,7 +74,7 @@ func (s *server) GetWorkflowContextList(context context.Context, req *pb.Workflo
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions
 func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowActionsRequest) (*pb.WorkflowActionList, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
 	return getWorkflowActions(context, s.db, wfID)
@@ -82,17 +83,17 @@ func (s *server) GetWorkflowActions(context context.Context, req *pb.WorkflowAct
 // ReportActionStatus implements tinkerbell.ReportActionStatus
 func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowActionStatus) (*pb.Empty, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
-	if len(req.GetTaskName()) == 0 {
+	if req.GetTaskName() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidTaskName)
 	}
-	if len(req.GetActionName()) == 0 {
+	if req.GetActionName() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidActionName)
 	}
 
-	l := logger.With("actionName", req.GetActionName(), "workflowID", req.GetWorkflowId())
+	l := s.logger.With("actionName", req.GetActionName(), "workflowID", req.GetWorkflowId())
 	l.Info(fmt.Sprintf(msgReceivedStatus, req.GetActionStatus()))
 
 	wfContext, err := s.db.GetWorkflowContexts(context, wfID)
@@ -134,7 +135,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 		return &pb.Empty{}, status.Error(codes.Aborted, err.Error())
 	}
 
-	l = logger.With(
+	l = s.logger.With(
 		"workflowID", wfContext.GetWorkflowId(),
 		"currentWorker", wfContext.GetCurrentWorker(),
 		"currentTask", wfContext.GetCurrentTask(),
@@ -150,7 +151,7 @@ func (s *server) ReportActionStatus(context context.Context, req *pb.WorkflowAct
 // UpdateWorkflowData updates workflow ephemeral data
 func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkflowDataRequest) (*pb.Empty, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return &pb.Empty{}, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
 	_, ok := workflowData[wfID]
@@ -167,7 +168,7 @@ func (s *server) UpdateWorkflowData(context context.Context, req *pb.UpdateWorkf
 // GetWorkflowData gets the ephemeral data for a workflow
 func (s *server) GetWorkflowData(context context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
 	wfID := req.GetWorkflowId()
-	if len(wfID) == 0 {
+	if wfID == "" {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, errInvalidWorkflowId)
 	}
 	data, err := s.db.GetfromWfDataTable(context, req)
@@ -196,7 +197,7 @@ func (s *server) GetWorkflowDataVersion(context context.Context, req *pb.GetWork
 }
 
 func getWorkflowsForWorker(db db.Database, id string) ([]string, error) {
-	if len(id) == 0 {
+	if id == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkerID)
 	}
 	wfs, err := db.GetWorkflowsForWorker(id)
@@ -216,7 +217,7 @@ func getWorkflowActions(context context.Context, db db.Database, wfID string) (*
 
 // isApplicableToSend checks if a particular workflow context is applicable or if it is needed to
 // be sent to a worker based on the state of the current action and the targeted workerID
-func isApplicableToSend(context context.Context, wfContext *pb.WorkflowContext, workerID string, db db.Database) bool {
+func isApplicableToSend(context context.Context, logger log.Logger, wfContext *pb.WorkflowContext, workerID string, db db.Database) bool {
 	if wfContext.GetCurrentActionState() == pb.State_STATE_FAILED ||
 		wfContext.GetCurrentActionState() == pb.State_STATE_TIMEOUT {
 		return false

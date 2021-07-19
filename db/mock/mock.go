@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tinkerbell/tink/db"
+	tb "github.com/tinkerbell/tink/protos/template"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -25,5 +26,5 @@ type DB struct {
 	InsertIntoWorkflowEventTableFunc func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error
 	// template
 	TemplateDB      map[string]interface{}
-	GetTemplateFunc func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error)
+	GetTemplateFunc func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error)
 }

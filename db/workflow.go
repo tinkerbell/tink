@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -19,6 +18,7 @@ import (
 	wflow "github.com/tinkerbell/tink/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Workflow represents a workflow instance in database
@@ -337,7 +337,7 @@ func (d TinkDB) GetWorkflowsForWorker(id string) ([]string, error) {
 // GetWorkflow returns a workflow
 func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 	query := `
-	SELECT template, devices
+	SELECT template, devices, created_at, updated_at
 	FROM workflow
 	WHERE
 		id = $1
@@ -345,18 +345,29 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 		deleted_at IS NULL;
 	`
 	row := d.instance.QueryRowContext(ctx, query, id)
-	var tmp, tar string
-	err := row.Scan(&tmp, &tar)
+	var (
+		tmp, tar   string
+		crAt, upAt time.Time
+	)
+	err := row.Scan(&tmp, &tar, &crAt, &upAt)
 	if err == nil {
-		return Workflow{ID: id, Template: tmp, Hardware: tar}, nil
+		createdAt := timestamppb.New(crAt)
+		updatedAt := timestamppb.New(upAt)
+		return Workflow{
+			ID:        id,
+			Template:  tmp,
+			Hardware:  tar,
+			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
+		}, nil
 	}
-
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
+		return Workflow{}, err
 	}
 
-	return Workflow{}, nil
+	return Workflow{}, errors.New("Workflow with id " + id + " does not exist")
 }
 
 // DeleteWorkflow deletes a workflow
@@ -438,8 +449,8 @@ func (d TinkDB) ListWorkflows(fn func(wf Workflow) error) error {
 			Template: tmp,
 			Hardware: tar,
 		}
-		wf.CreatedAt, _ = ptypes.TimestampProto(crAt)
-		wf.UpdatedAt, _ = ptypes.TimestampProto(upAt)
+		wf.CreatedAt = timestamppb.New(crAt)
+		wf.UpdatedAt = timestamppb.New(upAt)
 		err = fn(wf)
 		if err != nil {
 			return err
@@ -549,8 +560,9 @@ func (d TinkDB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.Workf
 	if err != sql.ErrNoRows {
 		err = errors.Wrap(err, "SELECT from worflow_state")
 		d.logger.Error(err)
+		return &pb.WorkflowContext{}, err
 	}
-	return &pb.WorkflowContext{}, nil
+	return &pb.WorkflowContext{}, errors.New("Workflow with id " + wfID + " does not exist")
 }
 
 // GetWorkflowActions : gives you the action list of workflow
@@ -633,7 +645,7 @@ func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionSt
 			d.logger.Error(err)
 			return err
 		}
-		createdAt, _ := ptypes.TimestampProto(evTime)
+		createdAt := timestamppb.New(evTime)
 		wfs := &pb.WorkflowActionStatus{
 			WorkerId:     id,
 			TaskName:     tName,
@@ -750,7 +762,7 @@ func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error)
 }
 
 func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
-	_, err := net.ParseMAC(addr)
+	parsedMAC, err := net.ParseMAC(addr)
 	if err != nil {
 		ip := net.ParseIP(addr)
 		if ip == nil || ip.To4() == nil {
@@ -760,7 +772,7 @@ func getWorkerID(ctx context.Context, db *sql.DB, addr string) (string, error) {
 		return id, errors.WithMessage(err, "no worker found")
 
 	}
-	id, err := getWorkerIDbyMac(ctx, db, addr)
+	id, err := getWorkerIDbyMac(ctx, db, parsedMAC.String())
 	return id, errors.WithMessage(err, "no worker found")
 }
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
-	"github.com/tinkerbell/tink/protos/events"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -22,7 +21,6 @@ var (
 	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
 	HardwareClient hardware.HardwareServiceClient
-	EventsClient   events.EventsServiceClient
 )
 
 // FullClient aggregates all the gRPC clients available from Tinkerbell Server
@@ -30,7 +28,6 @@ type FullClient struct {
 	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
 	HardwareClient hardware.HardwareServiceClient
-	EventsClient   events.EventsServiceClient
 }
 
 // NewFullClientFromGlobal is a dirty hack that returns a FullClient using the
@@ -50,7 +47,6 @@ func NewFullClientFromGlobal() (*FullClient, error) {
 		TemplateClient: TemplateClient,
 		WorkflowClient: WorkflowClient,
 		HardwareClient: HardwareClient,
-		EventsClient:   EventsClient,
 	}, nil
 }
 
@@ -62,7 +58,6 @@ func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 		TemplateClient: template.NewTemplateServiceClient(conn),
 		WorkflowClient: workflow.NewWorkflowServiceClient(conn),
 		HardwareClient: hardware.NewHardwareServiceClient(conn),
-		EventsClient:   events.NewEventsServiceClient(conn),
 	}
 }
 
@@ -146,7 +141,6 @@ func Setup() error {
 	TemplateClient = template.NewTemplateServiceClient(conn)
 	WorkflowClient = workflow.NewWorkflowServiceClient(conn)
 	HardwareClient = hardware.NewHardwareServiceClient(conn)
-	EventsClient = events.NewEventsServiceClient(conn)
 	return nil
 }
 

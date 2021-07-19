@@ -28,24 +28,24 @@ const (
 
 var wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
 
-func testServer(db db.Database) *server {
+func testServer(t *testing.T, db db.Database) *server {
+	l, _ := log.Init("github.com/tinkerbell/tink")
 	return &server{
-		db: db,
+		logger: l,
+		db:     db,
 	}
 }
 
 func TestMain(m *testing.M) {
-
 	l, _ := log.Init("github.com/tinkerbell/tink")
-	logger = l.Package("grpcserver")
-	metrics.SetupMetrics("onprem", logger)
+	metrics.SetupMetrics("onprem", l.Package("grpcserver"))
 	os.Exit(m.Run())
 }
 
 func TestGetWorkflowContextList(t *testing.T) {
 	type (
 		args struct {
-			db       mock.DB
+			db       *mock.DB
 			workerID string
 		}
 		want struct {
@@ -58,7 +58,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 	}{
 		"empty worker id": {
 			args: args{
-				db: mock.DB{},
+				db: &mock.DB{},
 			},
 			want: want{
 				expectedError: true,
@@ -66,7 +66,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		},
 		"database failure": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
@@ -82,7 +82,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		},
 		"no workflows found": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
 						return nil, nil
 					},
@@ -98,7 +98,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		},
 		"workflows found": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
@@ -122,7 +122,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowContextList(ctx, &pb.WorkflowContextRequest{WorkerId: tc.args.workerID})
 			if err != nil {
 				assert.Error(t, err)
@@ -144,7 +144,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 func TestGetWorkflowActions(t *testing.T) {
 	type (
 		args struct {
-			db         mock.DB
+			db         *mock.DB
 			workflowID string
 		}
 		want struct {
@@ -157,7 +157,7 @@ func TestGetWorkflowActions(t *testing.T) {
 	}{
 		"empty workflow id": {
 			args: args{
-				db: mock.DB{},
+				db: &mock.DB{},
 			},
 			want: want{
 				expectedError: true,
@@ -165,7 +165,7 @@ func TestGetWorkflowActions(t *testing.T) {
 		},
 		"database failure": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
 						return nil, errors.New("SELECT from worflow_state")
 					},
@@ -178,7 +178,7 @@ func TestGetWorkflowActions(t *testing.T) {
 		},
 		"getting actions": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
 						return &pb.WorkflowActionList{
 							ActionList: []*pb.WorkflowAction{
@@ -205,7 +205,7 @@ func TestGetWorkflowActions(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -223,7 +223,7 @@ func TestGetWorkflowActions(t *testing.T) {
 func TestReportActionStatus(t *testing.T) {
 	type (
 		args struct {
-			db                                         mock.DB
+			db                                         *mock.DB
 			workflowID, taskName, actionName, workerID string
 			actionState                                pb.State
 		}
@@ -237,7 +237,7 @@ func TestReportActionStatus(t *testing.T) {
 	}{
 		"empty workflow id": {
 			args: args{
-				db:         mock.DB{},
+				db:         &mock.DB{},
 				taskName:   taskName,
 				actionName: actionName,
 			},
@@ -247,7 +247,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"empty task name": {
 			args: args{
-				db:         mock.DB{},
+				db:         &mock.DB{},
 				workflowID: workflowID,
 				actionName: actionName,
 			},
@@ -257,7 +257,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"empty action name": {
 			args: args{
-				db:         mock.DB{},
+				db:         &mock.DB{},
 				taskName:   taskName,
 				workflowID: workflowID,
 			},
@@ -267,7 +267,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"error getting workflow context": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return nil, errors.New("SELECT from worflow_state")
 					},
@@ -284,7 +284,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"failed getting actions for context": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -308,7 +308,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"success reporting status": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -348,7 +348,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"report status for second action": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -397,7 +397,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"reporting different action name": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -431,7 +431,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"reporting different task name": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -465,7 +465,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"failed to update workflow state": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -502,7 +502,7 @@ func TestReportActionStatus(t *testing.T) {
 		},
 		"failed to update workflow events": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -546,7 +546,7 @@ func TestReportActionStatus(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.ReportActionStatus(ctx,
 				&pb.WorkflowActionStatus{
 					WorkflowId:   tc.args.workflowID,
@@ -572,7 +572,7 @@ func TestReportActionStatus(t *testing.T) {
 func TestUpdateWorkflowData(t *testing.T) {
 	type (
 		args struct {
-			db         mock.DB
+			db         *mock.DB
 			data       []byte
 			workflowID string
 		}
@@ -586,7 +586,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 	}{
 		"empty workflow id": {
 			args: args{
-				db: mock.DB{},
+				db: &mock.DB{},
 			},
 			want: want{
 				expectedError: true,
@@ -594,7 +594,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 		},
 		"database failure": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					InsertIntoWfDataTableFunc: func(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
 						return errors.New("INSERT Into workflow_data")
 					},
@@ -608,7 +608,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 		},
 		"add new data": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					InsertIntoWfDataTableFunc: func(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error {
 						return nil
 					},
@@ -626,7 +626,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.UpdateWorkflowData(
 				ctx, &pb.UpdateWorkflowDataRequest{
 					WorkflowId: tc.args.workflowID,
@@ -644,7 +644,7 @@ func TestUpdateWorkflowData(t *testing.T) {
 func TestGetWorkflowData(t *testing.T) {
 	type (
 		args struct {
-			db         mock.DB
+			db         *mock.DB
 			workflowID string
 		}
 		want struct {
@@ -658,7 +658,7 @@ func TestGetWorkflowData(t *testing.T) {
 	}{
 		"empty workflow id": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 						return []byte{}, nil
 					},
@@ -672,7 +672,7 @@ func TestGetWorkflowData(t *testing.T) {
 		},
 		"invalid workflow id": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 						return []byte{}, errors.New("invalid uuid")
 					},
@@ -686,7 +686,7 @@ func TestGetWorkflowData(t *testing.T) {
 		},
 		"no workflow data": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 						return []byte{}, nil
 					},
@@ -699,7 +699,7 @@ func TestGetWorkflowData(t *testing.T) {
 		},
 		"workflow data": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetfromWfDataTableFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 						return wfData, nil
 					},
@@ -715,7 +715,7 @@ func TestGetWorkflowData(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
 	defer cancel()
 	for name, tc := range testCases {
-		s := testServer(tc.args.db)
+		s := testServer(t, tc.args.db)
 		t.Run(name, func(t *testing.T) {
 			res, err := s.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
@@ -734,7 +734,7 @@ func TestGetWorkflowData(t *testing.T) {
 func TestGetWorkflowsForWorker(t *testing.T) {
 	type (
 		args struct {
-			db       mock.DB
+			db       *mock.DB
 			workerID string
 		}
 		want struct {
@@ -748,7 +748,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 	}{
 		"empty workflow id": {
 			args: args{
-				db:       mock.DB{},
+				db:       &mock.DB{},
 				workerID: "",
 			},
 			want: want{
@@ -757,7 +757,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		},
 		"database failure": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
 						return nil, errors.New("database failed")
 					},
@@ -770,7 +770,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		},
 		"no workflows found": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
 						return nil, nil
 					},
@@ -783,7 +783,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		},
 		"workflows found": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
@@ -798,7 +798,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := getWorkflowsForWorker(s.db, tc.args.workerID)
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -815,7 +815,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 func TestGetWorkflowMetadata(t *testing.T) {
 	type (
 		args struct {
-			db         mock.DB
+			db         *mock.DB
 			workflowID string
 		}
 		want struct {
@@ -828,7 +828,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 	}{
 		"database failure": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowMetadataFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 						return []byte{}, errors.New("SELECT from workflow_data")
 					},
@@ -841,7 +841,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 		},
 		"no metadata": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowMetadataFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 						return []byte{}, nil
 					},
@@ -854,7 +854,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 		},
 		"metadata": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowMetadataFunc: func(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error) {
 						type workflowMetadata struct {
 							WorkerID  string    `json:"worker-id"`
@@ -886,7 +886,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowMetadata(ctx, &pb.GetWorkflowDataRequest{WorkflowId: tc.args.workflowID})
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
@@ -914,7 +914,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 func TestGetWorkflowDataVersion(t *testing.T) {
 	type (
 		args struct {
-			db mock.DB
+			db *mock.DB
 		}
 		want struct {
 			version       int32
@@ -927,7 +927,7 @@ func TestGetWorkflowDataVersion(t *testing.T) {
 	}{
 		"database failure": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowDataVersionFunc: func(ctx context.Context, workflowID string) (int32, error) {
 						return -1, errors.New("SELECT from workflow_data")
 					},
@@ -940,7 +940,7 @@ func TestGetWorkflowDataVersion(t *testing.T) {
 		},
 		"success": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowDataVersionFunc: func(ctx context.Context, workflowID string) (int32, error) {
 						return 2, nil
 					},
@@ -957,7 +957,7 @@ func TestGetWorkflowDataVersion(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflowDataVersion(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
 			assert.Equal(t, tc.want.version, res.Version)
 			if err != nil {
@@ -973,7 +973,7 @@ func TestGetWorkflowDataVersion(t *testing.T) {
 func TestIsApplicableToSend(t *testing.T) {
 	type (
 		args struct {
-			db mock.DB
+			db *mock.DB
 		}
 		want struct {
 			isApplicable bool
@@ -985,7 +985,7 @@ func TestIsApplicableToSend(t *testing.T) {
 	}{
 		"failed state": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1001,7 +1001,7 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 		"timeout state": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1017,7 +1017,7 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 		"failed to get actions": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1036,7 +1036,7 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 		"is last action and success state": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1065,7 +1065,7 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 		"in-progress last action for different worker": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1094,7 +1094,7 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 		"success state and not the last action": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1130,7 +1130,7 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 		"not the last action": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1166,13 +1166,14 @@ func TestIsApplicableToSend(t *testing.T) {
 		},
 	}
 
+	logger, _ := log.Init("test")
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			wfContext, _ := s.db.GetWorkflowContexts(ctx, workflowID)
-			res := isApplicableToSend(ctx, wfContext, workerID, s.db)
+			res := isApplicableToSend(ctx, logger, wfContext, workerID, s.db)
 			assert.Equal(t, tc.want.isApplicable, res)
 		})
 	}
@@ -1181,7 +1182,7 @@ func TestIsApplicableToSend(t *testing.T) {
 func TestIsLastAction(t *testing.T) {
 	type (
 		args struct {
-			db mock.DB
+			db *mock.DB
 		}
 		want struct {
 			isLastAction bool
@@ -1193,7 +1194,7 @@ func TestIsLastAction(t *testing.T) {
 	}{
 		"is not last": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1229,7 +1230,7 @@ func TestIsLastAction(t *testing.T) {
 		},
 		"is last": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
 						return &pb.WorkflowContext{
 							WorkflowId:           workflowID,
@@ -1262,7 +1263,7 @@ func TestIsLastAction(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			wfContext, _ := s.db.GetWorkflowContexts(ctx, workflowID)
 			actions, _ := s.db.GetWorkflowActions(ctx, workflowID)
 			res := isLastAction(wfContext, actions)

@@ -120,23 +120,6 @@ func Test_NewHardwareCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "Watch",
-			args: args{name: testCommand},
-			want: &cobra.Command{},
-			cmdFunc: func(t *testing.T, c *cobra.Command) {
-				root := c.Root()
-				out := &bytes.Buffer{}
-				root.SetArgs([]string{subCommand, "watch", "-h"})
-				root.SetOutput(out)
-				if err := root.Execute(); err != nil {
-					t.Error(err)
-				}
-				if !strings.Contains(out.String(), "register to watch an id for any changes") {
-					t.Error("expected output should include register to watch an id for any changes")
-				}
-			},
-		},
-		{
 			name: "Push",
 			args: args{name: testCommand},
 			want: &cobra.Command{},

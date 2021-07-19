@@ -22,7 +22,7 @@ const (
 )
 
 func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.Empty, error) {
-	logger.Info("push")
+	s.logger.Info("push")
 	labels := prometheus.Labels{"method": "Push", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
@@ -33,7 +33,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	hw := in.GetData()
 	if hw == nil {
 		err := errors.New("expected data not to be nil")
-		logger.Error(err)
+		s.logger.Error(err)
 		return &hardware.Empty{}, err
 	}
 
@@ -43,7 +43,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		metrics.CacheTotals.With(labels).Inc()
 		metrics.CacheErrors.With(labels).Inc()
 		err := errors.New("id must be set to a UUID, got id: " + hw.Id)
-		logger.Error(err)
+		s.logger.Error(err)
 		return &hardware.Empty{}, err
 	}
 
@@ -59,7 +59,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	const msg = "inserting into DB"
 	data, err := json.Marshal(hw)
 	if err != nil {
-		logger.Error(err)
+		s.logger.Error(err)
 	}
 
 	labels["op"] = "insert"
@@ -68,18 +68,18 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	logger.Info(msg)
+	s.logger.Info(msg)
 	err = s.db.InsertIntoDB(ctx, string(data))
-	logger.Info("done " + msg)
+	s.logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
-		l := logger
+		l := s.logger
 		if pqErr := db.Error(err); pqErr != nil {
 			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
 		}
 		l.Error(err)
 	}
-	logger.With("id", hw.Id).Info("data pushed")
+	s.logger.With("id", hw.Id).Info("data pushed")
 
 	s.watchLock.RLock()
 	if ch := s.watch[hw.Id]; ch != nil {
@@ -90,7 +90,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 		}
 	}
 	s.watchLock.RUnlock()
-	logger.With("id", hw.Id).Info("skipping blocked watcher")
+	s.logger.With("id", hw.Id).Info("skipping blocked watcher")
 
 	return &hardware.Empty{}, err
 }
@@ -182,7 +182,7 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 }
 
 func (s *server) DeprecatedWatch(in *hardware.GetRequest, stream hardware.HardwareService_DeprecatedWatchServer) error {
-	l := logger.With("id", in.Id)
+	l := s.logger.With("id", in.Id)
 
 	ch := make(chan string, 1)
 	s.watchLock.Lock()
@@ -252,7 +252,7 @@ func (s *server) ModTime() time.Time {
 }
 
 func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardware.Empty, error) {
-	logger.Info("delete")
+	s.logger.Info("delete")
 	labels := prometheus.Labels{"method": "Delete", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
 	defer metrics.CacheInFlight.With(labels).Dec()
@@ -264,11 +264,11 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 		metrics.CacheTotals.With(labels).Inc()
 		metrics.CacheErrors.With(labels).Inc()
 		err := errors.New("id must be set to a UUID")
-		logger.Error(err)
+		s.logger.Error(err)
 		return &hardware.Empty{}, err
 	}
 
-	logger.With("id", in.Id).Info("data deleted")
+	s.logger.With("id", in.Id).Info("data deleted")
 
 	labels["op"] = "delete"
 	const msg = "deleting into DB"
@@ -277,16 +277,16 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 	timer := prometheus.NewTimer(metrics.CacheDuration.With(labels))
 	defer timer.ObserveDuration()
 
-	logger.Info(msg)
+	s.logger.Info(msg)
 	err := s.db.DeleteFromDB(ctx, in.Id)
-	logger.Info("done " + msg)
+	s.logger.Info("done " + msg)
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
-		l := logger
+		logger := s.logger
 		if pqErr := db.Error(err); pqErr != nil {
-			l = l.With("detail", pqErr.Detail, "where", pqErr.Where)
+			logger = s.logger.With("detail", pqErr.Detail, "where", pqErr.Where)
 		}
-		l.Error(err)
+		logger.Error(err)
 	}
 
 	s.watchLock.RLock()
@@ -295,7 +295,7 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 		case ch <- in.Id:
 		default:
 			metrics.WatchMissTotal.Inc()
-			logger.With("id", in.Id).Info("skipping blocked watcher")
+			s.logger.With("id", in.Id).Info("skipping blocked watcher")
 		}
 	}
 	s.watchLock.RUnlock()
@@ -308,11 +308,11 @@ func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware
 		mac := iface.GetDhcp().GetMac()
 
 		if data, _ := s.db.GetByMAC(ctx, mac); data != "" {
-			logger.With("MAC", mac).Info(duplicateMAC)
+			s.logger.With("MAC", mac).Info(duplicateMAC)
 
 			newhw := hardware.Hardware{}
 			if err := json.Unmarshal([]byte(data), &newhw); err != nil {
-				logger.Error(err, "Failed to unmarshal hardware data")
+				s.logger.Error(err, "Failed to unmarshal hardware data")
 				return err
 			}
 

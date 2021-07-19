@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/db/mock"
+	tb "github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
@@ -30,7 +31,7 @@ tasks:
 func TestCreateWorkflow(t *testing.T) {
 	type (
 		args struct {
-			db                     mock.DB
+			db                     *mock.DB
 			wfTemplate, wfHardware string
 		}
 		want struct {
@@ -43,9 +44,13 @@ func TestCreateWorkflow(t *testing.T) {
 	}{
 		"FailedToGetTemplate": {
 			args: args{
-				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", "", errors.New("failed to get template")
+				db: &mock.DB{
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: "",
+						}, errors.New("failed to get template")
 					},
 				},
 				wfTemplate: templateID,
@@ -57,9 +62,13 @@ func TestCreateWorkflow(t *testing.T) {
 		},
 		"FailedCreatingWorkflow": {
 			args: args{
-				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+				db: &mock.DB{
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
 						return errors.New("failed to create a workfow")
@@ -74,9 +83,13 @@ func TestCreateWorkflow(t *testing.T) {
 		},
 		"SuccessCreatingWorkflow": {
 			args: args{
-				db: mock.DB{
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+				db: &mock.DB{
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
 						return nil
@@ -95,7 +108,7 @@ func TestCreateWorkflow(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.CreateWorkflow(ctx, &workflow.CreateRequest{
 				Hardware: tc.args.wfHardware,
 				Template: tc.args.wfTemplate,
@@ -116,8 +129,9 @@ func TestCreateWorkflow(t *testing.T) {
 func TestGetWorkflow(t *testing.T) {
 	type (
 		args struct {
-			db                     mock.DB
+			db                     *mock.DB
 			wfTemplate, wfHardware string
+			state                  workflow.State
 		}
 		want struct {
 			expectedError bool
@@ -129,17 +143,75 @@ func TestGetWorkflow(t *testing.T) {
 	}{
 		"SuccessGettingWorkflow": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
 						return db.Workflow{
 							ID:       workflowID,
 							Template: templateID,
 							Hardware: hw}, nil
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
-						return "", "", templateData, nil
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*workflow.WorkflowContext, error) {
+						return &workflow.WorkflowContext{
+							WorkflowId:           wfID,
+							CurrentActionState:   workflow.State_STATE_SUCCESS,
+							CurrentActionIndex:   0,
+							TotalNumberOfActions: 1,
+						}, nil
+					},
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
 					},
 				},
+				state:      workflow.State_STATE_SUCCESS,
+				wfTemplate: templateID,
+				wfHardware: hw,
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+		"WorkflowDoesNotExist": {
+			args: args{
+				db: &mock.DB{
+					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
+						return db.Workflow{}, errors.New("Workflow with id " + workflowID + " does not exist")
+					},
+				},
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
+		"GetWorkflowState": {
+			args: args{
+				db: &mock.DB{
+					GetWorkflowFunc: func(ctx context.Context, workflowID string) (db.Workflow, error) {
+						return db.Workflow{
+							ID:       workflowID,
+							Template: templateID,
+							Hardware: hw}, nil
+					},
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*workflow.WorkflowContext, error) {
+						return &workflow.WorkflowContext{
+							WorkflowId:           wfID,
+							CurrentActionState:   workflow.State_STATE_SUCCESS,
+							CurrentActionIndex:   0,
+							TotalNumberOfActions: 2,
+						}, nil
+					},
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
+						return &tb.WorkflowTemplate{
+							Id:   "",
+							Name: "",
+							Data: templateData,
+						}, nil
+					},
+				},
+				state:      workflow.State_STATE_RUNNING,
 				wfTemplate: templateID,
 				wfHardware: hw,
 			},
@@ -153,8 +225,58 @@ func TestGetWorkflow(t *testing.T) {
 	defer cancel()
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetWorkflow(ctx, &workflow.GetRequest{
+				Id: workflowID,
+			})
+			if err != nil {
+				assert.Error(t, err)
+				assert.Empty(t, res)
+				assert.True(t, tc.want.expectedError)
+				return
+			}
+			assert.Equal(t, tc.args.state, res.State)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, res)
+			assert.False(t, tc.want.expectedError)
+		})
+	}
+}
+
+func TestGetWorkflowContext(t *testing.T) {
+	type (
+		args struct {
+			db *mock.DB
+		}
+		want struct {
+			expectedError bool
+		}
+	)
+	testCases := map[string]struct {
+		args args
+		want want
+	}{
+		"WorkflowDoesNotExist": {
+			args: args{
+				db: &mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, workflowID string) (*workflow.WorkflowContext, error) {
+						w := workflow.WorkflowContext{}
+						return &w, errors.New("Workflow with id " + workflowID + " does not exist")
+					},
+				},
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
+	defer cancel()
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			s := testServer(t, tc.args.db)
+			res, err := s.GetWorkflowContext(ctx, &workflow.GetRequest{
 				Id: workflowID,
 			})
 			if err != nil {

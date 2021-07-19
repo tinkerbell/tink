@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
+	tb "github.com/tinkerbell/tink/protos/template"
 )
 
 type Template struct {
@@ -15,7 +16,7 @@ type Template struct {
 }
 
 // CreateTemplate creates a new workflow template
-func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+func (d *DB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	if d.TemplateDB == nil {
 		d.TemplateDB = make(map[string]interface{})
 	}
@@ -41,7 +42,7 @@ func (d DB) CreateTemplate(ctx context.Context, name string, data string, id uui
 }
 
 // GetTemplate returns a workflow template
-func (d DB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+func (d DB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 	return d.GetTemplateFunc(ctx, fields, deleted)
 }
 
@@ -65,6 +66,6 @@ func (d DB) UpdateTemplate(ctx context.Context, name string, data string, id uui
 }
 
 // ClearTemplateDB clear all the templates
-func (d DB) ClearTemplateDB() {
+func (d *DB) ClearTemplateDB() {
 	d.TemplateDB = make(map[string]interface{})
 }

@@ -42,7 +42,7 @@ generate_password() (
 	head -c 12 /dev/urandom | sha256sum | cut -d' ' -f1
 )
 
-generate_envrc() (
+generate_env() (
 	local tink_interface=$1
 
 	validate_tinkerbell_network_interface "$tink_interface"
@@ -85,11 +85,11 @@ EOF
 
 main() (
 	if [ -z "${1:-}" ]; then
-		err "Usage: $0 network-interface-name > envrc"
+		err "Usage: $0 network-interface-name > .env"
 		exit 1
 	fi
 
-	generate_envrc "$1"
+	generate_env "$1"
 )
 
 main "$@"

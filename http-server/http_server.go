@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"os"
 	"runtime"
 	"time"
 
@@ -21,22 +20,27 @@ import (
 )
 
 var (
-	gitRev         = "unknown"
-	gitRevJSON     []byte
-	grpcEndpoint   = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
-	httpListenAddr = os.Getenv("TINKERBELL_HTTP_AUTHORITY")
-	authUsername   = os.Getenv("TINK_AUTH_USERNAME")
-	authPassword   = os.Getenv("TINK_AUTH_PASSWORD")
-	startTime      = time.Now()
-	logger         log.Logger
+	gitRev     = "unknown"
+	gitRevJSON []byte
+	startTime  = time.Now()
+	logger     log.Logger
 )
 
+type HTTPServerConfig struct {
+	CertPEM               []byte
+	ModTime               time.Time
+	GRPCAuthority         string
+	HTTPAuthority         string
+	HTTPBasicAuthUsername string
+	HTTPBasicAuthPassword string
+}
+
 // SetupHTTP setup and return an HTTP server
-func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.Time, errCh chan<- error) {
+func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, errCh chan<- error) {
 	logger = lg
 
 	cp := x509.NewCertPool()
-	ok := cp.AppendCertsFromPEM(certPEM)
+	ok := cp.AppendCertsFromPEM(config.CertPEM)
 	if !ok {
 		logger.Error(errors.New("parse cert"))
 	}
@@ -47,9 +51,7 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 
-	if grpcEndpoint == "" {
-		grpcEndpoint = "localhost:42113"
-	}
+	grpcEndpoint := config.GRPCAuthority
 	host, _, err := net.SplitHostPort(grpcEndpoint)
 	if err != nil {
 		logger.Error(err)
@@ -71,19 +73,16 @@ func SetupHTTP(ctx context.Context, lg log.Logger, certPEM []byte, modTime time.
 	}
 
 	http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, "server.pem", modTime, bytes.NewReader(certPEM))
+		http.ServeContent(w, r, "server.pem", config.ModTime, bytes.NewReader(config.CertPEM))
 	})
 	http.Handle("/metrics", promhttp.Handler())
 	setupGitRevJSON()
 	http.HandleFunc("/version", versionHandler)
 	http.HandleFunc("/healthz", healthCheckHandler)
-	http.Handle("/", BasicAuth(mux))
+	http.Handle("/", BasicAuth(config.HTTPBasicAuthUsername, config.HTTPBasicAuthPassword, mux))
 
-	if httpListenAddr == "" {
-		httpListenAddr = ":42114"
-	}
 	srv := &http.Server{
-		Addr: httpListenAddr,
+		Addr: config.HTTPAuthority,
 	}
 	go func() {
 		logger.Info("serving http")
@@ -145,7 +144,7 @@ func setupGitRevJSON() {
 
 // BasicAuth adds authentication to the routes handled by handler
 // skips authentication if both authUsername and authPassword aren't set
-func BasicAuth(handler http.Handler) http.Handler {
+func BasicAuth(authUsername, authPassword string, handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if authUsername != "" || authPassword != "" {
 			user, pass, ok := r.BasicAuth()

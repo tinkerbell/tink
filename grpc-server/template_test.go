@@ -54,7 +54,7 @@ tasks:
 func TestCreateTemplate(t *testing.T) {
 	type (
 		args struct {
-			db       mock.DB
+			db       *mock.DB
 			name     string
 			template string
 		}
@@ -68,7 +68,7 @@ func TestCreateTemplate(t *testing.T) {
 	}{
 		"SuccessfulTemplateCreation": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: make(map[string]interface{}),
 				},
 				name:     "template_1",
@@ -81,7 +81,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		"SuccessfulMultipleTemplateCreation": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						"template_1": mock.Template{
 							Data:    template1,
@@ -99,7 +99,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		"FailedMultipleTemplateCreationWithSameName": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						"template_1": mock.Template{
 							Data:    template1,
@@ -117,7 +117,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		"SuccessfulTemplateCreationAfterDeletingWithSameName": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						"template_1": mock.Template{
 							Data:    template1,
@@ -140,7 +140,7 @@ func TestCreateTemplate(t *testing.T) {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.CreateTemplate(ctx, &pb.WorkflowTemplate{Name: tc.args.name, Data: tc.args.template})
 			if tc.want.expectedError {
 				assert.Error(t, err)
@@ -156,7 +156,7 @@ func TestCreateTemplate(t *testing.T) {
 func TestGetTemplate(t *testing.T) {
 	type (
 		args struct {
-			db         mock.DB
+			db         *mock.DB
 			getRequest *pb.GetRequest
 		}
 	)
@@ -169,17 +169,25 @@ func TestGetTemplate(t *testing.T) {
 	}{
 		"SuccessfulTemplateGet_Name": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*pb.WorkflowTemplate, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
+							return &pb.WorkflowTemplate{
+								Id:   templateID1,
+								Name: templateName1,
+								Data: template1,
+							}, nil
 						}
-						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
+						return &pb.WorkflowTemplate{
+							Id:   templateNotFoundID,
+							Name: templateNotFoundName,
+							Data: templateNotFoundTemplate,
+						}, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Name{Name: templateName1}},
@@ -192,17 +200,25 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_Name": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*pb.WorkflowTemplate, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
+							return &pb.WorkflowTemplate{
+								Id:   templateID1,
+								Name: templateName1,
+								Data: template1,
+							}, nil
 						}
-						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
+						return &pb.WorkflowTemplate{
+							Id:   templateNotFoundID,
+							Name: templateNotFoundName,
+							Data: templateNotFoundTemplate,
+						}, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Name{Name: templateName2}},
@@ -215,17 +231,25 @@ func TestGetTemplate(t *testing.T) {
 
 		"SuccessfulTemplateGet_ID": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*pb.WorkflowTemplate, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
+							return &pb.WorkflowTemplate{
+								Id:   templateID1,
+								Name: templateName1,
+								Data: template1,
+							}, nil
 						}
-						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
+						return &pb.WorkflowTemplate{
+							Id:   templateNotFoundID,
+							Name: templateNotFoundName,
+							Data: templateNotFoundTemplate,
+						}, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Id{Id: templateID1}},
@@ -238,17 +262,25 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_ID": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*pb.WorkflowTemplate, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
+							return &pb.WorkflowTemplate{
+								Id:   templateID1,
+								Name: templateName1,
+								Data: template1,
+							}, nil
 						}
-						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
+						return &pb.WorkflowTemplate{
+							Id:   templateNotFoundID,
+							Name: templateNotFoundName,
+							Data: templateNotFoundTemplate,
+						}, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{GetBy: &pb.GetRequest_Id{Id: templateID2}},
@@ -261,17 +293,25 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_EmptyRequest": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*pb.WorkflowTemplate, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
+							return &pb.WorkflowTemplate{
+								Id:   templateID1,
+								Name: templateName1,
+								Data: template1,
+							}, nil
 						}
-						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
+						return &pb.WorkflowTemplate{
+							Id:   templateNotFoundID,
+							Name: templateNotFoundName,
+							Data: templateNotFoundTemplate,
+						}, errors.New("failed to get template")
 					},
 				},
 				getRequest: &pb.GetRequest{},
@@ -284,17 +324,25 @@ func TestGetTemplate(t *testing.T) {
 
 		"FailedTemplateGet_NilRequest": {
 			args: args{
-				db: mock.DB{
+				db: &mock.DB{
 					TemplateDB: map[string]interface{}{
 						templateName1: template1,
 					},
-					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (string, string, string, error) {
+					GetTemplateFunc: func(ctx context.Context, fields map[string]string, deleted bool) (*pb.WorkflowTemplate, error) {
 						t.Log("in get template func")
 
 						if fields["id"] == templateID1 || fields["name"] == templateName1 {
-							return templateID1, templateName1, template1, nil
+							return &pb.WorkflowTemplate{
+								Id:   templateID1,
+								Name: templateName1,
+								Data: template1,
+							}, nil
 						}
-						return templateNotFoundID, templateNotFoundName, templateNotFoundTemplate, errors.New("failed to get template")
+						return &pb.WorkflowTemplate{
+							Id:   templateNotFoundID,
+							Name: templateNotFoundName,
+							Data: templateNotFoundTemplate,
+						}, errors.New("failed to get template")
 					},
 				},
 			},
@@ -311,7 +359,7 @@ func TestGetTemplate(t *testing.T) {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			s := testServer(tc.args.db)
+			s := testServer(t, tc.args.db)
 			res, err := s.GetTemplate(ctx, tc.args.getRequest)
 			if tc.err {
 				assert.Error(t, err)

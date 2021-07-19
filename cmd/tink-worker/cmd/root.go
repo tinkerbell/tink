@@ -48,6 +48,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			user, _ := cmd.Flags().GetString("registry-username")
 			pwd, _ := cmd.Flags().GetString("registry-password")
 			registry, _ := cmd.Flags().GetString("docker-registry")
+			captureActionLogs, _ := cmd.Flags().GetBool("capture-action-logs")
 
 			logger.With("version", version).Info("starting")
 			if setupErr := client.Setup(); setupErr != nil {
@@ -70,7 +71,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			regConn := internal.NewRegistryConnDetails(registry, user, pwd, logger)
 			worker := internal.NewWorker(rClient, regConn, logger, registry, retries, retryInterval, maxFileSize)
 
-			err = worker.ProcessWorkflowActions(ctx, workerID)
+			err = worker.ProcessWorkflowActions(ctx, workerID, captureActionLogs)
 			if err != nil {
 				return errors.Wrap(err, "worker Finished with error")
 			}
@@ -85,6 +86,8 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	rootCmd.Flags().Int("max-retry", defaultRetryCount, "Maximum number of retries to attempt (MAX_RETRY)")
 
 	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes (MAX_FILE_SIZE)")
+
+	rootCmd.Flags().Bool("capture-action-logs", true, "Capture action container output as part of worker logs")
 
 	// rootCmd.Flags().String("log-level", "info", "Sets the worker log level (panic, fatal, error, warn, info, debug, trace)")
 
