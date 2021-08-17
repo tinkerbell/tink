@@ -1,0 +1,68 @@
+
+linters-settings:
+  cyclop:
+    max-complexity: 30
+  wsl:
+    allow-cuddle-declarations: true
+    allow-assign-and-anything: true
+
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+    - dogsled
+    - gocritic
+    - gofmt
+    - goimports
+    - misspell
+    - nakedret
+    - stylecheck
+    - unconvert
+    - unparam
+    - revive
+    - ifshort
+    - whitespace
+    - wastedassign
+    - asciicheck
+    - bodyclose
+    - durationcheck
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forcetypeassert
+    - gocyclo
+    - godot
+    - goheader
+    - goprintffuncname
+    - importas
+    - makezero
+    - nestif
+    - nilerr
+    - nolintlint
+    - prealloc
+    - predeclared
+    - rowserrcheck
+    - sqlclosecheck
+    - thelper
+    - tparallel
+    - cyclop
+ # needs further tuning
+ #   - wsl
+
+  # To be enabled soon:
+  # - gochecknoinits
+  # - promlinter
+  # - noctx
+
+  # Explicitly disabled
+  # - nlreturn
+
