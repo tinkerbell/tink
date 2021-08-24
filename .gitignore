@@ -1,0 +1,18 @@
+bin/
+certs/
+cmd/tink-cli/tink-cli
+cmd/tink-server/tink-server
+cmd/tink-worker/tink-worker
+.idea
+.vscode
+
+# Terraform
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+
+# Vagrant
+**/.vagrant
+envrc
+.env
+deploy/state

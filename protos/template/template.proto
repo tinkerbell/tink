@@ -1,0 +1,134 @@
+/*
+ * A template is a set of jobs and actions that can be performed to some
+ * hardware.
+ * It uses YAML to describe order and relation of those actions. Each action is
+ * a Docker container.
+ * When a template is stored in Tinkerbell it can be used to trigger a workflow
+ * targeting a specific hardwarwe.
+ */
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/tink/protos/template";
+
+package github.com.tinkerbell.tink.protos.template;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+/*
+ * TemplateService exposes capabilities to manipulate templates.
+ */
+service TemplateService {
+  /*
+   * CreateTemplate stores a template in the Tinkerbell server.
+   */
+  rpc CreateTemplate(WorkflowTemplate) returns (CreateResponse) {
+    option (google.api.http) = {
+      post: "/v1/templates"
+      body: "*"
+    };
+  };
+  /*
+   * GetTemplate returns a specific template via its identifier.
+   */
+  rpc GetTemplate(GetRequest) returns (WorkflowTemplate) {
+    option (google.api.http) = {
+      get: "/v1/templates/{id}"
+    };
+  };
+  /*
+   * DeleteTemplate deletes a template via its identifier.
+   */
+  rpc DeleteTemplate(GetRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v1/templates/{id}"
+    };
+  };
+  /*
+   * ListTemplates returns all the template stored in Tinkerbell server
+   */
+  rpc ListTemplates(ListRequest) returns (stream WorkflowTemplate) {
+    option (google.api.http) = {
+      get: "/v1/templates"
+    };
+  };
+  /*
+   * UpdateTemplate updates a template
+   * TODO: Read the code and figure out how an update work
+   */
+  rpc UpdateTemplate(WorkflowTemplate) returns (Empty);
+}
+
+/*
+ * Empty represents an empty response
+ */
+message Empty {
+}
+
+/*
+ * WorkflowTemplate describes the template itself.
+ */
+message WorkflowTemplate {
+  /*
+   * The template identifier
+   */
+  string id = 1;
+  /*
+   * The name of the template. You can see it as a friendly way to remember a
+   * template
+   */
+  string name = 2;
+  reserved 3; // obsolete data
+  /*
+   * When a template got created
+   */
+  google.protobuf.Timestamp created_at = 4;
+  /*
+   * The last time a template was modified
+   */
+  google.protobuf.Timestamp updated_at = 5;
+  /*
+   * When a template got deleted. This is the value used to identify a deleted
+   * template as well. If empty the template can be used to generate workflows.
+   */
+  google.protobuf.Timestamp deleted_at = 6;
+  /*
+   * The content of the template in its YAML representation
+   */
+  string data = 7;
+}
+
+/*
+ * CreateResponse returns the ID of the created template
+ */
+message CreateResponse {
+  string id = 1;
+}
+
+/*
+ * GetRequest enables you to filter templates by name or id.
+ */
+message GetRequest {
+  oneof get_by {
+    /*
+     * Filter by the template id
+     */
+    string id = 1;
+    /*
+     * Filter by the template name
+     */
+    string name = 2;
+  }
+}
+
+/*
+ * The request to use during a List template request
+ */
+message ListRequest {
+  oneof filter_by {
+    /*
+     * Filter by the template name
+     */
+    string name = 1;
+  }
+}

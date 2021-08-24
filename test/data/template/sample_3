@@ -1,0 +1,25 @@
+version: '0.1'
+name: packet_osie_provision
+global_timeout: 600
+tasks:
+- name: "run-first-worker"
+  worker: "{{.device_1}}"
+  actions:
+  - name: "update-data"
+    image: update-data
+    timeout: 10
+    on-timeout: ["echo", "Timeout"]
+    on-failure: ["echo", "Failure"]
+  - name: "overwrite-data"
+    image: overwrite-data
+    timeout: 10
+    on-timeout: ["echo", "Timeout"]
+    on-failure: ["echo", "Failure"]
+- name: "run-second-worker"
+  worker: "{{.device_2}}"
+  actions:
+  - name: "overwrite-again"
+    image: update-data
+    timeout: 10
+    on-timeout: ["echo", "Timeout"]
+    on-failure: ["echo", "Failure"]

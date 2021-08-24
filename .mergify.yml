@@ -1,0 +1,13 @@
+pull_request_rules:
+  - name: Automatic merge on approval
+    conditions:
+      - base=master
+      - "#approved-reviews-by>=1"
+      - "#review-requested=0"
+      - "#changes-requested-reviews-by=0"
+      - label=ready-to-merge
+      - label!=do-not-merge
+    actions:
+      merge:
+        commit_message: title+body
+        strict: smart+fastpath

@@ -1,0 +1,18 @@
+version: '0.1'
+name: packet_osie_provision
+global_timeout: 600
+tasks:
+- name: "timeout-task"
+  worker: "{{.device_1}}"
+  actions:
+  - name: "update-data"
+    image: update-data
+    timeout: 10
+    on-timeout: ["echo", "Timeout"]
+    on-failure: ["echo", "Failure"]
+  - name: "sleep-till-timeout"
+    image: bash
+    command: ["sleep", "20"]
+    timeout: 6
+    on-timeout: ["echo", "Timeout"]
+    on-failure: ["echo", "Failure"]

@@ -1,0 +1,101 @@
+version: "3.8"
+services:
+  tls-gen:
+    image: cfssl/cfssl
+    entrypoint: /bin/bash
+    command:
+      - /code/tls/generate.sh
+    environment:
+      FACILITY: ${FACILITY:-onprem}
+    volumes:
+      - ${PWD}/deploy:/code
+      - certs:/certs/${FACILITY:-onprem}:rw
+
+  tinkerbell:
+    build:
+      context: ./cmd/tink-server/
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      FACILITY: ${FACILITY:-onprem}
+      PACKET_ENV: ${PACKET_ENV:-testing}
+      PACKET_VERSION: ${PACKET_VERSION:-ignored}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
+      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
+      PGDATABASE: tinkerbell
+      PGHOST: db
+      PGPASSWORD: tinkerbell
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: tinkerbell
+      TINKERBELL_GRPC_AUTHORITY: :42113
+      TINKERBELL_HTTP_AUTHORITY: :42114
+      TINK_AUTH_USERNAME: ${TINKERBELL_TINK_USERNAME}
+      TINK_AUTH_PASSWORD: ${TINKERBELL_TINK_PASSWORD}
+    depends_on:
+      - "tink-server-migration"
+      - "db"
+      - "tls-gen"
+    volumes:
+      - certs:/certs/${FACILITY:-onprem}:rw
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"] # port needs to match TINKERBELL_HTTP_AUTHORITY
+      interval: 5s
+      timeout: 2s
+      retries: 3
+    ports:
+      - 42113:42113/tcp
+      - 42114:42114/tcp
+
+  tink-server-migration:
+    image: quay.io/tinkerbell/tink:latest
+    restart: on-failure
+    environment:
+      ONLY_MIGRATION: "true"
+      FACILITY: ${FACILITY:-onprem}
+      PGDATABASE: tinkerbell
+      PGHOST: db
+      PGPASSWORD: tinkerbell
+      PGPORT: 5432
+      PGSSLMODE: disable
+      PGUSER: tinkerbell
+      TINKERBELL_GRPC_AUTHORITY: :42113
+      TINKERBELL_HTTP_AUTHORITY: :42114
+      TINK_AUTH_USERNAME: ${TINKERBELL_TINK_USERNAME}
+      TINK_AUTH_PASSWORD: ${TINKERBELL_TINK_PASSWORD}
+    depends_on:
+      - "db"
+
+  db:
+    image: postgres:10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tinkerbell
+      POSTGRES_PASSWORD: tinkerbell
+      POSTGRES_USER: tinkerbell
+    volumes:
+      - postgres_data:/var/lib/postgresql/data:rw
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tinkerbell"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+
+  tink-cli:
+    build:
+      context: ./cmd/tink-cli/
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      TINKERBELL_GRPC_AUTHORITY: tinkerbell:42113
+      TINKERBELL_CERT_URL: http://tinkerbell:42114/cert
+    depends_on:
+        - "tinkerbell"
+        - "db"
+
+volumes:
+  postgres_data:
+  certs:
+

@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/tink/protos/packet";
+
+package github.com.tinkerbell.tink.protos.packet;
+
+message Metadata {
+  message Manufacturer {
+    string id = 1;
+    string slug = 2;
+  }
+  message Instance {
+    message OperatingSystem {
+      string slug = 1;
+      string distro = 2;
+      string version = 3;
+      string image_tag = 4;
+      string os_slug = 5;
+    }
+    message IP {
+      string address = 1;
+      string netmask = 2;
+      string gateway = 3;
+      int64 family = 4;
+      bool public = 5;
+      bool management = 6;
+    }
+    message Storage {
+      message Disk {
+        message Partition {
+          string label = 1;
+          int64 number = 2;
+          int64 size = 3;
+          int64 start = 4;
+          string type_guid = 5;
+        }
+
+        string device = 1;
+        bool wipe_table = 2;
+        repeated Partition partitions = 3;
+      }
+
+      message File {
+        string path = 1;
+        string contents = 2;
+        int64 mode = 3;
+        int64 uid = 4;
+        int64 gid = 5;
+      }
+
+      message Mount {
+        message FilesystemOptions {
+          bool force = 1;
+          repeated string options = 2;
+        }
+
+        string device = 1;
+        string format = 2;
+        repeated File files = 3;
+        FilesystemOptions create = 4;
+        string point = 5;
+      }
+
+      message Filesystem {
+        Mount mount = 1;
+      }
+
+      message RAID {
+        string name = 1;
+        string level = 2;
+        repeated string devices = 3;
+        int64 spare = 4;
+      }
+
+      repeated Disk disks = 1;
+      repeated RAID raid = 2;
+      repeated Filesystem filesystems = 3;
+    }
+
+    string id = 1;
+    string state = 2;
+    string hostname = 3;
+    bool allow_pxe = 4;
+    bool rescue = 5;
+
+    OperatingSystem operating_system = 6;
+    bool always_pxe = 7;
+    string ipxe_script_url = 8;
+    repeated IP ips = 9;
+    string userdata = 10;
+
+    string crypted_root_password = 11;
+
+    repeated string tags = 12;
+    Storage storage = 13;
+    repeated string ssh_keys = 14;
+    bool network_ready = 15;
+  }
+  message Custom {
+    Instance.OperatingSystem preinstalled_operating_system_version = 1;
+    repeated string private_subnets = 2;
+  }
+  message Facility {
+    string plan_slug = 1;
+    string plan_version_slug = 2;
+    string facility_code = 3;
+  }
+
+  string state = 1;
+  int64 bonding_mode = 2;
+  Manufacturer manufacturer = 3;
+  Instance instance = 4;
+  Custom custom = 5;
+  Facility facility = 6;
+}

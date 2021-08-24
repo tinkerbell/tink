@@ -1,0 +1,269 @@
+/*
+ * Hardware represents a single device managed by Tinkerbell.
+ * It can be identifed with its own UUID but more in general it can be everything that has a MAC address.
+ */
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/tink/protos/hardware";
+
+package github.com.tinkerbell.tink.protos.hardware;
+
+import "google/api/annotations.proto";
+
+/*
+ * The HardwareService provides access to data describing the compute
+ * and networking profiles of the hardware available to accept workflows.
+ *
+ * The API supports adding new entries. While the hardware data is essential,
+ * not all of the properties are required for every workflow. The choice of
+ * workflow predicates the level of hardware detail necessary.
+ *
+ * Read access to individual hardware profiles is provided through the unique
+ * ID, MAC, and IP hardware properties.
+ */
+service HardwareService {
+  // Push adds a new Hardware profile to the data store.
+  rpc Push (PushRequest) returns (Empty) {
+    option (google.api.http) = {
+      post: "/v1/hardware"
+      body: "*"
+    };
+  };
+
+  // ByMac returns the Hardware with the given hardware MAC Address.
+  rpc ByMAC(GetRequest) returns (Hardware) {
+    option (google.api.http) = {
+      post: "/v1/hardware/mac"
+      body: "*"
+    };
+  };
+
+  // ByIP returns the Hardware with the given IP Address.
+  rpc ByIP(GetRequest) returns (Hardware) {
+    option (google.api.http) = {
+      post: "/v1/hardware/ip"
+      body: "*"
+    };
+  };
+
+  // ByID returns the Hardware with the given ID.
+  rpc ByID(GetRequest) returns (Hardware) {
+    option (google.api.http) = {
+      get: "/v1/hardware/{id}"
+    };
+  };
+
+  // All returns all of the Hardware profiles.
+  rpc All(Empty) returns (stream Hardware) {
+    option (google.api.http) = {
+      get: "/v1/hardware"
+    };
+  };
+
+  // DeprecatedWatch watches for events on the given hardware and streams the matching Hardware.
+  // We would like to keep Watch as the function used to stream events,
+  // and ideally Watch should be more powerful than the DeprecatedWatch
+	rpc DeprecatedWatch(GetRequest) returns (stream Hardware);
+
+  // Delete deletes the given hardware from the data store.
+  rpc Delete(DeleteRequest) returns (Empty) {
+    option (google.api.http) = {
+      delete: "/v1/hardware/{id}"
+    };
+  };
+}
+
+/*
+ * PushRequest is the body for the Push method. It contains information about
+ * a piece of hardware.
+ */
+message PushRequest {
+  /*
+   * Hardware describes the hardware you want to register to Tinkerbell and
+   * what it looks like.
+   * Hostname, MAC address, DHCP, network interfaces, metadata and so on.
+   */
+  Hardware data = 1;
+}
+
+/*
+ * Empty represents an empty response
+ */
+message Empty {
+}
+
+/*
+ * GetRequest is the request used by the Get various get methods exposed by the
+ * hardware serice.
+ */
+message GetRequest {
+  string mac = 1;
+  string ip = 2;
+  string id = 3;
+}
+
+/*
+ * Hardware describes a specific device managed by Tinkerbell
+ */
+message Hardware {
+  /*
+   * DHCP represents
+   */
+  message DHCP {
+    message IP {
+      string address = 1;
+      string netmask = 2;
+      string gateway = 3;
+      int64 family = 4;
+    }
+    /*
+     * The MAC address for your hardware.  It is important to get it
+     * right because it is used from Tinkerbell to dispatch workflows to the
+     * right destination.
+     */
+    string mac = 1;
+    reserved 2; // obsolete ip
+    /*
+     * Hostname represents the hostname of your server
+     */
+    string hostname = 3;
+    int64 lease_time = 4;
+    /*
+     */
+    repeated string name_servers = 5;
+    /*
+     */
+    repeated string time_servers = 6;
+    /*
+     */
+    reserved 7;
+    /*
+     * The CPU architecture like arm64, amd64, x86_64 and so on.
+     */
+    string arch = 8;
+    bool uefi = 9;
+    /*
+     * The name of the interface in your hardware like eth0, en1 and so on.
+     */
+    string iface_name = 10;
+    /*
+     *
+     */
+    IP ip = 11;
+  }
+  /*
+   * Netboot is the model used to represent and configure the netbooting
+   * behavior From there you can customise the IPXE chained during boot, the in
+   * memory operating system tand so on.
+   */
+  message Netboot {
+    /*
+     * IPXE is the network boot firmware Tinkerbell uses to start the
+     * provisioning in the hardware
+     */
+    message IPXE {
+      /*
+       * This is the location of the IPXE script
+       */
+      string url = 1;
+      /*
+       */
+      string contents = 2;
+    }
+    /*
+     * Osie is the in memory operating system
+     */
+    message Osie {
+      string base_url = 1;
+      string kernel = 2;
+      string initrd = 3;
+    }
+
+    /*
+     * This is a boolean value that tells to Tinkerbell if the hardware has PXE
+     * enabled. If set to false Tinkerbell won't attempt a provisioning at the
+     * moment.
+     */
+    bool allow_pxe = 1;
+    /*
+     * When set to true Osie will lookup and execute the workflows assigned to
+     * a particular hardware.
+     *
+     * When set to false Osie will be executed but no workflows will be
+     * applied. This is useful if you don't want to execute any workflows but
+     * you simply need an operating system running in memory
+     */
+    bool allow_workflow = 2;
+    /*
+     *
+     */
+    IPXE ipxe = 3;
+    reserved 4; // obsolete bootstrapper
+    /*
+     *
+     */
+    Osie osie = 5;
+  }
+  /*
+   * Network describes the networking you expect in your hardware.
+   * The number of interfaces, their name, gateway and IP.
+   */
+  message Network {
+    /*
+     * Interface represents a single network interface in your hardware
+     */
+    message Interface {
+      /*
+       * DHCP configures the behavior of DHCP connection for your hardware.
+       * IP you expect, gateway and netmask.
+       */
+      DHCP dhcp = 1;
+      /*
+       * Netboot pilots netbooting. You can select Osie, the in memory
+       * operating system used during netbooting.
+       */
+      Netboot netboot = 2;
+    }
+    reserved 1; // obsolete dhcp
+    reserved 2; // obsolete netboot
+    /*
+     * Configure the network interfaces you have in your hardware and defines their
+     * behavior.
+     */
+    repeated Interface interfaces = 3;
+    reserved 4; // obsolete default
+  }
+
+  reserved 1; // obsolete json
+  reserved 2; // obsolete dhcp
+  reserved 3; // obsolete netboot
+  reserved 4; // obsolete network
+  reserved 5; // obsolete metadata
+  /*
+   * Describe network layout for your hardware
+   */
+  Network network = 6;
+  /*
+   * A UUID representing a unique identifier for your hardware
+   */
+  string id = 7;
+  int64 version = 8;
+  /*
+   * Metadata served by Hegel and that are accessible from the server itself To
+   * know more about what Hegel is have a look at the documentation
+   * https://docs.tinkerbell.org/services/hegel/
+   *
+   * And at this URL you can find an explanation of how a metadata looks like:
+   * https://docs.tinkerbell.org/about/hardware-data/
+   * Right now it is a string but we want to structure it a bit more.
+   */
+  string metadata = 9;
+}
+
+/*
+ * DeleteRequest gets used when you want to delete an hardware by its identifier.
+ * Usually it is a UUID.
+ */
+message DeleteRequest {
+  string id = 1;
+}

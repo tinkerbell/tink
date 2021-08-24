@@ -1,0 +1,112 @@
+{
+  "allow_pxe": true,
+  "arch": "x86_64",
+  "bonding_mode": 4,
+  "efi_boot": true,
+  "facility_code": "ewr1",
+  "id": "f9f56dff-098a-4c5f-a51c-19ad35de85d2",
+  "instance": {
+    "allow_pxe": true,
+    "always_pxe": true,
+    "customdata": {},
+    "hostname": "sample-machine2",
+    "id": "3b2cccf1-1906-4d82-9fe0-c6d5188e70ec",
+    "ip_addresses": [],
+    "ipxe_script_url": "https://boot.netboot.xyz",
+    "network_ready": false,
+    "operating_system_version": {
+      "distro": "custom_ipxe",
+      "image_tag": null,
+      "os_slug": "custom_ipxe",
+      "slug": "custom_ipxe",
+      "version": "1"
+    },
+    "project": {},
+    "rescue": false,
+    "ssh_keys": [],
+    "state": "active",
+    "storage": {},
+    "tags": [],
+    "userdata": ""
+  },
+  "ip_addresses": [
+    {
+      "address": "172.24.7.51",
+      "address_family": 4,
+      "cidr": 30,
+      "enabled": true,
+      "gateway": "172.24.7.49",
+      "management": true,
+      "netmask": "255.255.255.252",
+      "network": "172.24.7.48",
+      "public": false,
+      "type": "data"
+    },
+    {
+      "address": "10.250.42.39",
+      "gateway": "10.250.42.1",
+      "netmask": "255.255.255.0",
+      "type": "ipmi"
+    }
+  ],
+  "management": {
+    "address": "10.250.42.39",
+    "gateway": "10.250.42.1",
+    "netmask": "255.255.255.0",
+    "type": "ipmi"
+  },
+  "manufacturer": {
+    "id": "5c6dc6d1-0b75-4e77-811e-e2d3b4e5312b",
+    "slug": "dell"
+  },
+  "network_ports": [
+    {
+      "connected_ports": [
+        {
+          "data": {
+            "bond": null,
+            "mac": null
+          },
+          "hostname": "",
+          "id": "421f34e5-b141-4c4a-8234-239996bf7a1b",
+          "name": "xe-0/0/28",
+          "type": "data"
+        }
+      ],
+      "data": {
+        "bond": null,
+        "mac": "98:03:9b:89:d7:da"
+      },
+      "id": "213394d4-8642-443d-9140-c625cfaeb354",
+      "name": "eth0",
+      "type": "data"
+    },
+    {
+      "connected_ports": [],
+      "data": {
+        "bond": null,
+        "mac": "98:03:9b:89:d7:db"
+      },
+      "id": "da245720-aa41-4368-9eca-7fb5af8bd493",
+      "name": "eth1",
+      "type": "data"
+    },
+    {
+      "connected_ports": [],
+      "data": {
+        "bond": null,
+        "mac": "4c:d9:8f:42:21:f4"
+      },
+      "id": "b1b7c29c-41d0-479d-9dbc-392250b8b37f",
+      "name": "ipmi0",
+      "type": "ipmi"
+    }
+  ],
+  "plan_slug": "c2.medium.x86",
+  "plan_version_slug": "c2.medium.x86.01",
+  "preinstalled_operating_system_version": {},
+  "services": {},
+  "state": "in_use",
+  "type": "server",
+  "vlan_id": null
+}
