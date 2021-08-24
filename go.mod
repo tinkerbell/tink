@@ -4,10 +4,12 @@ go 1.13
 
 require (
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v20.10.7+incompatible
-	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.6
-	github.com/google/uuid v1.2.0
+	github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible
+	github.com/docker/go-units v0.4.0 // indirect
+	github.com/go-openapi/strfmt v0.19.3 // indirect
+	github.com/golang/protobuf v1.5.0
+	github.com/google/go-cmp v0.5.5
+	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
@@ -24,12 +26,16 @@ require (
 	github.com/stormcat24/protodep v0.0.0-20200505140716-b02c9ba62816
 	github.com/stretchr/testify v1.7.0
 	github.com/testcontainers/testcontainers-go v0.9.0
-	github.com/tobert/otel-launcher-go v0.20.1-0.20210715190015-ab89c7a1eb9d
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.21.0
-	google.golang.org/genproto v0.0.0-20210604141403-392c879c8b08
-	google.golang.org/grpc v1.39.0
-	google.golang.org/protobuf v1.27.1
-	gopkg.in/yaml.v2 v2.4.0
+	go.mongodb.org/mongo-driver v1.1.2 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.16.0 // indirect
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/tools v0.1.0 // indirect
+	google.golang.org/genproto v0.0.0-20201026171402-d4b8fe4fd877
+	google.golang.org/grpc v1.32.0
+	google.golang.org/protobuf v1.26.0
+	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible // indirect
 )
 
