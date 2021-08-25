@@ -3,12 +3,14 @@ package get
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jedib0t/go-pretty/table"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/internal/clientctx"
@@ -18,6 +20,7 @@ func TestNewGetCommand(t *testing.T) {
 	tests := []struct {
 		Name         string
 		ExpectStdout string
+		ExpectError  error
 		Args         []string
 		Opt          Options
 		Skip         string
@@ -51,20 +54,20 @@ func TestNewGetCommand(t *testing.T) {
 		},
 		{
 			Name: "get-by-id",
-			Args: []string{"30"},
-			ExpectStdout: `+------+-------+
-| NAME | ID    |
-+------+-------+
-| 30   | hello |
-+------+-------+
+			Args: []string{"e0ffbf50-ae7c-4c92-bc7f-34e0de25a989"},
+			ExpectStdout: `+-------+--------------------------------------+
+| NAME  | ID                                   |
++-------+--------------------------------------+
+| hello | e0ffbf50-ae7c-4c92-bc7f-34e0de25a989 |
++-------+--------------------------------------+
 `,
 			Opt: Options{
 				Headers: []string{"name", "id"},
 				RetrieveByID: func(ctx context.Context, cl *client.FullClient, arg string) (interface{}, error) {
-					if arg != "30" {
-						t.Errorf("expected 30 as arg got %s", arg)
+					if arg != "e0ffbf50-ae7c-4c92-bc7f-34e0de25a989" {
+						t.Errorf("expected e0ffbf50-ae7c-4c92-bc7f-34e0de25a989 as arg got %s", arg)
 					}
-					return []string{"30", "hello"}, nil
+					return []string{"hello", "e0ffbf50-ae7c-4c92-bc7f-34e0de25a989"}, nil
 				},
 				PopulateTable: func(data []interface{}, w table.Writer) error {
 					for _, v := range data {
@@ -75,6 +78,43 @@ func TestNewGetCommand(t *testing.T) {
 					return nil
 				},
 			},
+		},
+		{
+			Name:        "get-by-id but no retriever",
+			Args:        []string{"e0ffbf50-ae7c-4c92-bc7f-34e0de25a989"},
+			ExpectError: errors.New("get by ID is not implemented for this resource yet, please have a look at the issue in GitHub or open a new one"),
+		},
+		{
+			Name: "get-by-name",
+			Args: []string{"hello"},
+			ExpectStdout: `+-------+--------------------------------------+
+| NAME  | ID                                   |
++-------+--------------------------------------+
+| hello | e0ffbf50-ae7c-4c92-bc7f-34e0de25a989 |
++-------+--------------------------------------+
+`,
+			Opt: Options{
+				Headers: []string{"name", "id"},
+				RetrieveByName: func(ctx context.Context, cl *client.FullClient, arg string) (interface{}, error) {
+					if arg != "hello" {
+						t.Errorf("expected hello as arg got %s", arg)
+					}
+					return []string{"hello", "e0ffbf50-ae7c-4c92-bc7f-34e0de25a989"}, nil
+				},
+				PopulateTable: func(data []interface{}, w table.Writer) error {
+					for _, v := range data {
+						if vv, ok := v.([]string); ok {
+							w.AppendRow(table.Row{vv[0], vv[1]})
+						}
+					}
+					return nil
+				},
+			},
+		},
+		{
+			Name:        "get-by-name but no retriever",
+			Args:        []string{"hello"},
+			ExpectError: errors.New("get by Name is not implemented for this resource yet, please have a look at the issue in GitHub or open a new one"),
 		},
 		{
 			Name: "happy-path-no-headers",
@@ -181,17 +221,21 @@ func TestNewGetCommand(t *testing.T) {
 			if s.Skip != "" {
 				t.Skip(s.Skip)
 			}
-			stdout := bytes.NewBufferString("")
+			stdout := &bytes.Buffer{}
 			cmd := NewGetCommand(s.Opt)
+			cmd.SilenceErrors = true
 			cmd.SetOut(stdout)
 			cmd.SetArgs(s.Args)
 			err := cmd.ExecuteContext(clientctx.Set(context.Background(), &client.FullClient{}))
-			if err != nil {
-				t.Error(err)
+			if fmt.Sprint(err) != fmt.Sprint(s.ExpectError) {
+				t.Errorf("unexpected error: want=%v, got=%v", s.ExpectError, err)
 			}
 			out, err := ioutil.ReadAll(stdout)
 			if err != nil {
 				t.Error(err)
+			}
+			if s.ExpectError != nil {
+				s.ExpectStdout = cmd.UsageString() + "\n"
 			}
 			if diff := cmp.Diff(string(out), s.ExpectStdout); diff != "" {
 				t.Fatal(diff)

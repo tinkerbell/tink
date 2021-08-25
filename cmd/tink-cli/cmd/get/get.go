@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -19,6 +20,8 @@ type Options struct {
 	RetrieveData func(context.Context, *client.FullClient) ([]interface{}, error)
 	// RetrieveByID is used when a get command has a list of arguments
 	RetrieveByID func(context.Context, *client.FullClient, string) (interface{}, error)
+	// RetrieveByName is used when a get command has a list of arguments
+	RetrieveByName func(context.Context, *client.FullClient, string) (interface{}, error)
 	// PopulateTable populates a table with the data retrieved with the RetrieveData function.
 	PopulateTable func([]interface{}, table.Writer) error
 
@@ -62,16 +65,7 @@ func NewGetCommand(opt Options) *cobra.Command {
 
 			client := clientctx.Get(cmd.Context())
 			if len(args) != 0 {
-				if opt.RetrieveByID == nil {
-					return errors.New("option RetrieveByID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one")
-				}
-				for _, requestedID := range args {
-					s, err := opt.RetrieveByID(cmd.Context(), client, requestedID)
-					if err != nil {
-						continue
-					}
-					data = append(data, s)
-				}
+				data, err = retrieveMulti(cmd.Context(), opt, client, args)
 			} else {
 				data, err = opt.RetrieveData(cmd.Context(), client)
 			}
@@ -116,4 +110,32 @@ func NewGetCommand(opt Options) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&opt.Format, "format", "", "table", "The format you expect the list to be printed out. Currently supported format are table, JSON and CSV")
 	cmd.PersistentFlags().BoolVar(&opt.NoHeaders, "no-headers", false, "Table contains an header with the columns' name. You can disable it from being printed out")
 	return cmd
+}
+
+func retrieveMulti(ctx context.Context, opt Options, fc *client.FullClient, args []string) ([]interface{}, error) {
+	var data []interface{}
+	for _, arg := range args {
+		var retriever func(context.Context, *client.FullClient, string) (interface{}, error)
+		if _, err := uuid.Parse(arg); err != nil {
+			// arg is invalid UUID, search for arg in `name` field of db
+			if opt.RetrieveByName == nil {
+				return nil, errors.New("get by Name is not implemented for this resource yet, please have a look at the issue in GitHub or open a new one")
+			}
+			retriever = opt.RetrieveByName
+		} else {
+			// arg is a valid UUID, search for arg in `id` field of db
+			if opt.RetrieveByID == nil {
+				return nil, errors.New("get by ID is not implemented for this resource yet, please have a look at the issue in GitHub or open a new one")
+			}
+			retriever = opt.RetrieveByID
+		}
+
+		s, err := retriever(ctx, fc, arg)
+		if err != nil {
+			continue
+		}
+		data = append(data, s)
+	}
+
+	return data, nil
 }
