@@ -68,7 +68,7 @@ type ConnOptions struct {
 
 func (o *ConnOptions) SetFlags(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(&o.CertURL, "tinkerbell-cert-url", "http://127.0.0.1:42114/cert", "The URL where the certificate is located")
-	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Link to tink-server grcp api")
+	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Link to tink-server grpc api")
 }
 
 func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
@@ -160,4 +160,13 @@ func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 		log.Fatal(err)
 	}
 	return workflow.NewWorkflowServiceClient(conn), nil
+}
+
+// TinkTemplateClient creates a new template client
+func TinkTemplateClient() (template.TemplateServiceClient, error) {
+	conn, err := GetConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return template.NewTemplateServiceClient(conn), nil
 }

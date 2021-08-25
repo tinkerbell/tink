@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-
+	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/table"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"google.golang.org/grpc"
@@ -20,6 +20,8 @@ type Options struct {
 	RetrieveData func(context.Context, *client.FullClient) ([]interface{}, error)
 	// RetrieveByID is used when a get command has a list of arguments
 	RetrieveByID func(context.Context, *client.FullClient, string) (interface{}, error)
+	// RetrieveByName is used when a get command has a list of arguments
+	RetrieveByName func(context.Context, *client.FullClient, string) (interface{}, error)
 	// PopulateTable populates a table with the data retrieved with the RetrieveData function.
 	PopulateTable func([]interface{}, table.Writer) error
 
@@ -96,15 +98,30 @@ func NewGetCommand(opt Options) *cobra.Command {
 			t.SetOutputMirror(cmd.OutOrStdout())
 
 			if len(args) != 0 {
-				if opt.RetrieveByID == nil {
-					return errors.New("Get by ID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
-				}
-				for _, requestedID := range args {
-					s, err := opt.RetrieveByID(cmd.Context(), opt.fullClient, requestedID)
-					if err != nil {
-						continue
+				for _, arg := range args {
+					if _, err := uuid.Parse(arg); err == nil {
+						// arg is a valid UUID, search for arg in `id` field of db
+						if opt.RetrieveByID == nil {
+							return errors.New("Get by ID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
+						}
+
+						s, err := opt.RetrieveByID(cmd.Context(), opt.fullClient, arg)
+						if err != nil {
+							continue
+						}
+						data = append(data, s)
+					} else {
+						// arg is invalid UUID, search for arg in `name` field of db
+						if opt.RetrieveByName == nil {
+							return errors.New("Get by Name is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
+						}
+
+						s, err := opt.RetrieveByName(cmd.Context(), opt.fullClient, arg)
+						if err != nil {
+							continue
+						}
+						data = append(data, s)
 					}
-					data = append(data, s)
 				}
 			} else {
 				data, err = opt.RetrieveData(cmd.Context(), opt.fullClient)
