@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -17,7 +18,6 @@ import (
 	"github.com/tinkerbell/tink/db"
 	rpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
-	"github.com/tobert/otel-launcher-go/launcher"
 )
 
 var (
@@ -103,15 +103,14 @@ func main() {
 	}
 	defer logger.Close()
 
-	otel := launcher.ConfigureOpentelemetry(
-		launcher.WithServiceName("github.com/tinkerbell/tink"),
-	)
-	defer otel.Shutdown()
+	ctx := context.Background()
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "github.com/tinkerbell/tink")
+	defer otelShutdown(ctx)
 
 	config := &DaemonConfig{}
 
 	cmd := NewRootCommand(config, logger)
-	if err := cmd.ExecuteContext(context.Background()); err != nil {
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 

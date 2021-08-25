@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"os"
 
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/cmd/tink-worker/cmd"
-	"github.com/tobert/otel-launcher-go/launcher"
 )
 
 const (
@@ -24,10 +25,8 @@ func main() {
 	}
 	defer logger.Close()
 
-	otel := launcher.ConfigureOpentelemetry(
-		launcher.WithServiceName("github.com/tinkerbell/tink"),
-	)
-	defer otel.Shutdown()
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(context.Background(), "github.com/tinkerbell/tink")
+	defer otelShutdown(ctx)
 
 	rootCmd := cmd.NewRootCommand(version, logger)
 

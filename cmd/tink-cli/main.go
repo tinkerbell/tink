@@ -1,21 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd"
-	"github.com/tobert/otel-launcher-go/launcher"
 )
 
 // version is set at build time
 var version = "devel"
 
 func main() {
-	otel := launcher.ConfigureOpentelemetry(
-		launcher.WithServiceName("github.com/tinkerbell/tink"),
-	)
-	defer otel.Shutdown()
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(context.Background(), "github.com/tinkerbell/tink")
+	defer otelShutdown(ctx)
 
 	if err := cmd.Execute(version); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
