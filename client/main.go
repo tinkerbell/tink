@@ -161,12 +161,3 @@ func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 	}
 	return workflow.NewWorkflowServiceClient(conn), nil
 }
-
-// TinkTemplateClient creates a new template client
-func TinkTemplateClient() (template.TemplateServiceClient, error) {
-	conn, err := GetConnection()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return template.NewTemplateServiceClient(conn), nil
-}
