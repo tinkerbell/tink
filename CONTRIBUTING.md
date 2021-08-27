@@ -1,10 +1,12 @@
 # Hello Contributors!
 
+Thanks for your interest!
+We're so glad you're here.
 Thanks for helping make Tinkerbell better 😍!
 
 There are many areas we can use contributions - ranging from code, documentation, feature proposals, issue triage, samples, and content creation.
 
-First, please read the [code of conduct](CODE_OF_CONDUCT.md).
+First, please read and understand the code of conduct found [here](https://github.com/tinkerbell/.github/blob/master/CODE_OF_CONDUCT.md).
 By participating, you're expected to uphold this code.
 
 ## Table of Contents
@@ -14,6 +16,8 @@ By participating, you're expected to uphold this code.
 -   [Contributing](#contributing)
     -   [File an issue](#file-an-issue)
     -   [Submit a change](#submit-a-change)
+        -   [DCO Sign Off](#DCO-Sign-Off)
+        -   [Environment Details](#Environment-Details)
     -   [Code style guide](#code-style-guide)
 -   [Understanding code structure](#understanding-code-structure)
     -   [cmd](#cmd)
@@ -58,15 +62,35 @@ Before you submit a change, you must fork the repository and submit a pull reque
 Please ensure that you adhere to the prompted submission guidelines while raising a pull request.
 We will try to review and provide feedback as soon as possible.
 
+### DCO Sign Off
+
+Please read and understand the DCO found [here](docs/DCO.md).
+
+### Environment Details
+
+Building is handled by `make`, please see the [Makefile](Makefile) for available targets.
+
+#### Nix
+
+This repo's build environment can be reproduced using `nix`.
+
+##### Install Nix
+
+Follow the [Nix installation](https://nixos.org/download.html) guide to setup Nix on your box.
+
+##### Load Dependencies
+
+Loading build dependencies is as simple as running `nix-shell` or using [lorri](https://github.com/nix-community/lorri).
+If you have `direnv` installed the included `.envrc` will make that step automatic.
+
 ### Code Style Guide
 
 #### Protobuf
 
 Please ensure protobuf related files are generated along with _any_ change to a protobuf file.
-CI will enforce this, but its best to commit the generated files along with the protobuf changes in the same commit.
+In the future CI will enforce this, but for the time being does not.
 Handling of protobuf deps and generating the go files are both handled by the [protoc.sh](./protos/protoc.sh) script.
 Both `go`, and `protoc` are required by `protoc.sh`.
-These are both installed and used if using `nix-shell`.
 
 #### Unit Tests
 
