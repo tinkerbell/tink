@@ -74,14 +74,13 @@ Rather than adding a bunch of command line options or a config file, OpenTelemet
 is configured via environment variables. The most relevant ones are below, for others
 see https://github.com/equinix-labs/otel-init-go
 
-Notes:
-   * currently this is just for tracing, metrics needs to be discussed with the community
+Currently this is just for tracing, metrics needs to be discussed with the community.
 
-| Env Variable                 | Required | Default   |
-|------------------------------|----------|---------- |
-|`OTEL_EXPORTER_OTLP_ENDPOINT` | n        | localhost |
-|`OTEL_EXPORTER_OTLP_INSECURE` | n        | false     |
-|`OTEL_LOG_LEVEL`              | n        | info      |
+| Env Variable                  | Required | Default   |
+| ----------------------------- | -------- | --------- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | n        | localhost |
+| `OTEL_EXPORTER_OTLP_INSECURE` | n        | false     |
+| `OTEL_LOG_LEVEL`              | n        | info      |
 
 To work with a local [opentelemetry-collector](https://github.com/open-telemetry/opentelemetry-collector),
 try the following. For examples of how to set up the collector to relay to various services
@@ -92,7 +91,6 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
 export OTEL_EXPORTER_OTLP_INSECURE=true
 ./cmd/tink-server/tink-server <stuff>
 ```
-
 
 ## Website
 
