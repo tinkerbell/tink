@@ -316,7 +316,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 					} else {
 						actionStatus.ActionStatus = pb.State_STATE_FAILED
 					}
-					l.With("actionStatus", actionStatus.ActionStatus.String())
+					l = l.With("actionStatus", actionStatus.ActionStatus.String())
 					l.Error(err)
 					if reportErr := w.reportActionStatus(ctx, actionStatus); reportErr != nil {
 						exitWithGrpcError(reportErr, l)
