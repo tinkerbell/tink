@@ -6,7 +6,8 @@ set -eux
 
 failed=0
 
-if ! git ls-files | xargs codespell -q 3 -I .codespell-whitelist; then
+# spell-checks only language files to avoid spell-checking checksums
+if ! git ls-files '*.sh' '*.go' '*.md' | xargs codespell -q 3 -I .codespell-whitelist; then
 	failed=1
 fi
 
