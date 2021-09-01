@@ -196,12 +196,12 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				HTTPBasicAuthPassword: config.HTTPBasicAuthPassword,
 			}, errCh)
 
-			<-ctx.Done()
 			select {
 			case err = <-errCh:
 				logger.Error(err)
 			case sig := <-sigs:
 				logger.With("signal", sig.String()).Info("signal received, stopping servers")
+				closer()
 			}
 
 			// wait for grpc server to shutdown
