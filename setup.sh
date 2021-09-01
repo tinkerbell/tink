@@ -247,38 +247,50 @@ EOF
 )
 
 setup_osie() (
-	mkdir -p "$STATEDIR/webroot"
-
 	local osie_current=$STATEDIR/webroot/misc/osie/current
 	local tink_workflow=$STATEDIR/webroot/workflow/
-	if [ ! -d "$osie_current" ] || [ ! -d "$tink_workflow" ]; then
-		mkdir -p "$osie_current"
-		mkdir -p "$tink_workflow"
-		pushd "$SCRATCH"
 
-		if [ -z "${TB_OSIE_TAR:-}" ]; then
-			curl --fail \
-				--location \
-				--retry 3 \
-				--show-error \
-				--silent \
-				'https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz' -o ./osie.tar.gz
-			tar -zxf osie.tar.gz
+	if [ -d "$osie_current" ] && [ -d "$tink_workflow" ]; then
+		echo "$INFO found existing osie files in ${osie_current} and ${tink_workflow}: skipping osie setup."
+		return
+	fi
+
+	mkdir -p "$osie_current" "$tink_workflow"
+	pushd "$SCRATCH"
+
+	if [ -z "${TB_OSIE_TAR:-}" ]; then
+		local url=${OSIE_DOWNLOAD_LINK:-"https://tinkerbell-oss.s3.amazonaws.com/osie-uploads/latest.tar.gz"}
+		TB_OSIE_TAR="osie.tar.gz"
+
+		echo "$INFO Downloading ${url} (this may take 5-15 minutes) ..."
+
+		if ! curl --fail \
+			--location \
+			--retry 3 \
+			--show-error \
+			--silent \
+			"${url}" -o "${TB_OSIE_TAR}"; then
+			echo "$ERR Failed to download ${url} - Download it and set $TB_OSIE_TAR to continue"
+			exit 1
+		fi
+	fi
+
+	if [ ! -f "$TB_OSIE_TAR" ]; then
+		echo "$ERR osie tar not found in the given location $TB_OSIE_TAR"
+		exit 1
+	fi
+
+	echo "$INFO extracting osie tar at $TB_OSIE_TAR"
+	tar -zxf "$TB_OSIE_TAR"
+
+	if pushd osie*/; then
+		if mv workflow-helper.sh workflow-helper-rc "$tink_workflow"; then
+			cp -r ./* "$osie_current"
 		else
-			tar -zxf "$TB_OSIE_TAR"
+			echo "$ERR failed to move 'workflow-helper.sh' and 'workflow-helper-rc'"
+			exit 1
 		fi
-
-		if pushd osie*/; then
-			if mv workflow-helper.sh workflow-helper-rc "$tink_workflow"; then
-				cp -r ./* "$osie_current"
-			else
-				echo "$ERR failed to move 'workflow-helper.sh' and 'workflow-helper-rc'"
-				exit 1
-			fi
-			popd
-		fi
-	else
-		echo "$INFO found existing osie files, skipping osie setup"
+		popd
 	fi
 )
 
