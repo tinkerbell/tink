@@ -261,6 +261,11 @@ setup_osie() (
 			curl -fsSL "${OSIE_DOWNLOAD_LINK}" -o ./osie.tar.gz
 			tar -zxf osie.tar.gz
 		else
+			if [ ! -f "$TB_OSIE_TAR" ]; then
+				echo "$ERR osie tar not found in the given location $TB_OSIE_TAR"
+				exit 1
+			fi
+			echo "$INFO extracting osie tar"
 			tar -zxf "$TB_OSIE_TAR"
 		fi
 
