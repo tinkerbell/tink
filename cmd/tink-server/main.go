@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -102,10 +103,14 @@ func main() {
 	}
 	defer logger.Close()
 
+	ctx := context.Background()
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "github.com/tinkerbell/tink")
+	defer otelShutdown(ctx)
+
 	config := &DaemonConfig{}
 
 	cmd := NewRootCommand(config, logger)
-	if err := cmd.ExecuteContext(context.Background()); err != nil {
+	if err := cmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 
