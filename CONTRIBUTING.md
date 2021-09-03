@@ -6,7 +6,7 @@ Thanks for helping make Tinkerbell better 😍!
 
 There are many areas we can use contributions - ranging from code, documentation, feature proposals, issue triage, samples, and content creation.
 
-First, please read and understand the code of conduct found [here](https://github.com/tinkerbell/.github/blob/master/CODE_OF_CONDUCT.md).
+First, please read and understand the code of conduct found [here](https://github.com/tinkerbell/.github/blob/main/CODE_OF_CONDUCT.md).
 By participating, you're expected to uphold this code.
 
 ## Table of Contents
