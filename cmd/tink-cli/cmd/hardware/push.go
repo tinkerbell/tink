@@ -23,7 +23,7 @@ var (
 	sFile = "file"
 )
 
-// pushCmd represents the push command
+// pushCmd represents the push command.
 func NewPushCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "push",

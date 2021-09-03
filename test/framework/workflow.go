@@ -7,7 +7,7 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
-// CreateWorkflow : create workflow
+// CreateWorkflow : create workflow.
 func CreateWorkflow(template string, hardware string) (string, error) {
 	req := workflow.CreateRequest{Template: template, Hardware: hardware}
 	res, err := client.WorkflowClient.CreateWorkflow(context.Background(), &req)
@@ -17,7 +17,7 @@ func CreateWorkflow(template string, hardware string) (string, error) {
 	return res.Id, nil
 }
 
-// GetCurrentStatus : get the current status of workflow from server
+// GetCurrentStatus : get the current status of workflow from server.
 func GetCurrentStatus(ctx context.Context, wfID string, status chan workflow.State) {
 	req := workflow.GetRequest{Id: wfID}
 	wf, err := client.WorkflowClient.GetWorkflowContext(ctx, &req)

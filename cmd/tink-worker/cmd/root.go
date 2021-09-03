@@ -20,11 +20,11 @@ import (
 const (
 	defaultRetryInterval        = 3
 	defaultRetryCount           = 3
-	defaultMaxFileSize    int64 = 10 * 1024 * 1024 //10MB
+	defaultMaxFileSize    int64 = 10 * 1024 * 1024 // 10MB
 	defaultTimeoutMinutes       = 60
 )
 
-// NewRootCommand creates a new Tink Worker Cobra root command
+// NewRootCommand creates a new Tink Worker Cobra root command.
 func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:     "tink-worker",

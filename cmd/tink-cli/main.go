@@ -7,7 +7,7 @@ import (
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd"
 )
 
-// version is set at build time
+// version is set at build time.
 var version = "devel"
 
 func main() {

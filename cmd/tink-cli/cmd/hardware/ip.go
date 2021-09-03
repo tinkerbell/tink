@@ -15,7 +15,7 @@ import (
 
 var data bool
 
-// ipCmd represents the ip command
+// ipCmd represents the ip command.
 func NewGetByIPCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ip",

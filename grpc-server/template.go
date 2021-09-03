@@ -13,7 +13,7 @@ import (
 	"github.com/tinkerbell/tink/protos/template"
 )
 
-// CreateTemplate implements template.CreateTemplate
+// CreateTemplate implements template.CreateTemplate.
 func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTemplate) (*template.CreateResponse, error) {
 	s.logger.Info("createtemplate")
 	labels := prometheus.Labels{"method": "CreateTemplate", "op": ""}
@@ -43,7 +43,7 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 	return &template.CreateResponse{Id: id.String()}, err
 }
 
-// GetTemplate implements template.GetTemplate
+// GetTemplate implements template.GetTemplate.
 func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*template.WorkflowTemplate, error) {
 	s.logger.Info("gettemplate")
 	labels := prometheus.Labels{"method": "GetTemplate", "op": ""}
@@ -75,7 +75,7 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 	return wtmpl, err
 }
 
-// DeleteTemplate implements template.DeleteTemplate
+// DeleteTemplate implements template.DeleteTemplate.
 func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*template.Empty, error) {
 	s.logger.Info("deletetemplate")
 	labels := prometheus.Labels{"method": "DeleteTemplate", "op": ""}
@@ -103,7 +103,7 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 	return &template.Empty{}, err
 }
 
-// ListTemplates implements template.ListTemplates
+// ListTemplates implements template.ListTemplates.
 func (s *server) ListTemplates(in *template.ListRequest, stream template.TemplateService_ListTemplatesServer) error {
 	s.logger.Info("listtemplates")
 	labels := prometheus.Labels{"method": "ListTemplates", "op": "list"}
@@ -129,7 +129,6 @@ func (s *server) ListTemplates(in *template.ListRequest, stream template.Templat
 	err := s.db.ListTemplates(filter, func(id, n string, crTime, upTime *timestamp.Timestamp) error {
 		return stream.Send(&template.WorkflowTemplate{Id: id, Name: n, CreatedAt: crTime, UpdatedAt: upTime})
 	})
-
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		return err
@@ -139,7 +138,7 @@ func (s *server) ListTemplates(in *template.ListRequest, stream template.Templat
 	return nil
 }
 
-// UpdateTemplate implements template.UpdateTemplate
+// UpdateTemplate implements template.UpdateTemplate.
 func (s *server) UpdateTemplate(ctx context.Context, in *template.WorkflowTemplate) (*template.Empty, error) {
 	s.logger.Info("updatetemplate")
 	labels := prometheus.Labels{"method": "UpdateTemplate", "op": ""}

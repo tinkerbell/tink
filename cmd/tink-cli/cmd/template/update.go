@@ -14,7 +14,7 @@ import (
 	"github.com/tinkerbell/tink/workflow"
 )
 
-// updateCmd represents the get subcommand for template command
+// updateCmd represents the get subcommand for template command.
 func NewUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update [id] [flags]",

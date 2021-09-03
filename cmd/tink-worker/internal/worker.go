@@ -38,7 +38,7 @@ var (
 	workflowDataSHA  = map[string]string{}
 )
 
-// WorkflowMetadata is the metadata related to workflow data
+// WorkflowMetadata is the metadata related to workflow data.
 type WorkflowMetadata struct {
 	WorkerID  string    `json:"workerID"`
 	Action    string    `json:"actionName"`
@@ -47,7 +47,7 @@ type WorkflowMetadata struct {
 	SHA       string    `json:"sha256"`
 }
 
-// Worker details provide all the context needed to run a
+// Worker details provide all the context needed to run a.
 type Worker struct {
 	client         pb.WorkflowServiceClient
 	regConn        *RegistryConnDetails
@@ -59,7 +59,7 @@ type Worker struct {
 	maxSize        int64
 }
 
-// NewWorker creates a new Worker, creating a new Docker registry client
+// NewWorker creates a new Worker, creating a new Docker registry client.
 func NewWorker(client pb.WorkflowServiceClient, regConn *RegistryConnDetails, logger log.Logger, registry string, retries int, retryInterval time.Duration, maxFileSize int64) *Worker {
 	registryClient, err := regConn.NewClient()
 	if err != nil {
@@ -188,7 +188,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	return status, nil
 }
 
-// ProcessWorkflowActions gets all Workflow contexts and processes their actions
+// ProcessWorkflowActions gets all Workflow contexts and processes their actions.
 func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, captureActionLogs bool) error {
 	l := w.logger.With("workerID", workerID)
 
@@ -249,7 +249,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 					"taskName", actions.GetActionList()[actionIndex].GetTaskName(),
 				)
 				if _, err := os.Stat(wfDir); os.IsNotExist(err) {
-					err := os.Mkdir(wfDir, os.FileMode(0755))
+					err := os.Mkdir(wfDir, os.FileMode(0o755))
 					if err != nil {
 						l.Error(err)
 						os.Exit(1)
@@ -474,7 +474,7 @@ func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowServic
 }
 
 func openDataFile(wfDir string, l log.Logger) *os.File {
-	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0600)
+	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		l.Error(err)
 		os.Exit(1)

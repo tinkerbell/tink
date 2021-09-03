@@ -35,7 +35,7 @@ type HTTPServerConfig struct {
 	HTTPBasicAuthPassword string
 }
 
-// SetupHTTP setup and return an HTTP server
+// SetupHTTP setup and return an HTTP server.
 func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, errCh chan<- error) {
 	logger = lg
 
@@ -143,7 +143,7 @@ func setupGitRevJSON() {
 }
 
 // BasicAuth adds authentication to the routes handled by handler
-// skips authentication if both authUsername and authPassword aren't set
+// skips authentication if both authUsername and authPassword aren't set.
 func BasicAuth(authUsername, authPassword string, handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if authUsername != "" || authPassword != "" {

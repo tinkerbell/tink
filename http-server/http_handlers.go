@@ -21,7 +21,7 @@ import (
 )
 
 // RegisterHardwareServiceHandlerFromEndpoint serves Hardware requests at the
-// given endpoint over GRPC
+// given endpoint over GRPC.
 func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -214,7 +214,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 }
 
 // RegisterTemplateHandlerFromEndpoint serves Template requests at the given
-// endpoint over GRPC
+// endpoint over GRPC.
 func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -384,7 +384,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 }
 
 // RegisterWorkflowSvcHandlerFromEndpoint serves Workflow requests at the given
-// endpoint over GRPC
+// endpoint over GRPC.
 func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -588,7 +588,7 @@ func tryParseTemplate(data string) error {
 	return nil
 }
 
-// writeResponse appends a new line after res
+// writeResponse appends a new line after res.
 func writeResponse(w http.ResponseWriter, status int, res string) {
 	w.WriteHeader(status)
 	if _, err := w.Write([]byte(fmt.Sprintln(res))); err != nil {

@@ -31,7 +31,7 @@ type HardwareWrapper struct {
 // 2. Marshal Hardware object to then be unmarshaled into map A
 // 3. Create another empty map B to unmarshal metadata string into
 // 4. Set map B as map A's metadata field
-// 5. Marshal map A
+// 5. Marshal map A.
 func (h HardwareWrapper) MarshalJSON() ([]byte, error) {
 	tmp := make(map[string]interface{})     // map (A) to hold metadata as a map (as opposed to string)
 	hwByte, err := json.Marshal(h.Hardware) // marshal hardware object
@@ -67,7 +67,7 @@ func (h HardwareWrapper) MarshalJSON() ([]byte, error) {
 // 2. Unmarshal []byte b into map
 // 3. Marshal metadata field
 // 4. Set metadata string as map's metadata field
-// 5. Marshal map to then be unmarshaled into Hardware object
+// 5. Marshal map to then be unmarshaled into Hardware object.
 func (h *HardwareWrapper) UnmarshalJSON(b []byte) error {
 	type hwWrapper HardwareWrapper      // intermediary type to avoid infinite recursion
 	tmp := make(map[string]interface{}) // map to hold metadata as a string (as well as all the hardware data)

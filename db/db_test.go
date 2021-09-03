@@ -20,7 +20,7 @@ type NewPostgresDatabaseRequest struct {
 
 // NewPostgresDatabaseClient returns a SQL client ready to be used. Behind the
 // scene it is starting a Docker container that will get cleaned up when the
-// test is over. Tests using this function are safe to run in parallel
+// test is over. Tests using this function are safe to run in parallel.
 func NewPostgresDatabaseClient(t *testing.T, ctx context.Context, req NewPostgresDatabaseRequest) (*sql.DB, *db.TinkDB, func() error) {
 	testcontainers.SkipIfProviderIsNotHealthy(t)
 	postgresC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

@@ -15,7 +15,7 @@ type Template struct {
 	Deleted bool
 }
 
-// CreateTemplate creates a new workflow template
+// CreateTemplate creates a new workflow template.
 func (d *DB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	if d.TemplateDB == nil {
 		d.TemplateDB = make(map[string]interface{})
@@ -41,12 +41,12 @@ func (d *DB) CreateTemplate(ctx context.Context, name string, data string, id uu
 	return nil
 }
 
-// GetTemplate returns a workflow template
+// GetTemplate returns a workflow template.
 func (d DB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 	return d.GetTemplateFunc(ctx, fields, deleted)
 }
 
-// DeleteTemplate deletes a workflow template
+// DeleteTemplate deletes a workflow template.
 func (d DB) DeleteTemplate(ctx context.Context, name string) error {
 	if d.TemplateDB != nil {
 		delete(d.TemplateDB, name)
@@ -55,17 +55,17 @@ func (d DB) DeleteTemplate(ctx context.Context, name string) error {
 	return nil
 }
 
-// ListTemplates returns all saved templates
+// ListTemplates returns all saved templates.
 func (d DB) ListTemplates(in string, fn func(id, n string, in, del *timestamp.Timestamp) error) error {
 	return nil
 }
 
-// UpdateTemplate update a given template
+// UpdateTemplate update a given template.
 func (d DB) UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	return nil
 }
 
-// ClearTemplateDB clear all the templates
+// ClearTemplateDB clear all the templates.
 func (d *DB) ClearTemplateDB() {
 	d.TemplateDB = make(map[string]interface{})
 }

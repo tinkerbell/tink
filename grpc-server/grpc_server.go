@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-// Server is the gRPC server for tinkerbell
+// Server is the gRPC server for tinkerbell.
 type server struct {
 	cert []byte
 	modT time.Time
@@ -48,7 +48,7 @@ type ConfigGRPCServer struct {
 	DB            *db.TinkDB
 }
 
-// SetupGRPC setup and return a gRPC server
+// SetupGRPC setup and return a gRPC server.
 func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer, errCh chan<- error) ([]byte, time.Time) {
 	params := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),

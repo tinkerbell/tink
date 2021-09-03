@@ -15,7 +15,7 @@ import (
 
 const errFailedToGetTemplate = "failed to get template with ID %s"
 
-// CreateWorkflow implements workflow.CreateWorkflow
+// CreateWorkflow implements workflow.CreateWorkflow.
 func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest) (*workflow.CreateResponse, error) {
 	s.logger.Info("createworkflow")
 	labels := prometheus.Labels{"method": "CreateWorkflow", "op": ""}
@@ -42,7 +42,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		return &workflow.CreateResponse{}, errors.Wrapf(err, errFailedToGetTemplate, in.GetTemplate())
 	}
 	data, err := wkf.RenderTemplate(in.GetTemplate(), wtmpl.GetData(), []byte(in.Hardware))
-
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		s.logger.Error(err)
@@ -71,7 +70,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	return &workflow.CreateResponse{Id: id.String()}, err
 }
 
-// GetWorkflow implements workflow.GetWorkflow
+// GetWorkflow implements workflow.GetWorkflow.
 func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Workflow, error) {
 	s.logger.Info("getworkflow")
 	labels := prometheus.Labels{"method": "GetWorkflow", "op": ""}
@@ -122,7 +121,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	return wf, err
 }
 
-// DeleteWorkflow implements workflow.DeleteWorkflow
+// DeleteWorkflow implements workflow.DeleteWorkflow.
 func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Empty, error) {
 	s.logger.Info("deleteworkflow")
 	labels := prometheus.Labels{"method": "DeleteWorkflow", "op": ""}
@@ -151,7 +150,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 	return &workflow.Empty{}, err
 }
 
-// ListWorkflows implements workflow.ListWorkflows
+// ListWorkflows implements workflow.ListWorkflows.
 func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowService_ListWorkflowsServer) error {
 	s.logger.Info("listworkflows")
 	labels := prometheus.Labels{"method": "ListWorkflows", "op": "list"}
@@ -180,7 +179,6 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowServic
 		}
 		return stream.Send(wf)
 	})
-
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		return err
@@ -236,7 +234,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	return wf, err
 }
 
-// ShowWorflowevents  implements workflow.ShowWorflowEvents
+// ShowWorflowevents  implements workflow.ShowWorflowEvents.
 func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowService_ShowWorkflowEventsServer) error {
 	s.logger.Info("List workflows Events")
 	labels := prometheus.Labels{"method": "ShowWorkflowEvents", "op": "list"}
@@ -266,7 +264,6 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 		}
 		return stream.Send(wfs)
 	})
-
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		return err

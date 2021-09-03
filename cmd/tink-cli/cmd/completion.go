@@ -8,7 +8,7 @@ import (
 )
 
 // completionCmd returns the completion command that, when run, generates a
-// bash or zsh completion script for the CLI
+// bash or zsh completion script for the CLI.
 func completionCmd(name string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "completion [bash|zsh|fish|powershell]",

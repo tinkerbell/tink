@@ -14,7 +14,7 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 )
 
-// idCmd represents the id command
+// idCmd represents the id command.
 func NewGetByIDCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "id",

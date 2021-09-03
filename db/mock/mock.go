@@ -10,7 +10,7 @@ import (
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
-// DB is the mocked implementation of Database interface
+// DB is the mocked implementation of Database interface.
 type DB struct {
 	// workflow
 	CreateWorkflowFunc               func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error

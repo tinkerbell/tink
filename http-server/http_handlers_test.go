@@ -62,7 +62,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestHardwarePushHandler(t *testing.T) {
-
 	for name, test := range handlerTests {
 		t.Log(name)
 

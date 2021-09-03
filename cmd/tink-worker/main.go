@@ -11,10 +11,8 @@ const (
 	serviceKey = "github.com/tinkerbell/tink"
 )
 
-var (
-	// version is set at build time
-	version = "devel"
-)
+// version is set at build time.
+var version = "devel"
 
 func main() {
 	logger, err := log.Init(serviceKey)

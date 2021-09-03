@@ -13,7 +13,7 @@ import (
 )
 
 // RegistryConnDetails are the connection details for accessing a Docker
-// registry and logging activities
+// registry and logging activities.
 type RegistryConnDetails struct {
 	registry,
 	user,
@@ -21,7 +21,7 @@ type RegistryConnDetails struct {
 	logger log.Logger
 }
 
-// ImagePullStatus is the status of the downloaded Image chunk
+// ImagePullStatus is the status of the downloaded Image chunk.
 type ImagePullStatus struct {
 	Status         string `json:"status"`
 	Error          string `json:"error"`
@@ -32,7 +32,7 @@ type ImagePullStatus struct {
 	} `json:"progressDetail"`
 }
 
-// NewRegistryConnDetails creates a new RegistryConnDetails
+// NewRegistryConnDetails creates a new RegistryConnDetails.
 func NewRegistryConnDetails(registry, user, pwd string, logger log.Logger) *RegistryConnDetails {
 	return &RegistryConnDetails{
 		registry: registry,
@@ -42,13 +42,12 @@ func NewRegistryConnDetails(registry, user, pwd string, logger log.Logger) *Regi
 	}
 }
 
-// NewClient uses the RegistryConnDetails to create a new Docker Client
+// NewClient uses the RegistryConnDetails to create a new Docker Client.
 func (r *RegistryConnDetails) NewClient() (*client.Client, error) {
 	if r.registry == "" {
 		return nil, errors.New("required DOCKER_REGISTRY")
 	}
 	c, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-
 	if err != nil {
 		return nil, errors.Wrap(err, "DOCKER CLIENT")
 	}
@@ -60,7 +59,7 @@ type imagePuller interface {
 	ImagePull(context.Context, string, types.ImagePullOptions) (io.ReadCloser, error)
 }
 
-// pullImage outputs to stdout the contents of the requested image (relative to the registry)
+// pullImage outputs to stdout the contents of the requested image (relative to the registry).
 func (r *RegistryConnDetails) pullImage(ctx context.Context, cli imagePuller, image string) error {
 	authConfig := types.AuthConfig{
 		Username:      r.user,

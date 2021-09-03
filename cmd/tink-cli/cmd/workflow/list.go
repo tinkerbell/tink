@@ -22,7 +22,7 @@ var (
 	hUpdatedAt = "Updated At"
 )
 
-// listCmd represents the list subcommand for workflow command
+// listCmd represents the list subcommand for workflow command.
 func NewListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",

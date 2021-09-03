@@ -19,10 +19,8 @@ import (
 	httpServer "github.com/tinkerbell/tink/http-server"
 )
 
-var (
-	// version is set at build time
-	version = "devel"
-)
+// version is set at build time.
+var version = "devel"
 
 // DaemonConfig represents all the values you can configure as part of the tink-server.
 // You can change the configuration via environment variable, or file, or command flags.
@@ -108,7 +106,6 @@ func main() {
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
-
 }
 
 func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {

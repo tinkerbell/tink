@@ -60,11 +60,11 @@ func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.Wait
 	case status := <-wait:
 		statusChannel <- status.StatusCode
 		fmt.Println("Worker with id ", id, "finished successfully with status code ", status.StatusCode)
-		//stopLogs <- true
+		// stopLogs <- true
 	case err := <-errC:
 		log.Println("Worker with id ", id, "failed : ", err)
 		failedWorkers <- id
-		//stopLogs <- true
+		// stopLogs <- true
 	}
 	wg.Done()
 }
@@ -84,6 +84,7 @@ func removeContainer(ctx context.Context, cli *dc.Client, id string) error {
 	log.Println("Worker Container removed : ", id)
 	return nil
 }
+
 func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan workflow.State) {
 	for len(workflowStatus) == 0 {
 		GetCurrentStatus(ctx, wfID, workflowStatus)
@@ -109,7 +110,7 @@ func captureLogs(ctx context.Context, cli *dc.Client, id string) {
 	fmt.Println("Logging Finished for container ", id)
 }
 
-// StartWorkers starts the dummy workers
+// StartWorkers starts the dummy workers.
 func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workflow.State, error) {
 	log = logger.WithField("workflow_id", wfID)
 	var wg sync.WaitGroup
@@ -131,7 +132,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 			workerContainer[i] = cID
 			log.Debugln("Worker container created with ID : ", cID)
 			// Run container
-			//startedAt := time.Now()
+			// startedAt := time.Now()
 			err = runContainer(ctx, cli, cID)
 
 			if err != nil {
@@ -140,7 +141,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 			} else {
 				fmt.Println("Worker started with ID : ", cID)
 				wg.Add(1)
-				//capturing logs of action container in a go-routine
+				// capturing logs of action container in a go-routine
 				stopLogs := make(chan bool)
 				go captureLogs(ctx, cli, cID)
 

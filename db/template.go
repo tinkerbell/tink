@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// CreateTemplate creates a new workflow template
+// CreateTemplate creates a new workflow template.
 func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	_, err := wflow.Parse([]byte(data))
 	if err != nil {
@@ -48,7 +48,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	return nil
 }
 
-// GetTemplate returns template which is not deleted
+// GetTemplate returns template which is not deleted.
 func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
@@ -100,7 +100,7 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 	return &tb.WorkflowTemplate{}, err
 }
 
-// DeleteTemplate deletes a workflow template by id
+// DeleteTemplate deletes a workflow template by id.
 func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -129,7 +129,7 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 	return nil
 }
 
-// ListTemplates returns all saved templates
+// ListTemplates returns all saved templates.
 func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *timestamp.Timestamp) error) error {
 	rows, err := d.instance.Query(`
 	SELECT id, name, created_at, updated_at
@@ -139,7 +139,6 @@ func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *time
 	AND
 		deleted_at IS NULL;
 	`, filter)
-
 	if err != nil {
 		return err
 	}
@@ -175,7 +174,7 @@ func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *time
 	return err
 }
 
-// UpdateTemplate update a given template
+// UpdateTemplate update a given template.
 func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {

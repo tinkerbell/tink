@@ -55,7 +55,6 @@ func removeWorkerImage() error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	return err
-
 }
 
 func createWorkerImage() error {
@@ -99,7 +98,7 @@ func initializeLogger() {
 	logger.SetFormatter(&logrus.JSONFormatter{})
 }
 
-// StartStack : Starting stack
+// StartStack : Starting stack.
 func StartStack() error {
 	// Docker compose file for starting the containers
 	filepath := "../test-docker-compose.yml"
@@ -125,25 +124,25 @@ func StartStack() error {
 		return err
 	}
 
-	//Build default images
+	// Build default images
 	err = buildActionImages()
 	if err != nil {
 		return err
 	}
 
-	//Push Images into registry
+	// Push Images into registry
 	err = pushImages()
 	if err != nil {
 		return err
 	}
 
-	//Remove older worker image
+	// Remove older worker image
 	err = removeWorkerImage()
 	if err != nil {
 		return err
 	}
 
-	//Create new Worker image locally
+	// Create new Worker image locally
 	err = createWorkerImage()
 	if err != nil {
 		logger.Errorln("failed to create worker Image")

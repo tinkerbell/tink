@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-// TearDown : remove the setup
+// TearDown : remove the setup.
 func TearDown() error {
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose rm -svf")
 	cmd.Stdout = os.Stdout

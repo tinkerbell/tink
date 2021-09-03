@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// DeleteFromDB : delete data from hardware table
+// DeleteFromDB : delete data from hardware table.
 func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -25,7 +25,6 @@ func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
 	WHERE
 		id = $1;
 	`, id)
-
 	if err != nil {
 		return errors.Wrap(err, "DELETE")
 	}
@@ -41,7 +40,7 @@ func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
 	return nil
 }
 
-// InsertIntoDB : insert data into hardware table
+// InsertIntoDB : insert data into hardware table.
 func (d TinkDB) InsertIntoDB(ctx context.Context, data string) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -69,7 +68,7 @@ func (d TinkDB) InsertIntoDB(ctx context.Context, data string) error {
 	return nil
 }
 
-// GetByMAC : get data by machine mac
+// GetByMAC : get data by machine mac.
 func (d TinkDB) GetByMAC(ctx context.Context, mac string) (string, error) {
 	arg := `
 	{
@@ -96,7 +95,7 @@ func (d TinkDB) GetByMAC(ctx context.Context, mac string) (string, error) {
 	return get(ctx, d.instance, query, arg)
 }
 
-// GetByIP : get data by machine ip
+// GetByIP : get data by machine ip.
 func (d TinkDB) GetByIP(ctx context.Context, ip string) (string, error) {
 	instance := `
 	{
@@ -140,7 +139,7 @@ func (d TinkDB) GetByIP(ctx context.Context, ip string) (string, error) {
 	return get(ctx, d.instance, query, instance, hardwareOrManagement)
 }
 
-// GetByID : get data by machine id
+// GetByID : get data by machine id.
 func (d TinkDB) GetByID(ctx context.Context, id string) (string, error) {
 	arg := id
 
@@ -155,7 +154,7 @@ func (d TinkDB) GetByID(ctx context.Context, id string) (string, error) {
 	return get(ctx, d.instance, query, arg)
 }
 
-// GetAll : get data for all machine
+// GetAll : get data for all machine.
 func (d TinkDB) GetAll(fn func([]byte) error) error {
 	rows, err := d.instance.Query(`
 	SELECT data
@@ -163,7 +162,6 @@ func (d TinkDB) GetAll(fn func([]byte) error) error {
 	WHERE
 		deleted_at IS NULL
 	`)
-
 	if err != nil {
 		return err
 	}
@@ -182,7 +180,6 @@ func (d TinkDB) GetAll(fn func([]byte) error) error {
 		if err != nil {
 			return err
 		}
-
 	}
 
 	err = rows.Err()

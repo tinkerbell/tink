@@ -4,16 +4,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var logger = logrus.New()
-var log *logrus.Entry
+var (
+	logger = logrus.New()
+	log    *logrus.Entry
+)
 
 // Log : This Log will be used in test cases.
 var Log = logger
 
-// SetupWorkflow ... Set up workflow
+// SetupWorkflow ... Set up workflow.
 func SetupWorkflow(tar string, tmpl string) (string, error) {
 	hardwareID := "c9d6faa4-08a2-4285-ae6c-f3401211bd56"
-	//Add template in template table
+	// Add template in template table
 	templateID, err := CreateTemplate(tmpl)
 	if err != nil {
 		return "", err

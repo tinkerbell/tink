@@ -25,7 +25,7 @@ func readHwData(file string) ([]byte, error) {
 	return data, nil
 }
 
-// PushHardwareData : push hardware data
+// PushHardwareData : push hardware data.
 func PushHardwareData(hwDataFiles []string) error {
 	for _, hwFile := range hwDataFiles {
 		filepath := "data/hardware/" + hwFile

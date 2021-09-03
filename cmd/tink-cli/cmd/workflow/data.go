@@ -17,7 +17,7 @@ var (
 	versionOnly   bool
 )
 
-// dataCmd represents the data subcommand for workflow command
+// dataCmd represents the data subcommand for workflow command.
 func NewDataCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "data [id]",

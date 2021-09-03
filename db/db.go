@@ -17,7 +17,7 @@ import (
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
-// Database interface for tinkerbell database operations
+// Database interface for tinkerbell database operations.
 type Database interface {
 	hardware
 	template
@@ -59,13 +59,13 @@ type workflow interface {
 	ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error
 }
 
-// TinkDB implements the Database interface
+// TinkDB implements the Database interface.
 type TinkDB struct {
 	instance *sql.DB
 	logger   log.Logger
 }
 
-// Connect returns a connection to postgres database
+// Connect returns a connection to postgres database.
 func Connect(db *sql.DB, lg log.Logger) *TinkDB {
 	return &TinkDB{instance: db, logger: lg}
 }
@@ -83,7 +83,7 @@ func (t *TinkDB) CheckRequiredMigrations() (int, error) {
 	return len(migrations) - len(records), nil
 }
 
-// Error returns the underlying cause for error
+// Error returns the underlying cause for error.
 func Error(err error) *pq.Error {
 	if pqErr, ok := errors.Cause(err).(*pq.Error); ok {
 		return pqErr
@@ -103,7 +103,7 @@ func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (st
 }
 
 // buildGetCondition builds a where condition string in the format "column_name = 'field_value' AND"
-// takes in a map[string]string with keys being the column name and the values being the field values
+// takes in a map[string]string with keys being the column name and the values being the field values.
 func buildGetCondition(fields map[string]string) (string, error) {
 	for column, field := range fields {
 		if field != "" {

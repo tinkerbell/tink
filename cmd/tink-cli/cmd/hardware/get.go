@@ -53,10 +53,12 @@ func (h *getHardware) PopulateTable(data []interface{}, t table.Writer) error {
 			// even if if has more than one
 			// interface.
 			for _, iface := range hw.GetNetwork().GetInterfaces() {
-				t.AppendRow(table.Row{hw.Id,
+				t.AppendRow(table.Row{
+					hw.Id,
 					iface.Dhcp.Mac,
 					iface.Dhcp.Ip.Address,
-					iface.Dhcp.Hostname})
+					iface.Dhcp.Hostname,
+				})
 			}
 		}
 	}
