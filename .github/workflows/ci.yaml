@@ -6,97 +6,73 @@ env:
   CGO_ENABLED: 0
 
 jobs:
-  golangci-lint:
+  lint:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.14.6'
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2
-  goimports:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.14.6'
-    - name: goimports
-      run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
-  vet:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.14.6'
-    - name: go vet
-      run: go vet ./...
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.17.0"
+      - name: make lint
+        run: make lint
   test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.14.6'
-    - name: go test
-      run: go test -coverprofile=coverage.txt ./...
-    - name: upload codecov
-      run: bash <(curl -s https://codecov.io/bash)
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.14.6"
+      - name: go test
+        run: go test -coverprofile=coverage.txt ./...
+      - name: upload codecov
+        run: bash <(curl -s https://codecov.io/bash)
   ci-checks:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - uses: cachix/install-nix-action@v12
-      with:
-        nix_path: nixpkgs=channel:nixos-unstable
-    - run: ./ci-checks.sh
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v12
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - run: ./ci-checks.sh
   validation:
     runs-on: ubuntu-latest
     needs:
       - ci-checks
-      - goimports
-      - golangci-lint
+      - lint
       - test
-      - vet
     steps:
-    - name: fake
-      run: echo ":+1:"
+      - name: fake
+        run: echo ":+1:"
   crosscompile:
     runs-on: ubuntu-latest
     needs:
       - validation
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: '1.14.6'
-    - run: make crosscompile -j$(nproc)
-    - name: Upload tink-cli binaries
-      uses: actions/upload-artifact@v2
-      with:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.14.6"
+      - run: make crosscompile -j$(nproc)
+      - name: Upload tink-cli binaries
+        uses: actions/upload-artifact@v2
+        with:
           name: tink-cli
           path: cmd/tink-cli/tink-cli-*
-    - name: Upload tink-server binaries
-      uses: actions/upload-artifact@v2
-      with:
+      - name: Upload tink-server binaries
+        uses: actions/upload-artifact@v2
+        with:
           name: tink-server
           path: cmd/tink-server/tink-server-*
-    - name: Upload tink-worker binaries
-      uses: actions/upload-artifact@v2
-      with:
+      - name: Upload tink-worker binaries
+        uses: actions/upload-artifact@v2
+        with:
           name: tink-worker
           path: cmd/tink-worker/tink-worker-*
   docker-images:
@@ -113,35 +89,35 @@ jobs:
           - repository: quay.io/tinkerbell/tink-worker
             binary: tink-worker
     steps:
-    - name: Docker Image Tag for Sha
-      id: docker-image-tag
-      run: |
-        echo ::set-output name=tags::${{ matrix.repository }}:latest,${{ matrix.repository }}:sha-${GITHUB_SHA::8}
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Login to quay.io
-      uses: docker/login-action@v1
-      if: ${{ startsWith(github.ref, 'refs/heads/master') }}
-      with:
-        registry: quay.io
-        username: ${{ secrets.QUAY_USERNAME }}
-        password: ${{ secrets.QUAY_PASSWORD }}
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Download ${{ matrix.binary }} artifacts
-      uses: actions/download-artifact@v2
-      with:
+      - name: Docker Image Tag for Sha
+        id: docker-image-tag
+        run: |
+          echo ::set-output name=tags::${{ matrix.repository }}:latest,${{ matrix.repository }}:sha-${GITHUB_SHA::8}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Login to quay.io
+        uses: docker/login-action@v1
+        if: ${{ startsWith(github.ref, 'refs/heads/master') }}
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Download ${{ matrix.binary }} artifacts
+        uses: actions/download-artifact@v2
+        with:
           name: ${{ matrix.binary}}
           path: cmd/${{ matrix.binary }}
-    - name: Fix Permissions
-      run: chmod +x cmd/${{ matrix.binary }}/${{ matrix.binary }}*
-    - name: ${{ matrix.repository }}
-      uses: docker/build-push-action@v2
-      with:
-        context: cmd/${{ matrix.binary }}/
-        cache-from: type=registry,ref=${{ matrix.repository }}:latest
-        push: ${{ startsWith(github.ref, 'refs/heads/master') }}
-        tags: ${{ steps.docker-image-tag.outputs.tags }}
-        platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+      - name: Fix Permissions
+        run: chmod +x cmd/${{ matrix.binary }}/${{ matrix.binary }}*
+      - name: ${{ matrix.repository }}
+        uses: docker/build-push-action@v2
+        with:
+          context: cmd/${{ matrix.binary }}/
+          cache-from: type=registry,ref=${{ matrix.repository }}:latest
+          push: ${{ startsWith(github.ref, 'refs/heads/master') }}
+          tags: ${{ steps.docker-image-tag.outputs.tags }}
+          platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64

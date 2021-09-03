@@ -102,7 +102,6 @@ func main() {
 
 	ctx := context.Background()
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "github.com/tinkerbell/tink")
-	defer otelShutdown(ctx)
 
 	config := &DaemonConfig{}
 
@@ -112,6 +111,7 @@ func main() {
 	}
 
 	logger.Close()
+	otelShutdown(ctx)
 }
 
 func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {

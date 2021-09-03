@@ -1504,27 +1504,30 @@ func file_workflow_workflow_proto_rawDescGZIP() []byte {
 	return file_workflow_workflow_proto_rawDescData
 }
 
-var file_workflow_workflow_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_workflow_workflow_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
-var file_workflow_workflow_proto_goTypes = []interface{}{
-	(State)(0),                        // 0: github.com.tinkerbell.tink.protos.workflow.State
-	(*Empty)(nil),                     // 1: github.com.tinkerbell.tink.protos.workflow.Empty
-	(*Workflow)(nil),                  // 2: github.com.tinkerbell.tink.protos.workflow.Workflow
-	(*CreateRequest)(nil),             // 3: github.com.tinkerbell.tink.protos.workflow.CreateRequest
-	(*CreateResponse)(nil),            // 4: github.com.tinkerbell.tink.protos.workflow.CreateResponse
-	(*GetRequest)(nil),                // 5: github.com.tinkerbell.tink.protos.workflow.GetRequest
-	(*WorkflowContext)(nil),           // 6: github.com.tinkerbell.tink.protos.workflow.WorkflowContext
-	(*WorkflowActionStatus)(nil),      // 7: github.com.tinkerbell.tink.protos.workflow.WorkflowActionStatus
-	(*WorkflowContextRequest)(nil),    // 8: github.com.tinkerbell.tink.protos.workflow.WorkflowContextRequest
-	(*WorkflowContextList)(nil),       // 9: github.com.tinkerbell.tink.protos.workflow.WorkflowContextList
-	(*WorkflowActionsRequest)(nil),    // 10: github.com.tinkerbell.tink.protos.workflow.WorkflowActionsRequest
-	(*WorkflowAction)(nil),            // 11: github.com.tinkerbell.tink.protos.workflow.WorkflowAction
-	(*WorkflowActionList)(nil),        // 12: github.com.tinkerbell.tink.protos.workflow.WorkflowActionList
-	(*GetWorkflowDataRequest)(nil),    // 13: github.com.tinkerbell.tink.protos.workflow.GetWorkflowDataRequest
-	(*GetWorkflowDataResponse)(nil),   // 14: github.com.tinkerbell.tink.protos.workflow.GetWorkflowDataResponse
-	(*UpdateWorkflowDataRequest)(nil), // 15: github.com.tinkerbell.tink.protos.workflow.UpdateWorkflowDataRequest
-	(*timestamppb.Timestamp)(nil),     // 16: google.protobuf.Timestamp
-}
+var (
+	file_workflow_workflow_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+	file_workflow_workflow_proto_msgTypes  = make([]protoimpl.MessageInfo, 15)
+	file_workflow_workflow_proto_goTypes   = []interface{}{
+		(State)(0),                        // 0: github.com.tinkerbell.tink.protos.workflow.State
+		(*Empty)(nil),                     // 1: github.com.tinkerbell.tink.protos.workflow.Empty
+		(*Workflow)(nil),                  // 2: github.com.tinkerbell.tink.protos.workflow.Workflow
+		(*CreateRequest)(nil),             // 3: github.com.tinkerbell.tink.protos.workflow.CreateRequest
+		(*CreateResponse)(nil),            // 4: github.com.tinkerbell.tink.protos.workflow.CreateResponse
+		(*GetRequest)(nil),                // 5: github.com.tinkerbell.tink.protos.workflow.GetRequest
+		(*WorkflowContext)(nil),           // 6: github.com.tinkerbell.tink.protos.workflow.WorkflowContext
+		(*WorkflowActionStatus)(nil),      // 7: github.com.tinkerbell.tink.protos.workflow.WorkflowActionStatus
+		(*WorkflowContextRequest)(nil),    // 8: github.com.tinkerbell.tink.protos.workflow.WorkflowContextRequest
+		(*WorkflowContextList)(nil),       // 9: github.com.tinkerbell.tink.protos.workflow.WorkflowContextList
+		(*WorkflowActionsRequest)(nil),    // 10: github.com.tinkerbell.tink.protos.workflow.WorkflowActionsRequest
+		(*WorkflowAction)(nil),            // 11: github.com.tinkerbell.tink.protos.workflow.WorkflowAction
+		(*WorkflowActionList)(nil),        // 12: github.com.tinkerbell.tink.protos.workflow.WorkflowActionList
+		(*GetWorkflowDataRequest)(nil),    // 13: github.com.tinkerbell.tink.protos.workflow.GetWorkflowDataRequest
+		(*GetWorkflowDataResponse)(nil),   // 14: github.com.tinkerbell.tink.protos.workflow.GetWorkflowDataResponse
+		(*UpdateWorkflowDataRequest)(nil), // 15: github.com.tinkerbell.tink.protos.workflow.UpdateWorkflowDataRequest
+		(*timestamppb.Timestamp)(nil),     // 16: google.protobuf.Timestamp
+	}
+)
+
 var file_workflow_workflow_proto_depIdxs = []int32{
 	0,  // 0: github.com.tinkerbell.tink.protos.workflow.Workflow.state:type_name -> github.com.tinkerbell.tink.protos.workflow.State
 	16, // 1: github.com.tinkerbell.tink.protos.workflow.Workflow.created_at:type_name -> google.protobuf.Timestamp
@@ -1779,8 +1782,10 @@ func file_workflow_workflow_proto_init() {
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConnInterface
+var (
+	_ context.Context
+	_ grpc.ClientConnInterface
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
@@ -2062,48 +2067,60 @@ type WorkflowServiceServer interface {
 }
 
 // UnimplementedWorkflowServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedWorkflowServiceServer struct {
-}
+type UnimplementedWorkflowServiceServer struct{}
 
 func (*UnimplementedWorkflowServiceServer) CreateWorkflow(context.Context, *CreateRequest) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateWorkflow not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflow(context.Context, *GetRequest) (*Workflow, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflow not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) DeleteWorkflow(context.Context, *GetRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkflow not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) ListWorkflows(*Empty, WorkflowService_ListWorkflowsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListWorkflows not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflowContext(context.Context, *GetRequest) (*WorkflowContext, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowContext not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) ShowWorkflowEvents(*GetRequest, WorkflowService_ShowWorkflowEventsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ShowWorkflowEvents not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflowContextList(context.Context, *WorkflowContextRequest) (*WorkflowContextList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowContextList not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflowContexts(*WorkflowContextRequest, WorkflowService_GetWorkflowContextsServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetWorkflowContexts not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflowActions(context.Context, *WorkflowActionsRequest) (*WorkflowActionList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowActions not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) ReportActionStatus(context.Context, *WorkflowActionStatus) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportActionStatus not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflowData(context.Context, *GetWorkflowDataRequest) (*GetWorkflowDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowData not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflowMetadata(context.Context, *GetWorkflowDataRequest) (*GetWorkflowDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowMetadata not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) GetWorkflowDataVersion(context.Context, *GetWorkflowDataRequest) (*GetWorkflowDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowDataVersion not implemented")
 }
+
 func (*UnimplementedWorkflowServiceServer) UpdateWorkflowData(context.Context, *UpdateWorkflowDataRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateWorkflowData not implemented")
 }

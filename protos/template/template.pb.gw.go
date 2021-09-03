@@ -25,13 +25,15 @@ import (
 )
 
 // Suppress "imported and not used" errors
-var _ codes.Code
-var _ io.Reader
-var _ status.Status
-var _ = runtime.String
-var _ = utilities.NewDoubleArray
-var _ = descriptor.ForMessage
-var _ = metadata.Join
+var (
+	_ codes.Code
+	_ io.Reader
+	_ status.Status
+	_ = runtime.String
+	_ = utilities.NewDoubleArray
+	_ = descriptor.ForMessage
+	_ = metadata.Join
+)
 
 func request_TemplateService_CreateTemplate_0(ctx context.Context, marshaler runtime.Marshaler, client TemplateServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq WorkflowTemplate
@@ -47,7 +49,6 @@ func request_TemplateService_CreateTemplate_0(ctx context.Context, marshaler run
 
 	msg, err := client.CreateTemplate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_TemplateService_CreateTemplate_0(ctx context.Context, marshaler runtime.Marshaler, server TemplateServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -64,12 +65,9 @@ func local_request_TemplateService_CreateTemplate_0(ctx context.Context, marshal
 
 	msg, err := server.CreateTemplate(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_TemplateService_GetTemplate_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
+var filter_TemplateService_GetTemplate_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_TemplateService_GetTemplate_0(ctx context.Context, marshaler runtime.Marshaler, client TemplateServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
@@ -107,7 +105,6 @@ func request_TemplateService_GetTemplate_0(ctx context.Context, marshaler runtim
 
 	msg, err := client.GetTemplate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_TemplateService_GetTemplate_0(ctx context.Context, marshaler runtime.Marshaler, server TemplateServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -146,12 +143,9 @@ func local_request_TemplateService_GetTemplate_0(ctx context.Context, marshaler 
 
 	msg, err := server.GetTemplate(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_TemplateService_DeleteTemplate_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
+var filter_TemplateService_DeleteTemplate_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_TemplateService_DeleteTemplate_0(ctx context.Context, marshaler runtime.Marshaler, client TemplateServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
@@ -189,7 +183,6 @@ func request_TemplateService_DeleteTemplate_0(ctx context.Context, marshaler run
 
 	msg, err := client.DeleteTemplate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_TemplateService_DeleteTemplate_0(ctx context.Context, marshaler runtime.Marshaler, server TemplateServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -228,12 +221,9 @@ func local_request_TemplateService_DeleteTemplate_0(ctx context.Context, marshal
 
 	msg, err := server.DeleteTemplate(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_TemplateService_ListTemplates_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_TemplateService_ListTemplates_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_TemplateService_ListTemplates_0(ctx context.Context, marshaler runtime.Marshaler, client TemplateServiceClient, req *http.Request, pathParams map[string]string) (TemplateService_ListTemplatesClient, runtime.ServerMetadata, error) {
 	var protoReq ListRequest
@@ -256,7 +246,6 @@ func request_TemplateService_ListTemplates_0(ctx context.Context, marshaler runt
 	}
 	metadata.HeaderMD = header
 	return stream, metadata, nil
-
 }
 
 // RegisterTemplateServiceHandlerServer registers the http handlers for service TemplateService to "mux".
@@ -264,7 +253,6 @@ func request_TemplateService_ListTemplates_0(ctx context.Context, marshaler runt
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterTemplateServiceHandlerFromEndpoint instead.
 func RegisterTemplateServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server TemplateServiceServer) error {
-
 	mux.Handle("POST", pattern_TemplateService_CreateTemplate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -285,7 +273,6 @@ func RegisterTemplateServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_TemplateService_CreateTemplate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_TemplateService_GetTemplate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -308,7 +295,6 @@ func RegisterTemplateServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_TemplateService_GetTemplate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("DELETE", pattern_TemplateService_DeleteTemplate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -331,7 +317,6 @@ func RegisterTemplateServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_TemplateService_DeleteTemplate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_TemplateService_ListTemplates_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -381,7 +366,6 @@ func RegisterTemplateServiceHandler(ctx context.Context, mux *runtime.ServeMux, 
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "TemplateServiceClient" to call the correct interceptors.
 func RegisterTemplateServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client TemplateServiceClient) error {
-
 	mux.Handle("POST", pattern_TemplateService_CreateTemplate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -399,7 +383,6 @@ func RegisterTemplateServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_TemplateService_CreateTemplate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_TemplateService_GetTemplate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -419,7 +402,6 @@ func RegisterTemplateServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_TemplateService_GetTemplate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("DELETE", pattern_TemplateService_DeleteTemplate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -439,7 +421,6 @@ func RegisterTemplateServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_TemplateService_DeleteTemplate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_TemplateService_ListTemplates_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -459,7 +440,6 @@ func RegisterTemplateServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_TemplateService_ListTemplates_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil

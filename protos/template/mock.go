@@ -370,17 +370,13 @@ type TemplateService_ListTemplatesClientMock struct {
 	// calls tracks calls to the methods.
 	calls struct {
 		// CloseSend holds details about calls to the CloseSend method.
-		CloseSend []struct {
-		}
+		CloseSend []struct{}
 		// Context holds details about calls to the Context method.
-		Context []struct {
-		}
+		Context []struct{}
 		// Header holds details about calls to the Header method.
-		Header []struct {
-		}
+		Header []struct{}
 		// Recv holds details about calls to the Recv method.
-		Recv []struct {
-		}
+		Recv []struct{}
 		// RecvMsg holds details about calls to the RecvMsg method.
 		RecvMsg []struct {
 			// M is the m argument value.
@@ -392,8 +388,7 @@ type TemplateService_ListTemplatesClientMock struct {
 			M interface{}
 		}
 		// Trailer holds details about calls to the Trailer method.
-		Trailer []struct {
-		}
+		Trailer []struct{}
 	}
 	lockCloseSend sync.RWMutex
 	lockContext   sync.RWMutex
@@ -409,8 +404,7 @@ func (mock *TemplateService_ListTemplatesClientMock) CloseSend() error {
 	if mock.CloseSendFunc == nil {
 		panic("TemplateService_ListTemplatesClientMock.CloseSendFunc: method is nil but TemplateService_ListTemplatesClient.CloseSend was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockCloseSend.Lock()
 	mock.calls.CloseSend = append(mock.calls.CloseSend, callInfo)
 	mock.lockCloseSend.Unlock()
@@ -420,10 +414,8 @@ func (mock *TemplateService_ListTemplatesClientMock) CloseSend() error {
 // CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
 //     len(mockedTemplateService_ListTemplatesClient.CloseSendCalls())
-func (mock *TemplateService_ListTemplatesClientMock) CloseSendCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *TemplateService_ListTemplatesClientMock) CloseSendCalls() []struct{} {
+	var calls []struct{}
 	mock.lockCloseSend.RLock()
 	calls = mock.calls.CloseSend
 	mock.lockCloseSend.RUnlock()
@@ -435,8 +427,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Context() context.Context {
 	if mock.ContextFunc == nil {
 		panic("TemplateService_ListTemplatesClientMock.ContextFunc: method is nil but TemplateService_ListTemplatesClient.Context was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockContext.Lock()
 	mock.calls.Context = append(mock.calls.Context, callInfo)
 	mock.lockContext.Unlock()
@@ -446,10 +437,8 @@ func (mock *TemplateService_ListTemplatesClientMock) Context() context.Context {
 // ContextCalls gets all the calls that were made to Context.
 // Check the length with:
 //     len(mockedTemplateService_ListTemplatesClient.ContextCalls())
-func (mock *TemplateService_ListTemplatesClientMock) ContextCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *TemplateService_ListTemplatesClientMock) ContextCalls() []struct{} {
+	var calls []struct{}
 	mock.lockContext.RLock()
 	calls = mock.calls.Context
 	mock.lockContext.RUnlock()
@@ -461,8 +450,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Header() (metadata.MD, erro
 	if mock.HeaderFunc == nil {
 		panic("TemplateService_ListTemplatesClientMock.HeaderFunc: method is nil but TemplateService_ListTemplatesClient.Header was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockHeader.Lock()
 	mock.calls.Header = append(mock.calls.Header, callInfo)
 	mock.lockHeader.Unlock()
@@ -472,10 +460,8 @@ func (mock *TemplateService_ListTemplatesClientMock) Header() (metadata.MD, erro
 // HeaderCalls gets all the calls that were made to Header.
 // Check the length with:
 //     len(mockedTemplateService_ListTemplatesClient.HeaderCalls())
-func (mock *TemplateService_ListTemplatesClientMock) HeaderCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *TemplateService_ListTemplatesClientMock) HeaderCalls() []struct{} {
+	var calls []struct{}
 	mock.lockHeader.RLock()
 	calls = mock.calls.Header
 	mock.lockHeader.RUnlock()
@@ -487,8 +473,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Recv() (*WorkflowTemplate, 
 	if mock.RecvFunc == nil {
 		panic("TemplateService_ListTemplatesClientMock.RecvFunc: method is nil but TemplateService_ListTemplatesClient.Recv was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockRecv.Lock()
 	mock.calls.Recv = append(mock.calls.Recv, callInfo)
 	mock.lockRecv.Unlock()
@@ -498,10 +483,8 @@ func (mock *TemplateService_ListTemplatesClientMock) Recv() (*WorkflowTemplate, 
 // RecvCalls gets all the calls that were made to Recv.
 // Check the length with:
 //     len(mockedTemplateService_ListTemplatesClient.RecvCalls())
-func (mock *TemplateService_ListTemplatesClientMock) RecvCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *TemplateService_ListTemplatesClientMock) RecvCalls() []struct{} {
+	var calls []struct{}
 	mock.lockRecv.RLock()
 	calls = mock.calls.Recv
 	mock.lockRecv.RUnlock()
@@ -575,8 +558,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Trailer() metadata.MD {
 	if mock.TrailerFunc == nil {
 		panic("TemplateService_ListTemplatesClientMock.TrailerFunc: method is nil but TemplateService_ListTemplatesClient.Trailer was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockTrailer.Lock()
 	mock.calls.Trailer = append(mock.calls.Trailer, callInfo)
 	mock.lockTrailer.Unlock()
@@ -586,10 +568,8 @@ func (mock *TemplateService_ListTemplatesClientMock) Trailer() metadata.MD {
 // TrailerCalls gets all the calls that were made to Trailer.
 // Check the length with:
 //     len(mockedTemplateService_ListTemplatesClient.TrailerCalls())
-func (mock *TemplateService_ListTemplatesClientMock) TrailerCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *TemplateService_ListTemplatesClientMock) TrailerCalls() []struct{} {
+	var calls []struct{}
 	mock.lockTrailer.RLock()
 	calls = mock.calls.Trailer
 	mock.lockTrailer.RUnlock()

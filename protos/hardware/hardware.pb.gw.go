@@ -25,13 +25,15 @@ import (
 )
 
 // Suppress "imported and not used" errors
-var _ codes.Code
-var _ io.Reader
-var _ status.Status
-var _ = runtime.String
-var _ = utilities.NewDoubleArray
-var _ = descriptor.ForMessage
-var _ = metadata.Join
+var (
+	_ codes.Code
+	_ io.Reader
+	_ status.Status
+	_ = runtime.String
+	_ = utilities.NewDoubleArray
+	_ = descriptor.ForMessage
+	_ = metadata.Join
+)
 
 func request_HardwareService_Push_0(ctx context.Context, marshaler runtime.Marshaler, client HardwareServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PushRequest
@@ -47,7 +49,6 @@ func request_HardwareService_Push_0(ctx context.Context, marshaler runtime.Marsh
 
 	msg, err := client.Push(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_HardwareService_Push_0(ctx context.Context, marshaler runtime.Marshaler, server HardwareServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -64,7 +65,6 @@ func local_request_HardwareService_Push_0(ctx context.Context, marshaler runtime
 
 	msg, err := server.Push(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_HardwareService_ByMAC_0(ctx context.Context, marshaler runtime.Marshaler, client HardwareServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -81,7 +81,6 @@ func request_HardwareService_ByMAC_0(ctx context.Context, marshaler runtime.Mars
 
 	msg, err := client.ByMAC(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_HardwareService_ByMAC_0(ctx context.Context, marshaler runtime.Marshaler, server HardwareServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -98,7 +97,6 @@ func local_request_HardwareService_ByMAC_0(ctx context.Context, marshaler runtim
 
 	msg, err := server.ByMAC(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_HardwareService_ByIP_0(ctx context.Context, marshaler runtime.Marshaler, client HardwareServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -115,7 +113,6 @@ func request_HardwareService_ByIP_0(ctx context.Context, marshaler runtime.Marsh
 
 	msg, err := client.ByIP(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_HardwareService_ByIP_0(ctx context.Context, marshaler runtime.Marshaler, server HardwareServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -132,12 +129,9 @@ func local_request_HardwareService_ByIP_0(ctx context.Context, marshaler runtime
 
 	msg, err := server.ByIP(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_HardwareService_ByID_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
+var filter_HardwareService_ByID_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_HardwareService_ByID_0(ctx context.Context, marshaler runtime.Marshaler, client HardwareServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
@@ -170,7 +164,6 @@ func request_HardwareService_ByID_0(ctx context.Context, marshaler runtime.Marsh
 
 	msg, err := client.ByID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_HardwareService_ByID_0(ctx context.Context, marshaler runtime.Marshaler, server HardwareServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -204,7 +197,6 @@ func local_request_HardwareService_ByID_0(ctx context.Context, marshaler runtime
 
 	msg, err := server.ByID(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_HardwareService_All_0(ctx context.Context, marshaler runtime.Marshaler, client HardwareServiceClient, req *http.Request, pathParams map[string]string) (HardwareService_AllClient, runtime.ServerMetadata, error) {
@@ -221,7 +213,6 @@ func request_HardwareService_All_0(ctx context.Context, marshaler runtime.Marsha
 	}
 	metadata.HeaderMD = header
 	return stream, metadata, nil
-
 }
 
 func request_HardwareService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client HardwareServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -248,7 +239,6 @@ func request_HardwareService_Delete_0(ctx context.Context, marshaler runtime.Mar
 
 	msg, err := client.Delete(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_HardwareService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server HardwareServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -275,7 +265,6 @@ func local_request_HardwareService_Delete_0(ctx context.Context, marshaler runti
 
 	msg, err := server.Delete(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 // RegisterHardwareServiceHandlerServer registers the http handlers for service HardwareService to "mux".
@@ -283,7 +272,6 @@ func local_request_HardwareService_Delete_0(ctx context.Context, marshaler runti
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterHardwareServiceHandlerFromEndpoint instead.
 func RegisterHardwareServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server HardwareServiceServer) error {
-
 	mux.Handle("POST", pattern_HardwareService_Push_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -304,7 +292,6 @@ func RegisterHardwareServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_Push_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("POST", pattern_HardwareService_ByMAC_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -327,7 +314,6 @@ func RegisterHardwareServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_ByMAC_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("POST", pattern_HardwareService_ByIP_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -350,7 +336,6 @@ func RegisterHardwareServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_ByIP_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_HardwareService_ByID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -373,7 +358,6 @@ func RegisterHardwareServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_ByID_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_HardwareService_All_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -403,7 +387,6 @@ func RegisterHardwareServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_Delete_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil
@@ -446,7 +429,6 @@ func RegisterHardwareServiceHandler(ctx context.Context, mux *runtime.ServeMux, 
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "HardwareServiceClient" to call the correct interceptors.
 func RegisterHardwareServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client HardwareServiceClient) error {
-
 	mux.Handle("POST", pattern_HardwareService_Push_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -464,7 +446,6 @@ func RegisterHardwareServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_Push_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("POST", pattern_HardwareService_ByMAC_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -484,7 +465,6 @@ func RegisterHardwareServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_ByMAC_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("POST", pattern_HardwareService_ByIP_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -504,7 +484,6 @@ func RegisterHardwareServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_ByIP_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_HardwareService_ByID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -524,7 +503,6 @@ func RegisterHardwareServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_ByID_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_HardwareService_All_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -544,7 +522,6 @@ func RegisterHardwareServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_All_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("DELETE", pattern_HardwareService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -564,7 +541,6 @@ func RegisterHardwareServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_HardwareService_Delete_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil
