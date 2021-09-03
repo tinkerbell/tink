@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"os"
 
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/cmd/tink-worker/cmd"
 )
@@ -20,11 +22,13 @@ func main() {
 		panic(err)
 	}
 
-	rootCmd := cmd.NewRootCommand(version, logger)
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(context.Background(), "github.com/tinkerbell/tink")
 
+	rootCmd := cmd.NewRootCommand(version, logger)
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 
 	logger.Close()
+	otelShutdown(ctx)
 }

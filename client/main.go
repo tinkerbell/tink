@@ -12,6 +12,7 @@ import (
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -125,7 +126,11 @@ func GetConnection() (*grpc.ClientConn, error) {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 	creds := credentials.NewClientTLSFromCert(cp, "")
-	conn, err := grpc.Dial(grpcAuthority, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(grpcAuthority,
+		grpc.WithTransportCredentials(creds),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to tinkerbell server")
 	}
