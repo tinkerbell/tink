@@ -45,17 +45,17 @@ func (d DB) GetWorkflow(ctx context.Context, id string) (db.Workflow, error) {
 }
 
 // DeleteWorkflow deletes a workflow.
-func (d DB) DeleteWorkflow(ctx context.Context, id string, state int32) error {
+func (d DB) DeleteWorkflow(_ context.Context, _ string, _ int32) error {
 	return nil
 }
 
 // ListWorkflows returns all workflows.
-func (d DB) ListWorkflows(fn func(wf db.Workflow) error) error {
+func (d DB) ListWorkflows(_ func(wf db.Workflow) error) error {
 	return nil
 }
 
 // UpdateWorkflow updates a given workflow.
-func (d DB) UpdateWorkflow(ctx context.Context, wf db.Workflow, state int32) error {
+func (d DB) UpdateWorkflow(_ context.Context, _ db.Workflow, _ int32) error {
 	return nil
 }
 
@@ -75,11 +75,11 @@ func (d DB) GetWorkflowActions(ctx context.Context, wfID string) (*pb.WorkflowAc
 }
 
 // InsertIntoWorkflowEventTable : insert workflow event table.
-func (d DB) InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
-	return d.InsertIntoWorkflowEventTableFunc(ctx, wfEvent, time)
+func (d DB) InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, t time.Time) error {
+	return d.InsertIntoWorkflowEventTableFunc(ctx, wfEvent, t)
 }
 
 // ShowWorkflowEvents returns all workflows.
-func (d DB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error {
+func (d DB) ShowWorkflowEvents(_ string, _ func(wfs *pb.WorkflowActionStatus) error) error {
 	return nil
 }

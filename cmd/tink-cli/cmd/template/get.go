@@ -2,6 +2,7 @@ package template
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -15,7 +16,7 @@ import (
 	"github.com/tinkerbell/tink/protos/template"
 )
 
-// getCmd represents the get subcommand for template command.
+// GetCmd represents the get subcommand for template command.
 var GetCmd = &cobra.Command{
 	Use:                   "get [id]",
 	Short:                 "get a template",
@@ -43,7 +44,7 @@ var GetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(string(t.Data))
+			fmt.Println(t.Data)
 		}
 	},
 }
@@ -53,7 +54,7 @@ type getTemplate struct {
 }
 
 func (h *getTemplate) RetrieveByID(ctx context.Context, cl *client.FullClient, requestedID string) (interface{}, error) {
-	return cl.TemplateClient.GetTemplate(context.Background(), &template.GetRequest{
+	return cl.TemplateClient.GetTemplate(ctx, &template.GetRequest{
 		GetBy: &template.GetRequest_Id{
 			Id: requestedID,
 		},
@@ -75,7 +76,7 @@ func (h *getTemplate) RetrieveData(ctx context.Context, cl *client.FullClient) (
 	for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
 		data = append(data, tmp)
 	}
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
 	return data, nil

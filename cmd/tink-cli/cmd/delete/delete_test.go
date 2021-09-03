@@ -1,4 +1,4 @@
-package delete
+package delete // nolint:predeclared // package name delete has same name as predeclared identifier
 
 import (
 	"bytes"

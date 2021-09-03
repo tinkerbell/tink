@@ -98,7 +98,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Close()
 
 	config := &DaemonConfig{}
 
@@ -106,6 +105,8 @@ func main() {
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
+
+	logger.Close()
 }
 
 func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
@@ -179,7 +180,7 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				DB:            tinkDB,
 			}, errCh)
 
-			httpServer.SetupHTTP(ctx, logger, &httpServer.HTTPServerConfig{
+			httpServer.SetupHTTP(ctx, logger, &httpServer.Config{
 				CertPEM:               cert,
 				ModTime:               modT,
 				GRPCAuthority:         config.GRPCAuthority,

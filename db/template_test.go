@@ -1,3 +1,4 @@
+//nolint:thelper // misuse of test helpers requires a large refactor into subtests
 package db_test
 
 import (
@@ -127,7 +128,7 @@ func TestCreateTemplate(t *testing.T) {
 			Expectation: func(t *testing.T, input []*workflow.Workflow, tinkDB *db.TinkDB) {
 				count := 0
 				err := tinkDB.ListTemplates("%", func(id, n string, in, del *timestamp.Timestamp) error {
-					count = count + 1
+					count++
 					return nil
 				})
 				if err != nil {
@@ -143,7 +144,7 @@ func TestCreateTemplate(t *testing.T) {
 	for _, s := range table {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {
@@ -180,7 +181,7 @@ func TestCreateTemplate(t *testing.T) {
 func TestCreateTemplate_TwoTemplateWithSameNameButFirstOneIsDeleted(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -212,7 +213,7 @@ func TestCreateTemplate_TwoTemplateWithSameNameButFirstOneIsDeleted(t *testing.T
 func TestDeleteTemplate(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -237,7 +238,7 @@ func TestDeleteTemplate(t *testing.T) {
 
 	count := 0
 	err = tinkDB.ListTemplates("%", func(id, n string, in, del *timestamp.Timestamp) error {
-		count = count + 1
+		count++
 		return nil
 	})
 	if err != nil {
@@ -304,7 +305,7 @@ func TestGetTemplate(t *testing.T) {
 	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {
@@ -342,7 +343,7 @@ func TestGetTemplate(t *testing.T) {
 func TestGetTemplateWithInvalidID(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -359,8 +360,9 @@ func TestGetTemplateWithInvalidID(t *testing.T) {
 	}
 
 	want := "no rows in result set"
+	// TODO: replace with errors.Is
 	if !strings.Contains(err.Error(), want) {
-		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error())) // nolint:errorlint // non-wrapping format verb for fmt.Errorf
 	}
 }
 

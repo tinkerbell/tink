@@ -44,7 +44,7 @@ func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id
 	if err != nil {
 		return errors.Wrap(err, "failed to create workflow")
 	}
-	err = insertInWorkflow(ctx, d.instance, wf, tx)
+	err = insertInWorkflow(wf, tx)
 	if err != nil {
 		return errors.Wrap(err, "failed to create workflow")
 	}
@@ -55,7 +55,7 @@ func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id
 	return nil
 }
 
-func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) error {
+func insertInWorkflow(wf Workflow, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 	INSERT INTO
 		workflow (created_at, updated_at, template, devices, id)
@@ -72,7 +72,7 @@ func insertInWorkflow(ctx context.Context, db *sql.DB, wf Workflow, tx *sql.Tx) 
 	return nil
 }
 
-func insertIntoWfWorkerTable(ctx context.Context, db *sql.DB, wfID uuid.UUID, workerID uuid.UUID, tx *sql.Tx) error {
+func insertIntoWfWorkerTable(wfID uuid.UUID, workerID uuid.UUID, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 	INSERT INTO
 		workflow_worker_map (workflow_id, worker_id)
@@ -116,7 +116,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			return err
 		}
 		if uniqueWorkerID != workerUID {
-			err = insertIntoWfWorkerTable(ctx, db, id, workerUID, tx)
+			err = insertIntoWfWorkerTable(id, workerUID, tx)
 			if err != nil {
 				return err
 			}
@@ -197,7 +197,7 @@ func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflo
 	}
 
 	// increment version
-	version = version + 1
+	version++
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -254,7 +254,7 @@ func (d TinkDB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataR
 	buf := []byte{}
 	err := row.Scan(&buf)
 	if err == nil {
-		return []byte(buf), nil
+		return buf, nil
 	}
 
 	if err != sql.ErrNoRows {
@@ -285,7 +285,7 @@ func (d TinkDB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowData
 	buf := []byte{}
 	err := row.Scan(&buf)
 	if err == nil {
-		return []byte(buf), nil
+		return buf, nil
 	}
 
 	if err != sql.ErrNoRows {
@@ -326,7 +326,7 @@ func (d TinkDB) GetWorkflowsForWorker(id string) ([]string, error) {
 		wfID = append(wfID, workerID)
 	}
 	err = rows.Err()
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return wfID, err
@@ -369,7 +369,7 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 }
 
 // DeleteWorkflow deletes a workflow.
-func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, state int32) error {
+func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, _ int32) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -454,43 +454,26 @@ func (d TinkDB) ListWorkflows(fn func(wf Workflow) error) error {
 		}
 	}
 	err = rows.Err()
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	return err
 }
 
 // UpdateWorkflow updates a given workflow.
-func (d TinkDB) UpdateWorkflow(ctx context.Context, wf Workflow, state int32) error {
+func (d TinkDB) UpdateWorkflow(ctx context.Context, wf Workflow, _ int32) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	if wf.Hardware == "" && wf.Template != "" {
-		_, err = tx.Exec(`
-		UPDATE workflow
-		SET
-			updated_at = NOW(), template = $2
-		WHERE
-			id = $1;
-		`, wf.ID, wf.Template)
-	} else if wf.Hardware != "" && wf.Template == "" {
-		_, err = tx.Exec(`
-		UPDATE workflow
-		SET
-			updated_at = NOW(), devices = $2
-		WHERE
-			id = $1;
-		`, wf.ID, wf.Hardware)
-	} else {
-		_, err = tx.Exec(`
-		UPDATE workflow
-		SET
-			updated_at = NOW(), template = $2, devices = $3
-		WHERE
-			id = $1;
-		`, wf.ID, wf.Template, wf.Hardware)
+	switch {
+	case wf.Hardware == "" && wf.Template != "":
+		_, err = tx.Exec(`UPDATE workflow SET updated_at = NOW(), template = $2 WHERE id = $1;`, wf.ID, wf.Template)
+	case wf.Hardware != "" && wf.Template == "":
+		_, err = tx.Exec(`UPDATE workflow SET updated_at = NOW(), devices = $2 WHERE id = $1;`, wf.ID, wf.Hardware)
+	default:
+		_, err = tx.Exec(`UPDATE workflow SET updated_at = NOW(), template = $2, devices = $3 WHERE id = $1;`, wf.ID, wf.Template, wf.Hardware)
 	}
 
 	if err != nil {
@@ -591,7 +574,7 @@ func (d TinkDB) GetWorkflowActions(ctx context.Context, wfID string) (*pb.Workfl
 }
 
 // InsertIntoWorkflowEventTable : insert workflow event table.
-func (d TinkDB) InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
+func (d TinkDB) InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, t time.Time) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
@@ -603,7 +586,7 @@ func (d TinkDB) InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.Wo
 		workflow_event (workflow_id, worker_id, task_name, action_name, execution_time, message, status, created_at)
 	VALUES
 		($1, $2, $3, $4, $5, $6, $7, $8);
-	`, wfEvent.WorkflowId, wfEvent.WorkerId, wfEvent.TaskName, wfEvent.ActionName, wfEvent.Seconds, wfEvent.Message, wfEvent.ActionStatus, time)
+	`, wfEvent.WorkflowId, wfEvent.WorkerId, wfEvent.TaskName, wfEvent.ActionName, wfEvent.Seconds, wfEvent.Message, wfEvent.ActionStatus, t)
 	if err != nil {
 		return errors.Wrap(err, "INSERT in to workflow_event")
 	}
@@ -630,14 +613,14 @@ func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionSt
 
 	defer rows.Close()
 	var (
-		status                int32
+		st                    int32
 		secs                  int64
 		id, tName, aName, msg string
 		evTime                time.Time
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&id, &tName, &aName, &secs, &msg, &status, &evTime)
+		err = rows.Scan(&id, &tName, &aName, &secs, &msg, &st, &evTime)
 		if err != nil {
 			err = errors.Wrap(err, "SELECT")
 			d.logger.Error(err)
@@ -650,7 +633,7 @@ func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionSt
 			ActionName:   aName,
 			Seconds:      secs,
 			Message:      msg,
-			ActionStatus: pb.State(status),
+			ActionStatus: pb.State(st),
 			CreatedAt:    createdAt,
 		}
 		err = fn(wfs)
@@ -659,7 +642,7 @@ func (d TinkDB) ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionSt
 		}
 	}
 	err = rows.Err()
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	return err
@@ -674,8 +657,8 @@ func getLatestVersionWfData(ctx context.Context, db *sql.DB, wfID string) (int32
 	`
 	row := db.QueryRowContext(ctx, query, wfID)
 	var version int32
-	err := row.Scan(&version)
-	if err != nil {
+
+	if err := row.Scan(&version); err != nil {
 		return -1, err
 	}
 	return version, nil
@@ -705,7 +688,7 @@ func getWorkerIDbyMac(ctx context.Context, db *sql.DB, mac string) (string, erro
 	`
 
 	id, err := get(ctx, db, query, arg)
-	if errors.Cause(err) == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = errors.WithMessage(errors.New(mac), "mac")
 	}
 	return id, err
@@ -753,7 +736,7 @@ func getWorkerIDbyIP(ctx context.Context, db *sql.DB, ip string) (string, error)
         `
 
 	id, err := get(ctx, db, query, instance, hardwareOrManagement)
-	if errors.Cause(err) == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = errors.WithMessage(errors.New(ip), "ip")
 	}
 	return id, err

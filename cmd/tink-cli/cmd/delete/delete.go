@@ -1,4 +1,4 @@
-package delete
+package delete // nolint:predeclared // package name delete has same name as predeclared identifier
 
 import (
 	"context"
@@ -98,7 +98,7 @@ func NewDeleteCommand(opt Options) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opt.DeleteByID == nil {
-				return errors.New("DeleteByID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
+				return errors.New("option DeleteByID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one")
 			}
 			for _, requestedID := range args {
 				_, err := opt.DeleteByID(cmd.Context(), opt.fullClient, requestedID)
@@ -106,9 +106,8 @@ func NewDeleteCommand(opt Options) *cobra.Command {
 					if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
 						fmt.Fprintf(cmd.ErrOrStderr(), "Error\t%s\tnot found\n", requestedID)
 						continue
-					} else {
-						return err
 					}
+					return err
 				}
 				fmt.Fprintf(cmd.OutOrStdout(), "Deleted\t%s\n", requestedID)
 			}

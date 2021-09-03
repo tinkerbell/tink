@@ -15,7 +15,7 @@ verify: lint
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
 
-# BEGIN: lint-install ../tink
+# BEGIN: lint-install --dockerfile=warn ../tink
 # http://github.com/tinkerbell/lint-install
 
 GOLINT_VERSION ?= v1.42.0
@@ -37,7 +37,7 @@ GOLINT_CONFIG:=$(LINT_ROOT)/.golangci.yml
 
 lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run
-	out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) $(shell find . -name "*Dockerfile")
+	out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) --no-fail $(shell find . -name "*Dockerfile")
 	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")
 
 fix: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
@@ -59,4 +59,4 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b out/linters $(GOLINT_VERSION)
 	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 
-# END: lint-install ../tink
+# END: lint-install --dockerfile=warn ../tink

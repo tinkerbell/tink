@@ -180,7 +180,7 @@ issues:
         - gosec
         - noctx
 
-    - path: cmd.*
+    - path: .*cmd.*
       linters:
         - noctx
 
@@ -188,7 +188,7 @@ issues:
       linters:
         - noctx
 
-    - path: cmd.*
+    - path: .*cmd.*
       text: "deep-exit"
 
     - path: main\.go

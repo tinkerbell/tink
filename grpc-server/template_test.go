@@ -135,7 +135,10 @@ func TestCreateTemplate(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
-	defer cancel()
+	t.Cleanup(func() {
+		cancel()
+	})
+
 	for name := range testCases {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
@@ -354,7 +357,10 @@ func TestGetTemplate(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTestTimeout)
-	defer cancel()
+	t.Cleanup(func() {
+		cancel()
+	})
+
 	for name := range testCases {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {

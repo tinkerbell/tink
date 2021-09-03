@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,7 +21,7 @@ var (
 	hDevice   = "Hardware device"
 )
 
-// getCmd represents the get subcommand for workflow command.
+// GetCmd represents the get subcommand for workflow command.
 var GetCmd = &cobra.Command{
 	Use:     "get [id]",
 	Short:   "get a workflow",
@@ -76,7 +77,7 @@ func (h *getWorkflow) RetrieveData(ctx context.Context, cl *client.FullClient) (
 	for w, err = list.Recv(); err == nil && w.Id != ""; w, err = list.Recv() {
 		data = append(data, w)
 	}
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
 	return data, nil

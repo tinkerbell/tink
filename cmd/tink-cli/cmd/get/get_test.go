@@ -14,7 +14,7 @@ import (
 )
 
 func TestNewGetCommand(t *testing.T) {
-	table := []struct {
+	tests := []struct {
 		Name         string
 		ExpectStdout string
 		Args         []string
@@ -175,7 +175,7 @@ func TestNewGetCommand(t *testing.T) {
 		},
 	}
 
-	for _, s := range table {
+	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			if s.Skip != "" {
 				t.Skip(s.Skip)

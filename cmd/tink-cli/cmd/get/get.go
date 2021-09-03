@@ -97,7 +97,7 @@ func NewGetCommand(opt Options) *cobra.Command {
 
 			if len(args) != 0 {
 				if opt.RetrieveByID == nil {
-					return errors.New("Get by ID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
+					return errors.New("option RetrieveByID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one")
 				}
 				for _, requestedID := range args {
 					s, err := opt.RetrieveByID(cmd.Context(), opt.fullClient, requestedID)

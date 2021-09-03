@@ -39,11 +39,13 @@ func NewDataCommand() *cobra.Command {
 				req := &workflow.GetWorkflowDataRequest{WorkflowId: arg, Version: version}
 				var res *workflow.GetWorkflowDataResponse
 				var err error
-				if needsMetadata {
+
+				switch {
+				case needsMetadata:
 					res, err = client.WorkflowClient.GetWorkflowMetadata(context.Background(), req)
-				} else if versionOnly {
+				case versionOnly:
 					res, err = client.WorkflowClient.GetWorkflowDataVersion(context.Background(), req)
-				} else {
+				default:
 					res, err = client.WorkflowClient.GetWorkflowData(context.Background(), req)
 				}
 

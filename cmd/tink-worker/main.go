@@ -20,11 +20,11 @@ func main() {
 		panic(err)
 	}
 
-	defer logger.Close()
-
 	rootCmd := cmd.NewRootCommand(version, logger)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
+
+	logger.Close()
 }

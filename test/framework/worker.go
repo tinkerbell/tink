@@ -24,7 +24,7 @@ func initializeDockerClient() (*dc.Client, error) {
 	return c, nil
 }
 
-func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string, wfID string) (string, error) {
+func createWorkerContainer(ctx context.Context, cli *dc.Client, workerID string) (string, error) {
 	volume := map[string]struct{}{"/var/run/docker.sock": {}}
 	config := &container.Config{
 		Image:        "worker",
@@ -53,18 +53,16 @@ func runContainer(ctx context.Context, cli *dc.Client, id string) error {
 	return nil
 }
 
-func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string, statusChannel chan<- int64, stopLogs chan<- bool) {
+func waitContainer(ctx context.Context, cli *dc.Client, id string, wg *sync.WaitGroup, failedWorkers chan<- string, statusChannel chan<- int64) {
 	// send API call to wait for the container completion
 	wait, errC := cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 	select {
 	case status := <-wait:
 		statusChannel <- status.StatusCode
 		fmt.Println("Worker with id ", id, "finished successfully with status code ", status.StatusCode)
-		// stopLogs <- true
 	case err := <-errC:
 		log.Println("Worker with id ", id, "failed : ", err)
 		failedWorkers <- id
-		// stopLogs <- true
 	}
 	wg.Done()
 }
@@ -91,7 +89,7 @@ func checkCurrentStatus(ctx context.Context, wfID string, workflowStatus chan wo
 	}
 }
 
-func captureLogs(ctx context.Context, cli *dc.Client, id string) {
+func captureLogs(cli *dc.Client, id string) {
 	reader, err := cli.ContainerLogs(context.Background(), id, types.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -124,7 +122,7 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 	var i int64
 	for i = 0; i < workers; i++ {
 		ctx := context.Background()
-		cID, err := createWorkerContainer(ctx, cli, workerID[i], wfID)
+		cID, err := createWorkerContainer(ctx, cli, workerID[i])
 		log = logger.WithFields(logrus.Fields{"workflow_id": wfID, "worker_id": workerID[i]})
 		if err != nil {
 			log.Errorln("Failed to create worker container : ", err)
@@ -141,11 +139,9 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 			} else {
 				fmt.Println("Worker started with ID : ", cID)
 				wg.Add(1)
-				// capturing logs of action container in a go-routine
-				stopLogs := make(chan bool)
-				go captureLogs(ctx, cli, cID)
 
-				go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus, stopLogs)
+				go captureLogs(cli, cID)
+				go waitContainer(ctx, cli, cID, &wg, failedWorkers, workerStatus)
 				go checkCurrentStatus(ctx, wfID, workflowStatus)
 			}
 		}
@@ -176,8 +172,6 @@ func StartWorkers(workers int64, workerStatus chan<- int64, wfID string) (workfl
 
 			if len(failedContainer) > 0 {
 				continue
-			} else {
-				break
 			}
 		}
 	}

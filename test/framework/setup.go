@@ -41,7 +41,7 @@ func pushImages() error {
 	return err
 }
 
-func startDb(filepath string) error {
+func startDB(filepath string) error {
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d db")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -107,44 +107,37 @@ func StartStack() error {
 	initializeLogger()
 
 	// Start Db and logging components
-	err := startDb(filepath)
-	if err != nil {
+	if err := startDB(filepath); err != nil {
 		return err
 	}
 
 	// Building certs
-	err = buildCerts(filepath)
-	if err != nil {
+	if err := buildCerts(filepath); err != nil {
 		return err
 	}
 
 	// Building registry
-	err = buildLocalDockerRegistry(filepath)
-	if err != nil {
+	if err := buildLocalDockerRegistry(filepath); err != nil {
 		return err
 	}
 
 	// Build default images
-	err = buildActionImages()
-	if err != nil {
+	if err := buildActionImages(); err != nil {
 		return err
 	}
 
 	// Push Images into registry
-	err = pushImages()
-	if err != nil {
+	if err := pushImages(); err != nil {
 		return err
 	}
 
 	// Remove older worker image
-	err = removeWorkerImage()
-	if err != nil {
+	if err := removeWorkerImage(); err != nil {
 		return err
 	}
 
 	// Create new Worker image locally
-	err = createWorkerImage()
-	if err != nil {
+	if err := createWorkerImage(); err != nil {
 		logger.Errorln("failed to create worker Image")
 		return errors.Wrap(err, "worker image creation failed")
 	}
@@ -155,9 +148,9 @@ func StartStack() error {
 	cmd := exec.Command("/bin/sh", "-c", "docker-compose -f "+filepath+" up --build -d")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		logger.Errorln("failed to create worker Image")
+
+	if err := cmd.Run(); err != nil {
+		logger.Errorf("failed to create worker image: %v", err)
 		return errors.Wrap(err, "worker image creation failed")
 	}
 	return nil

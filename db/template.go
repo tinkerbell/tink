@@ -93,7 +93,7 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 			UpdatedAt: upAt,
 		}, nil
 	}
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
 	}
@@ -168,7 +168,7 @@ func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *time
 	}
 
 	err = rows.Err()
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	return err
@@ -181,28 +181,13 @@ func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	if data == "" && name != "" {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), name = $2
-		WHERE
-			id = $1;`, id, name)
-	} else if data != "" && name == "" {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), data = $2
-		WHERE
-			id = $1;`, id, data)
-	} else {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), name = $2, data = $3
-		WHERE
-			id = $1;
-		`, id, name, data)
+	switch {
+	case data == "" && name != "":
+		_, err = tx.Exec(`UPDATE template SET updated_at = NOW(), name = $2 WHERE id = $1;`, id, name)
+	case data != "" && name == "":
+		_, err = tx.Exec(`UPDATE template SET updated_at = NOW(), data = $2 WHERE id = $1;`, id, data)
+	default:
+		_, err = tx.Exec(`UPDATE template SET updated_at = NOW(), name = $2, data = $3 WHERE id = $1;`, id, name, data)
 	}
 
 	if err != nil {

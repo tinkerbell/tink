@@ -2,7 +2,7 @@ package mock
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
@@ -16,7 +16,7 @@ type Template struct {
 }
 
 // CreateTemplate creates a new workflow template.
-func (d *DB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+func (d *DB) CreateTemplate(_ context.Context, name string, data string, id uuid.UUID) error {
 	if d.TemplateDB == nil {
 		d.TemplateDB = make(map[string]interface{})
 	}
@@ -26,10 +26,10 @@ func (d *DB) CreateTemplate(ctx context.Context, name string, data string, id uu
 		switch stmpl := tmpl.(type) {
 		case Template:
 			if !stmpl.Deleted {
-				return errors.New("Template name already exist in the database")
+				return fmt.Errorf("template name %q already exists in the database", name)
 			}
 		default:
-			return errors.New("Not a Template type in the database")
+			return fmt.Errorf("template %q not a Template type in the database", name)
 		}
 	}
 	d.TemplateDB[name] = Template{
@@ -47,7 +47,7 @@ func (d DB) GetTemplate(ctx context.Context, fields map[string]string, deleted b
 }
 
 // DeleteTemplate deletes a workflow template.
-func (d DB) DeleteTemplate(ctx context.Context, name string) error {
+func (d DB) DeleteTemplate(_ context.Context, name string) error {
 	if d.TemplateDB != nil {
 		delete(d.TemplateDB, name)
 	}
@@ -56,12 +56,12 @@ func (d DB) DeleteTemplate(ctx context.Context, name string) error {
 }
 
 // ListTemplates returns all saved templates.
-func (d DB) ListTemplates(in string, fn func(id, n string, in, del *timestamp.Timestamp) error) error {
+func (d DB) ListTemplates(_ string, _ func(id, n string, in, del *timestamp.Timestamp) error) error {
 	return nil
 }
 
 // UpdateTemplate update a given template.
-func (d DB) UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
+func (d DB) UpdateTemplate(_ context.Context, _ string, _ string, _ uuid.UUID) error {
 	return nil
 }
 

@@ -55,7 +55,7 @@ type workflow interface {
 	UpdateWorkflowState(ctx context.Context, wfContext *pb.WorkflowContext) error
 	GetWorkflowContexts(ctx context.Context, wfID string) (*pb.WorkflowContext, error)
 	GetWorkflowActions(ctx context.Context, wfID string) (*pb.WorkflowActionList, error)
-	InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error
+	InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, t time.Time) error
 	ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error
 }
 
@@ -70,13 +70,13 @@ func Connect(db *sql.DB, lg log.Logger) *TinkDB {
 	return &TinkDB{instance: db, logger: lg}
 }
 
-func (t *TinkDB) Migrate() (int, error) {
-	return migrate.Exec(t.instance, "postgres", migration.GetMigrations(), migrate.Up)
+func (d *TinkDB) Migrate() (int, error) {
+	return migrate.Exec(d.instance, "postgres", migration.GetMigrations(), migrate.Up)
 }
 
-func (t *TinkDB) CheckRequiredMigrations() (int, error) {
+func (d *TinkDB) CheckRequiredMigrations() (int, error) {
 	migrations := migration.GetMigrations().Migrations
-	records, err := migrate.GetMigrationRecords(t.instance, "postgres")
+	records, err := migrate.GetMigrationRecords(d.instance, "postgres")
 	if err != nil {
 		return 0, err
 	}
@@ -95,8 +95,7 @@ func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (st
 	row := db.QueryRowContext(ctx, query, args...)
 
 	buf := []byte{}
-	err := row.Scan(&buf)
-	if err != nil {
+	if err := row.Scan(&buf); err != nil {
 		return "", errors.Wrap(err, "SELECT")
 	}
 	return string(buf), nil

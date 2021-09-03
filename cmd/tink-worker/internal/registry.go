@@ -81,7 +81,7 @@ func (r *RegistryConnDetails) pullImage(ctx context.Context, cli imagePuller, im
 	var status *ImagePullStatus
 	for {
 		if err := fd.Decode(&status); err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return errors.Wrap(err, "DOCKER PULL")

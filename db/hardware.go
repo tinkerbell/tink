@@ -183,7 +183,7 @@ func (d TinkDB) GetAll(fn func([]byte) error) error {
 	}
 
 	err = rows.Err()
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	return err

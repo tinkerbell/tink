@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -59,7 +60,7 @@ func listEvents(t table.Writer, args []string) {
 				{event.WorkerId, event.TaskName, event.ActionName, event.Seconds, event.Message, event.ActionStatus},
 			})
 		}
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			log.Fatal(err)
 		}
 	}

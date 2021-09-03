@@ -1,3 +1,4 @@
+//nolint:thelper // misuse of test helpers requires a large refactor into subtests
 package cmd
 
 import (
@@ -25,6 +26,7 @@ func Test_NewHardwareCommand(t *testing.T) {
 			args: args{name: testCommand},
 			want: &cobra.Command{},
 			cmdFunc: func(t *testing.T, c *cobra.Command) {
+				t.Helper()
 				root := c.Root()
 				root.SetArgs([]string{subCommand})
 				if err := root.Execute(); err != nil {

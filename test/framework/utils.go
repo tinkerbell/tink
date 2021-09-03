@@ -13,7 +13,7 @@ var (
 var Log = logger
 
 // SetupWorkflow ... Set up workflow.
-func SetupWorkflow(tar string, tmpl string) (string, error) {
+func SetupWorkflow(tmpl string) (string, error) {
 	hardwareID := "c9d6faa4-08a2-4285-ae6c-f3401211bd56"
 	// Add template in template table
 	templateID, err := CreateTemplate(tmpl)
