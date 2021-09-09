@@ -16,7 +16,6 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/db"
-	"github.com/tinkerbell/tink/metrics"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -56,7 +55,6 @@ func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer,
 		grpc_middleware.WithUnaryServerChain(grpc_prometheus.UnaryServerInterceptor, otelgrpc.UnaryServerInterceptor()),
 		grpc_middleware.WithStreamServerChain(grpc_prometheus.StreamServerInterceptor, otelgrpc.StreamServerInterceptor()),
 	}
-	metrics.SetupMetrics(config.Facility, logger)
 	server := &server{
 		db:      config.DB,
 		dbReady: true,
