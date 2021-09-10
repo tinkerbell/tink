@@ -1,11 +1,11 @@
 # Tinkerbell
 
-[![Build Status](https://github.com/tinkerbell/tink/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/tink/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amaster)
-[![codecov](https://codecov.io/gh/tinkerbell/tink/branch/master/graph/badge.svg)](https://codecov.io/gh/tinkerbell/tink)
+[![Build Status](https://github.com/tinkerbell/tink/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/tink/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
+[![codecov](https://codecov.io/gh/tinkerbell/tink/branch/main/graph/badge.svg)](https://codecov.io/gh/tinkerbell/tink)
 ![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4512/badge)](https://bestpractices.coreinfrastructure.org/projects/4512)
 
-This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style! This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
+This repository is [Experimental](https://github.com/packethost/standards/blob/main/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style! This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
 ## License
 
@@ -67,6 +67,30 @@ Use `make help`.
 The most interesting targets are `make all` (or just `make`) and `make images`.
 `make all` builds all the binaries for your host OS and CPU to enable running directly.
 `make images` will build all the binaries for Linux/x86_64 and build docker images with them.
+
+## Configuring OpenTelemetry
+
+Rather than adding a bunch of command line options or a config file, OpenTelemetry
+is configured via environment variables. The most relevant ones are below, for others
+see https://github.com/equinix-labs/otel-init-go
+
+Currently this is just for tracing, metrics needs to be discussed with the community.
+
+| Env Variable                  | Required | Default   |
+| ----------------------------- | -------- | --------- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | n        | localhost |
+| `OTEL_EXPORTER_OTLP_INSECURE` | n        | false     |
+| `OTEL_LOG_LEVEL`              | n        | info      |
+
+To work with a local [opentelemetry-collector](https://github.com/open-telemetry/opentelemetry-collector),
+try the following. For examples of how to set up the collector to relay to various services
+take a look at [otel-cli](https://github.com/packethost/otel-cli)
+
+```
+export OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+export OTEL_EXPORTER_OTLP_INSECURE=true
+./cmd/tink-server/tink-server <stuff>
+```
 
 ## Website
 
