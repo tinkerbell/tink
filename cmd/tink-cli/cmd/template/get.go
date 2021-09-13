@@ -33,18 +33,10 @@ var GetCmd = &cobra.Command{
 			// Parse arg[0] to see if it is a UUID
 			if _, err := uuid.Parse(arg); err == nil {
 				// UUID
-				req = template.GetRequest{
-					GetBy: &template.GetRequest_Id{
-						Id: arg,
-					},
-				}
+				req.GetBy = &template.GetRequest_Id{Id: arg}
 			} else {
 				// String (Name)
-				req = template.GetRequest{
-					GetBy: &template.GetRequest_Name{
-						Name: arg,
-					},
-				}
+				req.GetBy = &template.GetRequest_Name{Name: arg}
 			}
 			t, err := client.TemplateClient.GetTemplate(context.Background(), &req)
 			if err != nil {

@@ -99,18 +99,7 @@ func NewGetCommand(opt Options) *cobra.Command {
 
 			if len(args) != 0 {
 				for _, arg := range args {
-					if _, err := uuid.Parse(arg); err == nil {
-						// arg is a valid UUID, search for arg in `id` field of db
-						if opt.RetrieveByID == nil {
-							return errors.New("Get by ID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
-						}
-
-						s, err := opt.RetrieveByID(cmd.Context(), opt.fullClient, arg)
-						if err != nil {
-							continue
-						}
-						data = append(data, s)
-					} else {
+					if _, err := uuid.Parse(arg); err != nil {
 						// arg is invalid UUID, search for arg in `name` field of db
 						if opt.RetrieveByName == nil {
 							return errors.New("Get by Name is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
@@ -121,7 +110,20 @@ func NewGetCommand(opt Options) *cobra.Command {
 							continue
 						}
 						data = append(data, s)
+						continue
 					}
+
+					// arg is a valid UUID, search for arg in `id` field of db
+					if opt.RetrieveByID == nil {
+						return errors.New("Get by ID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one.")
+					}
+
+					s, err := opt.RetrieveByID(cmd.Context(), opt.fullClient, arg)
+					if err != nil {
+						continue
+					}
+					data = append(data, s)
+
 				}
 			} else {
 				data, err = opt.RetrieveData(cmd.Context(), opt.fullClient)
