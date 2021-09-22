@@ -18,6 +18,7 @@ import (
 	"github.com/tinkerbell/tink/db"
 	rpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
+	"github.com/tinkerbell/tink/metrics"
 )
 
 // version is set at build time.
@@ -131,6 +132,7 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			// the most aggressive way we have to guarantee that
 			// the old way works as before.
 			config.PopulateFromLegacyEnvVar()
+			metrics.SetupMetrics(config.Facility, logger)
 
 			logger.Info("starting version " + version)
 

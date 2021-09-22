@@ -1,3 +1,3 @@
 #OWNERS
 
-Please see [https://github.com/tinkerbell/.github/blob/master/OWNERS.md](https://github.com/tinkerbell/.github/blob/master/OWNERS.md).
+Please see [https://github.com/tinkerbell/.github/blob/main/OWNERS.md](https://github.com/tinkerbell/.github/blob/main/OWNERS.md).
