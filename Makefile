@@ -15,7 +15,7 @@ verify: lint
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
 
-# BEGIN: lint-install --dockerfile=warn ../tink
+# BEGIN: lint-install --dockerfile=warn .
 # http://github.com/tinkerbell/lint-install
 
 GOLINT_VERSION ?= v1.42.0
@@ -59,4 +59,4 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b out/linters $(GOLINT_VERSION)
 	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 
-# END: lint-install --dockerfile=warn ../tink
+# END: lint-install --dockerfile=warn .
