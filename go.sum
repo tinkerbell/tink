@@ -400,6 +400,8 @@ github.com/equinix-labs/otel-init-go v0.0.1 h1:v+XdagFMmmZHsOF6TLQArOt6CkuxiwXsI
 github.com/equinix-labs/otel-init-go v0.0.1/go.mod h1:Zprvqw70JGsTRLbj6bCtndooCAgg4mY4H2MF3KC/AS0=
 github.com/equinix-labs/otel-init-go v0.0.2 h1:p2htRl07GHFwfOeu0M4+NoMRU+KFyi9u/P/hJvAUPYA=
 github.com/equinix-labs/otel-init-go v0.0.2/go.mod h1:OkEx/nCikvqW1nMheZmcPxTMmbg4jKaSQef2iC7R21Q=
+github.com/equinix-labs/otel-init-go v0.0.3 h1:rpFwytb9mRW7T6EZxQ7+6RT5TQa81Bg5oKMs0u9bvjU=
+github.com/equinix-labs/otel-init-go v0.0.3/go.mod h1:9cMFj8/eeptSfeM+DuELxuIKgGSQIU4nctDIiJONbxk=
 github.com/esimonov/ifshort v1.0.2/go.mod h1:yZqNJUrNn20K8Q9n2CrjTKYyVEmX209Hgu+M1LBpeZE=
 github.com/ettle/strcase v0.1.1/go.mod h1:hzDLsPC7/lwKyBOywSHEP89nt2pDgdy+No1NBA9o9VY=
 github.com/evanphx/json-patch v4.9.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=

@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.7+incompatible
-	github.com/equinix-labs/otel-init-go v0.0.2
+	github.com/equinix-labs/otel-init-go v0.0.3
 	github.com/go-openapi/strfmt v0.19.3 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
