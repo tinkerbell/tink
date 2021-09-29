@@ -5,6 +5,7 @@ all: cli server worker ## Build all binaries for host OS and CPU
 
 -include rules.mk
 -include lint.mk
+-include kube.mk
 
 crosscompile: $(crossbinaries) ## Build all binaries for Linux and all supported CPU arches
 images: tink-cli-image tink-server-image tink-worker-image ## Build all docker images

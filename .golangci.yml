@@ -189,6 +189,10 @@ issues:
       linters:
         - noctx
 
+    # kubebuilder needs the stdlib invalid `inline` json struct tag
+    - path: pkg/apis/.*
+      text: "struct-tag"
+
     - path: main\.go
       linters:
         - noctx
