@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/equinix-labs/otel-init-go/otelhelpers"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	pb "github.com/tinkerbell/tink/protos/workflow"
@@ -22,6 +23,13 @@ const (
 )
 
 func (w *Worker) createContainer(ctx context.Context, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs bool) (string, error) {
+	// propagate the traceparent string over environment variables
+	tp := otelhelpers.TraceparentStringFromContext(ctx)
+	env := action.GetEnvironment()
+	if tp != "" {
+		env = append(env, "TRACEPARENT="+tp)
+	}
+
 	registry := w.registry
 	config := &container.Config{
 		Image:        path.Join(registry, action.GetImage()),
@@ -29,7 +37,7 @@ func (w *Worker) createContainer(ctx context.Context, cmd []string, wfID string,
 		AttachStderr: true,
 		Cmd:          cmd,
 		Tty:          true,
-		Env:          action.GetEnvironment(),
+		Env:          env,
 	}
 	if !captureLogs {
 		config.AttachStdout = true
