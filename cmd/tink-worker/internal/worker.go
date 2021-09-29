@@ -19,6 +19,9 @@ import (
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	pb "github.com/tinkerbell/tink/protos/workflow"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/status"
 )
 
@@ -191,6 +194,11 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 // ProcessWorkflowActions gets all Workflow contexts and processes their actions
 func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, captureActionLogs bool) error {
 	l := w.logger.With("workerID", workerID)
+	tracer := otel.Tracer("tink-worker")
+	ctx, span := tracer.Start(ctx, "ProcessWorkflowActions", trace.WithAttributes(
+		attribute.String("workerID", workerID),
+	))
+	defer span.End()
 
 	for {
 		res, err := w.client.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
@@ -200,6 +208,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 		for wfContext, err := res.Recv(); err == nil && wfContext != nil; wfContext, err = res.Recv() {
 			wfID := wfContext.GetWorkflowId()
 			l = l.With("workflowID", wfID)
+			span.SetAttributes(attribute.String("workflowID", wfID))
 			actions, err := w.client.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfID})
 			if err != nil {
 				return errors.Wrap(err, errGetWfActions)

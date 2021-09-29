@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/equinix-labs/otel-init-go/otelhelpers"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -61,6 +62,10 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 				ctx, cancel = context.WithTimeout(ctx, timeOut)
 				defer cancel()
 			}
+
+			// if traceparent is set in /proc/cmdline or in the environment,
+			// pick it up and add it to ctx
+			ctx = otelhelpers.ContextWithCmdlineOrEnvTraceparent(ctx)
 
 			conn, err := tryClientConnection(logger, retryInterval, retries)
 			if err != nil {
