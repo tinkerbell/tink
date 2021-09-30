@@ -35,11 +35,11 @@ func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.W
 		return err
 	}
 	for _, wf := range wfs {
-		wfContext, err := s.db.GetWorkflowContexts(context.Background(), wf)
+		wfContext, err := s.db.GetWorkflowContexts(stream.Context(), wf)
 		if err != nil {
 			return status.Errorf(codes.Aborted, err.Error())
 		}
-		if isApplicableToSend(context.Background(), s.logger, wfContext, req.WorkerId, s.db) {
+		if isApplicableToSend(stream.Context(), s.logger, wfContext, req.WorkerId, s.db) {
 			if err := stream.Send(wfContext); err != nil {
 				return err
 			}
