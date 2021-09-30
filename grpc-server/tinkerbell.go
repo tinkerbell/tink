@@ -30,7 +30,7 @@ const (
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts
 func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowService_GetWorkflowContextsServer) error {
-	wfs, err := getWorkflowsForWorker(s.db, req.WorkerId)
+	wfs, err := getWorkflowsForWorker(stream.Context(), s.db, req.WorkerId)
 	if err != nil {
 		return err
 	}
@@ -49,8 +49,8 @@ func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.W
 }
 
 // GetWorkflowContextList implements tinkerbell.GetWorkflowContextList
-	wfs, err := getWorkflowsForWorker(s.db, req.WorkerId)
 func (s *server) GetWorkflowContextList(ctx context.Context, req *pb.WorkflowContextRequest) (*pb.WorkflowContextList, error) {
+	wfs, err := getWorkflowsForWorker(ctx, s.db, req.WorkerId)
 	if err != nil {
 		return nil, err
 	}
@@ -196,11 +196,11 @@ func (s *server) GetWorkflowDataVersion(ctx context.Context, req *pb.GetWorkflow
 	return &pb.GetWorkflowDataResponse{Version: version}, nil
 }
 
-func getWorkflowsForWorker(db db.Database, id string) ([]string, error) {
+func getWorkflowsForWorker(ctx context.Context, db db.Database, id string) ([]string, error) {
 	if id == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkerID)
 	}
-	wfs, err := db.GetWorkflowsForWorker(id)
+	wfs, err := db.GetWorkflowsForWorker(ctx, id)
 	if err != nil {
 		return nil, status.Errorf(codes.Aborted, err.Error())
 	}
