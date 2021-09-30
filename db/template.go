@@ -27,7 +27,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	INSERT INTO
 		template (created_at, updated_at, name, data, id)
 	VALUES
@@ -107,7 +107,7 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	res, err := tx.Exec(`
+	res, err := tx.ExecContext(ctx, `
 	UPDATE template
 	SET
 		deleted_at = NOW()
@@ -183,11 +183,11 @@ func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id
 
 	switch {
 	case data == "" && name != "":
-		_, err = tx.Exec(`UPDATE template SET updated_at = NOW(), name = $2 WHERE id = $1;`, id, name)
+		_, err = tx.ExecContext(ctx, `UPDATE template SET updated_at = NOW(), name = $2 WHERE id = $1;`, id, name)
 	case data != "" && name == "":
-		_, err = tx.Exec(`UPDATE template SET updated_at = NOW(), data = $2 WHERE id = $1;`, id, data)
+		_, err = tx.ExecContext(ctx, `UPDATE template SET updated_at = NOW(), data = $2 WHERE id = $1;`, id, data)
 	default:
-		_, err = tx.Exec(`UPDATE template SET updated_at = NOW(), name = $2, data = $3 WHERE id = $1;`, id, name, data)
+		_, err = tx.ExecContext(ctx, `UPDATE template SET updated_at = NOW(), name = $2, data = $3 WHERE id = $1;`, id, name, data)
 	}
 
 	if err != nil {

@@ -18,7 +18,7 @@ func (d TinkDB) DeleteFromDB(ctx context.Context, id string) error {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	res, err := tx.Exec(`
+	res, err := tx.ExecContext(ctx, `
 	UPDATE hardware
 	SET
 		deleted_at = NOW()
@@ -47,7 +47,7 @@ func (d TinkDB) InsertIntoDB(ctx context.Context, data string) error {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	INSERT INTO
 		hardware (inserted_at, id, data)
 	VALUES

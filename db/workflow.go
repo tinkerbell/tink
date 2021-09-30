@@ -44,7 +44,7 @@ func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id
 	if err != nil {
 		return errors.Wrap(err, "failed to create workflow")
 	}
-	err = insertInWorkflow(wf, tx)
+	err = insertInWorkflow(ctx, wf, tx)
 	if err != nil {
 		return errors.Wrap(err, "failed to create workflow")
 	}
@@ -55,8 +55,8 @@ func (d TinkDB) CreateWorkflow(ctx context.Context, wf Workflow, data string, id
 	return nil
 }
 
-func insertInWorkflow(wf Workflow, tx *sql.Tx) error {
-	_, err := tx.Exec(`
+func insertInWorkflow(ctx context.Context, wf Workflow, tx *sql.Tx) error {
+	_, err := tx.ExecContext(ctx, `
 	INSERT INTO
 		workflow (created_at, updated_at, template, devices, id)
 	VALUES
@@ -72,8 +72,8 @@ func insertInWorkflow(wf Workflow, tx *sql.Tx) error {
 	return nil
 }
 
-func insertIntoWfWorkerTable(wfID uuid.UUID, workerID uuid.UUID, tx *sql.Tx) error {
-	_, err := tx.Exec(`
+func insertIntoWfWorkerTable(ctx context.Context, wfID uuid.UUID, workerID uuid.UUID, tx *sql.Tx) error {
+	_, err := tx.ExecContext(ctx, `
 	INSERT INTO
 		workflow_worker_map (workflow_id, worker_id)
 	VALUES
@@ -116,7 +116,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 			return err
 		}
 		if uniqueWorkerID != workerUID {
-			err = insertIntoWfWorkerTable(id, workerUID, tx)
+			err = insertIntoWfWorkerTable(ctx, id, workerUID, tx)
 			if err != nil {
 				return err
 			}
@@ -173,7 +173,7 @@ func insertActionList(ctx context.Context, db *sql.DB, yamlData string, id uuid.
 		return err
 	}
 
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	INSERT INTO
 		workflow_state (workflow_id, current_worker, current_task_name, current_action_name, current_action_state, action_list, current_action_index, total_number_of_actions)
 	VALUES
@@ -203,7 +203,7 @@ func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflo
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	INSERT INTO
 		workflow_data (workflow_id, version, metadata, data)
 	VALUES
@@ -215,7 +215,7 @@ func (d TinkDB) InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflo
 
 	if version > int32(maxVersions) {
 		cleanVersion := version - int32(maxVersions)
-		_, err = tx.Exec(`
+		_, err = tx.ExecContext(ctx, `
 		UPDATE workflow_data
 		SET
 			data = NULL
@@ -375,7 +375,7 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, _ int32) error {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	DELETE FROM workflow_worker_map
 	WHERE
 		workflow_id = $1;
@@ -384,7 +384,7 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, _ int32) error {
 		return errors.Wrap(err, "Delete Workflow Error")
 	}
 
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	DELETE FROM workflow_state
 	WHERE
 		workflow_id = $1;
@@ -393,7 +393,7 @@ func (d TinkDB) DeleteWorkflow(ctx context.Context, id string, _ int32) error {
 		return errors.Wrap(err, "Delete Workflow Error")
 	}
 
-	res, err := tx.Exec(`
+	res, err := tx.ExecContext(ctx, `
 	UPDATE workflow
 	SET
 		deleted_at = NOW()
@@ -469,11 +469,11 @@ func (d TinkDB) UpdateWorkflow(ctx context.Context, wf Workflow, _ int32) error 
 
 	switch {
 	case wf.Hardware == "" && wf.Template != "":
-		_, err = tx.Exec(`UPDATE workflow SET updated_at = NOW(), template = $2 WHERE id = $1;`, wf.ID, wf.Template)
+		_, err = tx.ExecContext(ctx, `UPDATE workflow SET updated_at = NOW(), template = $2 WHERE id = $1;`, wf.ID, wf.Template)
 	case wf.Hardware != "" && wf.Template == "":
-		_, err = tx.Exec(`UPDATE workflow SET updated_at = NOW(), devices = $2 WHERE id = $1;`, wf.ID, wf.Hardware)
+		_, err = tx.ExecContext(ctx, `UPDATE workflow SET updated_at = NOW(), devices = $2 WHERE id = $1;`, wf.ID, wf.Hardware)
 	default:
-		_, err = tx.Exec(`UPDATE workflow SET updated_at = NOW(), template = $2, devices = $3 WHERE id = $1;`, wf.ID, wf.Template, wf.Hardware)
+		_, err = tx.ExecContext(ctx, `UPDATE workflow SET updated_at = NOW(), template = $2, devices = $3 WHERE id = $1;`, wf.ID, wf.Template, wf.Hardware)
 	}
 
 	if err != nil {
@@ -494,7 +494,7 @@ func (d TinkDB) UpdateWorkflowState(ctx context.Context, wfContext *pb.WorkflowC
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	UPDATE workflow_state
 	SET current_task_name = $2,
 		current_action_name = $3,
@@ -581,7 +581,7 @@ func (d TinkDB) InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.Wo
 	}
 
 	// TODO "created_at" field should be set in worker and come in the request
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	INSERT INTO
 		workflow_event (workflow_id, worker_id, task_name, action_name, execution_time, message, status, created_at)
 	VALUES
