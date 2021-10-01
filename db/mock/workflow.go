@@ -35,8 +35,8 @@ func (d DB) GetWorkflowDataVersion(ctx context.Context, workflowID string) (int3
 }
 
 // GetWorkflowsForWorker : returns the list of workflows for a particular worker
-func (d DB) GetWorkflowsForWorker(id string) ([]string, error) {
-	return d.GetWorkflowsForWorkerFunc(id)
+func (d DB) GetWorkflowsForWorker(ctx context.Context, id string) ([]string, error) {
+	return d.GetWorkflowsForWorkerFunc(ctx, id)
 }
 
 // GetWorkflow returns a workflow
