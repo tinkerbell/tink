@@ -72,7 +72,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		"database failure": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
@@ -88,7 +88,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		"no workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return nil, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
@@ -104,7 +104,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		"workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
@@ -763,7 +763,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		"database failure": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return nil, errors.New("database failed")
 					},
 				},
@@ -776,7 +776,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		"no workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return nil, nil
 					},
 				},
@@ -789,7 +789,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		"workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
 				},
@@ -804,7 +804,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(t, tc.args.db)
-			res, err := getWorkflowsForWorker(s.db, tc.args.workerID)
+			res, err := getWorkflowsForWorker(context.Background(), s.db, tc.args.workerID)
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)

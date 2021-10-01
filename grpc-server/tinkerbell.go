@@ -30,16 +30,16 @@ const (
 
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts.
 func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.WorkflowService_GetWorkflowContextsServer) error {
-	wfs, err := getWorkflowsForWorker(s.db, req.WorkerId)
+	wfs, err := getWorkflowsForWorker(stream.Context(), s.db, req.WorkerId)
 	if err != nil {
 		return err
 	}
 	for _, wf := range wfs {
-		wfContext, err := s.db.GetWorkflowContexts(context.Background(), wf)
+		wfContext, err := s.db.GetWorkflowContexts(stream.Context(), wf)
 		if err != nil {
 			return status.Errorf(codes.Aborted, err.Error())
 		}
-		if isApplicableToSend(context.Background(), s.logger, wfContext, req.WorkerId, s.db) {
+		if isApplicableToSend(stream.Context(), s.logger, wfContext, req.WorkerId, s.db) {
 			if err := stream.Send(wfContext); err != nil {
 				return err
 			}
@@ -50,7 +50,7 @@ func (s *server) GetWorkflowContexts(req *pb.WorkflowContextRequest, stream pb.W
 
 // GetWorkflowContextList implements tinkerbell.GetWorkflowContextList.
 func (s *server) GetWorkflowContextList(ctx context.Context, req *pb.WorkflowContextRequest) (*pb.WorkflowContextList, error) {
-	wfs, err := getWorkflowsForWorker(s.db, req.WorkerId)
+	wfs, err := getWorkflowsForWorker(ctx, s.db, req.WorkerId)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (s *server) UpdateWorkflowData(ctx context.Context, req *pb.UpdateWorkflowD
 
 // GetWorkflowData gets the ephemeral data for a workflow.
 func (s *server) GetWorkflowData(ctx context.Context, req *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
-	if wfID := req.GetWorkflowId(); wfID == "" {
+	if id := req.GetWorkflowId(); id == "" {
 		return &pb.GetWorkflowDataResponse{Data: []byte("")}, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 
@@ -196,11 +196,11 @@ func (s *server) GetWorkflowDataVersion(ctx context.Context, req *pb.GetWorkflow
 	return &pb.GetWorkflowDataResponse{Version: version}, nil
 }
 
-func getWorkflowsForWorker(d db.Database, id string) ([]string, error) {
+func getWorkflowsForWorker(ctx context.Context, d db.Database, id string) ([]string, error) {
 	if id == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkerID)
 	}
-	wfs, err := d.GetWorkflowsForWorker(id)
+	wfs, err := d.GetWorkflowsForWorker(ctx, id)
 	if err != nil {
 		return nil, status.Errorf(codes.Aborted, err.Error())
 	}
