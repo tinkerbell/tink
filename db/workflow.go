@@ -304,8 +304,8 @@ func (d TinkDB) GetWorkflowDataVersion(ctx context.Context, workflowID string) (
 }
 
 // GetWorkflowsForWorker : returns the list of workflows for a particular worker
-func (d TinkDB) GetWorkflowsForWorker(id string) ([]string, error) {
-	rows, err := d.instance.Query(`
+func (d TinkDB) GetWorkflowsForWorker(ctx context.Context, id string) ([]string, error) {
+	rows, err := d.instance.QueryContext(ctx, `
 	SELECT workflow_id
 	FROM workflow_worker_map
 	WHERE
