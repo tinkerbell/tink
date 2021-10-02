@@ -18,7 +18,7 @@ verify: lint # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .
 
 generated: pbfiles protomocks ## Generate dynamically created files
-check-generated: check-protomocks ## Check if generated files are up to date
+check-generated: check-pbfiles check-protomocks ## Check if generated files are up to date
 
 tools: ${toolsBins} ## Build Go based build tools
 
