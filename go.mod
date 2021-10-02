@@ -3,6 +3,7 @@ module github.com/tinkerbell/tink
 go 1.13
 
 require (
+	github.com/bufbuild/buf v1.0.0-rc2
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.1
@@ -30,8 +31,8 @@ require (
 	github.com/testcontainers/testcontainers-go v0.11.1
 	go.mongodb.org/mongo-driver v1.1.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.22.0
-	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
-	google.golang.org/grpc v1.39.0
+	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6
+	google.golang.org/grpc v1.41.0-dev.0.20210907181116-2f3355d2244e
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	mvdan.cc/gofumpt v0.1.1
