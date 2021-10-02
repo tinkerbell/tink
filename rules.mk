@@ -50,7 +50,7 @@ run-stack:
 
 protos/gen_mock:
 	go generate ./protos/**/*
-	goimports -w ./protos/**/mock.go
+	gofumpt -s -w ./protos/**/mock.go
 
 grpc/gen_doc:
 	protoc \

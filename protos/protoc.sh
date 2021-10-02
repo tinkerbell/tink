@@ -33,4 +33,4 @@ for proto in protos/*/*.proto; do
 		--grpc-gateway_opt paths=source_relative \
 		"${proto}"
 done
-goimports -w .
+gofumpt -s -w .

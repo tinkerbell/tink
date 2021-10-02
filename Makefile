@@ -11,7 +11,8 @@ test: ## Run tests
 	go clean -testcache
 	go test ./... -v
 
-verify: lint
+verify: lint # Verify code style, is lint free, freshness ...
+	gofumpt -s -d .
 
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
