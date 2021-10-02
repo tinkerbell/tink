@@ -14,5 +14,7 @@ test: ## Run tests
 verify: lint # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .
 
+tools: ${toolsBins} ## Build Go based build tools
+
 help: ## Print this help
 	@grep --no-filename -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/:.*##/·/' | sort | column -ts '·' -c 120
