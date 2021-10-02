@@ -17,7 +17,7 @@ test: ## Run tests
 verify: lint # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .
 
-generated: protomocks ## Generate dynamically created files
+generated: pbfiles protomocks ## Generate dynamically created files
 check-generated: check-protomocks ## Check if generated files are up to date
 
 tools: ${toolsBins} ## Build Go based build tools

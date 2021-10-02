@@ -75,3 +75,8 @@ check-protomocks:
 	  echo "Mock files need to be regenerated!"; 
 	  git diff --no-ext-diff --exit-code --stat -- protos/*/mock.go
 	)
+
+.PHONY: pbfiles
+pbfiles: buf.gen.yaml buf.lock $(shell git ls-files 'protos/*/*.proto') $(toolsBins)
+	buf generate
+	gofumpt -w protos/*/*.pb.*
