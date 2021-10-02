@@ -19,7 +19,6 @@ mkShell {
     nixfmt
     nodePackages.prettier
     protobuf
-    protoc-gen-doc
     pythonPackages.codespell
     shfmt
     shellcheck

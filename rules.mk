@@ -68,12 +68,3 @@ $(toolsBins):
 protos/gen_mock:
 	go generate ./protos/**/*
 	gofumpt -s -w ./protos/**/mock.go
-
-.PHONY: grpc/gen_doc
-grpc/gen_doc:
-	protoc \
-		-I./protos \
-		-I./protos/third_party \
-		--doc_out=./doc \
-		--doc_opt=html,index.html \
-		protos/hardware/*.proto protos/template/*.proto protos/workflow/*.proto
