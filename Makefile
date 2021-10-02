@@ -18,3 +18,5 @@ verify: lint # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .
 
 tools: ${toolsBins} ## Build Go based build tools
+
+.PHONY: all crosscompile help images run test tools verify

@@ -20,11 +20,11 @@ endif
 LDFLAGS := -ldflags "-X main.version=$(version)"
 export CGO_ENABLED := 0
 
+.PHONY: server cli worker test $(binaries)
 cli: cmd/tink-cli/tink-cli
 server: cmd/tink-server/tink-server
 worker : cmd/tink-worker/tink-worker
 
-.PHONY: server cli worker test $(binaries)
 crossbinaries := $(addsuffix -linux-,$(binaries))
 crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=arm64) $(crossbinaries:=armv6) $(crossbinaries:=armv7)
 
@@ -37,7 +37,7 @@ crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=
 $(binaries) $(crossbinaries):
 	$(FLAGS) go build $(LDFLAGS) -o $@ ./$(@D)
 
-.PHONY: images tink-cli-image tink-server-image tink-worker-image
+.PHONY: tink-cli-image tink-server-image tink-worker-image
 tink-cli-image: cmd/tink-cli/tink-cli-linux-amd64
 	docker build -t tink-cli cmd/tink-cli/
 tink-server-image: cmd/tink-server/tink-server-linux-amd64
@@ -45,6 +45,7 @@ tink-server-image: cmd/tink-server/tink-server-linux-amd64
 tink-worker-image: cmd/tink-worker/tink-worker-linux-amd64
 	docker build -t tink-worker cmd/tink-worker/
 
+.PHONY: run-stack
 run-stack:
 	docker-compose up --build
 
@@ -63,10 +64,12 @@ $(toolsBins): CMD=$(shell awk -F'"' '/$(@F)"/ {print $$2}' tools.go)
 $(toolsBins):
 	go install $(CMD)
 
+.PHONY: protos/gen_mock
 protos/gen_mock:
 	go generate ./protos/**/*
 	gofumpt -s -w ./protos/**/mock.go
 
+.PHONY: grpc/gen_doc
 grpc/gen_doc:
 	protoc \
 		-I./protos \
