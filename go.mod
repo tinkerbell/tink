@@ -26,7 +26,6 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.8.1
-	github.com/stormcat24/protodep v0.0.0-20200505140716-b02c9ba62816
 	github.com/stretchr/testify v1.7.0
 	github.com/testcontainers/testcontainers-go v0.11.1
 	go.mongodb.org/mongo-driver v1.1.2 // indirect
