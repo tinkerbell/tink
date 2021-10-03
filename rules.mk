@@ -68,3 +68,10 @@ $(toolsBins):
 protomocks: bin/moq
 	go generate ./protos/...
 	gofumpt -s -w ./protos/*/mock.go
+
+.PHONY: check-protomocks
+check-protomocks:
+	@git diff --no-ext-diff --quiet --exit-code -- protos/*/mock.go || (
+	  echo "Mock files need to be regenerated!"; 
+	  git diff --no-ext-diff --exit-code --stat -- protos/*/mock.go
+	)
