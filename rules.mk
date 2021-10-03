@@ -66,5 +66,5 @@ $(toolsBins):
 
 .PHONY: protos/gen_mock
 protos/gen_mock:
-	go generate ./protos/**/*
-	gofumpt -s -w ./protos/**/mock.go
+	go generate ./protos/...
+	gofumpt -s -w ./protos/*/mock.go
