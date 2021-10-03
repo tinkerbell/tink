@@ -64,7 +64,7 @@ $(toolsBins): CMD=$(shell awk -F'"' '/$(@F)"/ {print $$2}' tools.go)
 $(toolsBins):
 	go install $(CMD)
 
-.PHONY: protos/gen_mock
-protos/gen_mock:
+.PHONY: protomocks
+protomocks: bin/moq
 	go generate ./protos/...
 	gofumpt -s -w ./protos/*/mock.go
