@@ -1,3 +1,4 @@
+//nolint:thelper // misuse of test helpers requires a large refactor into subtests
 package cmd
 
 import (

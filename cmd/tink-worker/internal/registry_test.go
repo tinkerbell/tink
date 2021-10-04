@@ -14,6 +14,8 @@ import (
 )
 
 func setupTestLogger(t *testing.T) log.Logger {
+	t.Helper()
+
 	service := "github.com/tinkerbell/tink"
 	logger, err := log.Init(service)
 	if err != nil {
@@ -27,7 +29,7 @@ type imagePullerMock struct {
 	imagePullErr     error
 }
 
-func (d *imagePullerMock) ImagePull(ctx context.Context, str string, op types.ImagePullOptions) (io.ReadCloser, error) {
+func (d *imagePullerMock) ImagePull(_ context.Context, _ string, _ types.ImagePullOptions) (io.ReadCloser, error) {
 	return d.stringReadCloser, d.imagePullErr
 }
 

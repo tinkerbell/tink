@@ -13,24 +13,22 @@ const (
 	serviceKey = "github.com/tinkerbell/tink"
 )
 
-var (
-	// version is set at build time
-	version = "devel"
-)
+// version is set at build time.
+var version = "devel"
 
 func main() {
 	logger, err := log.Init(serviceKey)
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Close()
 
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(context.Background(), "github.com/tinkerbell/tink")
-	defer otelShutdown(ctx)
 
 	rootCmd := cmd.NewRootCommand(version, logger)
-
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
+
+	logger.Close()
+	otelShutdown(ctx)
 }

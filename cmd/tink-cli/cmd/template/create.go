@@ -1,3 +1,4 @@
+//nolint:import-shadowing // The name 'template' shadows an import name
 package template
 
 import (

@@ -2,6 +2,7 @@ package template
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -14,7 +15,7 @@ import (
 	"github.com/tinkerbell/tink/protos/template"
 )
 
-// table headers
+// table headers.
 var (
 	id        = "Template ID"
 	name      = "Template Name"
@@ -27,7 +28,7 @@ var (
 	t     table.Writer
 )
 
-// listCmd represents the list subcommand for template command
+// listCmd represents the list subcommand for template command.
 func NewListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
@@ -75,7 +76,7 @@ func listTemplates() {
 		printOutput(tmp)
 	}
 
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		log.Fatal(err)
 	}
 }

@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -22,7 +23,7 @@ var (
 	hUpdatedAt = "Updated At"
 )
 
-// listCmd represents the list subcommand for workflow command
+// listCmd represents the list subcommand for workflow command.
 func NewListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
@@ -73,7 +74,7 @@ func listWorkflows() {
 		printOutput(wf)
 	}
 
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		log.Fatal(err)
 	}
 }

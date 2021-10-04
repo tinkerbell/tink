@@ -20,11 +20,11 @@ import (
 const (
 	defaultRetryInterval        = 3
 	defaultRetryCount           = 3
-	defaultMaxFileSize    int64 = 10 * 1024 * 1024 //10MB
+	defaultMaxFileSize    int64 = 10 * 1024 * 1024 // 10MB
 	defaultTimeoutMinutes       = 60
 )
 
-// NewRootCommand creates a new Tink Worker Cobra root command
+// NewRootCommand creates a new Tink Worker Cobra root command.
 func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:     "tink-worker",
@@ -81,7 +81,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 
 	rootCmd.Flags().Duration("retry-interval", defaultRetryInterval, "Retry interval in seconds (RETRY_INTERVAL)")
 
-	rootCmd.Flags().Duration("timeout", time.Duration(defaultTimeoutMinutes*time.Minute), "Max duration to wait for worker to complete (TIMEOUT)")
+	rootCmd.Flags().Duration("timeout", defaultTimeoutMinutes*time.Minute, "Max duration to wait for worker to complete (TIMEOUT)")
 
 	rootCmd.Flags().Int("max-retry", defaultRetryCount, "Maximum number of retries to attempt (MAX_RETRY)")
 
@@ -138,24 +138,24 @@ func createViper(logger log.Logger) (*viper.Viper, error) {
 }
 
 func applyViper(v *viper.Viper, cmd *cobra.Command) error {
-	errors := []error{}
+	errs := []error{}
 
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
 			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
-				errors = append(errors, err)
+				errs = append(errs, err)
 				return
 			}
 		}
 	})
 
-	if len(errors) > 0 {
-		errs := []string{}
-		for _, err := range errors {
-			errs = append(errs, err.Error())
+	if len(errs) > 0 {
+		es := []string{}
+		for _, err := range errs {
+			es = append(es, err.Error())
 		}
-		return fmt.Errorf(strings.Join(errs, ", "))
+		return fmt.Errorf(strings.Join(es, ", "))
 	}
 
 	return nil
@@ -166,7 +166,7 @@ func tryClientConnection(logger log.Logger, retryInterval time.Duration, retries
 		c, err := client.GetConnection()
 		if err != nil {
 			logger.With("error", err, "duration", retryInterval).Info("failed to connect, sleeping before retrying")
-			<-time.After(retryInterval * time.Second)
+			<-time.After(retryInterval)
 			continue
 		}
 

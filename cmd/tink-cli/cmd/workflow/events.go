@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -40,7 +41,6 @@ func NewShowCommand() *cobra.Command {
 			t.AppendHeader(table.Row{hWorkerID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
 			listEvents(t, args)
 			t.Render()
-
 		},
 	}
 	return cmd
@@ -53,14 +53,14 @@ func listEvents(t table.Writer, args []string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		//var wf *workflow.Workflow
+		// var wf *workflow.Workflow
 		err = nil
 		for event, err := events.Recv(); err == nil && event != nil; event, err = events.Recv() {
 			t.AppendRows([]table.Row{
 				{event.WorkerId, event.TaskName, event.ActionName, event.Seconds, event.Message, event.ActionStatus},
 			})
 		}
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			log.Fatal(err)
 		}
 	}

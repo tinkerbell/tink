@@ -1366,24 +1366,27 @@ func file_packet_packet_proto_rawDescGZIP() []byte {
 	return file_packet_packet_proto_rawDescData
 }
 
-var file_packet_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
-var file_packet_packet_proto_goTypes = []interface{}{
-	(*Metadata)(nil),                                          // 0: github.com.tinkerbell.tink.protos.packet.Metadata
-	(*Metadata_Manufacturer)(nil),                             // 1: github.com.tinkerbell.tink.protos.packet.Metadata.Manufacturer
-	(*Metadata_Instance)(nil),                                 // 2: github.com.tinkerbell.tink.protos.packet.Metadata.Instance
-	(*Metadata_Custom)(nil),                                   // 3: github.com.tinkerbell.tink.protos.packet.Metadata.Custom
-	(*Metadata_Facility)(nil),                                 // 4: github.com.tinkerbell.tink.protos.packet.Metadata.Facility
-	(*Metadata_Instance_OperatingSystem)(nil),                 // 5: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.OperatingSystem
-	(*Metadata_Instance_IP)(nil),                              // 6: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.IP
-	(*Metadata_Instance_Storage)(nil),                         // 7: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage
-	(*Metadata_Instance_Storage_Disk)(nil),                    // 8: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Disk
-	(*Metadata_Instance_Storage_File)(nil),                    // 9: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.File
-	(*Metadata_Instance_Storage_Mount)(nil),                   // 10: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Mount
-	(*Metadata_Instance_Storage_Filesystem)(nil),              // 11: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Filesystem
-	(*Metadata_Instance_Storage_RAID)(nil),                    // 12: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.RAID
-	(*Metadata_Instance_Storage_Disk_Partition)(nil),          // 13: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Disk.Partition
-	(*Metadata_Instance_Storage_Mount_FilesystemOptions)(nil), // 14: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Mount.FilesystemOptions
-}
+var (
+	file_packet_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+	file_packet_packet_proto_goTypes  = []interface{}{
+		(*Metadata)(nil),                                          // 0: github.com.tinkerbell.tink.protos.packet.Metadata
+		(*Metadata_Manufacturer)(nil),                             // 1: github.com.tinkerbell.tink.protos.packet.Metadata.Manufacturer
+		(*Metadata_Instance)(nil),                                 // 2: github.com.tinkerbell.tink.protos.packet.Metadata.Instance
+		(*Metadata_Custom)(nil),                                   // 3: github.com.tinkerbell.tink.protos.packet.Metadata.Custom
+		(*Metadata_Facility)(nil),                                 // 4: github.com.tinkerbell.tink.protos.packet.Metadata.Facility
+		(*Metadata_Instance_OperatingSystem)(nil),                 // 5: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.OperatingSystem
+		(*Metadata_Instance_IP)(nil),                              // 6: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.IP
+		(*Metadata_Instance_Storage)(nil),                         // 7: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage
+		(*Metadata_Instance_Storage_Disk)(nil),                    // 8: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Disk
+		(*Metadata_Instance_Storage_File)(nil),                    // 9: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.File
+		(*Metadata_Instance_Storage_Mount)(nil),                   // 10: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Mount
+		(*Metadata_Instance_Storage_Filesystem)(nil),              // 11: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Filesystem
+		(*Metadata_Instance_Storage_RAID)(nil),                    // 12: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.RAID
+		(*Metadata_Instance_Storage_Disk_Partition)(nil),          // 13: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Disk.Partition
+		(*Metadata_Instance_Storage_Mount_FilesystemOptions)(nil), // 14: github.com.tinkerbell.tink.protos.packet.Metadata.Instance.Storage.Mount.FilesystemOptions
+	}
+)
+
 var file_packet_packet_proto_depIdxs = []int32{
 	1,  // 0: github.com.tinkerbell.tink.protos.packet.Metadata.manufacturer:type_name -> github.com.tinkerbell.tink.protos.packet.Metadata.Manufacturer
 	2,  // 1: github.com.tinkerbell.tink.protos.packet.Metadata.instance:type_name -> github.com.tinkerbell.tink.protos.packet.Metadata.Instance

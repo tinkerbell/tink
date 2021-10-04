@@ -21,10 +21,8 @@ import (
 	"github.com/tinkerbell/tink/metrics"
 )
 
-var (
-	// version is set at build time
-	version = "devel"
-)
+// version is set at build time.
+var version = "devel"
 
 // DaemonConfig represents all the values you can configure as part of the tink-server.
 // You can change the configuration via environment variable, or file, or command flags.
@@ -102,11 +100,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Close()
 
 	ctx := context.Background()
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "github.com/tinkerbell/tink")
-	defer otelShutdown(ctx)
 
 	config := &DaemonConfig{}
 
@@ -115,6 +111,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger.Close()
+	otelShutdown(ctx)
 }
 
 func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
@@ -189,7 +187,7 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				DB:            tinkDB,
 			}, errCh)
 
-			httpServer.SetupHTTP(ctx, logger, &httpServer.HTTPServerConfig{
+			httpServer.SetupHTTP(ctx, logger, &httpServer.Config{
 				CertPEM:               cert,
 				ModTime:               modT,
 				GRPCAuthority:         config.GRPCAuthority,

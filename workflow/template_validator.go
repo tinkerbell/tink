@@ -24,7 +24,7 @@ const (
 	errInvalidHardwareAddress = "failed to render template, invalid hardware address: %s"
 )
 
-// Parse parses the template yaml content into a Workflow
+// Parse parses the template yaml content into a Workflow.
 func Parse(yamlContent []byte) (*Workflow, error) {
 	var workflow Workflow
 
@@ -41,7 +41,7 @@ func Parse(yamlContent []byte) (*Workflow, error) {
 }
 
 // MustParse parse a slice of bytes to a template. It an error occurs the
-// function triggers a panic. Common utility for testing purpose
+// function triggers a panic. Common utility for testing purpose.
 func MustParse(yamlContent []byte) *Workflow {
 	w, err := Parse(yamlContent)
 	if err != nil {
@@ -60,7 +60,7 @@ func MustParseFromFile(path string) *Workflow {
 	return MustParse(content)
 }
 
-// RenderTemplate renders the workflow template wrt given hardware details
+// RenderTemplate renders the workflow template wrt given hardware details.
 func RenderTemplate(templateID, templateData string, devices []byte) (string, error) {
 	var hardware map[string]interface{}
 	err := json.Unmarshal(devices, &hardware)
@@ -70,7 +70,7 @@ func RenderTemplate(templateID, templateData string, devices []byte) (string, er
 	}
 
 	t := template.New("workflow-template").Option("missingkey=error")
-	_, err = t.Parse(string(templateData))
+	_, err = t.Parse(templateData)
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		return "", err
@@ -92,7 +92,7 @@ func RenderTemplate(templateID, templateData string, devices []byte) (string, er
 	return buf.String(), nil
 }
 
-// validate validates a workflow template against certain requirements
+// validate validates a workflow template against certain requirements.
 func validate(wf *Workflow) error {
 	if hasEmptyName(wf.Name) {
 		return errors.New(errEmptyName)

@@ -42,7 +42,6 @@ func TestMigrationsAreOrderendInTheWayWeDeclaredThem(t *testing.T) {
 			t.Errorf("Expected migration \"%s\" but got \"%s\"", dm.Id, orderedMigration[ii].Id)
 		}
 	}
-
 }
 
 func TestMigrationFuncNamesMatchIDs(t *testing.T) {
@@ -65,7 +64,6 @@ func TestMigrationFuncNamesMatchIDs(t *testing.T) {
 
 		assert.NotContains(t, timestamps, mid)
 	}
-
 }
 
 func TestGetMigrations(t *testing.T) {

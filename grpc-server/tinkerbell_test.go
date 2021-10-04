@@ -28,11 +28,16 @@ const (
 
 var wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
 
-func testServer(t *testing.T, db db.Database) *server {
-	l, _ := log.Init("github.com/tinkerbell/tink")
+func testServer(t *testing.T, d db.Database) *server {
+	t.Helper()
+	l, err := log.Init("github.com/tinkerbell/tink")
+	if err != nil {
+		t.Errorf("log init failed: %v", err)
+	}
+
 	return &server{
 		logger: l,
-		db:     db,
+		db:     d,
 	}
 }
 
@@ -871,7 +876,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 							UpdatedAt: time.Now(),
 							SHA:       "fcbf74596047b6d3e746702ccc2c697d87817371918a5042805c8c7c75b2cb5f",
 						})
-						return []byte(meta), nil
+						return meta, nil
 					},
 				},
 				workflowID: workflowID,

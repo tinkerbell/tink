@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// Prometheus Metrics
+// Prometheus Metrics.
 var (
 	CacheDuration prometheus.ObserverVec
 	CacheErrors   *prometheus.CounterVec
@@ -22,7 +22,7 @@ var (
 	WatchMissTotal prometheus.Counter
 )
 
-// SetupMetrics sets the defaults for metrics
+// SetupMetrics sets the defaults for metrics.
 func SetupMetrics(facility string, logger log.Logger) {
 	curryLabels := prometheus.Labels{
 		"service":  "tink",

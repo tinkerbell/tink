@@ -11,11 +11,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/pkg"
-	"github.com/tinkerbell/tink/protos/hardware"
+	hwpb "github.com/tinkerbell/tink/protos/hardware"
 )
 
 // SubCommands holds the sub commands for template command
-// Example: tinkerbell template [subcommand]
+// Example: tinkerbell template [subcommand].
 var SubCommands []*cobra.Command
 
 func verifyUUIDs(args []string) error {
@@ -30,7 +30,7 @@ func verifyUUIDs(args []string) error {
 	return nil
 }
 
-func printOutput(data bool, hw *hardware.Hardware, input string) {
+func printOutput(data bool, hw *hwpb.Hardware, input string) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{"Field Name", "Value"})

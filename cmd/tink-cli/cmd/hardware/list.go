@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -10,7 +11,7 @@ import (
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
-	"github.com/tinkerbell/tink/protos/hardware"
+	hwpb "github.com/tinkerbell/tink/protos/hardware"
 )
 
 var (
@@ -40,12 +41,12 @@ func NewListCmd() *cobra.Command {
 }
 
 func listHardware() {
-	list, err := client.HardwareClient.All(context.Background(), &hardware.Empty{})
+	list, err := client.HardwareClient.All(context.Background(), &hwpb.Empty{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var hw *hardware.Hardware
+	var hw *hwpb.Hardware
 	for hw, err = list.Recv(); err == nil && hw != nil; hw, err = list.Recv() {
 		for _, iface := range hw.GetNetwork().GetInterfaces() {
 			if quiet {
@@ -55,7 +56,7 @@ func listHardware() {
 			}
 		}
 	}
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		log.Fatal(err)
 	}
 }

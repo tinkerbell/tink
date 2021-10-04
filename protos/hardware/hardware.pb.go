@@ -1047,21 +1047,24 @@ func file_hardware_hardware_proto_rawDescGZIP() []byte {
 	return file_hardware_hardware_proto_rawDescData
 }
 
-var file_hardware_hardware_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
-var file_hardware_hardware_proto_goTypes = []interface{}{
-	(*PushRequest)(nil),                // 0: github.com.tinkerbell.tink.protos.hardware.PushRequest
-	(*Empty)(nil),                      // 1: github.com.tinkerbell.tink.protos.hardware.Empty
-	(*GetRequest)(nil),                 // 2: github.com.tinkerbell.tink.protos.hardware.GetRequest
-	(*Hardware)(nil),                   // 3: github.com.tinkerbell.tink.protos.hardware.Hardware
-	(*DeleteRequest)(nil),              // 4: github.com.tinkerbell.tink.protos.hardware.DeleteRequest
-	(*Hardware_DHCP)(nil),              // 5: github.com.tinkerbell.tink.protos.hardware.Hardware.DHCP
-	(*Hardware_Netboot)(nil),           // 6: github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot
-	(*Hardware_Network)(nil),           // 7: github.com.tinkerbell.tink.protos.hardware.Hardware.Network
-	(*Hardware_DHCP_IP)(nil),           // 8: github.com.tinkerbell.tink.protos.hardware.Hardware.DHCP.IP
-	(*Hardware_Netboot_IPXE)(nil),      // 9: github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot.IPXE
-	(*Hardware_Netboot_Osie)(nil),      // 10: github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot.Osie
-	(*Hardware_Network_Interface)(nil), // 11: github.com.tinkerbell.tink.protos.hardware.Hardware.Network.Interface
-}
+var (
+	file_hardware_hardware_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+	file_hardware_hardware_proto_goTypes  = []interface{}{
+		(*PushRequest)(nil),                // 0: github.com.tinkerbell.tink.protos.hardware.PushRequest
+		(*Empty)(nil),                      // 1: github.com.tinkerbell.tink.protos.hardware.Empty
+		(*GetRequest)(nil),                 // 2: github.com.tinkerbell.tink.protos.hardware.GetRequest
+		(*Hardware)(nil),                   // 3: github.com.tinkerbell.tink.protos.hardware.Hardware
+		(*DeleteRequest)(nil),              // 4: github.com.tinkerbell.tink.protos.hardware.DeleteRequest
+		(*Hardware_DHCP)(nil),              // 5: github.com.tinkerbell.tink.protos.hardware.Hardware.DHCP
+		(*Hardware_Netboot)(nil),           // 6: github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot
+		(*Hardware_Network)(nil),           // 7: github.com.tinkerbell.tink.protos.hardware.Hardware.Network
+		(*Hardware_DHCP_IP)(nil),           // 8: github.com.tinkerbell.tink.protos.hardware.Hardware.DHCP.IP
+		(*Hardware_Netboot_IPXE)(nil),      // 9: github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot.IPXE
+		(*Hardware_Netboot_Osie)(nil),      // 10: github.com.tinkerbell.tink.protos.hardware.Hardware.Netboot.Osie
+		(*Hardware_Network_Interface)(nil), // 11: github.com.tinkerbell.tink.protos.hardware.Hardware.Network.Interface
+	}
+)
+
 var file_hardware_hardware_proto_depIdxs = []int32{
 	3,  // 0: github.com.tinkerbell.tink.protos.hardware.PushRequest.data:type_name -> github.com.tinkerbell.tink.protos.hardware.Hardware
 	7,  // 1: github.com.tinkerbell.tink.protos.hardware.Hardware.network:type_name -> github.com.tinkerbell.tink.protos.hardware.Hardware.Network
@@ -1264,8 +1267,10 @@ func file_hardware_hardware_proto_init() {
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConnInterface
+var (
+	_ context.Context
+	_ grpc.ClientConnInterface
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
@@ -1431,27 +1436,32 @@ type HardwareServiceServer interface {
 }
 
 // UnimplementedHardwareServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedHardwareServiceServer struct {
-}
+type UnimplementedHardwareServiceServer struct{}
 
 func (*UnimplementedHardwareServiceServer) Push(context.Context, *PushRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Push not implemented")
 }
+
 func (*UnimplementedHardwareServiceServer) ByMAC(context.Context, *GetRequest) (*Hardware, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ByMAC not implemented")
 }
+
 func (*UnimplementedHardwareServiceServer) ByIP(context.Context, *GetRequest) (*Hardware, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ByIP not implemented")
 }
+
 func (*UnimplementedHardwareServiceServer) ByID(context.Context, *GetRequest) (*Hardware, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ByID not implemented")
 }
+
 func (*UnimplementedHardwareServiceServer) All(*Empty, HardwareService_AllServer) error {
 	return status.Errorf(codes.Unimplemented, "method All not implemented")
 }
+
 func (*UnimplementedHardwareServiceServer) DeprecatedWatch(*GetRequest, HardwareService_DeprecatedWatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method DeprecatedWatch not implemented")
 }
+
 func (*UnimplementedHardwareServiceServer) Delete(context.Context, *DeleteRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
-	"github.com/tinkerbell/tink/protos/hardware"
+	hwpb "github.com/tinkerbell/tink/protos/hardware"
 )
 
 func NewGetByMACCmd() *cobra.Command {
@@ -28,7 +28,7 @@ func NewGetByMACCmd() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, mac := range args {
-				hw, err := client.HardwareClient.ByMAC(context.Background(), &hardware.GetRequest{Mac: mac})
+				hw, err := client.HardwareClient.ByMAC(context.Background(), &hwpb.GetRequest{Mac: mac})
 				if err != nil {
 					log.Fatal(err)
 				}

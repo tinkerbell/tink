@@ -9,15 +9,16 @@ import (
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd"
 )
 
-// version is set at build time
+// version is set at build time.
 var version = "devel"
 
 func main() {
 	ctx, otelShutdown := otelinit.InitOpenTelemetry(context.Background(), "github.com/tinkerbell/tink")
-	defer otelShutdown(ctx)
 
 	if err := cmd.Execute(version); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
+
+	otelShutdown(ctx)
 }

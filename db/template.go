@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// CreateTemplate creates a new workflow template
+// CreateTemplate creates a new workflow template.
 func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	_, err := wflow.Parse([]byte(data))
 	if err != nil {
@@ -27,7 +27,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 	INSERT INTO
 		template (created_at, updated_at, name, data, id)
 	VALUES
@@ -48,7 +48,7 @@ func (d TinkDB) CreateTemplate(ctx context.Context, name string, data string, id
 	return nil
 }
 
-// GetTemplate returns template which is not deleted
+// GetTemplate returns template which is not deleted.
 func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, deleted bool) (*tb.WorkflowTemplate, error) {
 	getCondition, err := buildGetCondition(fields)
 	if err != nil {
@@ -93,21 +93,21 @@ func (d TinkDB) GetTemplate(ctx context.Context, fields map[string]string, delet
 			UpdatedAt: upAt,
 		}, nil
 	}
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
 	}
 	return &tb.WorkflowTemplate{}, err
 }
 
-// DeleteTemplate deletes a workflow template by id
+// DeleteTemplate deletes a workflow template by id.
 func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	res, err := tx.Exec(`
+	res, err := tx.ExecContext(ctx, `
 	UPDATE template
 	SET
 		deleted_at = NOW()
@@ -129,7 +129,7 @@ func (d TinkDB) DeleteTemplate(ctx context.Context, id string) error {
 	return nil
 }
 
-// ListTemplates returns all saved templates
+// ListTemplates returns all saved templates.
 func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *timestamp.Timestamp) error) error {
 	rows, err := d.instance.Query(`
 	SELECT id, name, created_at, updated_at
@@ -139,7 +139,6 @@ func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *time
 	AND
 		deleted_at IS NULL;
 	`, filter)
-
 	if err != nil {
 		return err
 	}
@@ -169,41 +168,26 @@ func (d TinkDB) ListTemplates(filter string, fn func(id, n string, in, del *time
 	}
 
 	err = rows.Err()
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	return err
 }
 
-// UpdateTemplate update a given template
+// UpdateTemplate update a given template.
 func (d TinkDB) UpdateTemplate(ctx context.Context, name string, data string, id uuid.UUID) error {
 	tx, err := d.instance.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return errors.Wrap(err, "BEGIN transaction")
 	}
 
-	if data == "" && name != "" {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), name = $2
-		WHERE
-			id = $1;`, id, name)
-	} else if data != "" && name == "" {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), data = $2
-		WHERE
-			id = $1;`, id, data)
-	} else {
-		_, err = tx.Exec(`
-		UPDATE template
-		SET
-			updated_at = NOW(), name = $2, data = $3
-		WHERE
-			id = $1;
-		`, id, name, data)
+	switch {
+	case data == "" && name != "":
+		_, err = tx.ExecContext(ctx, `UPDATE template SET updated_at = NOW(), name = $2 WHERE id = $1;`, id, name)
+	case data != "" && name == "":
+		_, err = tx.ExecContext(ctx, `UPDATE template SET updated_at = NOW(), data = $2 WHERE id = $1;`, id, data)
+	default:
+		_, err = tx.ExecContext(ctx, `UPDATE template SET updated_at = NOW(), name = $2, data = $3 WHERE id = $1;`, id, name, data)
 	}
 
 	if err != nil {

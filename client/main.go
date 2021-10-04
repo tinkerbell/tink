@@ -17,14 +17,14 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// gRPC clients
+// gRPC clients.
 var (
 	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
 	HardwareClient hardware.HardwareServiceClient
 )
 
-// FullClient aggregates all the gRPC clients available from Tinkerbell Server
+// FullClient aggregates all the gRPC clients available from Tinkerbell Server.
 type FullClient struct {
 	TemplateClient template.TemplateServiceClient
 	WorkflowClient workflow.WorkflowServiceClient
@@ -53,7 +53,7 @@ func NewFullClientFromGlobal() (*FullClient, error) {
 
 // NewFullClient returns a FullClient. A structure that contains all the
 // clients made available from tink-server. This is the function you should use
-// instead of NewFullClientFromGlobal that will be deprecated soon
+// instead of NewFullClientFromGlobal that will be deprecated soon.
 func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 	return &FullClient{
 		TemplateClient: template.NewTemplateServiceClient(conn),
@@ -98,7 +98,7 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-// GetConnection returns a gRPC client connection
+// GetConnection returns a gRPC client connection.
 func GetConnection() (*grpc.ClientConn, error) {
 	certURL := os.Getenv("TINKERBELL_CERT_URL")
 	if certURL == "" {
@@ -137,7 +137,7 @@ func GetConnection() (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-// Setup : create a connection to server
+// Setup : create a connection to server.
 func Setup() error {
 	conn, err := GetConnection()
 	if err != nil {
@@ -149,7 +149,7 @@ func Setup() error {
 	return nil
 }
 
-// TinkHardwareClient creates a new hardware client
+// TinkHardwareClient creates a new hardware client.
 func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
@@ -158,7 +158,7 @@ func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 	return hardware.NewHardwareServiceClient(conn), nil
 }
 
-// TinkWorkflowClient creates a new workflow client
+// TinkWorkflowClient creates a new workflow client.
 func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {

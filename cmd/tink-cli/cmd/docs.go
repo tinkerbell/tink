@@ -7,12 +7,10 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-var (
-	docsPath string
-)
+var docsPath string
 
 // docsCmd returns the generate command that, when run, generates
-// documentation
+// documentation.
 func docsCmd(name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:       "docs [markdown|man]",

@@ -10,12 +10,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
-	"github.com/tinkerbell/tink/protos/hardware"
+	hwpb "github.com/tinkerbell/tink/protos/hardware"
 )
 
 var data bool
 
-// ipCmd represents the ip command
+// ipCmd represents the ip command.
 func NewGetByIPCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ip",
@@ -31,7 +31,7 @@ func NewGetByIPCmd() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, ip := range args {
-				hw, err := client.HardwareClient.ByIP(context.Background(), &hardware.GetRequest{Ip: ip})
+				hw, err := client.HardwareClient.ByIP(context.Background(), &hwpb.GetRequest{Ip: ip})
 				if err != nil {
 					log.Fatal(err)
 				}
