@@ -14,7 +14,7 @@ test: ## Run tests
 	go clean -testcache
 	go test ./... -v
 
-verify: lint # Verify code style, is lint free, freshness ...
+verify: lint check-generated # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .
 
 generated: pbfiles protomocks ## Generate dynamically created files
