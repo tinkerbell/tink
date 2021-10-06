@@ -188,3 +188,7 @@ Also, both `go`, and `protoc` are required by `protoc.sh`.
 │   ├── template
 │   └── workflow
 ```
+
+### environment variables
+
+Tink Server, CLI, and Worker environment variables are documented [here](docs/ENVVARS.md).
