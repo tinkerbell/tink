@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	defaultRetryInterval        = 3
-	defaultRetryCount           = 3
-	defaultMaxFileSize    int64 = 10 * 1024 * 1024 // 10MB
-	defaultTimeoutMinutes       = 60
+	defaultRetryIntervalSeconds       = 3
+	defaultRetryCount                 = 3
+	defaultMaxFileSize          int64 = 10 * 1024 * 1024 // 10MB
+	defaultTimeoutMinutes             = 60
 )
 
 // NewRootCommand creates a new Tink Worker Cobra root command.
@@ -79,7 +79,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 		},
 	}
 
-	rootCmd.Flags().Duration("retry-interval", defaultRetryInterval, "Retry interval in seconds (RETRY_INTERVAL)")
+	rootCmd.Flags().Duration("retry-interval", defaultRetryIntervalSeconds*time.Second, "Retry interval in seconds (RETRY_INTERVAL)")
 
 	rootCmd.Flags().Duration("timeout", defaultTimeoutMinutes*time.Minute, "Max duration to wait for worker to complete (TIMEOUT)")
 
