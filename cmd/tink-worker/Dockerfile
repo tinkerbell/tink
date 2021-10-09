@@ -1,4 +1,4 @@
-FROM alpine:3.11
+FROM alpine:3.14
 ENTRYPOINT [ "/usr/bin/tink-worker" ]
 
 ARG TARGETARCH

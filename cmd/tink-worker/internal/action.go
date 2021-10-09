@@ -31,8 +31,8 @@ func (w *Worker) createContainer(ctx context.Context, cmd []string, wfID string,
 		Env:          action.GetEnvironment(),
 	}
 	if !captureLogs {
-		config.AttachStdout = true
-		config.AttachStderr = true
+		config.AttachStdout = false
+		config.AttachStderr = false
 		config.Tty = false
 	}
 
