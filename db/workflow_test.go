@@ -1,3 +1,4 @@
+//nolint:thelper // misuse of test helpers requires a large refactor into subtests
 package db_test
 
 import (
@@ -55,7 +56,7 @@ func TestCreateWorkflow(t *testing.T) {
 			Expectation: func(t *testing.T, in *input, tinkDB *db.TinkDB) {
 				count := 0
 				err := tinkDB.ListWorkflows(func(wf db.Workflow) error {
-					count = count + 1
+					count++
 					return nil
 				})
 				if err != nil {
@@ -82,7 +83,7 @@ func TestCreateWorkflow(t *testing.T) {
 			Expectation: func(t *testing.T, in *input, tinkDB *db.TinkDB) {
 				count := 0
 				err := tinkDB.ListWorkflows(func(wf db.Workflow) error {
-					count = count + 1
+					count++
 					return nil
 				})
 				if err != nil {
@@ -109,7 +110,7 @@ func TestCreateWorkflow(t *testing.T) {
 			Expectation: func(t *testing.T, in *input, tinkDB *db.TinkDB) {
 				count := 0
 				err := tinkDB.ListWorkflows(func(wf db.Workflow) error {
-					count = count + 1
+					count++
 					return nil
 				})
 				if err != nil {
@@ -137,7 +138,7 @@ func TestCreateWorkflow(t *testing.T) {
 			Expectation: func(t *testing.T, in *input, tinkDB *db.TinkDB) {
 				count := 0
 				err := tinkDB.ListWorkflows(func(wf db.Workflow) error {
-					count = count + 1
+					count++
 					return nil
 				})
 				if err != nil {
@@ -154,7 +155,7 @@ func TestCreateWorkflow(t *testing.T) {
 	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {
@@ -201,7 +202,7 @@ func TestCreateWorkflow(t *testing.T) {
 func TestDeleteWorkflow(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -235,6 +236,7 @@ func TestDeleteWorkflow(t *testing.T) {
 		t.Error(err)
 	}
 
+	// TODO: Investigate why we bother with passing an unused status value
 	err = tinkDB.DeleteWorkflow(ctx, wfID, pb.State_value[pb.State_STATE_PENDING.String()])
 	if err != nil {
 		t.Error(err)
@@ -242,7 +244,7 @@ func TestDeleteWorkflow(t *testing.T) {
 
 	count := 0
 	err = tinkDB.ListWorkflows(func(wf db.Workflow) error {
-		count = count + 1
+		count++
 		return nil
 	})
 	if err != nil {
@@ -332,7 +334,7 @@ func TestGetWorkflow(t *testing.T) {
 	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {

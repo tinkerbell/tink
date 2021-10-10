@@ -493,15 +493,18 @@ func file_template_template_proto_rawDescGZIP() []byte {
 	return file_template_template_proto_rawDescData
 }
 
-var file_template_template_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_template_template_proto_goTypes = []interface{}{
-	(*Empty)(nil),                 // 0: github.com.tinkerbell.tink.protos.template.Empty
-	(*WorkflowTemplate)(nil),      // 1: github.com.tinkerbell.tink.protos.template.WorkflowTemplate
-	(*CreateResponse)(nil),        // 2: github.com.tinkerbell.tink.protos.template.CreateResponse
-	(*GetRequest)(nil),            // 3: github.com.tinkerbell.tink.protos.template.GetRequest
-	(*ListRequest)(nil),           // 4: github.com.tinkerbell.tink.protos.template.ListRequest
-	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
-}
+var (
+	file_template_template_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+	file_template_template_proto_goTypes  = []interface{}{
+		(*Empty)(nil),                 // 0: github.com.tinkerbell.tink.protos.template.Empty
+		(*WorkflowTemplate)(nil),      // 1: github.com.tinkerbell.tink.protos.template.WorkflowTemplate
+		(*CreateResponse)(nil),        // 2: github.com.tinkerbell.tink.protos.template.CreateResponse
+		(*GetRequest)(nil),            // 3: github.com.tinkerbell.tink.protos.template.GetRequest
+		(*ListRequest)(nil),           // 4: github.com.tinkerbell.tink.protos.template.ListRequest
+		(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	}
+)
+
 var file_template_template_proto_depIdxs = []int32{
 	5, // 0: github.com.tinkerbell.tink.protos.template.WorkflowTemplate.created_at:type_name -> google.protobuf.Timestamp
 	5, // 1: github.com.tinkerbell.tink.protos.template.WorkflowTemplate.updated_at:type_name -> google.protobuf.Timestamp
@@ -618,8 +621,10 @@ func file_template_template_proto_init() {
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConnInterface
+var (
+	_ context.Context
+	_ grpc.ClientConnInterface
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
@@ -744,21 +749,24 @@ type TemplateServiceServer interface {
 }
 
 // UnimplementedTemplateServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedTemplateServiceServer struct {
-}
+type UnimplementedTemplateServiceServer struct{}
 
 func (*UnimplementedTemplateServiceServer) CreateTemplate(context.Context, *WorkflowTemplate) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateTemplate not implemented")
 }
+
 func (*UnimplementedTemplateServiceServer) GetTemplate(context.Context, *GetRequest) (*WorkflowTemplate, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTemplate not implemented")
 }
+
 func (*UnimplementedTemplateServiceServer) DeleteTemplate(context.Context, *GetRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTemplate not implemented")
 }
+
 func (*UnimplementedTemplateServiceServer) ListTemplates(*ListRequest, TemplateService_ListTemplatesServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListTemplates not implemented")
 }
+
 func (*UnimplementedTemplateServiceServer) UpdateTemplate(context.Context, *WorkflowTemplate) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTemplate not implemented")
 }

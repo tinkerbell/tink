@@ -81,7 +81,7 @@ func TestGetHardware(t *testing.T) {
 					AllFunc: func(ctx context.Context, in *hardware_proto.Empty, opts ...grpc.CallOption) (hardware_proto.HardwareService_AllClient, error) {
 						return &hardware_proto.HardwareService_AllClientMock{
 							RecvFunc: func() (*hardware_proto.Hardware, error) {
-								s.counter = s.counter + 1
+								s.counter++
 								if s.counter > len(s.ReturnedHardwares) {
 									return nil, io.EOF
 								}

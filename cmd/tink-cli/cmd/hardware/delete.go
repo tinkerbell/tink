@@ -7,7 +7,7 @@ import (
 
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/delete"
-	"github.com/tinkerbell/tink/protos/hardware"
+	hwpb "github.com/tinkerbell/tink/protos/hardware"
 )
 
 type deleteHardware struct {
@@ -15,7 +15,7 @@ type deleteHardware struct {
 }
 
 func (h *deleteHardware) DeleteByID(ctx context.Context, cl *client.FullClient, requestedID string) (interface{}, error) {
-	return cl.HardwareClient.Delete(ctx, &hardware.DeleteRequest{Id: requestedID})
+	return cl.HardwareClient.Delete(ctx, &hwpb.DeleteRequest{Id: requestedID})
 }
 
 func NewDeleteOptions() delete.Options {

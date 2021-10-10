@@ -480,17 +480,13 @@ type HardwareService_AllClientMock struct {
 	// calls tracks calls to the methods.
 	calls struct {
 		// CloseSend holds details about calls to the CloseSend method.
-		CloseSend []struct {
-		}
+		CloseSend []struct{}
 		// Context holds details about calls to the Context method.
-		Context []struct {
-		}
+		Context []struct{}
 		// Header holds details about calls to the Header method.
-		Header []struct {
-		}
+		Header []struct{}
 		// Recv holds details about calls to the Recv method.
-		Recv []struct {
-		}
+		Recv []struct{}
 		// RecvMsg holds details about calls to the RecvMsg method.
 		RecvMsg []struct {
 			// M is the m argument value.
@@ -502,8 +498,7 @@ type HardwareService_AllClientMock struct {
 			M interface{}
 		}
 		// Trailer holds details about calls to the Trailer method.
-		Trailer []struct {
-		}
+		Trailer []struct{}
 	}
 	lockCloseSend sync.RWMutex
 	lockContext   sync.RWMutex
@@ -519,8 +514,7 @@ func (mock *HardwareService_AllClientMock) CloseSend() error {
 	if mock.CloseSendFunc == nil {
 		panic("HardwareService_AllClientMock.CloseSendFunc: method is nil but HardwareService_AllClient.CloseSend was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockCloseSend.Lock()
 	mock.calls.CloseSend = append(mock.calls.CloseSend, callInfo)
 	mock.lockCloseSend.Unlock()
@@ -530,10 +524,8 @@ func (mock *HardwareService_AllClientMock) CloseSend() error {
 // CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.CloseSendCalls())
-func (mock *HardwareService_AllClientMock) CloseSendCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *HardwareService_AllClientMock) CloseSendCalls() []struct{} {
+	var calls []struct{}
 	mock.lockCloseSend.RLock()
 	calls = mock.calls.CloseSend
 	mock.lockCloseSend.RUnlock()
@@ -545,8 +537,7 @@ func (mock *HardwareService_AllClientMock) Context() context.Context {
 	if mock.ContextFunc == nil {
 		panic("HardwareService_AllClientMock.ContextFunc: method is nil but HardwareService_AllClient.Context was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockContext.Lock()
 	mock.calls.Context = append(mock.calls.Context, callInfo)
 	mock.lockContext.Unlock()
@@ -556,10 +547,8 @@ func (mock *HardwareService_AllClientMock) Context() context.Context {
 // ContextCalls gets all the calls that were made to Context.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.ContextCalls())
-func (mock *HardwareService_AllClientMock) ContextCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *HardwareService_AllClientMock) ContextCalls() []struct{} {
+	var calls []struct{}
 	mock.lockContext.RLock()
 	calls = mock.calls.Context
 	mock.lockContext.RUnlock()
@@ -571,8 +560,7 @@ func (mock *HardwareService_AllClientMock) Header() (metadata.MD, error) {
 	if mock.HeaderFunc == nil {
 		panic("HardwareService_AllClientMock.HeaderFunc: method is nil but HardwareService_AllClient.Header was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockHeader.Lock()
 	mock.calls.Header = append(mock.calls.Header, callInfo)
 	mock.lockHeader.Unlock()
@@ -582,10 +570,8 @@ func (mock *HardwareService_AllClientMock) Header() (metadata.MD, error) {
 // HeaderCalls gets all the calls that were made to Header.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.HeaderCalls())
-func (mock *HardwareService_AllClientMock) HeaderCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *HardwareService_AllClientMock) HeaderCalls() []struct{} {
+	var calls []struct{}
 	mock.lockHeader.RLock()
 	calls = mock.calls.Header
 	mock.lockHeader.RUnlock()
@@ -597,8 +583,7 @@ func (mock *HardwareService_AllClientMock) Recv() (*Hardware, error) {
 	if mock.RecvFunc == nil {
 		panic("HardwareService_AllClientMock.RecvFunc: method is nil but HardwareService_AllClient.Recv was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockRecv.Lock()
 	mock.calls.Recv = append(mock.calls.Recv, callInfo)
 	mock.lockRecv.Unlock()
@@ -608,10 +593,8 @@ func (mock *HardwareService_AllClientMock) Recv() (*Hardware, error) {
 // RecvCalls gets all the calls that were made to Recv.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.RecvCalls())
-func (mock *HardwareService_AllClientMock) RecvCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *HardwareService_AllClientMock) RecvCalls() []struct{} {
+	var calls []struct{}
 	mock.lockRecv.RLock()
 	calls = mock.calls.Recv
 	mock.lockRecv.RUnlock()
@@ -685,8 +668,7 @@ func (mock *HardwareService_AllClientMock) Trailer() metadata.MD {
 	if mock.TrailerFunc == nil {
 		panic("HardwareService_AllClientMock.TrailerFunc: method is nil but HardwareService_AllClient.Trailer was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockTrailer.Lock()
 	mock.calls.Trailer = append(mock.calls.Trailer, callInfo)
 	mock.lockTrailer.Unlock()
@@ -696,10 +678,8 @@ func (mock *HardwareService_AllClientMock) Trailer() metadata.MD {
 // TrailerCalls gets all the calls that were made to Trailer.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.TrailerCalls())
-func (mock *HardwareService_AllClientMock) TrailerCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *HardwareService_AllClientMock) TrailerCalls() []struct{} {
+	var calls []struct{}
 	mock.lockTrailer.RLock()
 	calls = mock.calls.Trailer
 	mock.lockTrailer.RUnlock()

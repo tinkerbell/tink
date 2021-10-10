@@ -14,7 +14,7 @@ import (
 	"github.com/tinkerbell/tink/workflow"
 )
 
-// updateCmd represents the get subcommand for template command
+// updateCmd represents the get subcommand for template command.
 func NewUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update [id] [flags]",
@@ -54,7 +54,11 @@ $ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --file /tmp/example.
 func updateTemplate(id string) {
 	req := template.WorkflowTemplate{Id: id}
 	if filePath != "" {
-		data := readTemplateData()
+		data, err := readTemplateData()
+		if err != nil {
+			log.Fatalf("readTemplateData: %v", err)
+		}
+
 		if data != "" {
 			wf, err := workflow.Parse([]byte(data))
 			if err != nil {
@@ -74,16 +78,16 @@ func updateTemplate(id string) {
 	fmt.Println("Updated Template: ", id)
 }
 
-func readTemplateData() string {
+func readTemplateData() (string, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-	return string(data)
+	return string(data), nil
 }

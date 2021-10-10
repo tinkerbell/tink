@@ -43,7 +43,6 @@ func NewStateCommand() *cobra.Command {
 				t.AppendRow(table.Row{"Current Action State", wf.CurrentActionState})
 
 				t.Render()
-
 			}
 		},
 	}

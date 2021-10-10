@@ -56,7 +56,7 @@ func TestGetTemplate(t *testing.T) {
 					ListTemplatesFunc: func(ctx context.Context, in *template.ListRequest, opts ...grpc.CallOption) (template.TemplateService_ListTemplatesClient, error) {
 						return &template.TemplateService_ListTemplatesClientMock{
 							RecvFunc: func() (*template.WorkflowTemplate, error) {
-								s.counter = s.counter + 1
+								s.counter++
 								if s.counter > len(s.ReturnedTemplate) {
 									return nil, io.EOF
 								}

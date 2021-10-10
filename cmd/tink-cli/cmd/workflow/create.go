@@ -28,7 +28,7 @@ func NewCreateCommand() *cobra.Command {
 			return err
 		},
 		Run: func(c *cobra.Command, args []string) {
-			createWorkflow(args)
+			createWorkflow()
 		},
 	}
 	flags := cmd.PersistentFlags()
@@ -40,7 +40,7 @@ func NewCreateCommand() *cobra.Command {
 	return cmd
 }
 
-func createWorkflow(args []string) {
+func createWorkflow() {
 	req := workflow.CreateRequest{Template: template, Hardware: hardware}
 	res, err := client.WorkflowClient.CreateWorkflow(context.Background(), &req)
 	if err != nil {

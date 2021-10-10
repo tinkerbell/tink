@@ -28,11 +28,16 @@ const (
 
 var wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
 
-func testServer(t *testing.T, db db.Database) *server {
-	l, _ := log.Init("github.com/tinkerbell/tink")
+func testServer(t *testing.T, d db.Database) *server {
+	t.Helper()
+	l, err := log.Init("github.com/tinkerbell/tink")
+	if err != nil {
+		t.Errorf("log init failed: %v", err)
+	}
+
 	return &server{
 		logger: l,
-		db:     db,
+		db:     d,
 	}
 }
 
@@ -67,7 +72,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		"database failure": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
@@ -83,7 +88,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		"no workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return nil, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
@@ -99,7 +104,7 @@ func TestGetWorkflowContextList(t *testing.T) {
 		"workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
@@ -758,7 +763,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		"database failure": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return nil, errors.New("database failed")
 					},
 				},
@@ -771,7 +776,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		"no workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return nil, nil
 					},
 				},
@@ -784,7 +789,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 		"workflows found": {
 			args: args{
 				db: &mock.DB{
-					GetWorkflowsForWorkerFunc: func(id string) ([]string, error) {
+					GetWorkflowsForWorkerFunc: func(ctx context.Context, id string) ([]string, error) {
 						return []string{workflowID}, nil
 					},
 				},
@@ -799,7 +804,7 @@ func TestGetWorkflowsForWorker(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			s := testServer(t, tc.args.db)
-			res, err := getWorkflowsForWorker(s.db, tc.args.workerID)
+			res, err := getWorkflowsForWorker(context.Background(), s.db, tc.args.workerID)
 			if err != nil {
 				assert.True(t, tc.want.expectedError)
 				assert.Error(t, err)
@@ -871,7 +876,7 @@ func TestGetWorkflowMetadata(t *testing.T) {
 							UpdatedAt: time.Now(),
 							SHA:       "fcbf74596047b6d3e746702ccc2c697d87817371918a5042805c8c7c75b2cb5f",
 						})
-						return []byte(meta), nil
+						return meta, nil
 					},
 				},
 				workflowID: workflowID,

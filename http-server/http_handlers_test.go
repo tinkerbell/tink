@@ -31,7 +31,7 @@ type server struct {
 	hardware.UnimplementedHardwareServiceServer
 }
 
-func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.Empty, error) {
+func (s *server) Push(_ context.Context, in *hardware.PushRequest) (*hardware.Empty, error) {
 	hw := in.Data
 	if hw.Id == "" {
 		err := errors.New("id must be set to a UUID, got id: " + hw.Id)
@@ -62,7 +62,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestHardwarePushHandler(t *testing.T) {
-
 	for name, test := range handlerTests {
 		t.Log(name)
 

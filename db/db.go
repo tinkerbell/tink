@@ -17,11 +17,12 @@ import (
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
 
-// Database interface for tinkerbell database operations
+// Database interface for tinkerbell database operations.
 type Database interface {
 	hardware
 	template
 	workflow
+	WorkerWorkflow
 }
 
 type hardware interface {
@@ -43,47 +44,51 @@ type template interface {
 
 type workflow interface {
 	CreateWorkflow(ctx context.Context, wf Workflow, data string, id uuid.UUID) error
-	InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error
-	GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error)
 	GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error)
 	GetWorkflowDataVersion(ctx context.Context, workflowID string) (int32, error)
-	GetWorkflowsForWorker(id string) ([]string, error)
 	GetWorkflow(ctx context.Context, id string) (Workflow, error)
 	DeleteWorkflow(ctx context.Context, id string, state int32) error
 	ListWorkflows(fn func(wf Workflow) error) error
 	UpdateWorkflow(ctx context.Context, wf Workflow, state int32) error
-	UpdateWorkflowState(ctx context.Context, wfContext *pb.WorkflowContext) error
-	GetWorkflowContexts(ctx context.Context, wfID string) (*pb.WorkflowContext, error)
-	GetWorkflowActions(ctx context.Context, wfID string) (*pb.WorkflowActionList, error)
-	InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error
+	InsertIntoWorkflowEventTable(ctx context.Context, wfEvent *pb.WorkflowActionStatus, t time.Time) error
 	ShowWorkflowEvents(wfID string, fn func(wfs *pb.WorkflowActionStatus) error) error
 }
 
-// TinkDB implements the Database interface
+// WorkerWorkflow is an interface for methods invoked by APIs that the worker calls.
+type WorkerWorkflow interface {
+	InsertIntoWfDataTable(ctx context.Context, req *pb.UpdateWorkflowDataRequest) error
+	GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataRequest) ([]byte, error)
+	GetWorkflowsForWorker(ctx context.Context, id string) ([]string, error)
+	UpdateWorkflowState(ctx context.Context, wfContext *pb.WorkflowContext) error
+	GetWorkflowContexts(ctx context.Context, wfID string) (*pb.WorkflowContext, error)
+	GetWorkflowActions(ctx context.Context, wfID string) (*pb.WorkflowActionList, error)
+}
+
+// TinkDB implements the Database interface.
 type TinkDB struct {
 	instance *sql.DB
 	logger   log.Logger
 }
 
-// Connect returns a connection to postgres database
+// Connect returns a connection to postgres database.
 func Connect(db *sql.DB, lg log.Logger) *TinkDB {
 	return &TinkDB{instance: db, logger: lg}
 }
 
-func (t *TinkDB) Migrate() (int, error) {
-	return migrate.Exec(t.instance, "postgres", migration.GetMigrations(), migrate.Up)
+func (d *TinkDB) Migrate() (int, error) {
+	return migrate.Exec(d.instance, "postgres", migration.GetMigrations(), migrate.Up)
 }
 
-func (t *TinkDB) CheckRequiredMigrations() (int, error) {
+func (d *TinkDB) CheckRequiredMigrations() (int, error) {
 	migrations := migration.GetMigrations().Migrations
-	records, err := migrate.GetMigrationRecords(t.instance, "postgres")
+	records, err := migrate.GetMigrationRecords(d.instance, "postgres")
 	if err != nil {
 		return 0, err
 	}
 	return len(migrations) - len(records), nil
 }
 
-// Error returns the underlying cause for error
+// Error returns the underlying cause for error.
 func Error(err error) *pq.Error {
 	if pqErr, ok := errors.Cause(err).(*pq.Error); ok {
 		return pqErr
@@ -95,15 +100,14 @@ func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (st
 	row := db.QueryRowContext(ctx, query, args...)
 
 	buf := []byte{}
-	err := row.Scan(&buf)
-	if err != nil {
+	if err := row.Scan(&buf); err != nil {
 		return "", errors.Wrap(err, "SELECT")
 	}
 	return string(buf), nil
 }
 
 // buildGetCondition builds a where condition string in the format "column_name = 'field_value' AND"
-// takes in a map[string]string with keys being the column name and the values being the field values
+// takes in a map[string]string with keys being the column name and the values being the field values.
 func buildGetCondition(fields map[string]string) (string, error) {
 	for column, field := range fields {
 		if field != "" {

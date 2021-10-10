@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -21,7 +22,7 @@ import (
 )
 
 // RegisterHardwareServiceHandlerFromEndpoint serves Hardware requests at the
-// given endpoint over GRPC
+// given endpoint over GRPC.
 func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -53,7 +54,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			return
 		}
 
-		if err := json.NewDecoder(newReader()).Decode(&hw); err != nil && err != io.EOF {
+		if err := json.NewDecoder(newReader()).Decode(&hw); err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
@@ -81,7 +82,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			return
 		}
 
-		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
+		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
@@ -109,7 +110,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			return
 		}
 
-		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && err != io.EOF {
+		if err := json.NewDecoder(newReader()).Decode(&gr); err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
@@ -170,7 +171,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 		}
 
 		var hw *hardware.Hardware
-		err = nil
+
 		for hw, err = alls.Recv(); err == nil && hw != nil; hw, err = alls.Recv() {
 			b, err := json.Marshal(pkg.HardwareWrapper{Hardware: hw})
 			if err != nil {
@@ -179,7 +180,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 			}
 			writeResponse(w, http.StatusOK, string(b))
 		}
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -214,7 +215,7 @@ func RegisterHardwareServiceHandlerFromEndpoint(ctx context.Context, mux *runtim
 }
 
 // RegisterTemplateHandlerFromEndpoint serves Template requests at the given
-// endpoint over GRPC
+// endpoint over GRPC.
 func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -246,7 +247,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		if err := json.NewDecoder(newReader()).Decode(&tmpl); err != nil && err != io.EOF {
+		if err := json.NewDecoder(newReader()).Decode(&tmpl); err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
@@ -364,7 +365,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 		}
 
 		var tmp *template.WorkflowTemplate
-		err = nil
+
 		for tmp, err = list.Recv(); err == nil && tmp.Name != ""; tmp, err = list.Recv() {
 			m := protojson.MarshalOptions{UseProtoNames: true}
 			s, err := m.Marshal(tmp)
@@ -375,7 +376,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 			writeResponse(w, http.StatusOK, string(s))
 		}
 
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 		}
 	})
@@ -384,7 +385,7 @@ func RegisterTemplateHandlerFromEndpoint(ctx context.Context, mux *runtime.Serve
 }
 
 // RegisterWorkflowSvcHandlerFromEndpoint serves Workflow requests at the given
-// endpoint over GRPC
+// endpoint over GRPC.
 func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
@@ -416,7 +417,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			return
 		}
 
-		if err := json.NewDecoder(newReader()).Decode(&cr); err != nil && err != io.EOF {
+		if err := json.NewDecoder(newReader()).Decode(&cr); err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusBadRequest, status.Errorf(codes.InvalidArgument, "%v", err).Error())
 			return
 		}
@@ -488,7 +489,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		}
 
 		var wf *workflow.Workflow
-		err = nil
+
 		for wf, err = list.Recv(); err == nil && wf.Id != ""; wf, err = list.Recv() {
 			m := protojson.MarshalOptions{UseProtoNames: true}
 			s, err := m.Marshal(wf)
@@ -499,7 +500,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			writeResponse(w, http.StatusOK, string(s))
 		}
 
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -561,7 +562,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			return
 		}
 		var event *workflow.WorkflowActionStatus
-		err = nil
+
 		for event, err = events.Recv(); err == nil && event != nil; event, err = events.Recv() {
 			m := protojson.MarshalOptions{UseProtoNames: true, EmitUnpopulated: true}
 			s, err := m.Marshal(event)
@@ -571,7 +572,7 @@ func RegisterWorkflowSvcHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 			}
 			writeResponse(w, http.StatusOK, string(s))
 		}
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			writeResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -588,9 +589,9 @@ func tryParseTemplate(data string) error {
 	return nil
 }
 
-// writeResponse appends a new line after res
-func writeResponse(w http.ResponseWriter, status int, res string) {
-	w.WriteHeader(status)
+// writeResponse appends a new line after res.
+func writeResponse(w http.ResponseWriter, st int, res string) {
+	w.WriteHeader(st)
 	if _, err := w.Write([]byte(fmt.Sprintln(res))); err != nil {
 		logger.Info(err)
 	}

@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	errCreateContainer = "failed to create container"
-	errFailedToWait    = "failed to wait for completion of action"
-	errFailedToRunCmd  = "failed to run on-timeout command"
+	errFailedToWait   = "failed to wait for completion of action"
+	errFailedToRunCmd = "failed to run on-timeout command"
 
 	infoWaitFinished = "wait finished for failed or timeout container"
 )
@@ -51,9 +50,7 @@ func (w *Worker) createContainer(ctx context.Context, cmd []string, wfID string,
 		Binds:      []string{wfDir + ":/workflow"},
 	}
 
-	// Retrieve the PID configuration
-	pidConfig := action.GetPid()
-	if pidConfig != "" {
+	if pidConfig := action.GetPid(); pidConfig != "" {
 		w.logger.With("pid", pidConfig).Info("creating container")
 		hostConfig.PidMode = container.PidMode(pidConfig)
 	}
@@ -75,7 +72,7 @@ func startContainer(ctx context.Context, l log.Logger, cli *client.Client, id st
 func waitContainer(ctx context.Context, cli *client.Client, id string) (pb.State, error) {
 	// Inspect whether the container is in running state
 	if _, err := cli.ContainerInspect(ctx, id); err != nil {
-		return pb.State_STATE_FAILED, nil
+		return pb.State_STATE_FAILED, nil // nolint:nilerr // error is not nil, but it returns nil
 	}
 
 	// send API call to wait for the container completion

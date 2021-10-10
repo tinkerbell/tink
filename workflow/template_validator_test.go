@@ -42,32 +42,32 @@ tasks:
 
 func TestMustParse(t *testing.T) {
 	table := []struct {
-		Name    string
-		Input   string
-		Recover func(t *testing.T)
+		Name      string
+		Input     string
+		WantPanic bool
 	}{
 		{
-			Name:  "parse-valid-template",
-			Input: validTemplate,
-			Recover: func(t *testing.T) {
-				if r := recover(); r != nil {
-					t.Errorf("panic not expected: %s", r)
-				}
-			},
+			Name:      "parse-valid-template",
+			Input:     validTemplate,
+			WantPanic: false,
 		},
 		{
-			Name:  "parse-invalid-template",
-			Input: invalidTemplate,
-			Recover: func(t *testing.T) {
-				if r := recover(); r == nil {
-					t.Errorf("panic expected but we didn't got one: %s", r)
-				}
-			},
+			Name:      "parse-invalid-template",
+			Input:     invalidTemplate,
+			WantPanic: true,
 		},
 	}
 	for _, s := range table {
 		t.Run(s.Name, func(t *testing.T) {
-			defer s.Recover(t)
+			defer func() {
+				r := recover()
+				if r == nil && s.WantPanic {
+					t.Errorf("panic expected but we didn't got one: %s", r)
+				} else if r != nil && !s.WantPanic {
+					t.Errorf("unexpected panic: %s", r)
+				}
+			}()
+
 			_ = MustParse([]byte(s.Input))
 		})
 	}
@@ -75,32 +75,32 @@ func TestMustParse(t *testing.T) {
 
 func TestMustParseFromFile(t *testing.T) {
 	table := []struct {
-		Name    string
-		Input   string
-		Recover func(t *testing.T)
+		Name      string
+		Input     string
+		WantPanic bool
 	}{
 		{
-			Name:  "parse-valid-template",
-			Input: validTemplate,
-			Recover: func(t *testing.T) {
-				if r := recover(); r != nil {
-					t.Errorf("panic not expected: %s", r)
-				}
-			},
+			Name:      "parse-valid-template",
+			Input:     validTemplate,
+			WantPanic: false,
 		},
 		{
-			Name:  "parse-invalid-template",
-			Input: invalidTemplate,
-			Recover: func(t *testing.T) {
-				if r := recover(); r == nil {
-					t.Errorf("panic expected but we didn't got one: %s", r)
-				}
-			},
+			Name:      "parse-invalid-template",
+			Input:     invalidTemplate,
+			WantPanic: true,
 		},
 	}
 	for _, s := range table {
 		t.Run(s.Name, func(t *testing.T) {
-			defer s.Recover(t)
+			defer func() {
+				r := recover()
+				if r == nil && s.WantPanic {
+					t.Errorf("panic expected but we didn't got one: %s", r)
+				} else if r != nil && !s.WantPanic {
+					t.Errorf("unexpected panic: %s", r)
+				}
+			}()
+
 			file, err := ioutil.TempFile(os.TempDir(), "tinktest")
 			if err != nil {
 				t.Error(err)
@@ -136,7 +136,7 @@ func TestParse(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := Parse([]byte(test.content))
+			res, err := Parse(test.content)
 			if err != nil {
 				assert.Error(t, err)
 				assert.Empty(t, res)
@@ -263,6 +263,7 @@ tasks:
 			templateData: validTemplate,
 			hwAddress:    []byte("{\"invalid_device\":\"08:00:27:00:00:01\"}"),
 			expectedError: func(t *testing.T, err error) {
+				t.Helper()
 				if err == nil {
 					t.Error("expected error, got nil")
 				}

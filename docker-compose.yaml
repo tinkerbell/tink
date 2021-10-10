@@ -96,12 +96,11 @@ services:
       TINKERBELL_GRPC_AUTHORITY: tinkerbell:42113
       TINKERBELL_CERT_URL: http://tinkerbell:42114/cert
     depends_on:
-        tinkerbell:
-            condition: service_healthy
-        db:
-            condition: service_healthy
+      tinkerbell:
+        condition: service_healthy
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
   certs:
-

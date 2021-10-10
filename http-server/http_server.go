@@ -26,7 +26,7 @@ var (
 	logger     log.Logger
 )
 
-type HTTPServerConfig struct {
+type Config struct {
 	CertPEM               []byte
 	ModTime               time.Time
 	GRPCAuthority         string
@@ -35,8 +35,8 @@ type HTTPServerConfig struct {
 	HTTPBasicAuthPassword string
 }
 
-// SetupHTTP setup and return an HTTP server
-func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, errCh chan<- error) {
+// SetupHTTP setup and return an HTTP server.
+func SetupHTTP(ctx context.Context, lg log.Logger, config *Config, errCh chan<- error) {
 	logger = lg
 
 	cp := x509.NewCertPool()
@@ -87,7 +87,7 @@ func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, err
 	go func() {
 		logger.Info("serving http")
 		err := srv.ListenAndServe()
-		if err == http.ErrServerClosed {
+		if errors.Is(err, http.ErrServerClosed) {
 			err = nil
 		}
 		errCh <- err
@@ -100,12 +100,12 @@ func SetupHTTP(ctx context.Context, lg log.Logger, config *HTTPServerConfig, err
 	}()
 }
 
-func versionHandler(w http.ResponseWriter, r *http.Request) {
+func versionHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(gitRevJSON)
 }
 
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func healthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	res := struct {
 		GitRev     string  `json:"git_rev"`
 		Uptime     float64 `json:"uptime"`
@@ -143,7 +143,7 @@ func setupGitRevJSON() {
 }
 
 // BasicAuth adds authentication to the routes handled by handler
-// skips authentication if both authUsername and authPassword aren't set
+// skips authentication if both authUsername and authPassword aren't set.
 func BasicAuth(authUsername, authPassword string, handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if authUsername != "" || authPassword != "" {

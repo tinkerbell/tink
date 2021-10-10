@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tinkerbell/tink/db"
@@ -15,7 +16,7 @@ import (
 
 const errFailedToGetTemplate = "failed to get template with ID %s"
 
-// CreateWorkflow implements workflow.CreateWorkflow
+// CreateWorkflow implements workflow.CreateWorkflow.
 func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest) (*workflow.CreateResponse, error) {
 	s.logger.Info("createworkflow")
 	labels := prometheus.Labels{"method": "CreateWorkflow", "op": ""}
@@ -42,7 +43,6 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 		return &workflow.CreateResponse{}, errors.Wrapf(err, errFailedToGetTemplate, in.GetTemplate())
 	}
 	data, err := wkf.RenderTemplate(in.GetTemplate(), wtmpl.GetData(), []byte(in.Hardware))
-
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		s.logger.Error(err)
@@ -71,7 +71,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 	return &workflow.CreateResponse{Id: id.String()}, err
 }
 
-// GetWorkflow implements workflow.GetWorkflow
+// GetWorkflow implements workflow.GetWorkflow.
 func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Workflow, error) {
 	s.logger.Info("getworkflow")
 	labels := prometheus.Labels{"method": "GetWorkflow", "op": ""}
@@ -112,7 +112,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 		Id:        w.ID,
 		Template:  w.Template,
 		Hardware:  w.Hardware,
-		State:     getWorkflowState(s.db, ctx, in.Id),
+		State:     getWorkflowState(ctx, s.db, s.logger, in.Id),
 		CreatedAt: w.CreatedAt,
 		UpdatedAt: w.UpdatedAt,
 		Data:      data,
@@ -122,7 +122,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 	return wf, err
 }
 
-// DeleteWorkflow implements workflow.DeleteWorkflow
+// DeleteWorkflow implements workflow.DeleteWorkflow.
 func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Empty, error) {
 	s.logger.Info("deleteworkflow")
 	labels := prometheus.Labels{"method": "DeleteWorkflow", "op": ""}
@@ -151,7 +151,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 	return &workflow.Empty{}, err
 }
 
-// ListWorkflows implements workflow.ListWorkflows
+// ListWorkflows implements workflow.ListWorkflows.
 func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowService_ListWorkflowsServer) error {
 	s.logger.Info("listworkflows")
 	labels := prometheus.Labels{"method": "ListWorkflows", "op": "list"}
@@ -176,11 +176,10 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowServic
 			Hardware:  w.Hardware,
 			CreatedAt: w.CreatedAt,
 			UpdatedAt: w.UpdatedAt,
-			State:     getWorkflowState(s.db, stream.Context(), w.ID),
+			State:     getWorkflowState(stream.Context(), s.db, s.logger, w.ID),
 		}
 		return stream.Send(wf)
 	})
-
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		return err
@@ -220,7 +219,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 		CurrentTask:          w.CurrentTask,
 		CurrentAction:        w.CurrentAction,
 		CurrentActionIndex:   w.CurrentActionIndex,
-		CurrentActionState:   workflow.State(w.CurrentActionState),
+		CurrentActionState:   w.CurrentActionState,
 		TotalNumberOfActions: w.TotalNumberOfActions,
 	}
 	l := s.logger.With(
@@ -236,7 +235,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 	return wf, err
 }
 
-// ShowWorflowevents  implements workflow.ShowWorflowEvents
+// ShowWorflowevents  implements workflow.ShowWorflowEvents.
 func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowService_ShowWorkflowEventsServer) error {
 	s.logger.Info("List workflows Events")
 	labels := prometheus.Labels{"method": "ShowWorkflowEvents", "op": "list"}
@@ -259,14 +258,13 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 			WorkerId:     w.WorkerId,
 			TaskName:     w.TaskName,
 			ActionName:   w.ActionName,
-			ActionStatus: workflow.State(w.ActionStatus),
+			ActionStatus: w.ActionStatus,
 			Seconds:      w.Seconds,
 			Message:      w.Message,
 			CreatedAt:    w.CreatedAt,
 		}
 		return stream.Send(wfs)
 	})
-
 	if err != nil {
 		metrics.CacheErrors.With(labels).Inc()
 		return err
@@ -281,15 +279,17 @@ func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.Wo
 // considered as Failed/Timeout. And If an action is successful then the workflow state
 // will be considered as Running until the last action of the workflow is executed successfully.
 
-func getWorkflowState(db db.Database, ctx context.Context, id string) workflow.State {
-	wfCtx, _ := db.GetWorkflowContexts(ctx, id)
+func getWorkflowState(ctx context.Context, d db.Database, l log.Logger, id string) workflow.State {
+	wfCtx, err := d.GetWorkflowContexts(ctx, id)
+	if err != nil {
+		l.Error(err)
+	}
+
 	if wfCtx.CurrentActionState != workflow.State_STATE_SUCCESS {
 		return wfCtx.CurrentActionState
-	} else {
-		if wfCtx.GetCurrentActionIndex() == wfCtx.GetTotalNumberOfActions()-1 {
-			return workflow.State_STATE_SUCCESS
-		} else {
-			return workflow.State_STATE_RUNNING
-		}
 	}
+	if wfCtx.GetCurrentActionIndex() == wfCtx.GetTotalNumberOfActions()-1 {
+		return workflow.State_STATE_SUCCESS
+	}
+	return workflow.State_STATE_RUNNING
 }

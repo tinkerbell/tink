@@ -1,3 +1,4 @@
+//nolint:thelper // misuse of test helpers requires a large refactor into subtests
 package db_test
 
 import (
@@ -119,7 +120,7 @@ func TestCreateHardware(t *testing.T) {
 			Expectation: func(t *testing.T, input []*hardware.Hardware, tinkDB *db.TinkDB) {
 				count := 0
 				err := tinkDB.GetAll(func(b []byte) error {
-					count = count + 1
+					count++
 					return nil
 				})
 				if err != nil {
@@ -140,7 +141,7 @@ func TestCreateHardware(t *testing.T) {
 	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {
@@ -178,7 +179,7 @@ func TestCreateHardware(t *testing.T) {
 func TestDeleteHardware(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -200,7 +201,7 @@ func TestDeleteHardware(t *testing.T) {
 
 	count := 0
 	err = tinkDB.GetAll(func(b []byte) error {
-		count = count + 1
+		count++
 		return nil
 	})
 	if err != nil {
@@ -262,7 +263,7 @@ func TestGetByID(t *testing.T) {
 	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {
@@ -300,7 +301,7 @@ func TestGetByID(t *testing.T) {
 func TestGetByID_WithNonExistingID(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -316,8 +317,10 @@ func TestGetByID_WithNonExistingID(t *testing.T) {
 	}
 
 	want := "no rows in result set"
+
+	// TODO: use errors.Is here
 	if !strings.Contains(err.Error(), want) {
-		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error())) //nolint:errorlint // non-wrapping format verb for fmt.Errorf
 	}
 }
 
@@ -375,7 +378,7 @@ func TestGetByIP(t *testing.T) {
 	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {
@@ -413,7 +416,7 @@ func TestGetByIP(t *testing.T) {
 func TestGetByIP_WithNonExistingIP(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -430,7 +433,7 @@ func TestGetByIP_WithNonExistingIP(t *testing.T) {
 
 	want := "no rows in result set"
 	if !strings.Contains(err.Error(), want) {
-		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error())) //nolint:errorlint // non-wrapping format verb for fmt.Errorf
 	}
 }
 
@@ -486,7 +489,7 @@ func TestGetByMAC(t *testing.T) {
 	for _, s := range tests {
 		t.Run(s.Name, func(t *testing.T) {
 			t.Parallel()
-			_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+			_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 				ApplyMigration: true,
 			})
 			defer func() {
@@ -524,7 +527,7 @@ func TestGetByMAC(t *testing.T) {
 func TestGetByMAC_WithNonExistingMAC(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	_, tinkDB, cl := NewPostgresDatabaseClient(t, ctx, NewPostgresDatabaseRequest{
+	_, tinkDB, cl := NewPostgresDatabaseClient(ctx, t, NewPostgresDatabaseRequest{
 		ApplyMigration: true,
 	})
 	defer func() {
@@ -541,7 +544,7 @@ func TestGetByMAC_WithNonExistingMAC(t *testing.T) {
 
 	want := "no rows in result set"
 	if !strings.Contains(err.Error(), want) {
-		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error())) //nolint:errorlint // non-wrapping format verb for fmt.Errorf
 	}
 }
 
@@ -551,19 +554,19 @@ func readHardwareData(file string) *hardware.Hardware {
 		panic(err)
 	}
 	var hw pkg.HardwareWrapper
-	err = json.Unmarshal([]byte(data), &hw)
+	err = json.Unmarshal(data, &hw)
 	if err != nil {
 		panic(err)
 	}
 	return hw.Hardware
 }
 
-func createHardware(ctx context.Context, db *db.TinkDB, hw *hardware.Hardware) error {
+func createHardware(ctx context.Context, d *db.TinkDB, hw *hardware.Hardware) error {
 	data, err := json.Marshal(hw)
 	if err != nil {
 		return err
 	}
-	return db.InsertIntoDB(ctx, string(data))
+	return d.InsertIntoDB(ctx, string(data))
 }
 
 func hardwareComparer(in *hardware.Hardware, hw *hardware.Hardware) bool {

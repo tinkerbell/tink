@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/pkg"
-	"github.com/tinkerbell/tink/protos/hardware"
+	hwpb "github.com/tinkerbell/tink/protos/hardware"
 )
 
-// idCmd represents the id command
+// idCmd represents the id command.
 func NewGetByIDCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "id",
@@ -25,7 +25,7 @@ func NewGetByIDCmd() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			for _, id := range args {
-				hw, err := client.HardwareClient.ByID(context.Background(), &hardware.GetRequest{Id: id})
+				hw, err := client.HardwareClient.ByID(context.Background(), &hwpb.GetRequest{Id: id})
 				if err != nil {
 					log.Fatal(err)
 				}

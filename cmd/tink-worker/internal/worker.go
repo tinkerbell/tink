@@ -41,7 +41,7 @@ var (
 	workflowDataSHA  = map[string]string{}
 )
 
-// WorkflowMetadata is the metadata related to workflow data
+// WorkflowMetadata is the metadata related to workflow data.
 type WorkflowMetadata struct {
 	WorkerID  string    `json:"workerID"`
 	Action    string    `json:"actionName"`
@@ -50,7 +50,7 @@ type WorkflowMetadata struct {
 	SHA       string    `json:"sha256"`
 }
 
-// Worker details provide all the context needed to run a
+// Worker details provide all the context needed to run a.
 type Worker struct {
 	client         pb.WorkflowServiceClient
 	regConn        *RegistryConnDetails
@@ -62,14 +62,14 @@ type Worker struct {
 	maxSize        int64
 }
 
-// NewWorker creates a new Worker, creating a new Docker registry client
-func NewWorker(client pb.WorkflowServiceClient, regConn *RegistryConnDetails, logger log.Logger, registry string, retries int, retryInterval time.Duration, maxFileSize int64) *Worker {
+// NewWorker creates a new Worker, creating a new Docker registry client.
+func NewWorker(c pb.WorkflowServiceClient, regConn *RegistryConnDetails, logger log.Logger, registry string, retries int, retryInterval time.Duration, maxFileSize int64) *Worker {
 	registryClient, err := regConn.NewClient()
 	if err != nil {
 		panic(err)
 	}
 	return &Worker{
-		client:         client,
+		client:         c,
 		regConn:        regConn,
 		registryClient: registryClient,
 		logger:         logger,
@@ -98,17 +98,20 @@ func (w *Worker) captureLogs(ctx context.Context, id string) {
 	}
 }
 
+// execute executes a workflow action, optionally capturing logs.
 func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAction, captureLogs bool) (pb.State, error) {
 	l := w.logger.With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
 
 	cli := w.registryClient
 	if err := w.regConn.pullImage(ctx, cli, action.GetImage()); err != nil {
-		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER PULL")
+		return pb.State_STATE_RUNNING, errors.Wrap(err, "pull image")
 	}
+
 	id, err := w.createContainer(ctx, action.Command, wfID, action, captureLogs)
 	if err != nil {
-		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER CREATE")
+		return pb.State_STATE_RUNNING, errors.Wrap(err, "create container")
 	}
+
 	l.With("containerID", id, "command", action.GetOnTimeout()).Info("container created")
 
 	var timeCtx context.Context
@@ -123,75 +126,77 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 
 	err = startContainer(timeCtx, l, cli, id)
 	if err != nil {
-		return pb.State_STATE_RUNNING, errors.Wrap(err, "DOCKER RUN")
+		return pb.State_STATE_RUNNING, errors.Wrap(err, "start container")
 	}
 
-	failedActionStatus := make(chan pb.State)
-
 	if captureLogs {
-		// capturing logs of action container in a go-routine
 		go w.captureLogs(ctx, id)
 	}
 
-	status, waitErr := waitContainer(timeCtx, cli, id)
+	st, err := waitContainer(timeCtx, cli, id)
+	l.With("status", st.String()).Info("wait container completed")
+
+	// If we've made it this far, the container has successfully completed.
+	// Everything after this is just cleanup.
+
 	defer func() {
-		if removalErr := removeContainer(ctx, l, cli, id); removalErr != nil {
-			l.With("containerID", id).Error(removalErr)
+		if err := removeContainer(ctx, l, cli, id); err != nil {
+			l.With("containerID", id).Error(err)
 		}
+		l.With("status", st.String()).Info("container removed")
 	}()
 
-	if waitErr != nil {
-		return status, errors.Wrap(waitErr, "DOCKER_WAIT")
+	if err != nil {
+		return st, errors.Wrap(err, "wait container")
 	}
 
-	l.With("status", status.String()).Info("container removed")
-	if status != pb.State_STATE_SUCCESS {
-		if status == pb.State_STATE_TIMEOUT && action.OnTimeout != nil {
-			id, err = w.createContainer(ctx, action.OnTimeout, wfID, action, captureLogs)
-			if err != nil {
-				l.Error(errors.Wrap(err, errCreateContainer))
-			}
-			l.With("containerID", id, "status", status.String(), "command", action.GetOnTimeout()).Info("container created")
-			failedActionStatus := make(chan pb.State)
-			if captureLogs {
-				go w.captureLogs(ctx, id)
-			}
-			go waitFailedContainer(ctx, l, cli, id, failedActionStatus)
-			err = startContainer(ctx, l, cli, id)
-			if err != nil {
-				l.Error(errors.Wrap(err, errFailedToRunCmd))
-			}
-			onTimeoutStatus := <-failedActionStatus
-			l.With("status", onTimeoutStatus).Info("action timeout")
-		} else {
-			if action.OnFailure != nil {
-				id, err = w.createContainer(ctx, action.OnFailure, wfID, action, captureLogs)
-				if err != nil {
-					l.Error(errors.Wrap(err, errFailedToRunCmd))
-				}
-				l.With("containerID", id, "actionStatus", status.String(), "command", action.GetOnFailure()).Info("container created")
-				if captureLogs {
-					go w.captureLogs(ctx, id)
-				}
-				go waitFailedContainer(ctx, l, cli, id, failedActionStatus)
-				err = startContainer(ctx, l, cli, id)
-				if err != nil {
-					l.Error(errors.Wrap(err, errFailedToRunCmd))
-				}
-				onFailureStatus := <-failedActionStatus
-				l.With("status", onFailureStatus).Info("action failed")
-			}
-		}
-		l.Info(infoWaitFinished)
-		if err != nil {
-			l.Error(errors.Wrap(err, errFailedToWait))
-		}
+	l.With("status", st.String()).Info("container removed")
+
+	if st == pb.State_STATE_SUCCESS {
+		l.With("status", st).Info("action container exited with success", st)
+		return st, nil
 	}
-	l.With("status", status).Info("action container exited")
-	return status, nil
+
+	if st == pb.State_STATE_TIMEOUT && action.OnTimeout != nil {
+		rst := w.executeReaction(ctx, st.String(), action.OnTimeout, wfID, action, captureLogs, l)
+		l.With("status", rst).Info("action timeout")
+	} else if action.OnFailure != nil {
+		rst := w.executeReaction(ctx, st.String(), action.OnFailure, wfID, action, captureLogs, l)
+		l.With("status", rst).Info("action failed")
+	}
+
+	l.Info(infoWaitFinished)
+	if err != nil {
+		l.Error(errors.Wrap(err, errFailedToWait))
+	}
+
+	l.With("status", st).Info("action container exited")
+	return st, nil
 }
 
-// ProcessWorkflowActions gets all Workflow contexts and processes their actions
+// executeReaction executes special case OnTimeout/OnFailure actions.
+func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs bool, l log.Logger) pb.State {
+	id, err := w.createContainer(ctx, cmd, wfID, action, captureLogs)
+	if err != nil {
+		l.Error(errors.Wrap(err, errFailedToRunCmd))
+	}
+	l.With("containerID", id, "actionStatus", reaction, "command", cmd).Info("container created")
+	if captureLogs {
+		go w.captureLogs(ctx, id)
+	}
+
+	st := make(chan pb.State)
+
+	go waitFailedContainer(ctx, l, w.registryClient, id, st)
+	err = startContainer(ctx, l, w.registryClient, id)
+	if err != nil {
+		l.Error(errors.Wrap(err, errFailedToRunCmd))
+	}
+
+	return <-st
+}
+
+// ProcessWorkflowActions gets all Workflow contexts and processes their actions.
 func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, captureActionLogs bool) error {
 	l := w.logger.With("workerID", workerID)
 	tracer := otel.Tracer("tink-worker")
@@ -258,7 +263,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 					"taskName", actions.GetActionList()[actionIndex].GetTaskName(),
 				)
 				if _, err := os.Stat(wfDir); os.IsNotExist(err) {
-					err := os.Mkdir(wfDir, os.FileMode(0755))
+					err := os.Mkdir(wfDir, os.FileMode(0o755))
 					if err != nil {
 						l.Error(err)
 						os.Exit(1)
@@ -308,7 +313,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 
 				// start executing the action
 				start := time.Now()
-				status, err := w.execute(ctx, wfID, action, captureActionLogs)
+				st, err := w.execute(ctx, wfID, action, captureActionLogs)
 				elapsed := time.Since(start)
 
 				actionStatus := &pb.WorkflowActionStatus{
@@ -319,8 +324,8 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 					WorkerId:   action.GetWorkerId(),
 				}
 
-				if err != nil || status != pb.State_STATE_SUCCESS {
-					if status == pb.State_STATE_TIMEOUT {
+				if err != nil || st != pb.State_STATE_SUCCESS {
+					if st == pb.State_STATE_TIMEOUT {
 						actionStatus.ActionStatus = pb.State_STATE_TIMEOUT
 					} else {
 						actionStatus.ActionStatus = pb.State_STATE_FAILED
@@ -349,20 +354,21 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 				if len(actions.GetActionList()) == actionIndex+1 {
 					l.Info("reached to end of workflow")
 					delete(workflowcontexts, wfID)
-					turn = false
+					turn = false // nolint:wastedassign // assigned to turn, but reassigned without using the value
 					break
 				}
+
 				nextAction := actions.GetActionList()[actionIndex+1]
 				if nextAction.GetWorkerId() != workerID {
 					l.Debug(fmt.Sprintf(msgTurn, nextAction.GetWorkerId()))
 					turn = false
 				} else {
-					actionIndex = actionIndex + 1
+					actionIndex++
 				}
 			}
 		}
 		// sleep before asking for new workflows
-		<-time.After(w.retryInterval * time.Second)
+		<-time.After(w.retryInterval)
 	}
 }
 
@@ -389,7 +395,7 @@ func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.Workfl
 		_, err = w.client.ReportActionStatus(ctx, actionStatus)
 		if err != nil {
 			l.Error(errors.Wrap(err, errReportActionStatus))
-			<-time.After(w.retryInterval * time.Second)
+			<-time.After(w.retryInterval)
 
 			continue
 		}
@@ -398,11 +404,11 @@ func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.Workfl
 	return err
 }
 
-func getWorkflowData(ctx context.Context, logger log.Logger, client pb.WorkflowServiceClient, workerID, workflowID string) {
+func getWorkflowData(ctx context.Context, logger log.Logger, c pb.WorkflowServiceClient, workerID, workflowID string) {
 	l := logger.With("workflowID", workflowID,
 		"workerID", workerID,
 	)
-	res, err := client.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
+	res, err := c.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
 	if err != nil {
 		l.Error(err)
 	}
@@ -452,7 +458,7 @@ func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.Workfl
 	}
 }
 
-func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowServiceClient, st *pb.WorkflowActionStatus, data []byte, checksum string) {
+func sendUpdate(ctx context.Context, logger log.Logger, c pb.WorkflowServiceClient, st *pb.WorkflowActionStatus, data []byte, checksum string) {
 	l := logger.With("workflowID", st.GetWorkflowId,
 		"workerID", st.GetWorkerId(),
 		"actionName", st.GetActionName(),
@@ -471,7 +477,7 @@ func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowServic
 		os.Exit(1)
 	}
 
-	_, err = client.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
+	_, err = c.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
 		WorkflowId: st.GetWorkflowId(),
 		Data:       data,
 		Metadata:   metadata,
@@ -483,7 +489,7 @@ func sendUpdate(ctx context.Context, logger log.Logger, client pb.WorkflowServic
 }
 
 func openDataFile(wfDir string, l log.Logger) *os.File {
-	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0600)
+	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		l.Error(err)
 		os.Exit(1)

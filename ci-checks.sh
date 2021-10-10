@@ -11,7 +11,8 @@ if ! git ls-files '*.sh' '*.go' '*.md' | xargs codespell -q 3 -I .codespell-whit
 	failed=1
 fi
 
-if ! git ls-files '*.yml' '*.json' '*.md' | xargs prettier --check; then
+# --check doesn't show what line number fails, so write the result to disk for the diff to catch
+if ! git ls-files '*.yml' '*.json' '*.md' | xargs prettier --list-different --write; then
 	failed=1
 fi
 

@@ -148,7 +148,8 @@ func TestGetWorkflow(t *testing.T) {
 						return db.Workflow{
 							ID:       workflowID,
 							Template: templateID,
-							Hardware: hw}, nil
+							Hardware: hw,
+						}, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*workflow.WorkflowContext, error) {
 						return &workflow.WorkflowContext{
@@ -193,7 +194,8 @@ func TestGetWorkflow(t *testing.T) {
 						return db.Workflow{
 							ID:       workflowID,
 							Template: templateID,
-							Hardware: hw}, nil
+							Hardware: hw,
+						}, nil
 					},
 					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*workflow.WorkflowContext, error) {
 						return &workflow.WorkflowContext{

@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/pkg"
-	"github.com/tinkerbell/tink/protos/hardware"
+	hwpb "github.com/tinkerbell/tink/protos/hardware"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 	sFile = "file"
 )
 
-// pushCmd represents the push command
+// pushCmd represents the push command.
 func NewPushCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "push",
@@ -41,10 +41,15 @@ tink hardware push --file /tmp/data.json`,
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			var data string
+			var err error
+
 			if isInputFromPipe() {
 				data = readDataFromStdin()
 			} else {
-				data = readDataFromFile()
+				data, err = readDataFromFile()
+				if err != nil {
+					log.Fatalf("read data from file failed: %v", err)
+				}
 			}
 			s := struct {
 				ID string
@@ -56,11 +61,11 @@ tink hardware push --file /tmp/data.json`,
 			}
 
 			var hw pkg.HardwareWrapper
-			err := json.Unmarshal([]byte(data), &hw)
+			err = json.Unmarshal([]byte(data), &hw)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if _, err := client.HardwareClient.Push(context.Background(), &hardware.PushRequest{Data: hw.Hardware}); err != nil {
+			if _, err := client.HardwareClient.Push(context.Background(), &hwpb.PushRequest{Data: hw.Hardware}); err != nil {
 				log.Fatal(err)
 			}
 			log.Println("Hardware data pushed successfully")
@@ -84,16 +89,16 @@ func readDataFromStdin() string {
 	return string(data)
 }
 
-func readDataFromFile() string {
+func readDataFromFile() (string, error) {
 	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-	return string(data)
+	return string(data), nil
 }

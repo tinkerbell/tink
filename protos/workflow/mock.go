@@ -865,17 +865,13 @@ type WorkflowService_ListWorkflowsClientMock struct {
 	// calls tracks calls to the methods.
 	calls struct {
 		// CloseSend holds details about calls to the CloseSend method.
-		CloseSend []struct {
-		}
+		CloseSend []struct{}
 		// Context holds details about calls to the Context method.
-		Context []struct {
-		}
+		Context []struct{}
 		// Header holds details about calls to the Header method.
-		Header []struct {
-		}
+		Header []struct{}
 		// Recv holds details about calls to the Recv method.
-		Recv []struct {
-		}
+		Recv []struct{}
 		// RecvMsg holds details about calls to the RecvMsg method.
 		RecvMsg []struct {
 			// M is the m argument value.
@@ -887,8 +883,7 @@ type WorkflowService_ListWorkflowsClientMock struct {
 			M interface{}
 		}
 		// Trailer holds details about calls to the Trailer method.
-		Trailer []struct {
-		}
+		Trailer []struct{}
 	}
 	lockCloseSend sync.RWMutex
 	lockContext   sync.RWMutex
@@ -904,8 +899,7 @@ func (mock *WorkflowService_ListWorkflowsClientMock) CloseSend() error {
 	if mock.CloseSendFunc == nil {
 		panic("WorkflowService_ListWorkflowsClientMock.CloseSendFunc: method is nil but WorkflowService_ListWorkflowsClient.CloseSend was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockCloseSend.Lock()
 	mock.calls.CloseSend = append(mock.calls.CloseSend, callInfo)
 	mock.lockCloseSend.Unlock()
@@ -915,10 +909,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) CloseSend() error {
 // CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
 //     len(mockedWorkflowService_ListWorkflowsClient.CloseSendCalls())
-func (mock *WorkflowService_ListWorkflowsClientMock) CloseSendCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *WorkflowService_ListWorkflowsClientMock) CloseSendCalls() []struct{} {
+	var calls []struct{}
 	mock.lockCloseSend.RLock()
 	calls = mock.calls.CloseSend
 	mock.lockCloseSend.RUnlock()
@@ -930,8 +922,7 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Context() context.Context {
 	if mock.ContextFunc == nil {
 		panic("WorkflowService_ListWorkflowsClientMock.ContextFunc: method is nil but WorkflowService_ListWorkflowsClient.Context was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockContext.Lock()
 	mock.calls.Context = append(mock.calls.Context, callInfo)
 	mock.lockContext.Unlock()
@@ -941,10 +932,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Context() context.Context {
 // ContextCalls gets all the calls that were made to Context.
 // Check the length with:
 //     len(mockedWorkflowService_ListWorkflowsClient.ContextCalls())
-func (mock *WorkflowService_ListWorkflowsClientMock) ContextCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *WorkflowService_ListWorkflowsClientMock) ContextCalls() []struct{} {
+	var calls []struct{}
 	mock.lockContext.RLock()
 	calls = mock.calls.Context
 	mock.lockContext.RUnlock()
@@ -956,8 +945,7 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Header() (metadata.MD, erro
 	if mock.HeaderFunc == nil {
 		panic("WorkflowService_ListWorkflowsClientMock.HeaderFunc: method is nil but WorkflowService_ListWorkflowsClient.Header was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockHeader.Lock()
 	mock.calls.Header = append(mock.calls.Header, callInfo)
 	mock.lockHeader.Unlock()
@@ -967,10 +955,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Header() (metadata.MD, erro
 // HeaderCalls gets all the calls that were made to Header.
 // Check the length with:
 //     len(mockedWorkflowService_ListWorkflowsClient.HeaderCalls())
-func (mock *WorkflowService_ListWorkflowsClientMock) HeaderCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *WorkflowService_ListWorkflowsClientMock) HeaderCalls() []struct{} {
+	var calls []struct{}
 	mock.lockHeader.RLock()
 	calls = mock.calls.Header
 	mock.lockHeader.RUnlock()
@@ -982,8 +968,7 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Recv() (*Workflow, error) {
 	if mock.RecvFunc == nil {
 		panic("WorkflowService_ListWorkflowsClientMock.RecvFunc: method is nil but WorkflowService_ListWorkflowsClient.Recv was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockRecv.Lock()
 	mock.calls.Recv = append(mock.calls.Recv, callInfo)
 	mock.lockRecv.Unlock()
@@ -993,10 +978,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Recv() (*Workflow, error) {
 // RecvCalls gets all the calls that were made to Recv.
 // Check the length with:
 //     len(mockedWorkflowService_ListWorkflowsClient.RecvCalls())
-func (mock *WorkflowService_ListWorkflowsClientMock) RecvCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *WorkflowService_ListWorkflowsClientMock) RecvCalls() []struct{} {
+	var calls []struct{}
 	mock.lockRecv.RLock()
 	calls = mock.calls.Recv
 	mock.lockRecv.RUnlock()
@@ -1070,8 +1053,7 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Trailer() metadata.MD {
 	if mock.TrailerFunc == nil {
 		panic("WorkflowService_ListWorkflowsClientMock.TrailerFunc: method is nil but WorkflowService_ListWorkflowsClient.Trailer was just called")
 	}
-	callInfo := struct {
-	}{}
+	callInfo := struct{}{}
 	mock.lockTrailer.Lock()
 	mock.calls.Trailer = append(mock.calls.Trailer, callInfo)
 	mock.lockTrailer.Unlock()
@@ -1081,10 +1063,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Trailer() metadata.MD {
 // TrailerCalls gets all the calls that were made to Trailer.
 // Check the length with:
 //     len(mockedWorkflowService_ListWorkflowsClient.TrailerCalls())
-func (mock *WorkflowService_ListWorkflowsClientMock) TrailerCalls() []struct {
-} {
-	var calls []struct {
-	}
+func (mock *WorkflowService_ListWorkflowsClientMock) TrailerCalls() []struct{} {
+	var calls []struct{}
 	mock.lockTrailer.RLock()
 	calls = mock.calls.Trailer
 	mock.lockTrailer.RUnlock()

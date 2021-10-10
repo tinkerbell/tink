@@ -140,14 +140,14 @@ func (s *server) ByIP(ctx context.Context, in *hardware.GetRequest) (*hardware.H
 	})
 }
 
-// ByID implements hardware.ByID
+// ByID implements hardware.ByID.
 func (s *server) ByID(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByID", func() (string, error) {
 		return s.db.GetByID(ctx, in.Id)
 	})
 }
 
-// ALL implements hardware.All
+// ALL implements hardware.All.
 func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServer) error {
 	labels := prometheus.Labels{"method": "All", "op": "get"}
 
@@ -241,12 +241,12 @@ func (s *server) DeprecatedWatch(in *hardware.GetRequest, stream hardware.Hardwa
 	}
 }
 
-// Cert returns the public cert that can be served to clients
+// Cert returns the public cert that can be served to clients.
 func (s *server) Cert() []byte {
 	return s.cert
 }
 
-// ModTime returns the modified-time of the grpc cert
+// ModTime returns the modified-time of the grpc cert.
 func (s *server) ModTime() time.Time {
 	return s.modT
 }
