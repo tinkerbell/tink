@@ -4,10 +4,10 @@
 package template
 
 import (
-	"context"
-	"sync"
+	context "context"
+	sync "sync"
 
-	"google.golang.org/grpc"
+	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -17,31 +17,31 @@ var _ TemplateServiceClient = &TemplateServiceClientMock{}
 
 // TemplateServiceClientMock is a mock implementation of TemplateServiceClient.
 //
-//     func TestSomethingThatUsesTemplateServiceClient(t *testing.T) {
+// 	func TestSomethingThatUsesTemplateServiceClient(t *testing.T) {
 //
-//         // make and configure a mocked TemplateServiceClient
-//         mockedTemplateServiceClient := &TemplateServiceClientMock{
-//             CreateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
-// 	               panic("mock out the CreateTemplate method")
-//             },
-//             DeleteTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the DeleteTemplate method")
-//             },
-//             GetTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
-// 	               panic("mock out the GetTemplate method")
-//             },
-//             ListTemplatesFunc: func(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error) {
-// 	               panic("mock out the ListTemplates method")
-//             },
-//             UpdateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the UpdateTemplate method")
-//             },
-//         }
+// 		// make and configure a mocked TemplateServiceClient
+// 		mockedTemplateServiceClient := &TemplateServiceClientMock{
+// 			CreateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
+// 				panic("mock out the CreateTemplate method")
+// 			},
+// 			DeleteTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the DeleteTemplate method")
+// 			},
+// 			GetTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
+// 				panic("mock out the GetTemplate method")
+// 			},
+// 			ListTemplatesFunc: func(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error) {
+// 				panic("mock out the ListTemplates method")
+// 			},
+// 			UpdateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the UpdateTemplate method")
+// 			},
+// 		}
 //
-//         // use mockedTemplateServiceClient in code that requires TemplateServiceClient
-//         // and then make assertions.
+// 		// use mockedTemplateServiceClient in code that requires TemplateServiceClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type TemplateServiceClientMock struct {
 	// CreateTemplateFunc mocks the CreateTemplate method.
 	CreateTemplateFunc func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error)
@@ -314,37 +314,37 @@ var _ TemplateService_ListTemplatesClient = &TemplateService_ListTemplatesClient
 
 // TemplateService_ListTemplatesClientMock is a mock implementation of TemplateService_ListTemplatesClient.
 //
-//     func TestSomethingThatUsesTemplateService_ListTemplatesClient(t *testing.T) {
+// 	func TestSomethingThatUsesTemplateService_ListTemplatesClient(t *testing.T) {
 //
-//         // make and configure a mocked TemplateService_ListTemplatesClient
-//         mockedTemplateService_ListTemplatesClient := &TemplateService_ListTemplatesClientMock{
-//             CloseSendFunc: func() error {
-// 	               panic("mock out the CloseSend method")
-//             },
-//             ContextFunc: func() context.Context {
-// 	               panic("mock out the Context method")
-//             },
-//             HeaderFunc: func() (metadata.MD, error) {
-// 	               panic("mock out the Header method")
-//             },
-//             RecvFunc: func() (*WorkflowTemplate, error) {
-// 	               panic("mock out the Recv method")
-//             },
-//             RecvMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the RecvMsg method")
-//             },
-//             SendMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the SendMsg method")
-//             },
-//             TrailerFunc: func() metadata.MD {
-// 	               panic("mock out the Trailer method")
-//             },
-//         }
+// 		// make and configure a mocked TemplateService_ListTemplatesClient
+// 		mockedTemplateService_ListTemplatesClient := &TemplateService_ListTemplatesClientMock{
+// 			CloseSendFunc: func() error {
+// 				panic("mock out the CloseSend method")
+// 			},
+// 			ContextFunc: func() context.Context {
+// 				panic("mock out the Context method")
+// 			},
+// 			HeaderFunc: func() (metadata.MD, error) {
+// 				panic("mock out the Header method")
+// 			},
+// 			RecvFunc: func() (*WorkflowTemplate, error) {
+// 				panic("mock out the Recv method")
+// 			},
+// 			RecvMsgFunc: func(m interface{}) error {
+// 				panic("mock out the RecvMsg method")
+// 			},
+// 			SendMsgFunc: func(m interface{}) error {
+// 				panic("mock out the SendMsg method")
+// 			},
+// 			TrailerFunc: func() metadata.MD {
+// 				panic("mock out the Trailer method")
+// 			},
+// 		}
 //
-//         // use mockedTemplateService_ListTemplatesClient in code that requires TemplateService_ListTemplatesClient
-//         // and then make assertions.
+// 		// use mockedTemplateService_ListTemplatesClient in code that requires TemplateService_ListTemplatesClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type TemplateService_ListTemplatesClientMock struct {
 	// CloseSendFunc mocks the CloseSend method.
 	CloseSendFunc func() error

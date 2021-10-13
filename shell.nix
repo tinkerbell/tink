@@ -15,12 +15,10 @@ mkShell {
     gnumake
     gnused
     go
-    gotools
     jq
     nixfmt
     nodePackages.prettier
     protobuf
-    protoc-gen-doc
     pythonPackages.codespell
     shfmt
     shellcheck
