@@ -4,10 +4,10 @@
 package workflow
 
 import (
-	"context"
-	"sync"
+	context "context"
+	sync "sync"
 
-	"google.golang.org/grpc"
+	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -17,58 +17,58 @@ var _ WorkflowServiceClient = &WorkflowServiceClientMock{}
 
 // WorkflowServiceClientMock is a mock implementation of WorkflowServiceClient.
 //
-//     func TestSomethingThatUsesWorkflowServiceClient(t *testing.T) {
+// 	func TestSomethingThatUsesWorkflowServiceClient(t *testing.T) {
 //
-//         // make and configure a mocked WorkflowServiceClient
-//         mockedWorkflowServiceClient := &WorkflowServiceClientMock{
-//             CreateWorkflowFunc: func(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
-// 	               panic("mock out the CreateWorkflow method")
-//             },
-//             DeleteWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the DeleteWorkflow method")
-//             },
-//             GetWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error) {
-// 	               panic("mock out the GetWorkflow method")
-//             },
-//             GetWorkflowActionsFunc: func(ctx context.Context, in *WorkflowActionsRequest, opts ...grpc.CallOption) (*WorkflowActionList, error) {
-// 	               panic("mock out the GetWorkflowActions method")
-//             },
-//             GetWorkflowContextFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowContext, error) {
-// 	               panic("mock out the GetWorkflowContext method")
-//             },
-//             GetWorkflowContextListFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (*WorkflowContextList, error) {
-// 	               panic("mock out the GetWorkflowContextList method")
-//             },
-//             GetWorkflowContextsFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (WorkflowService_GetWorkflowContextsClient, error) {
-// 	               panic("mock out the GetWorkflowContexts method")
-//             },
-//             GetWorkflowDataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
-// 	               panic("mock out the GetWorkflowData method")
-//             },
-//             GetWorkflowDataVersionFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
-// 	               panic("mock out the GetWorkflowDataVersion method")
-//             },
-//             GetWorkflowMetadataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
-// 	               panic("mock out the GetWorkflowMetadata method")
-//             },
-//             ListWorkflowsFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowService_ListWorkflowsClient, error) {
-// 	               panic("mock out the ListWorkflows method")
-//             },
-//             ReportActionStatusFunc: func(ctx context.Context, in *WorkflowActionStatus, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the ReportActionStatus method")
-//             },
-//             ShowWorkflowEventsFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (WorkflowService_ShowWorkflowEventsClient, error) {
-// 	               panic("mock out the ShowWorkflowEvents method")
-//             },
-//             UpdateWorkflowDataFunc: func(ctx context.Context, in *UpdateWorkflowDataRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the UpdateWorkflowData method")
-//             },
-//         }
+// 		// make and configure a mocked WorkflowServiceClient
+// 		mockedWorkflowServiceClient := &WorkflowServiceClientMock{
+// 			CreateWorkflowFunc: func(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
+// 				panic("mock out the CreateWorkflow method")
+// 			},
+// 			DeleteWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the DeleteWorkflow method")
+// 			},
+// 			GetWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error) {
+// 				panic("mock out the GetWorkflow method")
+// 			},
+// 			GetWorkflowActionsFunc: func(ctx context.Context, in *WorkflowActionsRequest, opts ...grpc.CallOption) (*WorkflowActionList, error) {
+// 				panic("mock out the GetWorkflowActions method")
+// 			},
+// 			GetWorkflowContextFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowContext, error) {
+// 				panic("mock out the GetWorkflowContext method")
+// 			},
+// 			GetWorkflowContextListFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (*WorkflowContextList, error) {
+// 				panic("mock out the GetWorkflowContextList method")
+// 			},
+// 			GetWorkflowContextsFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (WorkflowService_GetWorkflowContextsClient, error) {
+// 				panic("mock out the GetWorkflowContexts method")
+// 			},
+// 			GetWorkflowDataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
+// 				panic("mock out the GetWorkflowData method")
+// 			},
+// 			GetWorkflowDataVersionFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
+// 				panic("mock out the GetWorkflowDataVersion method")
+// 			},
+// 			GetWorkflowMetadataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
+// 				panic("mock out the GetWorkflowMetadata method")
+// 			},
+// 			ListWorkflowsFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowService_ListWorkflowsClient, error) {
+// 				panic("mock out the ListWorkflows method")
+// 			},
+// 			ReportActionStatusFunc: func(ctx context.Context, in *WorkflowActionStatus, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the ReportActionStatus method")
+// 			},
+// 			ShowWorkflowEventsFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (WorkflowService_ShowWorkflowEventsClient, error) {
+// 				panic("mock out the ShowWorkflowEvents method")
+// 			},
+// 			UpdateWorkflowDataFunc: func(ctx context.Context, in *UpdateWorkflowDataRequest, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the UpdateWorkflowData method")
+// 			},
+// 		}
 //
-//         // use mockedWorkflowServiceClient in code that requires WorkflowServiceClient
-//         // and then make assertions.
+// 		// use mockedWorkflowServiceClient in code that requires WorkflowServiceClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type WorkflowServiceClientMock struct {
 	// CreateWorkflowFunc mocks the CreateWorkflow method.
 	CreateWorkflowFunc func(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
@@ -809,37 +809,37 @@ var _ WorkflowService_ListWorkflowsClient = &WorkflowService_ListWorkflowsClient
 
 // WorkflowService_ListWorkflowsClientMock is a mock implementation of WorkflowService_ListWorkflowsClient.
 //
-//     func TestSomethingThatUsesWorkflowService_ListWorkflowsClient(t *testing.T) {
+// 	func TestSomethingThatUsesWorkflowService_ListWorkflowsClient(t *testing.T) {
 //
-//         // make and configure a mocked WorkflowService_ListWorkflowsClient
-//         mockedWorkflowService_ListWorkflowsClient := &WorkflowService_ListWorkflowsClientMock{
-//             CloseSendFunc: func() error {
-// 	               panic("mock out the CloseSend method")
-//             },
-//             ContextFunc: func() context.Context {
-// 	               panic("mock out the Context method")
-//             },
-//             HeaderFunc: func() (metadata.MD, error) {
-// 	               panic("mock out the Header method")
-//             },
-//             RecvFunc: func() (*Workflow, error) {
-// 	               panic("mock out the Recv method")
-//             },
-//             RecvMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the RecvMsg method")
-//             },
-//             SendMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the SendMsg method")
-//             },
-//             TrailerFunc: func() metadata.MD {
-// 	               panic("mock out the Trailer method")
-//             },
-//         }
+// 		// make and configure a mocked WorkflowService_ListWorkflowsClient
+// 		mockedWorkflowService_ListWorkflowsClient := &WorkflowService_ListWorkflowsClientMock{
+// 			CloseSendFunc: func() error {
+// 				panic("mock out the CloseSend method")
+// 			},
+// 			ContextFunc: func() context.Context {
+// 				panic("mock out the Context method")
+// 			},
+// 			HeaderFunc: func() (metadata.MD, error) {
+// 				panic("mock out the Header method")
+// 			},
+// 			RecvFunc: func() (*Workflow, error) {
+// 				panic("mock out the Recv method")
+// 			},
+// 			RecvMsgFunc: func(m interface{}) error {
+// 				panic("mock out the RecvMsg method")
+// 			},
+// 			SendMsgFunc: func(m interface{}) error {
+// 				panic("mock out the SendMsg method")
+// 			},
+// 			TrailerFunc: func() metadata.MD {
+// 				panic("mock out the Trailer method")
+// 			},
+// 		}
 //
-//         // use mockedWorkflowService_ListWorkflowsClient in code that requires WorkflowService_ListWorkflowsClient
-//         // and then make assertions.
+// 		// use mockedWorkflowService_ListWorkflowsClient in code that requires WorkflowService_ListWorkflowsClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type WorkflowService_ListWorkflowsClientMock struct {
 	// CloseSendFunc mocks the CloseSend method.
 	CloseSendFunc func() error

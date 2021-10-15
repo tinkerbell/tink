@@ -20,11 +20,11 @@ endif
 LDFLAGS := -ldflags "-X main.version=$(version)"
 export CGO_ENABLED := 0
 
+.PHONY: server cli worker test $(binaries)
 cli: cmd/tink-cli/tink-cli
 server: cmd/tink-server/tink-server
 worker : cmd/tink-worker/tink-worker
 
-.PHONY: server cli worker test $(binaries)
 crossbinaries := $(addsuffix -linux-,$(binaries))
 crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=arm64) $(crossbinaries:=armv6) $(crossbinaries:=armv7)
 
@@ -37,7 +37,7 @@ crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=
 $(binaries) $(crossbinaries):
 	$(FLAGS) go build $(LDFLAGS) -o $@ ./$(@D)
 
-.PHONY: images tink-cli-image tink-server-image tink-worker-image
+.PHONY: tink-cli-image tink-server-image tink-worker-image
 tink-cli-image: cmd/tink-cli/tink-cli-linux-amd64
 	docker build -t tink-cli cmd/tink-cli/
 tink-server-image: cmd/tink-server/tink-server-linux-amd64
@@ -45,17 +45,45 @@ tink-server-image: cmd/tink-server/tink-server-linux-amd64
 tink-worker-image: cmd/tink-worker/tink-worker-linux-amd64
 	docker build -t tink-worker cmd/tink-worker/
 
+.PHONY: run-stack
 run-stack:
 	docker-compose up --build
 
-protos/gen_mock:
-	go generate ./protos/**/*
-	goimports -w ./protos/**/mock.go
+ifeq ($(origin GOBIN), undefined)
+GOBIN := ${PWD}/bin
+export GOBIN
+PATH := ${GOBIN}:${PATH}
+export PATH
+endif
 
-grpc/gen_doc:
-	protoc \
-		-I./protos \
-		-I./protos/third_party \
-		--doc_out=./doc \
-		--doc_opt=html,index.html \
-		protos/hardware/*.proto protos/template/*.proto protos/workflow/*.proto
+toolsBins := $(addprefix bin/,$(notdir $(shell awk -F'"' '/^\s*_/ {print $$2}' tools.go)))
+
+# installs cli tools defined in tools.go
+$(toolsBins): go.mod go.sum tools.go
+$(toolsBins): CMD=$(shell awk -F'"' '/$(@F)"/ {print $$2}' tools.go)
+$(toolsBins):
+	go install $(CMD)
+
+.PHONY: protomocks
+protomocks: bin/moq
+	go generate ./protos/...
+	gofumpt -s -w ./protos/*/mock.go
+
+.PHONY: check-protomocks
+check-protomocks:
+	@git diff --no-ext-diff --quiet --exit-code -- protos/*/mock.go || (
+	  echo "Mock files need to be regenerated!"; 
+	  git diff --no-ext-diff --exit-code --stat -- protos/*/mock.go
+	)
+ 
+.PHONY: pbfiles
+pbfiles: buf.gen.yaml buf.lock $(shell git ls-files 'protos/*/*.proto') $(toolsBins)
+	buf generate
+	gofumpt -w protos/*/*.pb.*
+
+.PHONY: check-pbfiles
+check-pbfiles: pbfiles
+	@git diff --no-ext-diff --quiet --exit-code -- protos/*/*.pb.* || (
+	  echo "Protobuf files need to be regenerated!"; 
+	  git diff --no-ext-diff --exit-code --stat -- protos/*/*.pb.*
+	)
