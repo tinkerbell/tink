@@ -191,3 +191,7 @@ CI will ensure generated files are up to date.
 │   ├── template
 │   └── workflow
 ```
+
+### environment variables
+
+Tink Server, CLI, and Worker environment variables are documented [here](docs/ENVVARS.md).
