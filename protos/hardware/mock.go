@@ -4,10 +4,10 @@
 package hardware
 
 import (
-	"context"
-	"sync"
+	context "context"
+	sync "sync"
 
-	"google.golang.org/grpc"
+	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -17,37 +17,37 @@ var _ HardwareServiceClient = &HardwareServiceClientMock{}
 
 // HardwareServiceClientMock is a mock implementation of HardwareServiceClient.
 //
-//     func TestSomethingThatUsesHardwareServiceClient(t *testing.T) {
+// 	func TestSomethingThatUsesHardwareServiceClient(t *testing.T) {
 //
-//         // make and configure a mocked HardwareServiceClient
-//         mockedHardwareServiceClient := &HardwareServiceClientMock{
-//             AllFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error) {
-// 	               panic("mock out the All method")
-//             },
-//             ByIDFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
-// 	               panic("mock out the ByID method")
-//             },
-//             ByIPFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
-// 	               panic("mock out the ByIP method")
-//             },
-//             ByMACFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
-// 	               panic("mock out the ByMAC method")
-//             },
-//             DeleteFunc: func(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the Delete method")
-//             },
-//             DeprecatedWatchFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_DeprecatedWatchClient, error) {
-// 	               panic("mock out the DeprecatedWatch method")
-//             },
-//             PushFunc: func(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 	               panic("mock out the Push method")
-//             },
-//         }
+// 		// make and configure a mocked HardwareServiceClient
+// 		mockedHardwareServiceClient := &HardwareServiceClientMock{
+// 			AllFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error) {
+// 				panic("mock out the All method")
+// 			},
+// 			ByIDFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
+// 				panic("mock out the ByID method")
+// 			},
+// 			ByIPFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
+// 				panic("mock out the ByIP method")
+// 			},
+// 			ByMACFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
+// 				panic("mock out the ByMAC method")
+// 			},
+// 			DeleteFunc: func(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the Delete method")
+// 			},
+// 			DeprecatedWatchFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_DeprecatedWatchClient, error) {
+// 				panic("mock out the DeprecatedWatch method")
+// 			},
+// 			PushFunc: func(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the Push method")
+// 			},
+// 		}
 //
-//         // use mockedHardwareServiceClient in code that requires HardwareServiceClient
-//         // and then make assertions.
+// 		// use mockedHardwareServiceClient in code that requires HardwareServiceClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type HardwareServiceClientMock struct {
 	// AllFunc mocks the All method.
 	AllFunc func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error)
@@ -424,37 +424,37 @@ var _ HardwareService_AllClient = &HardwareService_AllClientMock{}
 
 // HardwareService_AllClientMock is a mock implementation of HardwareService_AllClient.
 //
-//     func TestSomethingThatUsesHardwareService_AllClient(t *testing.T) {
+// 	func TestSomethingThatUsesHardwareService_AllClient(t *testing.T) {
 //
-//         // make and configure a mocked HardwareService_AllClient
-//         mockedHardwareService_AllClient := &HardwareService_AllClientMock{
-//             CloseSendFunc: func() error {
-// 	               panic("mock out the CloseSend method")
-//             },
-//             ContextFunc: func() context.Context {
-// 	               panic("mock out the Context method")
-//             },
-//             HeaderFunc: func() (metadata.MD, error) {
-// 	               panic("mock out the Header method")
-//             },
-//             RecvFunc: func() (*Hardware, error) {
-// 	               panic("mock out the Recv method")
-//             },
-//             RecvMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the RecvMsg method")
-//             },
-//             SendMsgFunc: func(m interface{}) error {
-// 	               panic("mock out the SendMsg method")
-//             },
-//             TrailerFunc: func() metadata.MD {
-// 	               panic("mock out the Trailer method")
-//             },
-//         }
+// 		// make and configure a mocked HardwareService_AllClient
+// 		mockedHardwareService_AllClient := &HardwareService_AllClientMock{
+// 			CloseSendFunc: func() error {
+// 				panic("mock out the CloseSend method")
+// 			},
+// 			ContextFunc: func() context.Context {
+// 				panic("mock out the Context method")
+// 			},
+// 			HeaderFunc: func() (metadata.MD, error) {
+// 				panic("mock out the Header method")
+// 			},
+// 			RecvFunc: func() (*Hardware, error) {
+// 				panic("mock out the Recv method")
+// 			},
+// 			RecvMsgFunc: func(m interface{}) error {
+// 				panic("mock out the RecvMsg method")
+// 			},
+// 			SendMsgFunc: func(m interface{}) error {
+// 				panic("mock out the SendMsg method")
+// 			},
+// 			TrailerFunc: func() metadata.MD {
+// 				panic("mock out the Trailer method")
+// 			},
+// 		}
 //
-//         // use mockedHardwareService_AllClient in code that requires HardwareService_AllClient
-//         // and then make assertions.
+// 		// use mockedHardwareService_AllClient in code that requires HardwareService_AllClient
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type HardwareService_AllClientMock struct {
 	// CloseSendFunc mocks the CloseSend method.
 	CloseSendFunc func() error

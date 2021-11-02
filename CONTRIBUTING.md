@@ -177,8 +177,11 @@ It has a base server that implements the API.
 ### protos
 
 The `protos` package contains all the protobuf files used by the gRPC server.
-Handling of protobuf deps and generating the go files are both handled by the [protoc.sh](./protos/protoc.sh) script.
-Also, both `go`, and `protoc` are required by `protoc.sh`.
+Handling of protobuf deps and generating the go files are both handled [buf] via `make pbfiles`.
+The protubuf/grpc files are not generated as part of the build pipeline to keep builds fast.
+CI will ensure generated files are up to date.
+
+[buf]: https://buf.build/
 
 ```
 .
@@ -188,3 +191,7 @@ Also, both `go`, and `protoc` are required by `protoc.sh`.
 │   ├── template
 │   └── workflow
 ```
+
+### environment variables
+
+Tink Server, CLI, and Worker environment variables are documented [here](docs/ENVVARS.md).
