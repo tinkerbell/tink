@@ -27,7 +27,7 @@ func NewPostgresDatabaseClient(ctx context.Context, t *testing.T, req NewPostgre
 	testcontainers.SkipIfProviderIsNotHealthy(t)
 	postgresC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        "postgres:13.1",
+			Image:        "postgres:14-alpine",
 			ExposedPorts: []string{"5432/tcp"},
 			WaitingFor:   wait.ForLog("database system is ready to accept connections"),
 			Env: map[string]string{
