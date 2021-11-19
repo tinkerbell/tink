@@ -14,7 +14,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.17.0"
+          go-version: "1.17.4"
       - name: make verify
         run: make verify
   test:
@@ -25,7 +25,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.14.6"
+          go-version: "1.17.4"
       - name: go test
         run: go test -coverprofile=coverage.txt ./...
       - name: upload codecov
@@ -58,7 +58,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.14.6"
+          go-version: "1.17.4"
       - run: make crosscompile -j$(nproc)
       - name: Upload tink-cli binaries
         uses: actions/upload-artifact@v2
