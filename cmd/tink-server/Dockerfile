@@ -1,4 +1,4 @@
-FROM alpine:3.11
+FROM alpine:3.15
 ENTRYPOINT ["/usr/bin/tink-server"]
 EXPOSE 42113
 EXPOSE 42114
