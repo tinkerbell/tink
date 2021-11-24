@@ -1,0 +1,9 @@
+apiVersion: "tinkerbell.org/v1alpha1"
+kind: Workflow
+metadata:
+  name: wf1
+  namespace: default
+spec:
+  templateRef: debian
+  hardwareMap:
+    device_1: 3c:ec:ef:4c:4f:54
