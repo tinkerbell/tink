@@ -18,9 +18,6 @@ type WorkflowStatus struct {
 	// State is the state of the workflow in Tinkerbell.
 	State string `json:"state,omitempty"`
 
-	// Data is the populated Workflow Data in Tinkerbell.
-	Data string `json:"data,omitempty"`
-
 	// GlobalTimeout represents the max execution time
 	GlobalTimeout int64 `json:"globalTimeout,omitempty"`
 

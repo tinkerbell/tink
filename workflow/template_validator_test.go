@@ -301,6 +301,110 @@ tasks:
       timeout: 60
 `,
 		},
+		{
+			name:       "malformed template",
+			hwAddress:  []byte("{\"device_1\":\"08:00:27:00:00:01\"}"),
+			templateID: "98788301-d0d9-4ee9-84df-b64e6e1ef1cc",
+			templateData: `
+version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world"
+    worker: "{{.device_1}"
+    actions:
+    - name: "hello_world"
+      image: hello-world
+      timeout: 60
+`,
+			expectedError: func(t *testing.T, err error) {
+				t.Helper()
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), `template: workflow-template:7: unexpected "}" in operand`) {
+					t.Errorf("\nexpected err: '%s'\ngot:          '%s'", `failed to parse template with ID 98788301-d0d9-4ee9-84df-b64e6e1ef1cc: template: workflow-template:7: unexpected "}" in operand`, err)
+				}
+			},
+		},
+		{
+			name:       "invalid yaml in template",
+			hwAddress:  []byte("{\"device_1\":\"08:00:27:00:00:01\"}"),
+			templateID: "98788301-d0d9-4ee9-84df-b64e6e1ef1cc",
+			templateData: `
+version: "0.1"
+  name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world"
+    worker: "{{.device_1}}"
+    actions:
+    - name: "hello_world"
+      image: hello-world
+      timeout: 60
+`,
+			expectedError: func(t *testing.T, err error) {
+				t.Helper()
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), `parsing yaml data: yaml: line 2: did not find expected key`) {
+					t.Errorf("\nexpected err: '%s'\ngot:          '%s'", `parsing yaml data: yaml: line 2: did not find expected key`, err)
+				}
+			},
+		},
+		{
+			name:       "Empty worker address",
+			hwAddress:  []byte("{\"device_1\":\"\"}"),
+			templateID: "98788301-d0d9-4ee9-84df-b64e6e1ef1cc",
+			templateData: `
+version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world"
+    worker: "{{.device_1}}"
+    actions:
+    - name: "hello_world"
+      image: hello-world
+      timeout: 60
+`,
+			expectedError: func(t *testing.T, err error) {
+				t.Helper()
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), `failed to render template, invalid hardware address: map[device_1:]`) {
+					t.Errorf("\nexpected err: '%s'\ngot:          '%s'", `failed to render template, invalid hardware address: map[device_1:]`, err)
+				}
+			},
+		},
+		{
+			name:       "Invalid hardware json",
+			hwAddress:  []byte(`{"device_1":"abc"}}`),
+			templateID: "98788301-d0d9-4ee9-84df-b64e6e1ef1cc",
+			templateData: `
+version: "0.1"
+name: hello_world_workflow
+global_timeout: 600
+tasks:
+  - name: "hello world"
+    worker: "{{.device_1}}"
+    actions:
+    - name: "hello_world"
+      image: hello-world
+      timeout: 60
+`,
+			expectedError: func(t *testing.T, err error) {
+				t.Helper()
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), `failed to parse template with ID 98788301-d0d9-4ee9-84df-b64e6e1ef1cc: invalid character '}' after top-level value`) {
+					t.Errorf("\nexpected err: '%s'\ngot:          '%s'", `failed to parse template with ID 98788301-d0d9-4ee9-84df-b64e6e1ef1cc: invalid character '}' after top-level value`, err)
+				}
+			},
+		},
 	}
 
 	for _, test := range tests {

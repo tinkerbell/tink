@@ -53,9 +53,6 @@ spec:
             status:
               description: WorkflowStatus defines the observed state of Workflow.
               properties:
-                data:
-                  description: Data is the populated Workflow Data in Tinkerbell.
-                  type: string
                 globalTimeout:
                   description: GlobalTimeout represents the max execution time
                   format: int64

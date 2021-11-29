@@ -11,7 +11,7 @@ MAKEFLAGS += --no-builtin-rules
 SHELL := bash
 .SHELLFLAGS := -o pipefail -euc
 
-binaries := cmd/tink-cli/tink-cli cmd/tink-server/tink-server cmd/tink-worker/tink-worker
+binaries := cmd/tink-cli/tink-cli cmd/tink-controller/tink-controller cmd/tink-server/tink-server cmd/tink-worker/tink-worker
 version := $(shell git rev-parse --short HEAD)
 tag := $(shell git tag --points-at HEAD)
 ifneq (,$(tag))
@@ -22,6 +22,7 @@ export CGO_ENABLED := 0
 
 .PHONY: server cli worker test $(binaries)
 cli: cmd/tink-cli/tink-cli
+controller: cmd/tink-controller/tink-controller
 server: cmd/tink-server/tink-server
 worker : cmd/tink-worker/tink-worker
 
@@ -37,9 +38,11 @@ crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=
 $(binaries) $(crossbinaries):
 	$(FLAGS) go build $(LDFLAGS) -o $@ ./$(@D)
 
-.PHONY: tink-cli-image tink-server-image tink-worker-image
+.PHONY: tink-cli-image tink-controller-image tink-server-image tink-worker-image
 tink-cli-image: cmd/tink-cli/tink-cli-linux-amd64
 	docker build -t tink-cli cmd/tink-cli/
+tink-controller-image: cmd/tink-controller/tink-controller-linux-amd64
+	docker build -t tink-controller cmd/tink-controller/
 tink-server-image: cmd/tink-server/tink-server-linux-amd64
 	docker build -t tink-server cmd/tink-server/
 tink-worker-image: cmd/tink-worker/tink-worker-linux-amd64
@@ -72,10 +75,10 @@ protomocks: bin/moq
 .PHONY: check-protomocks
 check-protomocks:
 	@git diff --no-ext-diff --quiet --exit-code -- protos/*/mock.go || (
-	  echo "Mock files need to be regenerated!"; 
+	  echo "Mock files need to be regenerated!";
 	  git diff --no-ext-diff --exit-code --stat -- protos/*/mock.go
 	)
- 
+
 .PHONY: pbfiles
 pbfiles: buf.gen.yaml buf.lock $(shell git ls-files 'protos/*/*.proto') $(toolsBins)
 	buf generate
@@ -84,6 +87,6 @@ pbfiles: buf.gen.yaml buf.lock $(shell git ls-files 'protos/*/*.proto') $(toolsB
 .PHONY: check-pbfiles
 check-pbfiles: pbfiles
 	@git diff --no-ext-diff --quiet --exit-code -- protos/*/*.pb.* || (
-	  echo "Protobuf files need to be regenerated!"; 
+	  echo "Protobuf files need to be regenerated!";
 	  git diff --no-ext-diff --exit-code --stat -- protos/*/*.pb.*
 	)
