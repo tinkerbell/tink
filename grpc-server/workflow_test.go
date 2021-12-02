@@ -71,7 +71,7 @@ func TestCreateWorkflow(t *testing.T) {
 						}, nil
 					},
 					CreateWorkflowFunc: func(ctx context.Context, wf db.Workflow, data string, id uuid.UUID) error {
-						return errors.New("failed to create a workfow")
+						return errors.New("failed to create a workflow")
 					},
 				},
 				wfTemplate: templateID,

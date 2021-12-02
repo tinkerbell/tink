@@ -94,7 +94,7 @@ message Empty {
 
 /*
  * GetRequest is the request used by the Get various get methods exposed by the
- * hardware serice.
+ * hardware service.
  */
 message GetRequest {
   string mac = 1;

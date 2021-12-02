@@ -122,7 +122,7 @@ func (*Empty) Descriptor() ([]byte, []int) {
 
 //
 // GetRequest is the request used by the Get various get methods exposed by the
-// hardware serice.
+// hardware service.
 type GetRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
