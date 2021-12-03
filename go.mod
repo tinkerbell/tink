@@ -38,6 +38,7 @@ require (
 	k8s.io/apimachinery v0.22.2
 	mvdan.cc/gofumpt v0.1.1
 	sigs.k8s.io/controller-runtime v0.10.1
+	sigs.k8s.io/controller-tools v0.7.0
 )
 
 replace github.com/stormcat24/protodep => github.com/ackintosh/protodep v0.0.0-20200728152107-abf8eb579d6c
