@@ -154,7 +154,6 @@ linters:
     - wastedassign
     - whitespace
 
-
   # Disabled linters, due to being misaligned with Go practices
   # - exhaustivestruct
   # - gochecknoglobals

@@ -1,10 +1,10 @@
 let _pkgs = import <nixpkgs> { };
 in { pkgs ? import (_pkgs.fetchFromGitHub {
   owner = "NixOS";
-  repo = "nixpkgs-channels";
-  #branch@date: nixpkgs-unstable@2020-09-11
-  rev = "6d4b93323e7f78121f8d6db6c59f3889aa1dd931";
-  sha256 = "0g2j41cx2w2an5d9kkqvgmada7ssdxqz1zvjd7hi5vif8ag0v5la";
+  repo = "nixpkgs";
+  #branch@date: 21.11@2021-12-02
+  rev = "21.11";
+  sha256 = "sha256-AjhmbT4UBlJWqxY0ea8a6GU2C2HdKUREkG43oRr3TZg=";
 }) { } }:
 
 with pkgs;
@@ -14,12 +14,12 @@ mkShell {
     git
     gnumake
     gnused
-    go
+    go_1_17
     jq
     nixfmt
     nodePackages.prettier
     protobuf
-    pythonPackages.codespell
+    python3Packages.codespell
     shfmt
     shellcheck
     vagrant
