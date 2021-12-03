@@ -31,7 +31,7 @@ require (
 	go.mongodb.org/mongo-driver v1.1.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.22.0
 	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6
-	google.golang.org/grpc v1.41.0-dev.0.20210907181116-2f3355d2244e
+	google.golang.org/grpc v1.41.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
