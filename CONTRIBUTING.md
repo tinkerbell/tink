@@ -98,6 +98,12 @@ One must support their proposed changes with unit tests.
 As you submit a pull request(PR) the CI generates a code coverage report.
 It will help you identify parts of the code that are not yet covered in unit tests.
 
+#### Go
+
+##### Import Groups
+
+There should be two groups of import blocks, one for stdlib and the other for everything else.
+
 ## Understanding code structure
 
 This is a nonexhaustive list important packages that happen to cover most of the code base.
