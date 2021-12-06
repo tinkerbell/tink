@@ -31,29 +31,8 @@ type FullClient struct {
 	HardwareClient hardware.HardwareServiceClient
 }
 
-// NewFullClientFromGlobal is a dirty hack that returns a FullClient using the
-// global variables exposed by the client package. Globals should be avoided
-// and we will deprecate them at some point replacing this function with
-// NewFullClient. If you are starting a new project please use NewFullClient instead.
-func NewFullClientFromGlobal() (*FullClient, error) {
-	// This is required because we use init() too often, even more in the
-	// CLI and based on where you are sometime the clients are not initialised
-	if TemplateClient == nil {
-		err := Setup()
-		if err != nil {
-			panic(err)
-		}
-	}
-	return &FullClient{
-		TemplateClient: TemplateClient,
-		WorkflowClient: WorkflowClient,
-		HardwareClient: HardwareClient,
-	}, nil
-}
-
 // NewFullClient returns a FullClient. A structure that contains all the
-// clients made available from tink-server. This is the function you should use
-// instead of NewFullClientFromGlobal that will be deprecated soon.
+// clients made available from tink-server.
 func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 	return &FullClient{
 		TemplateClient: template.NewTemplateServiceClient(conn),
