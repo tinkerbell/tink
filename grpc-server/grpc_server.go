@@ -46,7 +46,7 @@ type ConfigGRPCServer struct {
 	Facility      string
 	TLSCert       string
 	GRPCAuthority string
-	DB            *db.TinkDB
+	DB            db.Database
 }
 
 // SetupGRPC setup and return a gRPC server.
