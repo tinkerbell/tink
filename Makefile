@@ -11,8 +11,8 @@ crosscompile: $(crossbinaries) ## Build all binaries for Linux and all supported
 images: tink-cli-image tink-server-image tink-worker-image virtual-worker-image ## Build all docker images
 run: crosscompile run-stack ## Builds and runs the Tink stack (tink, db, cli) via docker-compose
 
-test: ## Run tests
-	go test -coverprofile=coverage.txt ./...
+test: e2etest-setup ## Run tests
+	source <(setup-envtest use  -p env) && go test -coverprofile=coverage.txt ./...
 
 verify: lint check-generated # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .

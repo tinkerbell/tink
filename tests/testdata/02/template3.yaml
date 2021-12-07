@@ -1,0 +1,33 @@
+apiVersion: "tinkerbell.org/v1alpha1"
+kind: Template
+metadata:
+  name: template3
+  namespace: default
+spec:
+  data: |
+    version: "0.1"
+    name: ubuntu
+    global_timeout: 1800
+    tasks:
+      - name: "task-1"
+        worker: "{{.device_1}}"
+        volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+        actions:
+          - name: "task-1-action-1"
+            image: quay.io/tinkerbell-actions/image2disk:v1.0.0
+            timeout: 600
+            environment:
+              DEST_DISK: /dev/nvme0n1
+              # Hegel IP
+              IMG_URL: "http://10.1.1.11:8080/ubuntu-amd64.raw.gz"
+              COMPRESSED: true
+          - name: "task-1-action-2"
+            image: quay.io/tinkerbell-actions/kexec:v1.0.1
+            timeout: 90
+            pid: host
+            environment:
+              BLOCK_DEVICE: /dev/nvme0n1p1
+              FS_TYPE: ext4

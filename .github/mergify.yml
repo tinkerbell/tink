@@ -6,7 +6,6 @@ queue_rules:
       - check-success~=docker-images.*tink-cli
       - check-success~=docker-images.*tink-server
       - check-success~=docker-images.*tink-worker
-      - check-success=validation
 
 pull_request_rules:
   - name: Automatic merge on approval
@@ -19,7 +18,7 @@ pull_request_rules:
       - check-success~=docker-images.*tink-cli
       - check-success~=docker-images.*tink-server
       - check-success~=docker-images.*tink-worker
-      - check-success=validation
+      - check-success=crosscompile
       - label!=do-not-merge
       - label=ready-to-merge
     actions:

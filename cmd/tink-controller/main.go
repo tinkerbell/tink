@@ -13,6 +13,7 @@ import (
 	"github.com/tinkerbell/tink/pkg/controllers"
 	wfctrl "github.com/tinkerbell/tink/pkg/controllers/workflow"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // version is set at build time.
@@ -58,12 +59,22 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.Info("starting controller version " + version)
 
-			config, err := clientcmd.BuildConfigFromFlags(config.K8sAPI, config.Kubeconfig)
+			ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+				&clientcmd.ClientConfigLoadingRules{ExplicitPath: config.Kubeconfig},
+				&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: config.K8sAPI}})
+
+			cfg, err := ccfg.ClientConfig()
 			if err != nil {
 				return err
 			}
 
-			manager, err := controllers.NewManager(config, controllers.GetControllerOptions())
+			namespace, _, err := ccfg.Namespace()
+			if err != nil {
+				return err
+			}
+			options := controllers.GetControllerOptions()
+			options.LeaderElectionNamespace = namespace
+			manager, err := controllers.NewManager(cfg, options)
 			if err != nil {
 				return err
 			}

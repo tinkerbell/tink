@@ -36,6 +36,12 @@ func (m *fakeManager) sleep() {
 
 // NewFakeContainerManager returns a fake worker.ContainerManager that will sleep for Docker API calls.
 func NewFakeContainerManager(l log.Logger, sleepMinimum, sleepJitter time.Duration) worker.ContainerManager {
+	if sleepMinimum <= 0 {
+		sleepMinimum = 1
+	}
+	if sleepJitter <= 0 {
+		sleepJitter = 1
+	}
 	return &fakeManager{
 		sleepMinimum: sleepMinimum,
 		sleepJitter:  sleepJitter,
