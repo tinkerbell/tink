@@ -51,25 +51,34 @@ func (o *ConnOptions) SetFlags(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Link to tink-server grcp api")
 }
 
-func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
-	resp, err := http.Get(opt.CertURL)
+// This function is bad and ideally should be removed, but for now it moves all the bad into one place.
+// This is the legacy of packethost/cacher running behind an ingress that couldn't terminate TLS on behalf
+// of GRPC. All of this functionality should be ripped out in favor of either using trusted certificates
+// or moving the establishment of trust in the certificate out to the environment (or running in insecure mode
+// e.g. for development.)
+func grpcCredentialFromCertEndpoint(url string) (credentials.TransportCredentials, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "fetch cert")
 	}
 	defer resp.Body.Close()
-
 	certs, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "read cert")
 	}
-
 	cp := x509.NewCertPool()
 	ok := cp.AppendCertsFromPEM(certs)
 	if !ok {
 		return nil, errors.Wrap(err, "parse cert")
 	}
+	return credentials.NewClientTLSFromCert(cp, ""), nil
+}
 
-	creds := credentials.NewClientTLSFromCert(cp, "")
+func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
+	creds, err := grpcCredentialFromCertEndpoint(opt.CertURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "obtain trusted certificate")
+	}
 	conn, err := grpc.Dial(opt.GRPCAuthority, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to tinkerbell server")
@@ -83,28 +92,16 @@ func GetConnection() (*grpc.ClientConn, error) {
 	if certURL == "" {
 		return nil, errors.New("undefined TINKERBELL_CERT_URL")
 	}
-	resp, err := http.Get(certURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "fetch cert")
-	}
-	defer resp.Body.Close()
-
-	certs, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "read cert")
-	}
-
-	cp := x509.NewCertPool()
-	ok := cp.AppendCertsFromPEM(certs)
-	if !ok {
-		return nil, errors.Wrap(err, "parse cert")
-	}
 
 	grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 	if grpcAuthority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
-	creds := credentials.NewClientTLSFromCert(cp, "")
+
+	creds, err := grpcCredentialFromCertEndpoint(certURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "obtain trusted certificate")
+	}
 	conn, err := grpc.Dial(grpcAuthority,
 		grpc.WithTransportCredentials(creds),
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
