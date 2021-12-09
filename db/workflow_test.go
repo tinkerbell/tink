@@ -13,7 +13,6 @@ import (
 	"github.com/tinkerbell/tink/db"
 	"github.com/tinkerbell/tink/protos/hardware"
 	pb "github.com/tinkerbell/tink/protos/workflow"
-
 	"github.com/tinkerbell/tink/workflow"
 )
 
