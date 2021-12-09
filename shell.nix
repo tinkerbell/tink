@@ -11,6 +11,7 @@ with pkgs;
 
 mkShell {
   buildInputs = [
+    docker-compose
     git
     gnumake
     gnused
@@ -20,8 +21,8 @@ mkShell {
     nodePackages.prettier
     protobuf
     python3Packages.codespell
-    shfmt
     shellcheck
+    shfmt
     vagrant
   ];
 }
