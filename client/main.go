@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -44,17 +45,19 @@ func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 type ConnOptions struct {
 	CertURL       string
 	GRPCAuthority string
+	TLS           bool
 }
 
 func (o *ConnOptions) SetFlags(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(&o.CertURL, "tinkerbell-cert-url", "http://127.0.0.1:42114/cert", "The URL where the certificate is located")
-	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Link to tink-server grcp api")
+	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Connection info for tink-server")
+	flagSet.BoolVar(&o.TLS, "tinkerbell-tls", true, "Connect to server via TLS or not")
 }
 
 // This function is bad and ideally should be removed, but for now it moves all the bad into one place.
 // This is the legacy of packethost/cacher running behind an ingress that couldn't terminate TLS on behalf
 // of GRPC. All of this functionality should be ripped out in favor of either using trusted certificates
-// or moving the establishment of trust in the certificate out to the environment (or running in insecure mode
+// or moving the establishment of trust in the certificate out to the environment (or running in no-tls mode
 // e.g. for development.)
 func grpcCredentialFromCertEndpoint(url string) (credentials.TransportCredentials, error) {
 	resp, err := http.Get(url)
@@ -62,24 +65,35 @@ func grpcCredentialFromCertEndpoint(url string) (credentials.TransportCredential
 		return nil, errors.Wrap(err, "fetch cert")
 	}
 	defer resp.Body.Close()
+
 	certs, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "read cert")
 	}
+
 	cp := x509.NewCertPool()
 	ok := cp.AppendCertsFromPEM(certs)
 	if !ok {
 		return nil, errors.Wrap(err, "parse cert")
 	}
+
 	return credentials.NewClientTLSFromCert(cp, ""), nil
 }
 
 func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
-	creds, err := grpcCredentialFromCertEndpoint(opt.CertURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "obtain trusted certificate")
+	method := grpc.WithInsecure()
+	if opt.TLS {
+		creds, err := grpcCredentialFromCertEndpoint(opt.CertURL)
+		if err != nil {
+			return nil, err
+		}
+		method = grpc.WithTransportCredentials(creds)
 	}
-	conn, err := grpc.Dial(opt.GRPCAuthority, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(opt.GRPCAuthority,
+		method,
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to tinkerbell server")
 	}
@@ -88,22 +102,32 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 
 // GetConnection returns a gRPC client connection.
 func GetConnection() (*grpc.ClientConn, error) {
-	certURL := os.Getenv("TINKERBELL_CERT_URL")
-	if certURL == "" {
-		return nil, errors.New("undefined TINKERBELL_CERT_URL")
-	}
-
 	grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY")
 	if grpcAuthority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 
-	creds, err := grpcCredentialFromCertEndpoint(certURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "obtain trusted certificate")
+	method := grpc.WithInsecure()
+	tls := true
+	if val, isSet := os.LookupEnv("TINKERBELL_TLS"); isSet {
+		if b, err := strconv.ParseBool(val); err == nil {
+			tls = b
+		}
+	}
+
+	if tls {
+		certURL := os.Getenv("TINKERBELL_CERT_URL")
+		if certURL == "" {
+			return nil, errors.New("undefined TINKERBELL_CERT_URL")
+		}
+		creds, err := grpcCredentialFromCertEndpoint(certURL)
+		if err != nil {
+			return nil, err
+		}
+		method = grpc.WithTransportCredentials(creds)
 	}
 	conn, err := grpc.Dial(grpcAuthority,
-		grpc.WithTransportCredentials(creds),
+		method,
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
