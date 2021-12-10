@@ -18,6 +18,7 @@ services:
       PGUSER: tinkerbell
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     volumes:
       - certs:/certs/${FACILITY:-onprem}:rw
     ports:
@@ -61,6 +62,7 @@ services:
       PGUSER: tinkerbell
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     depends_on:
       db:
         condition: service_healthy
@@ -90,6 +92,7 @@ services:
     environment:
       TINKERBELL_CERT_URL: http://tinkerbell:42114/cert
       TINKERBELL_GRPC_AUTHORITY: tinkerbell:42113
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     depends_on:
       tinkerbell:
         condition: service_healthy

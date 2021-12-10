@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/db"
-	rpcServer "github.com/tinkerbell/tink/grpc-server"
+	grpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
 	"github.com/tinkerbell/tink/metrics"
 )
@@ -37,6 +37,7 @@ type DaemonConfig struct {
 	TLSCert       string
 	CertDir       string
 	HTTPAuthority string
+	TLS           bool
 }
 
 func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
@@ -50,6 +51,7 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.TLSCert, "tls-cert", "", "")
 	fs.StringVar(&c.CertDir, "cert-dir", "", "")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
+	fs.BoolVar(&c.TLS, "tls", true, "Run in tls protected mode (disabling should only be done for development or if behind TLS terminating proxy)")
 }
 
 func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
@@ -65,6 +67,7 @@ func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
 	c.CertDir = env.Get("TINKERBELL_CERTS_DIR", c.CertDir)
 	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
 	c.HTTPAuthority = env.Get("TINKERBELL_HTTP_AUTHORITY", c.HTTPAuthority)
+	c.TLS = env.Bool("TINKERBELL_LS", c.TLS)
 }
 
 func main() {
@@ -152,18 +155,23 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				logger.Info("Your database schema is not up to date. Please apply migrations running tink-server with env var ONLY_MIGRATION set.")
 			}
 
-			cert, modT := rpcServer.SetupGRPC(ctx, logger, &rpcServer.ConfigGRPCServer{
+			grpcConfig := &grpcServer.ConfigGRPCServer{
 				Facility:      config.Facility,
-				TLSCert:       config.TLSCert,
+				TLSCert:       "insecure",
 				GRPCAuthority: config.GRPCAuthority,
 				DB:            tinkDB,
-			}, errCh)
+			}
+			if config.TLS {
+				grpcConfig.TLSCert = config.TLSCert
+			}
+			cert, modT := grpcServer.SetupGRPC(ctx, logger, grpcConfig, errCh)
 
-			httpServer.SetupHTTP(ctx, logger, &httpServer.Config{
+			httpConfig := &httpServer.Config{
+				HTTPAuthority: config.HTTPAuthority,
 				CertPEM:       cert,
 				ModTime:       modT,
-				HTTPAuthority: config.HTTPAuthority,
-			}, errCh)
+			}
+			httpServer.SetupHTTP(ctx, logger, httpConfig, errCh)
 
 			select {
 			case err = <-errCh:
