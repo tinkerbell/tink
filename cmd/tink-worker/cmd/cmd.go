@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/peterbourgon/ff"
 )
@@ -17,16 +18,18 @@ const (
 	programVersion              = "devel"
 )
 
-type CmdlineFlags struct {
-	DockerRegistry   string
-	RegistryUsername string
-	RegistryPassword string
-	WorkerID         string
-	MaxFileSize      int64
-	MaxRetry         int
-	RetryInterval    int
-	Timeout          int
-	Version          bool
+type FlagEnvSettings struct {
+	TinkServerURL           string
+	TinkServerGRPCAuthority string
+	DockerRegistry          string
+	RegistryUsername        string
+	RegistryPassword        string
+	WorkerID                string
+	MaxFileSize             int64
+	MaxRetry                int
+	RetryInterval           int
+	Timeout                 int
+	Version                 bool
 }
 
 // Usage prints the help screen.
@@ -50,17 +53,17 @@ Flags:
 }
 
 // CollectCmdlineFlags parses and validates command line flags/env vars.
-func CollectCmdlineFlags(args []string) (CmdlineFlags, error) {
-	flags, err := parseCmdlineFlags(args)
+func CollectFlagEnvSettings(args []string) (FlagEnvSettings, error) {
+	flags, err := parseFlagEnvSettings(args)
 	if err != nil {
 		return flags, err
 	}
-	return flags, validateFlags(flags)
+	return flags, validateFlagEnvSettings(flags)
 }
 
-// parseCmdlineFlags parses flags from the command line and returns a populated CmdlineFlags struct.
-func parseCmdlineFlags(args []string) (CmdlineFlags, error) {
-	var flags CmdlineFlags
+// parseFlagEnvSettings parses flags from the command line and env vars, and returns a populated FlagEnvSettings struct.
+func parseFlagEnvSettings(args []string) (FlagEnvSettings, error) {
+	var flags FlagEnvSettings
 
 	fs := flag.NewFlagSet("tink-worker", flag.ContinueOnError)
 	fs.Usage = Usage
@@ -83,12 +86,16 @@ func parseCmdlineFlags(args []string) (CmdlineFlags, error) {
 	fs.IntVar(&flags.RetryInterval, "retry-interval", defaultRetryInterval, "")
 	fs.IntVar(&flags.Timeout, "timeout", defaultTimeoutMinutes, "")
 
+	// env vars which are unrelated to command line flags
+	flags.TinkServerURL = os.Getenv("TINKERBELL_CERT_URL")
+	flags.TinkServerGRPCAuthority = os.Getenv("TINKERBELL_GRPC_AUTHORITY")
+
 	err := ff.Parse(fs, args, ff.WithEnvVarNoPrefix())
 	return flags, err
 }
 
-// validateFlags performs command line flag validation.
-func validateFlags(flags CmdlineFlags) error {
+// validateFlagEnvSettings performs command line flag/env var validation.
+func validateFlagEnvSettings(flags FlagEnvSettings) error {
 	// specifying the version flag will print the version and ignore everything else
 	if flags.Version {
 		fmt.Println(programVersion)
@@ -107,6 +114,14 @@ func validateFlags(flags CmdlineFlags) error {
 	}
 	if flags.WorkerID == "" {
 		return errors.New("missing required flag --id <id> (or env var WORKER_ID)")
+	}
+
+	// check for required env vars which are unrelated to command line flags
+	if flags.TinkServerURL == "" {
+		return errors.New("required env var TINKERBELL_CERT_URL is undefined")
+	}
+	if flags.TinkServerGRPCAuthority == "" {
+		return errors.New("required env var TINKERBELL_GRPC_AUTHORITY is undefined")
 	}
 
 	return nil

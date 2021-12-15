@@ -2,108 +2,108 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"testing"
 )
 
-// setMinimumEnvVars is a test helper for setting up the minimum env vars for tink-worker to run.
-func setMinimumEnvVars(url string, user string, password string, id string) {
-	os.Setenv("DOCKER_REGISTRY", url)
-	os.Setenv("REGISTRY_USERNAME", user)
-	os.Setenv("REGISTRY_PASSWORD", password)
-	os.Setenv("ID", id)
+// Test Helpers
+
+// setMinimumEnvVars is a test helper for setting up the minimum required env vars (unrelated to command line flag env vars).
+func setMinimumEnvVars(t *testing.T) {
+	t.Helper()
+	t.Setenv("TINKERBELL_CERT_URL", "something1")
+	t.Setenv("TINKERBELL_GRPC_AUTHORITY", "something2")
 }
 
-// unsetMinimumEnvVars is a test helper for cleaning up/clearing env vars that may have been set by setMinimumEnvVars().
-func unsetMinimumEnvVars() {
-	os.Setenv("DOCKER_REGISTRY", "")
-	os.Setenv("REGISTRY_USERNAME", "")
-	os.Setenv("REGISTRY_PASSWORD", "")
-	os.Setenv("ID", "")
+// setMinimumFlagEnvVars is a test helper for setting up the minimum command line flag env vars for tink-worker to run.
+func setMinimumFlagEnvVars(t *testing.T, url string, user string, password string, id string) {
+	t.Helper()
+	t.Setenv("DOCKER_REGISTRY", url)
+	t.Setenv("REGISTRY_USERNAME", user)
+	t.Setenv("REGISTRY_PASSWORD", password)
+	t.Setenv("ID", id)
 }
 
-// setCompleteEnvVars is a test helper for setting up all env vars that tink-worker uses.
-func setCompleteEnvVars(url string, user string, password string, id string, maxFileSize string, maxRetry string, retryInterval string, timeout string) {
-	setMinimumEnvVars(url, user, password, id)
-	os.Setenv("MAX_FILE_SIZE", maxFileSize)
-	os.Setenv("MAX_RETRY", maxRetry)
-	os.Setenv("RETRY_INTERVAL", retryInterval)
-	os.Setenv("TIMEOUT", timeout)
-}
-
-// unsetCompleteEnvVars is a test helper for cleaning up/clearing all env vars that tink-worker uses.
-func unsetCompleteEnvVars() {
-	unsetMinimumEnvVars()
-	os.Setenv("MAX_FILE_SIZE", "")
-	os.Setenv("MAX_RETRY", "")
-	os.Setenv("RETRY_INTERVAL", "")
-	os.Setenv("TIMEOUT", "")
+// setCompleteFlagEnvVars is a test helper for setting up all env vars that tink-worker uses.
+func setCompleteFlagEnvVars(t *testing.T, url string, user string, password string, id string, maxFileSize string, maxRetry string, retryInterval string, timeout string) {
+	t.Helper()
+	setMinimumFlagEnvVars(t, url, user, password, id)
+	t.Setenv("MAX_FILE_SIZE", maxFileSize)
+	t.Setenv("MAX_RETRY", maxRetry)
+	t.Setenv("RETRY_INTERVAL", retryInterval)
+	t.Setenv("TIMEOUT", timeout)
 }
 
 // assertIntValuesMatch is a test helper that triggers an error if two int values do not match.
-func assertIntValuesMatch(tb testing.TB, got, want int) {
-	tb.Helper()
+func assertIntValuesMatch(t *testing.T, got, want int) {
+	t.Helper()
 	if got != want {
-		tb.Errorf("got %q want %q", got, want)
+		t.Errorf("got %q want %q", got, want)
 	}
 }
 
 // assertInt64ValuesMatch is a test helper that triggers an error if two int64 values do not match.
-func assertInt64ValuesMatch(tb testing.TB, got, want int64) {
-	tb.Helper()
+func assertInt64ValuesMatch(t *testing.T, got, want int64) {
+	t.Helper()
 	if got != want {
-		tb.Errorf("got %q want %q", got, want)
+		t.Errorf("got %q want %q", got, want)
 	}
 }
 
 // assertStringValuesMatch is a test helper that triggers an error if two strings do not match.
-func assertStringValuesMatch(tb testing.TB, got, want string) {
-	tb.Helper()
+func assertStringValuesMatch(t *testing.T, got, want string) {
+	t.Helper()
 	if got != want {
-		tb.Errorf("got %q want %q", got, want)
+		t.Errorf("got %q want %q", got, want)
 	}
 }
 
 // assertErrorMessage is a test helper that triggers an error if an error object (err) doesn't use a specific string (msg).
-func assertErrorMessage(tb testing.TB, err error, msg string) {
-	tb.Helper()
+func assertErrorMessage(t *testing.T, err error, msg string) {
+	t.Helper()
 	if err == nil {
-		tb.Errorf("Error: expecting error but none found")
+		t.Errorf("Error: expecting error but none found")
 	}
-	assertStringValuesMatch(tb, fmt.Sprint(err), msg)
+	assertStringValuesMatch(t, fmt.Sprint(err), msg)
 }
 
 // assertErrNotNil is a test helper that triggers an error if an error object (err) is not nil.
-func assertErrNotNil(tb testing.TB, err error) {
-	tb.Helper()
+func assertErrNotNil(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
-		tb.Errorf("Error: %s", err)
+		t.Errorf("Error: %s", err)
 	}
 }
+
+// CollectFlagEnvSettings() Functional Tests
+// These tests validate the code paths through parseFlagEnvSettings() and validateFlagEnvSettings().
 
 // TestRequiredLongCmdlineFlags ensures required long command line flags are really required.
 func TestRequiredLongCmdlineFlags(t *testing.T) {
 	t.Run("passing no flags returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "missing required flag --docker-registry <url> (or env var DOCKER_REGISTRY)")
 	})
 
 	t.Run("passing only --docker-registry localhost:8000 returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"--docker-registry", "localhost:8000"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "missing required flag --registry-username <username> (or env var REGISTRY_USERNAME)")
 	})
 
 	t.Run("passing only --docker-registry localhost:8000 --registry-username user returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"--docker-registry", "localhost:8000", "--registry-username", "user"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "missing required flag --registry-password <password> (or env var REGISTRY_PASSWORD)")
 	})
 
 	t.Run("passing only --docker-registry localhost:8000 --registry-username user --registry-password s3cret returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"--docker-registry", "localhost:8000", "--registry-username", "user", "--registry-password", "s3cret"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "missing required flag --id <id> (or env var WORKER_ID)")
 	})
 }
@@ -111,20 +111,23 @@ func TestRequiredLongCmdlineFlags(t *testing.T) {
 // TestRequiredShortCmdLineFlags ensures required short command line flags are really required.
 func TestRequiredShortCmdlineFlags(t *testing.T) {
 	t.Run("passing only -r localhost:8000 returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"-r", "localhost:8000"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "missing required flag --registry-username <username> (or env var REGISTRY_USERNAME)")
 	})
 
 	t.Run("passing only -r localhost:8000 -u user returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"-r", "localhost:8000", "-u", "user"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "missing required flag --registry-password <password> (or env var REGISTRY_PASSWORD)")
 	})
 
 	t.Run("passing only -r localhost:8000 -u user -p s3cret returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"-r", "localhost:8000", "-u", "user", "-p", "s3cret"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "missing required flag --id <id> (or env var WORKER_ID)")
 	})
 }
@@ -132,23 +135,27 @@ func TestRequiredShortCmdlineFlags(t *testing.T) {
 // TestMissingCmdlineArgsCauseErrors ensures missing arguments to command line flags trigger an error.
 func TestMissingCmdlineArgsCauseErrors(t *testing.T) {
 	t.Run("passing only --docker-registry returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"--docker-registry"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "error parsing commandline args: flag needs an argument: -docker-registry")
 	})
 	t.Run("passing only --registry-username returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"--registry-username"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "error parsing commandline args: flag needs an argument: -registry-username")
 	})
 	t.Run("passing only --registry-password returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"--registry-password"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "error parsing commandline args: flag needs an argument: -registry-password")
 	})
 	t.Run("passing only --id returns an error", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := []string{"--id"}
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrorMessage(t, err, "error parsing commandline args: flag needs an argument: -id")
 	})
 }
@@ -169,8 +176,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	versionLongFlag := []string{"--version"}
 
 	t.Run("--docker-registry flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.DockerRegistry
@@ -179,8 +187,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--registry-username flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryUsername
@@ -189,8 +198,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--registry-password flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryPassword
@@ -199,8 +209,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--id flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.WorkerID
@@ -209,8 +220,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--max-file-size flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := completeLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.MaxFileSize)
@@ -219,8 +231,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--max-retry flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := completeLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.MaxRetry)
@@ -229,8 +242,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--retry-interval flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := completeLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.RetryInterval)
@@ -239,8 +253,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--timeout flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := completeLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.Timeout)
@@ -249,8 +264,9 @@ func TestLongCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("--version flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := versionLongFlag
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 	})
 }
@@ -266,8 +282,9 @@ func TestShortCmdlineFlags(t *testing.T) {
 	versionShortFlag := []string{"-v"}
 
 	t.Run("-r flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.DockerRegistry
@@ -276,8 +293,9 @@ func TestShortCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("-u flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryUsername
@@ -286,8 +304,9 @@ func TestShortCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("-p flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryPassword
@@ -296,8 +315,9 @@ func TestShortCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("-i flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.WorkerID
@@ -306,8 +326,9 @@ func TestShortCmdlineFlags(t *testing.T) {
 	})
 
 	t.Run("-v flag is parsed correctly", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := versionShortFlag
-		_, err := CollectCmdlineFlags(args)
+		_, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 	})
 }
@@ -318,18 +339,13 @@ func TestDefaultValuesWithMinimumLongFlags(t *testing.T) {
 	testUser := "john.smith"
 	testPassword := "super-s3cret"
 	testWorkerID := "id-string"
-	// testMaxFileSize := "1000"
-	// testMaxRetry := "5"
-	// testRetryInterval := "10"
-	// testTimeout := "20"
 
 	minimumLongFlags := []string{"--docker-registry", testURL, "--registry-username", testUser, "--registry-password", testPassword, "--id", testWorkerID}
-	// minimumShortFlags := []string{"-r", testURL, "-u", testUser, "-p", testPassword, "-i", testWorkerID}
 
-	// long flags
 	t.Run("default max file size is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.MaxFileSize
@@ -338,8 +354,9 @@ func TestDefaultValuesWithMinimumLongFlags(t *testing.T) {
 	})
 
 	t.Run("default max retry is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.MaxRetry
@@ -348,8 +365,9 @@ func TestDefaultValuesWithMinimumLongFlags(t *testing.T) {
 	})
 
 	t.Run("default retry interval is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RetryInterval
@@ -358,8 +376,9 @@ func TestDefaultValuesWithMinimumLongFlags(t *testing.T) {
 	})
 
 	t.Run("default timeout is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumLongFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.Timeout
@@ -378,8 +397,9 @@ func TestDefaultValuesWithMinimumShortFlags(t *testing.T) {
 	minimumShortFlags := []string{"-r", testURL, "-u", testUser, "-p", testPassword, "-i", testWorkerID}
 
 	t.Run("default max file size is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.MaxFileSize
@@ -388,8 +408,9 @@ func TestDefaultValuesWithMinimumShortFlags(t *testing.T) {
 	})
 
 	t.Run("default max retry is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.MaxRetry
@@ -398,8 +419,9 @@ func TestDefaultValuesWithMinimumShortFlags(t *testing.T) {
 	})
 
 	t.Run("default retry interval is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RetryInterval
@@ -408,8 +430,9 @@ func TestDefaultValuesWithMinimumShortFlags(t *testing.T) {
 	})
 
 	t.Run("default timeout is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
 		args := minimumShortFlags
-		flags, err := CollectCmdlineFlags(args)
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.Timeout
@@ -430,10 +453,10 @@ func TestEnvVars(t *testing.T) {
 	testTimeout := "20"
 
 	t.Run("DOCKER_REGISTRY env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID)
 		args := []string{}
-		setMinimumEnvVars(testURL, testUser, testPassword, testWorkerID)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.DockerRegistry
@@ -442,10 +465,10 @@ func TestEnvVars(t *testing.T) {
 	})
 
 	t.Run("REGISTRY_USERNAME env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID)
 		args := []string{}
-		setMinimumEnvVars(testURL, testUser, testPassword, testWorkerID)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryUsername
@@ -454,10 +477,10 @@ func TestEnvVars(t *testing.T) {
 	})
 
 	t.Run("REGISTRY_PASSWORD env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID)
 		args := []string{}
-		setMinimumEnvVars(testURL, testUser, testPassword, testWorkerID)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryPassword
@@ -466,10 +489,10 @@ func TestEnvVars(t *testing.T) {
 	})
 
 	t.Run("ID env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID)
 		args := []string{}
-		setMinimumEnvVars(testURL, testUser, testPassword, testWorkerID)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.WorkerID
@@ -478,10 +501,10 @@ func TestEnvVars(t *testing.T) {
 	})
 
 	t.Run("MAX_FILE_SIZE env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
 		args := []string{}
-		setCompleteEnvVars(testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.MaxFileSize)
@@ -490,10 +513,10 @@ func TestEnvVars(t *testing.T) {
 	})
 
 	t.Run("MAX_RETRY env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
 		args := []string{}
-		setCompleteEnvVars(testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.MaxRetry)
@@ -502,10 +525,10 @@ func TestEnvVars(t *testing.T) {
 	})
 
 	t.Run("RETRY_INTERVAL env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
 		args := []string{}
-		setCompleteEnvVars(testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.RetryInterval)
@@ -514,10 +537,10 @@ func TestEnvVars(t *testing.T) {
 	})
 
 	t.Run("TIMEOUT env var is used", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
 		args := []string{}
-		setCompleteEnvVars(testURL, testUser, testPassword, testWorkerID, testMaxFileSize, testMaxRetry, testRetryInterval, testTimeout)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.Timeout)
@@ -552,10 +575,10 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	completeLongFlags := []string{"--docker-registry", testURL, "--registry-username", testUser, "--registry-password", testPassword, "--id", testWorkerID, "--max-file-size", testMaxFileSize, "--max-retry", testMaxRetry, "--retry-interval", testRetryInterval, "--timeout", testTimeout}
 
 	t.Run("DOCKER_REGISTRY env var is overridden by --docker-registry", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
 		args := minimumLongFlags
-		setMinimumEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.DockerRegistry
@@ -564,10 +587,10 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	})
 
 	t.Run("REGISTRY_USERNAME env var is overridden by --registry-username", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
 		args := minimumLongFlags
-		setMinimumEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryUsername
@@ -576,10 +599,10 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	})
 
 	t.Run("REGISTRY_PASSWORD env var is overridden by --registry-password", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
 		args := minimumLongFlags
-		setMinimumEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.RegistryPassword
@@ -588,10 +611,10 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	})
 
 	t.Run("ID env var is overridden by --id", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setMinimumFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
 		args := minimumLongFlags
-		setMinimumEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetMinimumEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := flags.WorkerID
@@ -600,10 +623,10 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	})
 
 	t.Run("MAX_FILE_SIZE env var is overridden by --max-file-size", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
 		args := completeLongFlags
-		setCompleteEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.MaxFileSize)
@@ -612,10 +635,10 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	})
 
 	t.Run("MAX_RETRY env var is overridden by --max-retry", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
 		args := completeLongFlags
-		setCompleteEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.MaxRetry)
@@ -624,10 +647,10 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	})
 
 	t.Run("RETRY_INTERVAL env var is overridden by --retry-interval", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
 		args := completeLongFlags
-		setCompleteEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.RetryInterval)
@@ -636,14 +659,47 @@ func TestCmdlineFlagsOverrideEnvVars(t *testing.T) {
 	})
 
 	t.Run("TIMEOUT env var is overridden by --timeout", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		setCompleteFlagEnvVars(t, testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
 		args := completeLongFlags
-		setCompleteEnvVars(testURLEnv, testUserEnv, testPasswordEnv, testWorkerIDEnv, testMaxFileSizeEnv, testMaxRetryEnv, testRetryIntervalEnv, testTimeoutEnv)
-		flags, err := CollectCmdlineFlags(args)
-		unsetCompleteEnvVars()
+		flags, err := CollectFlagEnvSettings(args)
 		assertErrNotNil(t, err)
 
 		got := fmt.Sprint(flags.Timeout)
 		want := testTimeout
 		assertStringValuesMatch(t, got, want)
+	})
+}
+
+// TestRequiredEnvVars ensures required env vars (unrelated to command line flags) are really required.
+func TestRequiredEnvVars(t *testing.T) {
+	// Cmdline values
+	testURL := "localhost:8000"
+	testUser := "john.smith"
+	testPassword := "super-s3cret"
+	testWorkerID := "id-string"
+
+	minimumLongFlags := []string{"--docker-registry", testURL, "--registry-username", testUser, "--registry-password", testPassword, "--id", testWorkerID}
+
+	t.Run("TINKERBELL_CERT_URL env var is required", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		t.Setenv("TINKERBELL_CERT_URL", "")
+		_, err := CollectFlagEnvSettings(minimumLongFlags)
+		assertErrorMessage(t, err, "required env var TINKERBELL_CERT_URL is undefined")
+	})
+
+	t.Run("TINKERBELL_GRPC_AUTHORITY env var is required", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		t.Setenv("TINKERBELL_GRPC_AUTHORITY", "")
+		_, err := CollectFlagEnvSettings(minimumLongFlags)
+		assertErrorMessage(t, err, "required env var TINKERBELL_GRPC_AUTHORITY is undefined")
+	})
+
+	t.Run("no errors are reported when required env vars are set", func(t *testing.T) {
+		setMinimumEnvVars(t)
+		_, err := CollectFlagEnvSettings(minimumLongFlags)
+		if err != nil {
+			t.Errorf("Error: this test should not have generated an error. Error is %v", err)
+		}
 	})
 }
