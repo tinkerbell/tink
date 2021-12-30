@@ -135,13 +135,11 @@ func TestGetWorkflowContextList(t *testing.T) {
 				assert.True(t, tc.want.expectedError)
 				return
 			}
-			if err == nil && res == nil {
-				assert.False(t, tc.want.expectedError)
-				return
-			}
 			assert.NoError(t, err)
 			assert.NotNil(t, res)
-			assert.Len(t, res.WorkflowContexts, 1)
+			assert.False(t, tc.want.expectedError)
+			assert.IsType(t, &pb.WorkflowContextList{}, res)
+			assert.IsType(t, []*pb.WorkflowContext{}, res.WorkflowContexts)
 		})
 	}
 }

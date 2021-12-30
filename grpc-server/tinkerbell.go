@@ -55,20 +55,17 @@ func (s *server) GetWorkflowContextList(ctx context.Context, req *pb.WorkflowCon
 		return nil, err
 	}
 
-	if wfs != nil {
-		wfContexts := []*pb.WorkflowContext{}
-		for _, wf := range wfs {
-			wfContext, err := s.db.GetWorkflowContexts(ctx, wf)
-			if err != nil {
-				return nil, status.Errorf(codes.Aborted, err.Error())
-			}
-			wfContexts = append(wfContexts, wfContext)
+	wfContexts := []*pb.WorkflowContext{}
+	for _, wf := range wfs {
+		wfContext, err := s.db.GetWorkflowContexts(ctx, wf)
+		if err != nil {
+			return nil, status.Errorf(codes.Aborted, err.Error())
 		}
-		return &pb.WorkflowContextList{
-			WorkflowContexts: wfContexts,
-		}, nil
+		wfContexts = append(wfContexts, wfContext)
 	}
-	return nil, nil
+	return &pb.WorkflowContextList{
+		WorkflowContexts: wfContexts,
+	}, nil
 }
 
 // GetWorkflowActions implements tinkerbell.GetWorkflowActions.
