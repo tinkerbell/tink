@@ -95,6 +95,7 @@ message Metadata {
     Storage storage = 13;
     repeated string ssh_keys = 14;
     bool network_ready = 15;
+    string vendordata = 16;
   }
   message Custom {
     Instance.OperatingSystem preinstalled_operating_system_version = 1;
