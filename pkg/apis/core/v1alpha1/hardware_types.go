@@ -74,6 +74,11 @@ type HardwareSpec struct {
 	// metadata
 	//+optional
 	UserData *string `json:"userData,omitempty"`
+
+	// VendorData is the vendor data to configure in the hardware's
+	// metadata
+	//+optional
+	VendorData *string `json:"vendorData,omitempty"`
 }
 
 // Interface represents a network interface configuration for Hardware.

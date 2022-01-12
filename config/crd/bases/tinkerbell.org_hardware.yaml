@@ -361,6 +361,11 @@ spec:
                     UserData is the user data to configure in the hardware's
                     metadata
                   type: string
+                vendorData:
+                  description:
+                    VendorData is the vendor data to configure in the hardware's
+                    metadata
+                  type: string
               type: object
             status:
               description: HardwareStatus defines the observed state of Hardware.
