@@ -111,7 +111,7 @@ func get(ctx context.Context, db *sql.DB, query string, args ...interface{}) (st
 func buildGetCondition(fields map[string]string) (string, error) {
 	for column, field := range fields {
 		if field != "" {
-			return fmt.Sprintf("%s = '%s'", column, field), nil
+			return fmt.Sprintf("%s = %s", pq.QuoteIdentifier(column), pq.QuoteLiteral(field)), nil
 		}
 	}
 	return "", errors.New("one GetBy field must be set to build a get condition")
