@@ -5,9 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/tinkerbell/tink/protos/hardware"
@@ -102,21 +101,16 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 
 // GetConnection returns a gRPC client connection.
 func GetConnection() (*grpc.ClientConn, error) {
-	grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY")
+	grpcAuthority := env.Get("TINKERBELL_GRPC_AUTHORITY")
 	if grpcAuthority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 
 	method := grpc.WithInsecure()
-	tls := true
-	if val, isSet := os.LookupEnv("TINKERBELL_TLS"); isSet {
-		if b, err := strconv.ParseBool(val); err == nil {
-			tls = b
-		}
-	}
+	tls := env.Bool("TINKERBELL_NO_TLS", true)
 
-	if tls {
-		certURL := os.Getenv("TINKERBELL_CERT_URL")
+	if !tls {
+		certURL := env.Get("TINKERBELL_CERT_URL")
 		if certURL == "" {
 			return nil, errors.New("undefined TINKERBELL_CERT_URL")
 		}
