@@ -101,34 +101,22 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 
 // GetConnection returns a gRPC client connection.
 func GetConnection() (*grpc.ClientConn, error) {
-	grpcAuthority := env.Get("TINKERBELL_GRPC_AUTHORITY")
-	if grpcAuthority == "" {
+	opts := ConnOptions{
+		CertURL:       env.Get("TINKERBELL_CERT_URL"),
+		GRPCAuthority: env.Get("TINKERBELL_GRPC_AUTHORITY"),
+		TLS:           env.Bool("TINKERBELL_TLS", true),
+	}
+
+	if opts.GRPCAuthority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 
-	method := grpc.WithInsecure()
-	tls := env.Bool("TINKERBELL_NO_TLS", true)
-
-	if !tls {
-		certURL := env.Get("TINKERBELL_CERT_URL")
-		if certURL == "" {
+	if opts.TLS {
+		if opts.CertURL == "" {
 			return nil, errors.New("undefined TINKERBELL_CERT_URL")
 		}
-		creds, err := grpcCredentialFromCertEndpoint(certURL)
-		if err != nil {
-			return nil, err
-		}
-		method = grpc.WithTransportCredentials(creds)
 	}
-	conn, err := grpc.Dial(grpcAuthority,
-		method,
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "connect to tinkerbell server")
-	}
-	return conn, nil
+	return NewClientConn(&opts)
 }
 
 // Setup : create a connection to server.
