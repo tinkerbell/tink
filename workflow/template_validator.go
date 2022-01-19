@@ -21,7 +21,7 @@ const (
 	errActionDuplicateName    = "two actions in a task cannot have same name: %s"
 	errActionInvalidImage     = "invalid action image: %s"
 	errTemplateParsing        = "failed to parse template with ID %s"
-	errInvalidHardwareAddress = "failed to render template, invalid hardware address: %s"
+	errInvalidHardwareAddress = "failed to render template, invalid hardware address: %v"
 )
 
 // Parse parses the template yaml content into a Workflow.
@@ -60,36 +60,48 @@ func MustParseFromFile(path string) *Workflow {
 	return MustParse(content)
 }
 
-// RenderTemplate renders the workflow template wrt given hardware details.
+// RenderTemplate renders the workflow template with regard to the given hardware details.
 func RenderTemplate(templateID, templateData string, devices []byte) (string, error) {
-	var hardware map[string]interface{}
+	var hardware map[string]string
 	err := json.Unmarshal(devices, &hardware)
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		return "", err
 	}
 
+	_, buf, err := RenderTemplateHardware(templateID, templateData, hardware)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+// RenderTemplateHardware renders the workflow template and returns the Workflow and the interpolated bytes.
+func RenderTemplateHardware(templateID, templateData string, hardware map[string]string) (*Workflow, *bytes.Buffer, error) {
 	t := template.New("workflow-template").Option("missingkey=error")
-	_, err = t.Parse(templateData)
+	_, err := t.Parse(templateData)
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
-		return "", err
+		return nil, nil, err
 	}
 
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, hardware)
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
-		return "", err
+		return nil, nil, err
 	}
 
-	wf := MustParse(buf.Bytes())
+	wf, err := Parse(buf.Bytes())
+	if err != nil {
+		return nil, nil, err
+	}
 	for _, task := range wf.Tasks {
 		if task.WorkerAddr == "" {
-			return "", fmt.Errorf(errInvalidHardwareAddress, string(devices))
+			return nil, nil, fmt.Errorf(errInvalidHardwareAddress, hardware)
 		}
 	}
-	return buf.String(), nil
+	return wf, buf, nil
 }
 
 // validate validates a workflow template against certain requirements.

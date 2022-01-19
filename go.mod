@@ -7,10 +7,11 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.1
+	github.com/go-logr/zapr v0.4.0
 	github.com/go-openapi/strfmt v0.19.3 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -30,12 +31,15 @@ require (
 	github.com/testcontainers/testcontainers-go v0.11.1
 	go.mongodb.org/mongo-driver v1.1.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.22.0
-	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6
-	google.golang.org/grpc v1.41.0-dev.0.20210907181116-2f3355d2244e
+	go.uber.org/multierr v1.7.0
+	google.golang.org/genproto v0.0.0-20211021150943-2b146023228c
+	google.golang.org/grpc v1.42.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.22.2
+	k8s.io/client-go v0.22.2
+	knative.dev/pkg v0.0.0-20211119170723-a99300deff34
 	mvdan.cc/gofumpt v0.1.1
 	sigs.k8s.io/controller-runtime v0.10.1
 	sigs.k8s.io/controller-tools v0.7.0

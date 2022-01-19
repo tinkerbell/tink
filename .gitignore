@@ -1,6 +1,7 @@
 bin/
 certs/
 cmd/tink-cli/tink-cli
+cmd/tink-controller/tink-controller
 cmd/tink-server/tink-server
 cmd/tink-worker/tink-worker
 doc/

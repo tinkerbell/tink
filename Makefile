@@ -13,7 +13,7 @@ run: crosscompile run-stack ## Builds and runs the Tink stack (tink, db, cli) vi
 
 test: ## Run tests
 	go clean -testcache
-	go test ./... -v
+	go test -coverprofile=coverage.txt ./... -v
 
 verify: lint check-generated # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .
