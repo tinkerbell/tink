@@ -15,7 +15,6 @@ mkShell {
     git
     gnumake
     gnused
-    go_1_17
     jq
     nixfmt
     nodePackages.prettier
