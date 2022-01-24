@@ -36,9 +36,7 @@ type Config struct {
 }
 
 // SetupHTTP setup and return an HTTP server.
-func SetupHTTP(ctx context.Context, lg log.Logger, config *Config, errCh chan<- error) {
-	logger = lg
-
+func SetupHTTP(ctx context.Context, logger log.Logger, config *Config, errCh chan<- error) {
 	cp := x509.NewCertPool()
 	ok := cp.AppendCertsFromPEM(config.CertPEM)
 	if !ok {
