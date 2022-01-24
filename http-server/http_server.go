@@ -20,10 +20,9 @@ import (
 )
 
 var (
-	gitRev     = "unknown"
-	gitRevJSON []byte
-	startTime  = time.Now()
-	logger     log.Logger
+	gitRev    = "unknown"
+	startTime = time.Now()
+	logger    log.Logger
 )
 
 type Config struct {
@@ -74,8 +73,7 @@ func SetupHTTP(ctx context.Context, logger log.Logger, config *Config, errCh cha
 		http.ServeContent(w, r, "server.pem", config.ModTime, bytes.NewReader(config.CertPEM))
 	})
 	http.Handle("/metrics", promhttp.Handler())
-	setupGitRevJSON()
-	http.HandleFunc("/version", versionHandler)
+	http.HandleFunc("/version", getGitRevJSONHandler())
 	http.HandleFunc("/healthz", healthCheckHandler)
 	http.Handle("/", BasicAuth(config.HTTPBasicAuthUsername, config.HTTPBasicAuthPassword, mux))
 
@@ -98,11 +96,6 @@ func SetupHTTP(ctx context.Context, logger log.Logger, config *Config, errCh cha
 	}()
 }
 
-func versionHandler(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(gitRevJSON)
-}
-
 func healthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	res := struct {
 		GitRev     string  `json:"git_rev"`
@@ -123,7 +116,7 @@ func healthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(b)
 }
 
-func setupGitRevJSON() {
+func getGitRevJSONHandler() http.HandlerFunc {
 	res := struct {
 		GitRev  string `json:"git_rev"`
 		Service string `json:"service_name"`
@@ -137,7 +130,11 @@ func setupGitRevJSON() {
 		logger.Error(err)
 		panic(err)
 	}
-	gitRevJSON = b
+
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(b)
+	}
 }
 
 // BasicAuth adds authentication to the routes handled by handler
