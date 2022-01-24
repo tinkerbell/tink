@@ -27,9 +27,11 @@ type Config struct {
 
 // SetupHTTP setup and return an HTTP server.
 func SetupHTTP(ctx context.Context, logger log.Logger, config *Config, errCh chan<- error) {
-	http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, "server.pem", config.ModTime, bytes.NewReader(config.CertPEM))
-	})
+	if config.CertPEM != nil {
+		http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeContent(w, r, "server.pem", config.ModTime, bytes.NewReader(config.CertPEM))
+		})
+	}
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/version", getGitRevJSONHandler())
 	http.HandleFunc("/healthz", healthCheckHandler)
