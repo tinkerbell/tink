@@ -140,6 +140,15 @@ func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 	return hardware.NewHardwareServiceClient(conn), nil
 }
 
+// TinkTemplateClient creates a new hardware client.
+func TinkTemplateClient() (template.TemplateServiceClient, error) {
+	conn, err := GetConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return template.NewTemplateServiceClient(conn), nil
+}
+
 // TinkWorkflowClient creates a new workflow client.
 func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 	conn, err := GetConnection()
@@ -147,4 +156,17 @@ func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 		log.Fatal(err)
 	}
 	return workflow.NewWorkflowServiceClient(conn), nil
+}
+
+// TinkFullClient creates a new full client.
+func TinkFullClient() (FullClient, error) {
+	conn, err := GetConnection()
+	if err != nil {
+		return FullClient{}, err
+	}
+	return FullClient{
+		HardwareClient: hardware.NewHardwareServiceClient(conn),
+		TemplateClient: template.NewTemplateServiceClient(conn),
+		WorkflowClient: workflow.NewWorkflowServiceClient(conn),
+	}, nil
 }
