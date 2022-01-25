@@ -31,7 +31,7 @@ services:
       tls-gen:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"] # port needs to match TINKERBELL_HTTP_AUTHORITY
+      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/healthz"] # port needs to match TINKERBELL_HTTP_AUTHORITY
       interval: 5s
       timeout: 2s
       retries: 3
