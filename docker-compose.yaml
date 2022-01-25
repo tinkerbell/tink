@@ -30,8 +30,6 @@ services:
       PGUSER: tinkerbell
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
-      TINK_AUTH_USERNAME: ${TINKERBELL_TINK_USERNAME}
-      TINK_AUTH_PASSWORD: ${TINKERBELL_TINK_PASSWORD}
     depends_on:
       tink-server-migration:
         condition: service_started
@@ -64,8 +62,6 @@ services:
       PGUSER: tinkerbell
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
-      TINK_AUTH_USERNAME: ${TINKERBELL_TINK_USERNAME}
-      TINK_AUTH_PASSWORD: ${TINKERBELL_TINK_PASSWORD}
     depends_on:
       db:
         condition: service_healthy

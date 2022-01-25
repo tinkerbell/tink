@@ -27,18 +27,16 @@ var version = "devel"
 // DaemonConfig represents all the values you can configure as part of the tink-server.
 // You can change the configuration via environment variable, or file, or command flags.
 type DaemonConfig struct {
-	Facility              string
-	PGDatabase            string
-	PGUSer                string
-	PGPassword            string
-	PGSSLMode             string
-	OnlyMigration         bool
-	GRPCAuthority         string
-	TLSCert               string
-	CertDir               string
-	HTTPAuthority         string
-	HTTPBasicAuthUsername string
-	HTTPBasicAuthPassword string
+	Facility      string
+	PGDatabase    string
+	PGUSer        string
+	PGPassword    string
+	PGSSLMode     string
+	OnlyMigration bool
+	GRPCAuthority string
+	TLSCert       string
+	CertDir       string
+	HTTPAuthority string
 }
 
 func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
@@ -86,12 +84,6 @@ func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
 	}
 	if httpAuthority := os.Getenv("TINKERBELL_HTTP_AUTHORITY"); httpAuthority != "" {
 		c.HTTPAuthority = httpAuthority
-	}
-	if basicAuthUser := os.Getenv("TINK_AUTH_USERNAME"); basicAuthUser != "" {
-		c.HTTPBasicAuthUsername = basicAuthUser
-	}
-	if basicAuthPass := os.Getenv("TINK_AUTH_PASSWORD"); basicAuthPass != "" {
-		c.HTTPBasicAuthPassword = basicAuthPass
 	}
 }
 
