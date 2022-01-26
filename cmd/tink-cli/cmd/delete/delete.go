@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
-	"google.golang.org/grpc"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/internal/clientctx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -15,17 +15,6 @@ import (
 type Options struct {
 	// DeleteByID is used to delete a resource
 	DeleteByID func(context.Context, *client.FullClient, string) (interface{}, error)
-
-	clientConnOpt *client.ConnOptions
-	fullClient    *client.FullClient
-}
-
-func (o *Options) SetClientConnOpt(co *client.ConnOptions) {
-	o.clientConnOpt = co
-}
-
-func (o *Options) SetFullClient(cl *client.FullClient) {
-	o.fullClient = cl
 }
 
 const shortDescr = "delete one or more resources"
@@ -73,35 +62,14 @@ func NewDeleteCommand(opt Options) *cobra.Command {
 		Long:                  longDescr,
 		Example:               exampleDescr,
 		DisableFlagsInUseLine: true,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if opt.fullClient != nil {
-				return nil
-			}
-			return nil
-		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if opt.fullClient == nil {
-				var err error
-				var conn *grpc.ClientConn
-				conn, err = client.NewClientConn(opt.clientConnOpt)
-				if err != nil {
-					fmt.Fprintf(cmd.ErrOrStderr(), "Flag based client configuration failed with err: %s. Trying with env var legacy method...", err)
-					// Fallback to legacy Setup via env var
-					conn, err = client.GetConnection()
-					if err != nil {
-						return errors.Wrap(err, "failed to setup connection to tink-server")
-					}
-				}
-				opt.SetFullClient(client.NewFullClient(conn))
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opt.DeleteByID == nil {
 				return errors.New("option DeleteByID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one")
 			}
+
+			client := clientctx.Get(cmd.Context())
 			for _, requestedID := range args {
-				_, err := opt.DeleteByID(cmd.Context(), opt.fullClient, requestedID)
+				_, err := opt.DeleteByID(cmd.Context(), client, requestedID)
 				if err != nil {
 					if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
 						fmt.Fprintf(cmd.ErrOrStderr(), "Error\t%s\tnot found\n", requestedID)
@@ -114,9 +82,5 @@ func NewDeleteCommand(opt Options) *cobra.Command {
 			return nil
 		},
 	}
-	if opt.clientConnOpt == nil {
-		opt.SetClientConnOpt(&client.ConnOptions{})
-	}
-	opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 	return cmd
 }

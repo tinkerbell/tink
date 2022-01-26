@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/internal/clientctx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -77,12 +78,11 @@ func TestNewDeleteCommand(t *testing.T) {
 	for _, test := range table {
 		t.Run(test.name, func(t *testing.T) {
 			stdout := bytes.NewBufferString("")
-			test.opt.SetFullClient(&client.FullClient{})
 			cmd := NewDeleteCommand(test.opt)
 			cmd.SetOut(stdout)
 			cmd.SetErr(stdout)
 			cmd.SetArgs(test.args)
-			err := cmd.Execute()
+			err := cmd.ExecuteContext(clientctx.Set(context.Background(), &client.FullClient{}))
 			if err != nil {
 				t.Error(err)
 			}
