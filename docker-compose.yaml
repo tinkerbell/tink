@@ -90,7 +90,6 @@ services:
       context: ./cmd/tink-cli/
       dockerfile: Dockerfile
     environment:
-      TINKERBELL_CERT_URL: http://tinkerbell:42114/cert
       TINKERBELL_GRPC_AUTHORITY: tinkerbell:42113
       TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     depends_on:
