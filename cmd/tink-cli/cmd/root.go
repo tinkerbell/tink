@@ -27,7 +27,6 @@ var fullClient = client.FullClient{}
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringP("facility", "f", "", "used to build grpc and http urls")
-	rootCmd.PersistentFlags().String("tinkerbell-cert-url", "http://127.0.0.1:42114/cert", "The URL where the certificate is located")
 	rootCmd.PersistentFlags().String("tinkerbell-grpc-authority", "127.0.0.1:42113", "Connection info for tink-server")
 	rootCmd.PersistentFlags().Bool("tinkerbell-tls", true, "Connect to server via TLS or not")
 	_ = viper.BindPFlags(rootCmd.PersistentFlags())
@@ -37,7 +36,6 @@ func init() {
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(version string) error {
 	opts := client.ConnOptions{
-		CertURL:       viper.GetString("tinkerbell-cert-url"),
 		GRPCAuthority: viper.GetString("tinkerbell-grpc-authority"),
 		TLS:           viper.GetBool("tinkerbell-tls"),
 	}

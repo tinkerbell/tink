@@ -1,10 +1,7 @@
 package client
 
 import (
-	"crypto/x509"
-	"io/ioutil"
 	"log"
-	"net/http"
 
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
@@ -41,48 +38,20 @@ func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 }
 
 type ConnOptions struct {
-	CertURL       string
 	GRPCAuthority string
 	TLS           bool
 }
 
-// This function is bad and ideally should be removed, but for now it moves all the bad into one place.
-// This is the legacy of packethost/cacher running behind an ingress that couldn't terminate TLS on behalf
-// of GRPC. All of this functionality should be ripped out in favor of either using trusted certificates
-// or moving the establishment of trust in the certificate out to the environment (or running in no-tls mode
-// e.g. for development.)
-func grpcCredentialFromCertEndpoint(url string) (credentials.TransportCredentials, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, errors.Wrap(err, "fetch cert")
-	}
-	defer resp.Body.Close()
-
-	certs, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "read cert")
-	}
-
-	cp := x509.NewCertPool()
-	ok := cp.AppendCertsFromPEM(certs)
-	if !ok {
-		return nil, errors.Wrap(err, "parse cert")
-	}
-
-	return credentials.NewClientTLSFromCert(cp, ""), nil
-}
-
 func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
-	method := grpc.WithInsecure()
+	var creds grpc.DialOption
 	if opt.TLS {
-		creds, err := grpcCredentialFromCertEndpoint(opt.CertURL)
-		if err != nil {
-			return nil, err
-		}
-		method = grpc.WithTransportCredentials(creds)
+		creds = grpc.WithTransportCredentials(credentials.NewTLS(nil))
+	} else {
+		creds = grpc.WithInsecure()
 	}
+
 	conn, err := grpc.Dial(opt.GRPCAuthority,
-		method,
+		creds,
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
@@ -95,7 +64,6 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 // GetConnection returns a gRPC client connection.
 func GetConnection() (*grpc.ClientConn, error) {
 	opts := ConnOptions{
-		CertURL:       env.Get("TINKERBELL_CERT_URL"),
 		GRPCAuthority: env.Get("TINKERBELL_GRPC_AUTHORITY"),
 		TLS:           env.Bool("TINKERBELL_TLS", true),
 	}
@@ -104,11 +72,6 @@ func GetConnection() (*grpc.ClientConn, error) {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 
-	if opts.TLS {
-		if opts.CertURL == "" {
-			return nil, errors.New("undefined TINKERBELL_CERT_URL")
-		}
-	}
 	return NewClientConn(&opts)
 }
 

@@ -184,8 +184,6 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 
 			httpConfig := &httpserver.Config{
 				HTTPAuthority: config.HTTPAuthority,
-				CertPEM:       certPEM,
-				ModTime:       *certModTime,
 			}
 			httpserver.SetupHTTP(ctx, logger, httpConfig, errCh)
 
