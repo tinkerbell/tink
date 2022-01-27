@@ -18,18 +18,14 @@ var (
 	logger    log.Logger
 )
 
-type Config struct {
-	HTTPAuthority string
-}
-
 // SetupHTTP setup and return an HTTP server.
-func SetupHTTP(ctx context.Context, logger log.Logger, config *Config, errCh chan<- error) {
+func SetupHTTP(ctx context.Context, logger log.Logger, authority string, errCh chan<- error) {
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/version", getGitRevJSONHandler())
 	http.HandleFunc("/healthz", healthCheckHandler)
 
 	srv := &http.Server{
-		Addr: config.HTTPAuthority,
+		Addr: authority,
 	}
 	go func() {
 		logger.Info("serving http")

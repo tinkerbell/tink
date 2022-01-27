@@ -168,10 +168,7 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			}
 			logger.With("address", addr).Info("started listener")
 
-			httpConfig := &httpserver.Config{
-				HTTPAuthority: config.HTTPAuthority,
-			}
-			httpserver.SetupHTTP(ctx, logger, httpConfig, errCh)
+			httpserver.SetupHTTP(ctx, logger, config.HTTPAuthority, errCh)
 
 			select {
 			case err = <-errCh:
