@@ -2,14 +2,12 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/env"
@@ -143,29 +141,20 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				return nil
 			}
 
-			var (
-				grpcOpts    []grpc.ServerOption
-				certPEM     []byte
-				certModTime *time.Time
-			)
+			var grpcOpts []grpc.ServerOption
 			if config.TLS {
-				certsDir := os.Getenv("TINKERBELL_CERTS_DIR")
-				if certsDir == "" {
-					certsDir = filepath.Join("/certs", config.Facility)
+				certDir := config.CertDir
+				if certDir == "" {
+					certDir = env.Get("TINKERBELL_CERTS_DIR", filepath.Join("/certs", config.Facility))
 				}
-				var cert *tls.Certificate
-				cert, certPEM, certModTime, err = grpcserver.GetCerts(certsDir)
+				cert, err := grpcserver.GetCerts(certDir)
 				if err != nil {
 					return err
 				}
 				grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewServerTLSFromCert(cert)))
 			}
 
-			tinkAPI, err := server.NewDBServer(
-				logger,
-				database,
-				server.WithCerts(*certModTime, certPEM),
-			)
+			tinkAPI, err := server.NewDBServer(logger, database)
 			if err != nil {
 				return err
 			}

@@ -3,11 +3,8 @@ package grpcserver
 import (
 	"context"
 	"crypto/tls"
-	"io/ioutil"
 	"net"
-	"os"
 	"path/filepath"
-	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -17,42 +14,20 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-// GetCerts returns a TLS certificate, PEM bytes, and file modification time for a
-// given path. An error is returned for any failure.
+// GetCerts returns a TLS certificate.
+// An error is returned for any failure.
 //
-// The public key is expected to be named "bundle.pem" and the private key
-// "server.pem".
-func GetCerts(certsDir string) (*tls.Certificate, []byte, *time.Time, error) {
-	certFile, err := os.Open(filepath.Join(certsDir, "bundle.pem"))
+// The public key is expected to be named "bundle.pem" and the private key "server-key.pem".
+func GetCerts(certsDir string) (*tls.Certificate, error) {
+	cert, err := tls.LoadX509KeyPair(
+		filepath.Join(certsDir, "bundle.pem"),
+		filepath.Join(certsDir, "server-key.pem"),
+	)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "failed to open TLS cert")
+		err = errors.Wrap(err, "failed to load TLS files")
+		return nil, err
 	}
-
-	stat, err := certFile.Stat()
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "failed to stat TLS cert")
-	}
-	modT := stat.ModTime()
-	certPEM, err := ioutil.ReadAll(certFile)
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "failed to read TLS cert")
-	}
-	err = certFile.Close()
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "failed to close TLS cert")
-	}
-
-	keyPEM, err := ioutil.ReadFile(filepath.Join(certsDir, "server-key.pem"))
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "failed to read TLS key")
-	}
-
-	cert, err := tls.X509KeyPair(certPEM, keyPEM)
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "failed to parse TLS file content")
-	}
-
-	return &cert, certPEM, &modT, nil
+	return &cert, nil
 }
 
 // Registrar is an interface for registering APIs on a gRPC server.
@@ -60,9 +35,8 @@ type Registrar interface {
 	Register(*grpc.Server)
 }
 
-// SetupGRPC opens a listener and serves a given Registrar's APIs on a gRPC server
-// and returns the listener's address or an error.
-func SetupGRPC(ctx context.Context, r Registrar, listenAddr string, opts []grpc.ServerOption, errCh chan<- error) (serverAddr string, err error) {
+// SetupGRPC opens a listener and serves a given Registrar's APIs on a gRPC server and returns the listener's address or an error.
+func SetupGRPC(ctx context.Context, r Registrar, listenAddr string, opts []grpc.ServerOption, errCh chan<- error) (string, error) {
 	params := []grpc.ServerOption{
 		grpc_middleware.WithUnaryServerChain(grpc_prometheus.UnaryServerInterceptor, otelgrpc.UnaryServerInterceptor()),
 		grpc_middleware.WithStreamServerChain(grpc_prometheus.StreamServerInterceptor, otelgrpc.StreamServerInterceptor()),

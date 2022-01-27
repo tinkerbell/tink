@@ -120,7 +120,7 @@ func TestGetCerts(t *testing.T) {
 				t.Helper()
 				return "./not-a-directory", nil
 			},
-			fmt.Errorf("failed to open TLS cert: open not-a-directory/bundle.pem: no such file or directory"),
+			fmt.Errorf("failed to load TLS files: open not-a-directory/bundle.pem: no such file or directory"),
 		},
 		{
 			"empty content",
@@ -137,7 +137,7 @@ func TestGetCerts(t *testing.T) {
 				}
 				return tdir, nil
 			},
-			fmt.Errorf("failed to parse TLS file content: tls: failed to find any PEM data in certificate input"),
+			fmt.Errorf("failed to load TLS files: tls: failed to find any PEM data in certificate input"),
 		},
 	}
 
@@ -148,17 +148,11 @@ func TestGetCerts(t *testing.T) {
 				t.Errorf("Failed to setup test: %v", err)
 				return
 			}
-			gotCert, gotBytes, modTime, err := GetCerts(input)
+			gotCert, err := GetCerts(input)
 
 			if tc.wanterr == nil {
 				if gotCert == nil {
 					t.Error("Missing expected cert, got nil")
-				}
-				if gotBytes == nil {
-					t.Error("Missing expected cert bytes, got nil")
-				}
-				if modTime == nil {
-					t.Error("Missing expected cert mod time, got nil")
 				}
 			}
 			if tc.wanterr == nil && err == nil {
@@ -170,7 +164,7 @@ func TestGetCerts(t *testing.T) {
 					return
 				}
 				if tc.wanterr.Error() != err.Error() {
-					t.Errorf("Got different error. Wanted %s, got %s", tc.wanterr.Error(), err.Error())
+					t.Errorf("Got different error.\nWanted:\n  %s\nGot:\n  %s", tc.wanterr.Error(), err.Error())
 				}
 				return
 			}
