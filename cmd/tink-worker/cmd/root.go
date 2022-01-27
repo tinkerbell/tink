@@ -14,8 +14,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
-	pb "github.com/tinkerbell/tink/protos/workflow"
-	"google.golang.org/grpc"
+	"github.com/tinkerbell/tink/protos/workflow"
 )
 
 const (
@@ -49,15 +48,12 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			captureActionLogs, _ := cmd.Flags().GetBool("capture-action-logs")
 
 			logger.With("version", version).Info("starting")
-			if setupErr := client.Setup(); setupErr != nil {
-				return setupErr
-			}
 
-			conn, err := tryClientConnection(logger, retryInterval, retries)
+			conn, err := client.GetConnection()
 			if err != nil {
 				return err
 			}
-			rClient := pb.NewWorkflowServiceClient(conn)
+			workflowClient := workflow.NewWorkflowServiceClient(conn)
 
 			dockerClient, err := dockercli.NewClientWithOpts(dockercli.FromEnv, dockercli.WithAPIVersionNegotiation())
 			if err != nil {
@@ -76,7 +72,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 
 			w := worker.NewWorker(
 				workerID,
-				rClient,
+				workflowClient,
 				containerManager,
 				logCapturer,
 				logger,
@@ -171,18 +167,4 @@ func applyViper(v *viper.Viper, cmd *cobra.Command) error {
 	}
 
 	return nil
-}
-
-func tryClientConnection(logger log.Logger, retryInterval time.Duration, retries int) (*grpc.ClientConn, error) {
-	for ; retries > 0; retries-- {
-		c, err := client.GetConnection()
-		if err != nil {
-			logger.With("error", err, "duration", retryInterval).Info("failed to connect, sleeping before retrying")
-			<-time.After(retryInterval)
-			continue
-		}
-
-		return c, nil
-	}
-	return nil, fmt.Errorf("retries exceeded")
 }
