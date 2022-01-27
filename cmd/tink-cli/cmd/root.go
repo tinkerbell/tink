@@ -35,11 +35,10 @@ func init() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(version string) error {
-	opts := client.ConnOptions{
-		GRPCAuthority: viper.GetString("tinkerbell-grpc-authority"),
-		TLS:           viper.GetBool("tinkerbell-tls"),
-	}
-	conn, err := client.NewClientConn(&opts)
+	conn, err := client.NewClientConn(
+		viper.GetString("tinkerbell-grpc-authority"),
+		viper.GetBool("tinkerbell-tls"),
+	)
 	if err != nil {
 		return err
 	}

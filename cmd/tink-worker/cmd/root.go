@@ -44,11 +44,10 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 
 			logger.With("version", version).Info("starting")
 
-			options := client.ConnOptions{
-				GRPCAuthority: viper.GetString("tinkerbell-grpc-authority"),
-				TLS:           viper.GetBool("tinkerbell-tls"),
-			}
-			conn, err := client.NewClientConn(&options)
+			conn, err := client.NewClientConn(
+				viper.GetString("tinkerbell-grpc-authority"),
+				viper.GetBool("tinkerbell-tls"),
+			)
 			if err != nil {
 				return err
 			}

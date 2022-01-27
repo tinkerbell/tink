@@ -37,20 +37,15 @@ func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 	}
 }
 
-type ConnOptions struct {
-	GRPCAuthority string
-	TLS           bool
-}
-
-func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
+func NewClientConn(authority string, tls bool) (*grpc.ClientConn, error) {
 	var creds grpc.DialOption
-	if opt.TLS {
+	if tls {
 		creds = grpc.WithTransportCredentials(credentials.NewTLS(nil))
 	} else {
 		creds = grpc.WithInsecure()
 	}
 
-	conn, err := grpc.Dial(opt.GRPCAuthority,
+	conn, err := grpc.Dial(authority,
 		creds,
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
@@ -63,16 +58,13 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 
 // GetConnection returns a gRPC client connection.
 func GetConnection() (*grpc.ClientConn, error) {
-	opts := ConnOptions{
-		GRPCAuthority: env.Get("TINKERBELL_GRPC_AUTHORITY"),
-		TLS:           env.Bool("TINKERBELL_TLS", true),
-	}
-
-	if opts.GRPCAuthority == "" {
+	authority := env.Get("TINKERBELL_GRPC_AUTHORITY")
+	if authority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 
-	return NewClientConn(&opts)
+	tls := env.Bool("TINKERBELL_TLS", true)
+	return NewClientConn(authority, tls)
 }
 
 // Setup : create a connection to server.
