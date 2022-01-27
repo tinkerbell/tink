@@ -8,7 +8,6 @@ import (
 
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -45,12 +44,6 @@ type ConnOptions struct {
 	CertURL       string
 	GRPCAuthority string
 	TLS           bool
-}
-
-func (o *ConnOptions) SetFlags(flagSet *pflag.FlagSet) {
-	flagSet.StringVar(&o.CertURL, "tinkerbell-cert-url", "http://127.0.0.1:42114/cert", "The URL where the certificate is located")
-	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Connection info for tink-server")
-	flagSet.BoolVar(&o.TLS, "tinkerbell-tls", true, "Connect to server via TLS or not")
 }
 
 // This function is bad and ideally should be removed, but for now it moves all the bad into one place.
