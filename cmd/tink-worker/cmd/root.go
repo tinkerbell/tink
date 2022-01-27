@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	defaultRetryIntervalSeconds       = 3
-	defaultRetryCount                 = 3
-	defaultMaxFileSize          int64 = 10 * 1024 * 1024 // 10MB
-	defaultTimeoutMinutes             = 60
+	defaultRetryIntervalSeconds = 3
+	defaultRetryCount           = 3
+	defaultMaxFileSize          = 10 * 1024 * 1024 // 10MB
+	defaultTimeoutMinutes       = 60
 )
 
 // NewRootCommand creates a new Tink Worker Cobra root command.
