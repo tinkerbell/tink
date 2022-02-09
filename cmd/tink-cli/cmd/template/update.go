@@ -3,9 +3,11 @@ package template
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -20,12 +22,16 @@ func NewUpdateCommand() *cobra.Command {
 		Use:   "update [id] [flags]",
 		Short: "update a workflow template",
 		Long: `The update command allows you change the definition of an existing workflow template:
+# Pipe the file to create a template:
+$ cat /tmp/example.tmpl | tink template update 614168df-45a5-11eb-b13d-0242ac120003
 # Update an existing template:
 $ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --path /tmp/example.tmpl
 `,
 		PreRunE: func(c *cobra.Command, args []string) error {
-			if filePath == "" {
-				return fmt.Errorf("%v requires the '--path' flag", c.UseLine())
+			if !isInputFromPipe() {
+				if filePath == "" {
+					return fmt.Errorf("%v requires the '--path' flag", c.UseLine())
+				}
 			}
 			return nil
 		},
@@ -79,15 +85,24 @@ func updateTemplate(id string) {
 }
 
 func readTemplateData() (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
+	var reader io.Reader
+	if isInputFromPipe() {
+		reader = os.Stdin
+	} else {
+		f, err := os.Open(filepath.Clean(filePath))
+		if err != nil {
+			return "", err
+		}
 
-	data, err := ioutil.ReadAll(f)
+		defer f.Close()
+
+		reader = f
+	}
+
+	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return "", err
 	}
+
 	return string(data), nil
 }
