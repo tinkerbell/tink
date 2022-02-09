@@ -59,26 +59,21 @@ $ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --path /tmp/example.
 
 func updateTemplate(id string) {
 	req := template.WorkflowTemplate{Id: id}
-	if filePath != "" {
-		data, err := readTemplateData()
-		if err != nil {
-			log.Fatalf("readTemplateData: %v", err)
-		}
-
-		if data != "" {
-			wf, err := workflow.Parse([]byte(data))
-			if err != nil {
-				log.Fatal(err)
-			}
-			req.Name = wf.Name
-			req.Data = data
-		}
-	} else {
-		log.Fatal("Nothing is provided in the file path")
+	data, err := readTemplateData()
+	if err != nil {
+		log.Fatalf("readTemplateData: %v", err)
 	}
 
-	_, err := client.TemplateClient.UpdateTemplate(context.Background(), &req)
-	if err != nil {
+	if data != "" {
+		wf, err := workflow.Parse([]byte(data))
+		if err != nil {
+			log.Fatal(err)
+		}
+		req.Name = wf.Name
+		req.Data = data
+	}
+
+	if _, err := client.TemplateClient.UpdateTemplate(context.Background(), &req); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Updated Template: ", id)
