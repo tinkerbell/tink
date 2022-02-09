@@ -21,11 +21,11 @@ func NewUpdateCommand() *cobra.Command {
 		Short: "update a workflow template",
 		Long: `The update command allows you change the definition of an existing workflow template:
 # Update an existing template:
-$ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --file /tmp/example.tmpl
+$ tink template update 614168df-45a5-11eb-b13d-0242ac120003 --path /tmp/example.tmpl
 `,
 		PreRunE: func(c *cobra.Command, args []string) error {
 			if filePath == "" {
-				return fmt.Errorf("%v requires the '--file' flag", c.UseLine())
+				return fmt.Errorf("%v requires the '--path' flag", c.UseLine())
 			}
 			return nil
 		},
