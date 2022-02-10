@@ -14,7 +14,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/ktr0731/evans v0.10.0
 	github.com/lib/pq v1.10.1
