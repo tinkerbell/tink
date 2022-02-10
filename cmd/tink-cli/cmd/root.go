@@ -24,14 +24,6 @@ var rootCmd = &cobra.Command{
 // gets passed into to subcommands as a pointer in the context.Context.
 var fullClient = client.FullClient{}
 
-func init() {
-	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringP("facility", "f", "", "used to build grpc and http urls")
-	rootCmd.PersistentFlags().String("tinkerbell-grpc-authority", "127.0.0.1:42113", "Connection info for tink-server")
-	rootCmd.PersistentFlags().Bool("tinkerbell-tls", true, "Connect to server via TLS or not")
-	_ = viper.BindPFlags(rootCmd.PersistentFlags())
-}
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(version string) error {
@@ -56,17 +48,20 @@ func Execute(version string) error {
 	rootCmd.AddCommand(NewTemplateCommand())
 	rootCmd.AddCommand(NewWorkflowCommand())
 
-	ctx := clientctx.Set(context.Background(), &fullClient)
-	return rootCmd.ExecuteContext(ctx)
-}
+	rootCmd.PersistentFlags().StringP("facility", "f", "", "used to build grpc and http urls")
+	rootCmd.PersistentFlags().String("tinkerbell-grpc-authority", "", "Connection info for tink-server (TINKERBELL_GRPC_AUTHORITY)")
+	rootCmd.PersistentFlags().Bool("tinkerbell-tls", true, "Connect to server via TLS or not")
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
+	// Both AutomaticEnv and SetEnvKeyReplacer need to be called/setup before the VisitAll command that follows, otherwise env vars don't count
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv()
 
-	// If a config file is found, read it in.
+	_ = viper.BindPFlags(rootCmd.PersistentFlags())
+
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+
+	ctx := clientctx.Set(context.Background(), &fullClient)
+	return rootCmd.ExecuteContext(ctx)
 }
