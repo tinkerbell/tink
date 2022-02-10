@@ -34,10 +34,8 @@ jobs:
         run: nix-shell --run 'true'
       - name: Generate
         run: nix-shell --run 'make generate'
-      - name: go clean -testcache
-        run: go clean -testcache
       - name: go test
-        run: go test -coverprofile=coverage.txt ./... -v
+        run: make test
       - name: upload codecov
         run: bash <(curl -s https://codecov.io/bash)
   ci-checks:

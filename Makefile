@@ -12,8 +12,7 @@ images: tink-cli-image tink-server-image tink-worker-image ## Build all docker i
 run: crosscompile run-stack ## Builds and runs the Tink stack (tink, db, cli) via docker-compose
 
 test: ## Run tests
-	go clean -testcache
-	go test -coverprofile=coverage.txt ./... -v
+	go test -coverprofile=coverage.txt ./...
 
 verify: lint check-generated # Verify code style, is lint free, freshness ...
 	gofumpt -s -d .
