@@ -19,6 +19,28 @@ var rootCmd = &cobra.Command{
 	Use:               "tink",
 	Short:             "tinkerbell CLI",
 	DisableAutoGenTag: true,
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		// we have to connect to tink server here and not any earlier because cobra
+		// would not have run yet and thus hasn't parsed the cli flags which would
+		// override env or config file
+		conn, err := client.NewClientConn(
+			viper.GetString("tinkerbell-grpc-authority"),
+			viper.GetBool("tinkerbell-tls"),
+		)
+		if err != nil {
+			return err
+		}
+		client.HardwareClient = hardware.NewHardwareServiceClient(conn)
+		client.TemplateClient = template.NewTemplateServiceClient(conn)
+		client.WorkflowClient = workflow.NewWorkflowServiceClient(conn)
+		fullClient = client.FullClient{
+			HardwareClient: client.HardwareClient,
+			TemplateClient: client.TemplateClient,
+			WorkflowClient: client.WorkflowClient,
+		}
+
+		return nil
+	},
 }
 
 // gets passed into to subcommands as a pointer in the context.Context.
@@ -27,22 +49,6 @@ var fullClient = client.FullClient{}
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(version string) error {
-	conn, err := client.NewClientConn(
-		viper.GetString("tinkerbell-grpc-authority"),
-		viper.GetBool("tinkerbell-tls"),
-	)
-	if err != nil {
-		return err
-	}
-	client.HardwareClient = hardware.NewHardwareServiceClient(conn)
-	client.TemplateClient = template.NewTemplateServiceClient(conn)
-	client.WorkflowClient = workflow.NewWorkflowServiceClient(conn)
-	fullClient = client.FullClient{
-		HardwareClient: client.HardwareClient,
-		TemplateClient: client.TemplateClient,
-		WorkflowClient: client.WorkflowClient,
-	}
-
 	rootCmd.Version = version
 	rootCmd.AddCommand(NewHardwareCommand())
 	rootCmd.AddCommand(NewTemplateCommand())
