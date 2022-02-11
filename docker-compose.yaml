@@ -1,21 +1,9 @@
 version: "3.8"
 services:
-  tls-gen:
-    image: cfssl/cfssl
-    entrypoint: /bin/bash
-    command:
-      - /code/tls/generate.sh
-    environment:
-      FACILITY: ${FACILITY:-onprem}
-    volumes:
-      - ${PWD}/deploy:/code
-      - certs:/certs/${FACILITY:-onprem}:rw
-
   tinkerbell:
     build:
       context: ./cmd/tink-server/
       dockerfile: Dockerfile
-    restart: unless-stopped
     environment:
       FACILITY: ${FACILITY:-onprem}
       PACKET_ENV: ${PACKET_ENV:-testing}
@@ -30,27 +18,39 @@ services:
       PGUSER: tinkerbell
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
-    depends_on:
-      tink-server-migration:
-        condition: service_started
-      db:
-        condition: service_healthy
-      tls-gen:
-        condition: service_started
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     volumes:
       - certs:/certs/${FACILITY:-onprem}:rw
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/cert"] # port needs to match TINKERBELL_HTTP_AUTHORITY
-      interval: 5s
-      timeout: 2s
-      retries: 3
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
+    depends_on:
+      db:
+        condition: service_healthy
+      tink-server-migration:
+        condition: service_started
+      tls-gen:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/healthz"] # port needs to match TINKERBELL_HTTP_AUTHORITY
+      interval: 5s
+      timeout: 2s
+      retries: 3
+    restart: unless-stopped
+
+  tls-gen:
+    image: cfssl/cfssl
+    entrypoint: /bin/bash
+    command:
+      - /code/tls/generate.sh
+    environment:
+      FACILITY: ${FACILITY:-onprem}
+    volumes:
+      - ${PWD}/deploy:/code
+      - certs:/certs/${FACILITY:-onprem}:rw
 
   tink-server-migration:
     image: quay.io/tinkerbell/tink:latest
-    restart: on-failure
     environment:
       ONLY_MIGRATION: "true"
       FACILITY: ${FACILITY:-onprem}
@@ -62,13 +62,14 @@ services:
       PGUSER: tinkerbell
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     depends_on:
       db:
         condition: service_healthy
+    restart: on-failure
 
   db:
     image: postgres:14-alpine
-    restart: unless-stopped
     environment:
       POSTGRES_DB: tinkerbell
       POSTGRES_PASSWORD: tinkerbell
@@ -82,20 +83,20 @@ services:
       interval: 1s
       timeout: 1s
       retries: 30
+    restart: unless-stopped
 
   tink-cli:
     build:
       context: ./cmd/tink-cli/
       dockerfile: Dockerfile
-    restart: unless-stopped
     environment:
-      TINKERBELL_GRPC_AUTHORITY: tinkerbell:42113
       TINKERBELL_CERT_URL: http://tinkerbell:42114/cert
+      TINKERBELL_GRPC_AUTHORITY: tinkerbell:42113
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     depends_on:
       tinkerbell:
         condition: service_healthy
-      db:
-        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:

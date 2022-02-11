@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/equinix-labs/otel-init-go/otelinit"
+	"github.com/packethost/pkg/env"
 	"github.com/packethost/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/db"
-	rpcServer "github.com/tinkerbell/tink/grpc-server"
+	grpcServer "github.com/tinkerbell/tink/grpc-server"
 	httpServer "github.com/tinkerbell/tink/http-server"
 	"github.com/tinkerbell/tink/metrics"
 )
@@ -37,6 +37,7 @@ type DaemonConfig struct {
 	TLSCert       string
 	CertDir       string
 	HTTPAuthority string
+	TLS           bool
 }
 
 func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
@@ -50,41 +51,23 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.TLSCert, "tls-cert", "", "")
 	fs.StringVar(&c.CertDir, "cert-dir", "", "")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
+	fs.BoolVar(&c.TLS, "tls", true, "Run in tls protected mode (disabling should only be done for development or if behind TLS terminating proxy)")
 }
 
 func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
-	if f := os.Getenv("FACILITY"); f != "" {
-		c.Facility = f
-	}
-	if pgdb := os.Getenv("PGDATABASE"); pgdb != "" {
-		c.PGDatabase = pgdb
-	}
-	if pguser := os.Getenv("PGUSER"); pguser != "" {
-		c.PGUSer = pguser
-	}
-	if pgpass := os.Getenv("PGPASSWORD"); pgpass != "" {
-		c.PGPassword = pgpass
-	}
-	if pgssl := os.Getenv("PGSSLMODE"); pgssl != "" {
-		c.PGSSLMode = pgssl
-	}
-	if onlyMigration, isSet := os.LookupEnv("ONLY_MIGRATION"); isSet {
-		if b, err := strconv.ParseBool(onlyMigration); err != nil {
-			c.OnlyMigration = b
-		}
-	}
-	if tlsCert := os.Getenv("TINKERBELL_TLS_CERT"); tlsCert != "" {
-		c.TLSCert = tlsCert
-	}
-	if certDir := os.Getenv("TINKERBELL_CERTS_DIR"); certDir != "" {
-		c.CertDir = certDir
-	}
-	if grpcAuthority := os.Getenv("TINKERBELL_GRPC_AUTHORITY"); grpcAuthority != "" {
-		c.GRPCAuthority = grpcAuthority
-	}
-	if httpAuthority := os.Getenv("TINKERBELL_HTTP_AUTHORITY"); httpAuthority != "" {
-		c.HTTPAuthority = httpAuthority
-	}
+	c.Facility = env.Get("FACILITY", c.Facility)
+
+	c.PGDatabase = env.Get("PGDATABASE", c.PGDatabase)
+	c.PGUSer = env.Get("PGUSER", c.PGUSer)
+	c.PGPassword = env.Get("PGPASSWORD", c.PGPassword)
+	c.PGSSLMode = env.Get("PGSSLMODE", c.PGSSLMode)
+	c.OnlyMigration = env.Bool("ONLY_MIGRATION", c.OnlyMigration)
+
+	c.TLSCert = env.Get("TINKERBELL_TLS_CERT", c.TLSCert)
+	c.CertDir = env.Get("TINKERBELL_CERTS_DIR", c.CertDir)
+	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
+	c.HTTPAuthority = env.Get("TINKERBELL_HTTP_AUTHORITY", c.HTTPAuthority)
+	c.TLS = env.Bool("TINKERBELL_LS", c.TLS)
 }
 
 func main() {
@@ -172,18 +155,23 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				logger.Info("Your database schema is not up to date. Please apply migrations running tink-server with env var ONLY_MIGRATION set.")
 			}
 
-			cert, modT := rpcServer.SetupGRPC(ctx, logger, &rpcServer.ConfigGRPCServer{
+			grpcConfig := &grpcServer.ConfigGRPCServer{
 				Facility:      config.Facility,
-				TLSCert:       config.TLSCert,
+				TLSCert:       "insecure",
 				GRPCAuthority: config.GRPCAuthority,
 				DB:            tinkDB,
-			}, errCh)
+			}
+			if config.TLS {
+				grpcConfig.TLSCert = config.TLSCert
+			}
+			cert, modT := grpcServer.SetupGRPC(ctx, logger, grpcConfig, errCh)
 
-			httpServer.SetupHTTP(ctx, logger, &httpServer.Config{
+			httpConfig := &httpServer.Config{
+				HTTPAuthority: config.HTTPAuthority,
 				CertPEM:       cert,
 				ModTime:       modT,
-				HTTPAuthority: config.HTTPAuthority,
-			}, errCh)
+			}
+			httpServer.SetupHTTP(ctx, logger, httpConfig, errCh)
 
 			select {
 			case err = <-errCh:

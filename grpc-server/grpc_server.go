@@ -60,14 +60,19 @@ func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer,
 		dbReady: true,
 		logger:  logger,
 	}
-	if cert := config.TLSCert; cert != "" {
-		server.cert = []byte(cert)
-		server.modT = time.Now()
-	} else {
+	cert := config.TLSCert
+	switch cert {
+	case "insecure":
+		// server.cert *must* be nil, which it is because that is the default value
+		// server.modT doesn't matter
+	case "":
 		tlsCert, certPEM, modT := getCerts(config.Facility, logger)
 		params = append(params, grpc.Creds(credentials.NewServerTLSFromCert(&tlsCert)))
 		server.cert = certPEM
 		server.modT = modT
+	default:
+		server.cert = []byte(cert)
+		server.modT = time.Now()
 	}
 
 	// register servers
