@@ -19,6 +19,7 @@ type RegistryConnDetails struct {
 	user,
 	pwd string
 	logger log.Logger
+	useAbsoluteImageURI bool
 }
 
 // ImagePullStatus is the status of the downloaded Image chunk.
@@ -32,21 +33,19 @@ type ImagePullStatus struct {
 	} `json:"progressDetail"`
 }
 
-// NewRegistryConnDetails creates a new RegistryConnDetails.
-func NewRegistryConnDetails(registry, user, pwd string, logger log.Logger) *RegistryConnDetails {
+// NewRegistryConnDetails creates a new RegistryConnDetails
+func NewRegistryConnDetails(registry, user, pwd string, logger log.Logger, useAbsoluteImageURI bool) *RegistryConnDetails {
 	return &RegistryConnDetails{
 		registry: registry,
 		user:     user,
 		pwd:      pwd,
 		logger:   logger,
+		useAbsoluteImageURI: useAbsoluteImageURI,
 	}
 }
 
 // NewClient uses the RegistryConnDetails to create a new Docker Client.
 func (r *RegistryConnDetails) NewClient() (*client.Client, error) {
-	if r.registry == "" {
-		return nil, errors.New("required DOCKER_REGISTRY")
-	}
 	c, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, errors.Wrap(err, "DOCKER CLIENT")
@@ -72,7 +71,16 @@ func (r *RegistryConnDetails) pullImage(ctx context.Context, cli imagePuller, im
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	out, err := cli.ImagePull(ctx, r.registry+"/"+image, types.ImagePullOptions{RegistryAuth: authStr})
+	var imageURI string
+	if r.useAbsoluteImageURI {
+		imageURI = image
+	} else if len(r.registry) > 0 {
+		imageURI = r.registry + "/" + image
+	} else {
+		return errors.Wrap(err, "REGISTRY REQUIRED")
+	}
+
+	out, err := cli.ImagePull(ctx, imageURI, types.ImagePullOptions{RegistryAuth: authStr})
 	if err != nil {
 		return errors.Wrap(err, "DOCKER PULL")
 	}

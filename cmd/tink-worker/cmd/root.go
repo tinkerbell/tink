@@ -48,9 +48,11 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			user, _ := cmd.Flags().GetString("registry-username")
 			pwd, _ := cmd.Flags().GetString("registry-password")
 			registry, _ := cmd.Flags().GetString("docker-registry")
+			useAbsoluteImageURI, _ := cmd.Flags().GetString("use-absolute-image-uri")
 			captureActionLogs, _ := cmd.Flags().GetBool("capture-action-logs")
 
 			logger.With("version", version).Info("starting")
+			logger.With("useAbsoluteImageURI", useAbsoluteImageURI).Info("starting")
 			if setupErr := client.Setup(); setupErr != nil {
 				return setupErr
 			}
@@ -68,7 +70,12 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			}
 			rClient := pb.NewWorkflowServiceClient(conn)
 
-			regConn := internal.NewRegistryConnDetails(registry, user, pwd, logger)
+			var regConn *internal.RegistryConnDetails
+			if useAbsoluteImageURI == "true" {
+				regConn = internal.NewRegistryConnDetails(registry, user, pwd, logger, true)
+			} else {
+				regConn = internal.NewRegistryConnDetails(registry, user, pwd, logger, false)
+			}
 			worker := internal.NewWorker(rClient, regConn, logger, registry, retries, retryInterval, maxFileSize)
 
 			err = worker.ProcessWorkflowActions(ctx, workerID, captureActionLogs)
@@ -101,13 +108,12 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	must(rootCmd.MarkFlagRequired("id"))
 
 	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry (DOCKER_REGISTRY)")
-	must(rootCmd.MarkFlagRequired("docker-registry"))
 
 	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username (REGISTRY_USERNAME)")
-	must(rootCmd.MarkFlagRequired("registry-username"))
 
 	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password (REGISTRY_PASSWORD)")
-	must(rootCmd.MarkFlagRequired("registry-password"))
+
+	rootCmd.Flags().StringP("use-absolute-image-uri", "a", "", "Do not prepend docker_registry to template action images (USE_ABSOLUTE_IMAGE_URI)")
 
 	return rootCmd
 }

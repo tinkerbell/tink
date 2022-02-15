@@ -104,7 +104,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "pull image")
 	}
 
-	id, err := w.createContainer(ctx, action.Command, wfID, action, captureLogs)
+	id, err := w.createContainer(ctx, action.Command, wfID, action, captureLogs, w.regConn.useAbsoluteImageURI)
 	if err != nil {
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "create container")
 	}
@@ -173,7 +173,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 
 // executeReaction executes special case OnTimeout/OnFailure actions.
 func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs bool, l log.Logger) pb.State {
-	id, err := w.createContainer(ctx, cmd, wfID, action, captureLogs)
+	id, err := w.createContainer(ctx, cmd, wfID, action, captureLogs, w.regConn.useAbsoluteImageURI)
 	if err != nil {
 		l.Error(errors.Wrap(err, errFailedToRunCmd))
 	}
