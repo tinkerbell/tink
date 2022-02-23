@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/bufbuild/buf v1.0.0-rc2
-	github.com/docker/distribution v2.8.0+incompatible
+	github.com/docker/distribution v2.8.0-beta.1+incompatible
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.1
 	github.com/go-logr/zapr v0.4.0
@@ -46,3 +46,5 @@ require (
 )
 
 replace github.com/stormcat24/protodep => github.com/ackintosh/protodep v0.0.0-20200728152107-abf8eb579d6c
+
+exclude github.com/docker/distributions v2.8.0+incompatible
