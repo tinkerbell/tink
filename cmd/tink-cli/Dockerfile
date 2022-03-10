@@ -4,5 +4,5 @@ CMD sleep infinity
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-RUN apk add --no-cache --update --upgrade ca-certificates
+RUN apk add --no-cache --update --upgrade bash ca-certificates
 COPY tink-cli-linux-${TARGETARCH:-amd64}${TARGETVARIANT} /usr/bin/tink
