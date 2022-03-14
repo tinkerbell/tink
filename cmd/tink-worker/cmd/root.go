@@ -3,16 +3,18 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
+	dockercli "github.com/docker/docker/client"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/client"
-	"github.com/tinkerbell/tink/cmd/tink-worker/internal"
+	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc"
 )
@@ -68,10 +70,33 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			}
 			rClient := pb.NewWorkflowServiceClient(conn)
 
-			regConn := internal.NewRegistryConnDetails(registry, user, pwd, logger)
-			worker := internal.NewWorker(rClient, regConn, logger, registry, retries, retryInterval, maxFileSize)
+			dockerClient, err := dockercli.NewClientWithOpts(dockercli.FromEnv, dockercli.WithAPIVersionNegotiation())
+			if err != nil {
+				return err
+			}
+			containerManager := worker.NewContainerManager(
+				logger,
+				dockerClient,
+				worker.RegistryConnDetails{
+					Registry: registry,
+					Username: user,
+					Password: pwd,
+				})
 
-			err = worker.ProcessWorkflowActions(ctx, workerID, captureActionLogs)
+			logCapturer := worker.NewDockerLogCapturer(dockerClient, logger, os.Stdout)
+
+			w := worker.NewWorker(
+				workerID,
+				rClient,
+				containerManager,
+				logCapturer,
+				logger,
+				worker.WithMaxFileSize(maxFileSize),
+				worker.WithRetries(retryInterval, retries),
+				worker.WithLogCapture(captureActionLogs),
+				worker.WithPrivileged(true))
+
+			err = w.ProcessWorkflowActions(ctx)
 			if err != nil {
 				return errors.Wrap(err, "worker Finished with error")
 			}

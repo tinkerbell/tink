@@ -1,7 +1,6 @@
-package internal
+package worker
 
 import (
-	"bufio"
 	"context"
 	sha "crypto/sha256"
 	"encoding/base64"
@@ -14,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	pb "github.com/tinkerbell/tink/protos/workflow"
@@ -23,8 +20,8 @@ import (
 )
 
 const (
-	dataFile = "data"
-	dataDir  = "/worker"
+	dataFile       = "data"
+	defaultDataDir = "/worker"
 
 	errGetWfContext       = "failed to get workflow context"
 	errGetWfActions       = "failed to get actions for workflow"
@@ -32,6 +29,10 @@ const (
 
 	msgTurn = "it's turn for a different worker: %s"
 )
+
+type loggingContext string
+
+var loggingContextKey loggingContext = "logger"
 
 var (
 	workflowcontexts = map[string]*pb.WorkflowContext{}
@@ -47,64 +48,124 @@ type WorkflowMetadata struct {
 	SHA       string    `json:"sha256"`
 }
 
-// Worker details provide all the context needed to run a.
+// Option is a type for modifying a worker.
+type Option func(*Worker)
+
+// WithRetries adds custom retries to a worker.
+func WithRetries(interval time.Duration, retries int) Option {
+	return func(w *Worker) {
+		w.retries = retries
+		w.retryInterval = interval
+	}
+}
+
+// WithDataDir changes the default directory for a worker.
+func WithDataDir(dir string) Option {
+	return func(w *Worker) {
+		w.dataDir = dir
+	}
+}
+
+// WithMaxFileSize changes the max file size for a worker.
+func WithMaxFileSize(maxSize int64) Option {
+	return func(w *Worker) {
+		w.maxSize = maxSize
+	}
+}
+
+// WithLogCapture enables capture of container logs.
+func WithLogCapture(capture bool) Option {
+	return func(w *Worker) {
+		w.captureLogs = capture
+	}
+}
+
+// WithPrivileged enables containers to be privileged.
+func WithPrivileged(privileged bool) Option {
+	return func(w *Worker) {
+		w.createPrivileged = privileged
+	}
+}
+
+// LogCapturer emits container logs.
+type LogCapturer interface {
+	CaptureLogs(ctx context.Context, containerID string)
+}
+
+// ContainerManager manages linux containers for Tinkerbell workers.
+type ContainerManager interface {
+	CreateContainer(ctx context.Context, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs, privileged bool) (string, error)
+	StartContainer(ctx context.Context, id string) error
+	WaitForContainer(ctx context.Context, id string) (pb.State, error)
+	WaitForFailedContainer(ctx context.Context, id string, failedActionStatus chan pb.State)
+	RemoveContainer(ctx context.Context, id string) error
+	PullImage(ctx context.Context, image string) error
+}
+
+// Worker details provide all the context needed to run workflows.
 type Worker struct {
-	client         pb.WorkflowServiceClient
-	regConn        *RegistryConnDetails
-	registryClient *client.Client
-	logger         log.Logger
-	registry       string
-	retries        int
-	retryInterval  time.Duration
-	maxSize        int64
+	workerID         string
+	logCapturer      LogCapturer
+	containerManager ContainerManager
+	tinkClient       pb.WorkflowServiceClient
+	logger           log.Logger
+
+	dataDir string
+	maxSize int64
+
+	createPrivileged bool
+	captureLogs      bool
+
+	retries       int
+	retryInterval time.Duration
 }
 
 // NewWorker creates a new Worker, creating a new Docker registry client.
-func NewWorker(c pb.WorkflowServiceClient, regConn *RegistryConnDetails, logger log.Logger, registry string, retries int, retryInterval time.Duration, maxFileSize int64) *Worker {
-	registryClient, err := regConn.NewClient()
-	if err != nil {
-		panic(err)
+func NewWorker(
+	workerID string,
+	tinkClient pb.WorkflowServiceClient,
+	containerManager ContainerManager,
+	logCapturer LogCapturer,
+	logger log.Logger,
+	opts ...Option) *Worker {
+	w := &Worker{
+		workerID:         workerID,
+		dataDir:          defaultDataDir,
+		containerManager: containerManager,
+		logCapturer:      logCapturer,
+		tinkClient:       tinkClient,
+		logger:           logger,
+		captureLogs:      false,
+		createPrivileged: false,
+		retries:          3,
+		retryInterval:    time.Second * 3,
+		maxSize:          1 << 20,
 	}
-	return &Worker{
-		client:         c,
-		regConn:        regConn,
-		registryClient: registryClient,
-		logger:         logger,
-		registry:       registry,
-		retries:        retries,
-		retryInterval:  retryInterval,
-		maxSize:        maxFileSize,
+	for _, opt := range opts {
+		opt(w)
 	}
+
+	return w
 }
 
-func (w *Worker) captureLogs(ctx context.Context, id string) {
-	reader, err := w.registryClient.ContainerLogs(ctx, id, types.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Follow:     true,
-		Timestamps: false,
-	})
-	if err != nil {
-		panic(err)
+// getLogger is a helper function to get logging out of a context, or use the default logger.
+func (w Worker) getLogger(ctx context.Context) *log.Logger {
+	loggerIface := ctx.Value(loggingContextKey)
+	if loggerIface == nil {
+		return &w.logger
 	}
-	defer reader.Close()
-
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
-	}
+	return loggerIface.(*log.Logger)
 }
 
 // execute executes a workflow action, optionally capturing logs.
-func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAction, captureLogs bool) (pb.State, error) {
-	l := w.logger.With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
+func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAction) (pb.State, error) {
+	l := w.getLogger(ctx).With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
 
-	cli := w.registryClient
-	if err := w.regConn.pullImage(ctx, cli, action.GetImage()); err != nil {
+	if err := w.containerManager.PullImage(ctx, action.GetImage()); err != nil {
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "pull image")
 	}
 
-	id, err := w.createContainer(ctx, action.Command, wfID, action, captureLogs)
+	id, err := w.containerManager.CreateContainer(ctx, action.Command, wfID, action, w.captureLogs, w.createPrivileged)
 	if err != nil {
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "create container")
 	}
@@ -121,23 +182,23 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	}
 	defer cancel()
 
-	err = startContainer(timeCtx, l, cli, id)
+	err = w.containerManager.StartContainer(timeCtx, id)
 	if err != nil {
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "start container")
 	}
 
-	if captureLogs {
-		go w.captureLogs(ctx, id)
+	if w.captureLogs {
+		go w.logCapturer.CaptureLogs(ctx, id)
 	}
 
-	st, err := waitContainer(timeCtx, cli, id)
+	st, err := w.containerManager.WaitForContainer(timeCtx, id)
 	l.With("status", st.String()).Info("wait container completed")
 
 	// If we've made it this far, the container has successfully completed.
 	// Everything after this is just cleanup.
 
 	defer func() {
-		if err := removeContainer(ctx, l, cli, id); err != nil {
+		if err := w.containerManager.RemoveContainer(ctx, id); err != nil {
 			l.With("containerID", id).Error(err)
 		}
 		l.With("status", st.String()).Info("container removed")
@@ -155,10 +216,10 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 	}
 
 	if st == pb.State_STATE_TIMEOUT && action.OnTimeout != nil {
-		rst := w.executeReaction(ctx, st.String(), action.OnTimeout, wfID, action, captureLogs, l)
+		rst := w.executeReaction(ctx, st.String(), action.OnTimeout, wfID, action)
 		l.With("status", rst).Info("action timeout")
 	} else if action.OnFailure != nil {
-		rst := w.executeReaction(ctx, st.String(), action.OnFailure, wfID, action, captureLogs, l)
+		rst := w.executeReaction(ctx, st.String(), action.OnFailure, wfID, action)
 		l.With("status", rst).Info("action failed")
 	}
 
@@ -172,20 +233,22 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 }
 
 // executeReaction executes special case OnTimeout/OnFailure actions.
-func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs bool, l log.Logger) pb.State {
-	id, err := w.createContainer(ctx, cmd, wfID, action, captureLogs)
+func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []string, wfID string, action *pb.WorkflowAction) pb.State {
+	l := w.getLogger(ctx)
+	id, err := w.containerManager.CreateContainer(ctx, cmd, wfID, action, w.captureLogs, w.createPrivileged)
 	if err != nil {
 		l.Error(errors.Wrap(err, errFailedToRunCmd))
 	}
 	l.With("containerID", id, "actionStatus", reaction, "command", cmd).Info("container created")
-	if captureLogs {
-		go w.captureLogs(ctx, id)
+
+	if w.captureLogs {
+		go w.logCapturer.CaptureLogs(ctx, id)
 	}
 
 	st := make(chan pb.State)
 
-	go waitFailedContainer(ctx, l, w.registryClient, id, st)
-	err = startContainer(ctx, l, w.registryClient, id)
+	go w.containerManager.WaitForFailedContainer(ctx, id, st)
+	err = w.containerManager.StartContainer(ctx, id)
 	if err != nil {
 		l.Error(errors.Wrap(err, errFailedToRunCmd))
 	}
@@ -194,18 +257,20 @@ func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []str
 }
 
 // ProcessWorkflowActions gets all Workflow contexts and processes their actions.
-func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, captureActionLogs bool) error {
-	l := w.logger.With("workerID", workerID)
+func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
+	l := w.logger.With("workerID", w.workerID)
 
 	for {
-		res, err := w.client.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
+		res, err := w.tinkClient.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: w.workerID})
 		if err != nil {
 			return errors.Wrap(err, errGetWfContext)
 		}
 		for wfContext, err := res.Recv(); err == nil && wfContext != nil; wfContext, err = res.Recv() {
 			wfID := wfContext.GetWorkflowId()
 			l = l.With("workflowID", wfID)
-			actions, err := w.client.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfID})
+			ctx := context.WithValue(ctx, loggingContextKey, &l)
+
+			actions, err := w.tinkClient.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfID})
 			if err != nil {
 				return errors.Wrap(err, errGetWfActions)
 			}
@@ -214,7 +279,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 			actionIndex := 0
 			var nextAction *pb.WorkflowAction
 			if wfContext.GetCurrentAction() == "" {
-				if actions.GetActionList()[0].GetWorkerId() == workerID {
+				if actions.GetActionList()[0].GetWorkerId() == w.workerID {
 					actionIndex = 0
 					turn = true
 				}
@@ -243,18 +308,18 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 					"totalNumberOfActions", wfContext.GetTotalNumberOfActions(),
 				)
 				l.Info("current context")
-				if nextAction.GetWorkerId() == workerID {
+				if nextAction.GetWorkerId() == w.workerID {
 					turn = true
 				}
 			}
 
 			if turn {
-				wfDir := dataDir + string(os.PathSeparator) + wfID
+				wfDir := filepath.Join(w.dataDir, wfID)
 				l := l.With("actionName", actions.GetActionList()[actionIndex].GetName(),
 					"taskName", actions.GetActionList()[actionIndex].GetTaskName(),
 				)
 				if _, err := os.Stat(wfDir); os.IsNotExist(err) {
-					err := os.Mkdir(wfDir, os.FileMode(0o755))
+					err := os.MkdirAll(wfDir, os.FileMode(0o755))
 					if err != nil {
 						l.Error(err)
 						os.Exit(1)
@@ -281,6 +346,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 				l := l.With("actionName", action.GetName(),
 					"taskName", action.GetTaskName(),
 				)
+				ctx := context.WithValue(ctx, loggingContextKey, &l)
 				if wfContext.GetCurrentActionState() != pb.State_STATE_RUNNING {
 					actionStatus := &pb.WorkflowActionStatus{
 						WorkflowId:   wfID,
@@ -291,7 +357,6 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 						Message:      "Started execution",
 						WorkerId:     action.GetWorkerId(),
 					}
-
 					err := w.reportActionStatus(ctx, actionStatus)
 					if err != nil {
 						exitWithGrpcError(err, l)
@@ -300,11 +365,11 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 				}
 
 				// get workflow data
-				getWorkflowData(ctx, l, w.client, workerID, wfID)
+				w.getWorkflowData(ctx, wfID)
 
 				// start executing the action
 				start := time.Now()
-				st, err := w.execute(ctx, wfID, action, captureActionLogs)
+				st, err := w.execute(ctx, wfID, action)
 				elapsed := time.Since(start)
 
 				actionStatus := &pb.WorkflowActionStatus{
@@ -350,7 +415,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context, workerID string, ca
 				}
 
 				nextAction := actions.GetActionList()[actionIndex+1]
-				if nextAction.GetWorkerId() != workerID {
+				if nextAction.GetWorkerId() != w.workerID {
 					l.Debug(fmt.Sprintf(msgTurn, nextAction.GetWorkerId()))
 					turn = false
 				} else {
@@ -376,14 +441,15 @@ func isLastAction(wfContext *pb.WorkflowContext, actions *pb.WorkflowActionList)
 }
 
 func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.WorkflowActionStatus) error {
-	l := w.logger.With("workflowID", actionStatus.GetWorkflowId,
+	l := w.getLogger(ctx).With("workflowID", actionStatus.GetWorkflowId(),
 		"workerID", actionStatus.GetWorkerId(),
 		"actionName", actionStatus.GetActionName(),
 		"taskName", actionStatus.GetTaskName(),
 	)
 	var err error
 	for r := 1; r <= w.retries; r++ {
-		_, err = w.client.ReportActionStatus(ctx, actionStatus)
+		l.Info("reporting Action Status")
+		_, err = w.tinkClient.ReportActionStatus(ctx, actionStatus)
 		if err != nil {
 			l.Error(errors.Wrap(err, errReportActionStatus))
 			<-time.After(w.retryInterval)
@@ -395,19 +461,23 @@ func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.Workfl
 	return err
 }
 
-func getWorkflowData(ctx context.Context, logger log.Logger, c pb.WorkflowServiceClient, workerID, workflowID string) {
-	l := logger.With("workflowID", workflowID,
-		"workerID", workerID,
+func (w *Worker) getWorkflowData(ctx context.Context, workflowID string) {
+	l := w.getLogger(ctx).With("workflowID", workflowID,
+		"workerID", w.workerID,
 	)
-	res, err := c.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
+	res, err := w.tinkClient.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
 	if err != nil {
 		l.Error(err)
 	}
 
 	if len(res.GetData()) != 0 {
-		wfDir := dataDir + string(os.PathSeparator) + workflowID
+		wfDir := filepath.Join(w.dataDir, w.workerID)
 		f := openDataFile(wfDir, l)
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				l.With("file", f.Name()).Error(err)
+			}
+		}()
 
 		_, err := f.Write(res.GetData())
 		if err != nil {
@@ -419,15 +489,19 @@ func getWorkflowData(ctx context.Context, logger log.Logger, c pb.WorkflowServic
 }
 
 func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.WorkflowActionStatus) {
-	l := w.logger.With("workflowID", actionStatus.GetWorkflowId,
+	l := w.getLogger(ctx).With("workflowID", actionStatus.GetWorkflowId,
 		"workerID", actionStatus.GetWorkerId(),
 		"actionName", actionStatus.GetActionName(),
 		"taskName", actionStatus.GetTaskName(),
 	)
 
-	wfDir := dataDir + string(os.PathSeparator) + actionStatus.GetWorkflowId()
+	wfDir := filepath.Join(w.dataDir, actionStatus.GetWorkflowId())
 	f := openDataFile(wfDir, l)
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			l.With("file", f.Name()).Error(err)
+		}
+	}()
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
@@ -439,18 +513,18 @@ func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.Workfl
 		if _, ok := workflowDataSHA[actionStatus.GetWorkflowId()]; !ok {
 			checksum := base64.StdEncoding.EncodeToString(h.Sum(data))
 			workflowDataSHA[actionStatus.GetWorkflowId()] = checksum
-			sendUpdate(ctx, w.logger, w.client, actionStatus, data, checksum)
+			w.sendUpdate(ctx, actionStatus, data, checksum)
 		} else {
 			newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
 			if !strings.EqualFold(workflowDataSHA[actionStatus.GetWorkflowId()], newSHA) {
-				sendUpdate(ctx, w.logger, w.client, actionStatus, data, newSHA)
+				w.sendUpdate(ctx, actionStatus, data, newSHA)
 			}
 		}
 	}
 }
 
-func sendUpdate(ctx context.Context, logger log.Logger, c pb.WorkflowServiceClient, st *pb.WorkflowActionStatus, data []byte, checksum string) {
-	l := logger.With("workflowID", st.GetWorkflowId,
+func (w *Worker) sendUpdate(ctx context.Context, st *pb.WorkflowActionStatus, data []byte, checksum string) {
+	l := w.getLogger(ctx).With("workflowID", st.GetWorkflowId,
 		"workerID", st.GetWorkerId(),
 		"actionName", st.GetActionName(),
 		"taskName", st.GetTaskName(),
@@ -468,7 +542,7 @@ func sendUpdate(ctx context.Context, logger log.Logger, c pb.WorkflowServiceClie
 		os.Exit(1)
 	}
 
-	_, err = c.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
+	_, err = w.tinkClient.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
 		WorkflowId: st.GetWorkflowId(),
 		Data:       data,
 		Metadata:   metadata,
