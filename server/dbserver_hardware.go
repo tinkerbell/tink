@@ -1,4 +1,4 @@
-package grpcserver
+package server
 
 import (
 	"context"
@@ -21,7 +21,7 @@ const (
 	duplicateMAC    = "Duplicate MAC address found"
 )
 
-func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.Empty, error) {
+func (s *DBServer) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.Empty, error) {
 	s.logger.Info("push")
 	labels := prometheus.Labels{"method": "Push", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -95,7 +95,7 @@ func (s *server) Push(ctx context.Context, in *hardware.PushRequest) (*hardware.
 	return &hardware.Empty{}, err
 }
 
-func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardware, error) {
+func (s *DBServer) by(method string, fn func() (string, error)) (*hardware.Hardware, error) {
 	labels := prometheus.Labels{"method": method, "op": "get"}
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -128,27 +128,27 @@ func (s *server) by(method string, fn func() (string, error)) (*hardware.Hardwar
 	return hw, nil
 }
 
-func (s *server) ByMAC(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
+func (s *DBServer) ByMAC(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByMAC", func() (string, error) {
 		return s.db.GetByMAC(ctx, in.Mac)
 	})
 }
 
-func (s *server) ByIP(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
+func (s *DBServer) ByIP(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByIP", func() (string, error) {
 		return s.db.GetByIP(ctx, in.Ip)
 	})
 }
 
 // ByID implements hardware.ByID.
-func (s *server) ByID(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
+func (s *DBServer) ByID(ctx context.Context, in *hardware.GetRequest) (*hardware.Hardware, error) {
 	return s.by("ByID", func() (string, error) {
 		return s.db.GetByID(ctx, in.Id)
 	})
 }
 
 // ALL implements hardware.All.
-func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServer) error {
+func (s *DBServer) All(_ *hardware.Empty, stream hardware.HardwareService_AllServer) error {
 	labels := prometheus.Labels{"method": "All", "op": "get"}
 
 	metrics.CacheTotals.With(labels).Inc()
@@ -181,7 +181,7 @@ func (s *server) All(_ *hardware.Empty, stream hardware.HardwareService_AllServe
 	return nil
 }
 
-func (s *server) DeprecatedWatch(in *hardware.GetRequest, stream hardware.HardwareService_DeprecatedWatchServer) error {
+func (s *DBServer) DeprecatedWatch(in *hardware.GetRequest, stream hardware.HardwareService_DeprecatedWatchServer) error {
 	l := s.logger.With("id", in.Id)
 
 	ch := make(chan string, 1)
@@ -242,16 +242,16 @@ func (s *server) DeprecatedWatch(in *hardware.GetRequest, stream hardware.Hardwa
 }
 
 // Cert returns the public cert that can be served to clients.
-func (s *server) Cert() []byte {
+func (s *DBServer) Cert() []byte {
 	return s.cert
 }
 
 // ModTime returns the modified-time of the grpc cert.
-func (s *server) ModTime() time.Time {
+func (s *DBServer) ModTime() time.Time {
 	return s.modT
 }
 
-func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardware.Empty, error) {
+func (s *DBServer) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardware.Empty, error) {
 	s.logger.Info("delete")
 	labels := prometheus.Labels{"method": "Delete", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -303,7 +303,7 @@ func (s *server) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardw
 	return &hardware.Empty{}, err
 }
 
-func (s *server) validateHardwareData(ctx context.Context, hw *hardware.Hardware) error {
+func (s *DBServer) validateHardwareData(ctx context.Context, hw *hardware.Hardware) error {
 	for _, iface := range hw.GetNetwork().GetInterfaces() {
 		mac := iface.GetDhcp().GetMac()
 

@@ -3,12 +3,15 @@ package grpcserver
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/grpc"
 	"github.com/packethost/pkg/log"
+	"github.com/tinkerbell/tink/server"
 )
 
 func TestSetupGRPC(t *testing.T) {
@@ -16,26 +19,51 @@ func TestSetupGRPC(t *testing.T) {
 		server string
 		client string
 	}
-	tests := map[string]struct {
+	tests := []struct {
+		name  string
 		input input
 		want  []string
 		err   error
 	}{
-		"successful grpc client call":     {input: input{server: "127.0.0.1:55005", client: "127.0.0.1:55005"}, want: []string{"HardwareService", "TemplateService", "WorkflowService", "ServerReflection"}},
-		"grpc client fail to communicate": {input: input{server: "127.0.0.1:0", client: "127.0.0.1:55007"}, err: fmt.Errorf("failed to list services from reflection enabled gRPC server: rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing dial tcp 127.0.0.1:55007: connect: connection refused\"")},
+		{
+			name: "successful grpc client call",
+			input: input{
+				server: "127.0.0.1:55005",
+				client: "127.0.0.1:55005",
+			},
+			want: []string{"HardwareService", "TemplateService", "WorkflowService", "ServerReflection"},
+		},
+		{
+			name: "grpc client fail to communicate",
+			input: input{
+				server: "127.0.0.1:0",
+				client: "127.0.0.1:55007",
+			},
+			err: fmt.Errorf("failed to list services from reflection enabled gRPC server: rpc error: code = Unavailable desc = connection error: desc = \"transport: Error while dialing dial tcp 127.0.0.1:55007: connect: connection refused\""),
+		},
 	}
 
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			errCh := make(chan error)
-			logger, _ := log.Init("test_package")
-			SetupGRPC(ctx, logger, &ConfigGRPCServer{
-				Facility:      "onprem",
-				TLSCert:       "just can't be an empty string",
-				GRPCAuthority: tc.input.server,
-			}, errCh)
+			logger := log.Test(t, "test_package")
+			tinkServer, _ := server.NewDBServer(
+				logger,
+				nil,
+			)
+			_, err := SetupGRPC(
+				ctx,
+				tinkServer,
+				tc.input.server,
+				nil,
+				errCh)
+			if err != nil {
+				t.Errorf("failed to set up gRPC server: %v", err)
+				return
+			}
+
 			client, err := grpc.NewClient(tc.input.client, "name", true, false, "", "", "", nil)
 			if err != nil {
 				t.Fatal(err)
@@ -67,6 +95,84 @@ func TestSetupGRPC(t *testing.T) {
 				if diff := cmp.Diff(tc.want, got); diff != "" {
 					t.Error(diff)
 				}
+			}
+		})
+	}
+}
+
+func TestGetCerts(t *testing.T) {
+	cases := []struct {
+		name      string
+		setupFunc func(t *testing.T) (string, error)
+		wanterr   error
+	}{
+		{
+			"Real key file",
+			func(t *testing.T) (string, error) {
+				t.Helper()
+				return "./testdata", nil
+			},
+			nil,
+		},
+		{
+			"No cert",
+			func(t *testing.T) (string, error) {
+				t.Helper()
+				return "./not-a-directory", nil
+			},
+			fmt.Errorf("failed to open TLS cert: open not-a-directory/bundle.pem: no such file or directory"),
+		},
+		{
+			"empty content",
+			func(t *testing.T) (string, error) {
+				t.Helper()
+				tdir := t.TempDir()
+				err := ioutil.WriteFile(filepath.Join(tdir, "bundle.pem"), []byte{}, 0o644)
+				if err != nil {
+					return "", err
+				}
+				err = ioutil.WriteFile(filepath.Join(tdir, "server-key.pem"), []byte{}, 0o644)
+				if err != nil {
+					return "", err
+				}
+				return tdir, nil
+			},
+			fmt.Errorf("failed to parse TLS file content: tls: failed to find any PEM data in certificate input"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			input, err := tc.setupFunc(t)
+			if err != nil {
+				t.Errorf("Failed to setup test: %v", err)
+				return
+			}
+			gotCert, gotBytes, modTime, err := GetCerts(input)
+
+			if tc.wanterr == nil {
+				if gotCert == nil {
+					t.Error("Missing expected cert, got nil")
+				}
+				if gotBytes == nil {
+					t.Error("Missing expected cert bytes, got nil")
+				}
+				if modTime == nil {
+					t.Error("Missing expected cert mod time, got nil")
+				}
+			}
+			if tc.wanterr == nil && err == nil {
+				return
+			}
+			if tc.wanterr != nil {
+				if err == nil {
+					t.Errorf("Missing expected error %s", tc.wanterr.Error())
+					return
+				}
+				if tc.wanterr.Error() != err.Error() {
+					t.Errorf("Got different error. Wanted %s, got %s", tc.wanterr.Error(), err.Error())
+				}
+				return
 			}
 		})
 	}

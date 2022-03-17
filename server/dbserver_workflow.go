@@ -1,4 +1,4 @@
-package grpcserver
+package server
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 const errFailedToGetTemplate = "failed to get template with ID %s"
 
 // CreateWorkflow implements workflow.CreateWorkflow.
-func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest) (*workflow.CreateResponse, error) {
+func (s *DBServer) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest) (*workflow.CreateResponse, error) {
 	s.logger.Info("createworkflow")
 	labels := prometheus.Labels{"method": "CreateWorkflow", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -72,7 +72,7 @@ func (s *server) CreateWorkflow(ctx context.Context, in *workflow.CreateRequest)
 }
 
 // GetWorkflow implements workflow.GetWorkflow.
-func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Workflow, error) {
+func (s *DBServer) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Workflow, error) {
 	s.logger.Info("getworkflow")
 	labels := prometheus.Labels{"method": "GetWorkflow", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -123,7 +123,7 @@ func (s *server) GetWorkflow(ctx context.Context, in *workflow.GetRequest) (*wor
 }
 
 // DeleteWorkflow implements workflow.DeleteWorkflow.
-func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Empty, error) {
+func (s *DBServer) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*workflow.Empty, error) {
 	s.logger.Info("deleteworkflow")
 	labels := prometheus.Labels{"method": "DeleteWorkflow", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -152,7 +152,7 @@ func (s *server) DeleteWorkflow(ctx context.Context, in *workflow.GetRequest) (*
 }
 
 // ListWorkflows implements workflow.ListWorkflows.
-func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowService_ListWorkflowsServer) error {
+func (s *DBServer) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowService_ListWorkflowsServer) error {
 	s.logger.Info("listworkflows")
 	labels := prometheus.Labels{"method": "ListWorkflows", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()
@@ -189,7 +189,7 @@ func (s *server) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowServic
 	return nil
 }
 
-func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest) (*workflow.WorkflowContext, error) {
+func (s *DBServer) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest) (*workflow.WorkflowContext, error) {
 	s.logger.Info("GetworkflowContext")
 	labels := prometheus.Labels{"method": "GetWorkflowContext", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -236,7 +236,7 @@ func (s *server) GetWorkflowContext(ctx context.Context, in *workflow.GetRequest
 }
 
 // ShowWorflowevents  implements workflow.ShowWorflowEvents.
-func (s *server) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowService_ShowWorkflowEventsServer) error {
+func (s *DBServer) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.WorkflowService_ShowWorkflowEventsServer) error {
 	s.logger.Info("List workflows Events")
 	labels := prometheus.Labels{"method": "ShowWorkflowEvents", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()
