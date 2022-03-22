@@ -8,7 +8,6 @@ import (
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/pkg/controllers"
 	"github.com/tinkerbell/tink/pkg/convert"
-	protoworkflow "github.com/tinkerbell/tink/protos/workflow"
 	tinkworkflow "github.com/tinkerbell/tink/workflow"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -52,8 +51,10 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	switch wflow.Status.State {
 	case "":
 		resp, err = c.processNewWorkflow(ctx, wflow)
-	case protoworkflow.State_name[int32(protoworkflow.State_STATE_RUNNING)]:
+	case v1alpha1.WorkflowStateRunning:
 		resp = c.processRunningWorkflow(ctx, wflow)
+	default:
+		return resp, nil
 	}
 
 	// Patch any changes, regardless of errors
@@ -82,29 +83,28 @@ func (c *Controller) processNewWorkflow(ctx context.Context, stored *v1alpha1.Wo
 	// populate Task and Action data
 	stored.Status = *convert.WorkflowYAMLToStatus(tinkWf)
 
-	stored.Status.State = protoworkflow.State_name[int32(protoworkflow.State_STATE_PENDING)]
+	stored.Status.State = v1alpha1.WorkflowStatePending
 	return reconcile.Result{}, nil
 }
 
 func (c *Controller) processRunningWorkflow(_ context.Context, stored *v1alpha1.Workflow) reconcile.Result {
 	// Check for global timeout expiration
 	if c.nowFunc().After(stored.GetStartTime().Add(time.Duration(stored.Status.GlobalTimeout) * time.Second)) {
-		stored.Status.State = protoworkflow.State_name[int32(protoworkflow.State_STATE_TIMEOUT)]
+		stored.Status.State = v1alpha1.WorkflowStateTimeout
 	}
 
 	// check for any running actions that may have timed out
 	for ti, task := range stored.Status.Tasks {
 		for ai, action := range task.Actions {
 			// A running workflow task action has timed out
-			if action.Status == protoworkflow.State_name[int32(protoworkflow.State_STATE_RUNNING)] &&
-				action.StartedAt != nil &&
+			if action.Status == v1alpha1.WorkflowStateRunning && action.StartedAt != nil &&
 				c.nowFunc().After(action.StartedAt.Add(time.Duration(action.Timeout)*time.Second)) {
 				// Set fields on the timed out action
-				stored.Status.Tasks[ti].Actions[ai].Status = protoworkflow.State_name[int32(protoworkflow.State_STATE_TIMEOUT)]
+				stored.Status.Tasks[ti].Actions[ai].Status = v1alpha1.WorkflowStateTimeout
 				stored.Status.Tasks[ti].Actions[ai].Message = "Action timed out"
 				stored.Status.Tasks[ti].Actions[ai].Seconds = int64(c.nowFunc().Sub(action.StartedAt.Time).Seconds())
 				// Mark the workflow as timed out
-				stored.Status.State = protoworkflow.State_name[int32(protoworkflow.State_STATE_TIMEOUT)]
+				stored.Status.State = v1alpha1.WorkflowStateTimeout
 			}
 		}
 	}

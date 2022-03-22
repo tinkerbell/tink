@@ -11,6 +11,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func WorkflowToWorkflowContext(wf *v1alpha1.Workflow) *protoworkflow.WorkflowContext {
+	if wf == nil {
+		return nil
+	}
+	return &protoworkflow.WorkflowContext{
+		WorkflowId:           wf.GetName(),
+		CurrentWorker:        wf.GetCurrentWorker(),
+		CurrentTask:          wf.GetCurrentTask(),
+		CurrentAction:        wf.GetCurrentAction(),
+		CurrentActionIndex:   int64(wf.GetCurrentActionIndex()),
+		CurrentActionState:   protoworkflow.State(protoworkflow.State_value[string(wf.GetCurrentActionState())]),
+		TotalNumberOfActions: int64(wf.GetTotalNumberOfActions()),
+	}
+}
+
 func WorkflowYAMLToStatus(wf *workflow.Workflow) *v1alpha1.WorkflowStatus {
 	if wf == nil {
 		return nil
@@ -25,7 +40,7 @@ func WorkflowYAMLToStatus(wf *workflow.Workflow) *v1alpha1.WorkflowStatus {
 				Timeout:     action.Timeout,
 				Command:     action.Command,
 				Volumes:     action.Volumes,
-				Status:      protoworkflow.State_name[int32(protoworkflow.State_STATE_PENDING)],
+				Status:      v1alpha1.WorkflowState(protoworkflow.State_name[int32(protoworkflow.State_STATE_PENDING)]),
 				Environment: action.Environment,
 				Pid:         action.Pid,
 			})
@@ -48,7 +63,7 @@ func WorkflowCRDToProto(w *v1alpha1.Workflow) *protoworkflow.Workflow {
 	if w == nil {
 		return nil
 	}
-	v, ok := protoworkflow.State_value[w.Status.State]
+	v, ok := protoworkflow.State_value[string(w.Status.State)]
 	state := protoworkflow.State(v)
 	if !ok {
 		state = protoworkflow.State_STATE_PENDING
@@ -123,7 +138,7 @@ func WorkflowProtoToCRD(w *protoworkflow.Workflow) *v1alpha1.Workflow {
 	}
 
 	if v, ok := protoworkflow.State_name[int32(w.State)]; ok {
-		resp.Status.State = v
+		resp.Status.State = v1alpha1.WorkflowState(v)
 	}
 	return resp
 }
