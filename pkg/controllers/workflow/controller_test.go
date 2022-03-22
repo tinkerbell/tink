@@ -177,7 +177,7 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         "STATE_PENDING",
+					State:         v1alpha1.WorkflowStatePending,
 					GlobalTimeout: 1800,
 					Tasks: []v1alpha1.Task{
 						{
@@ -199,7 +199,7 @@ func TestReconcile(t *testing.T) {
 										"DEST_DISK":  "/dev/nvme0n1",
 										"IMG_URL":    "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz",
 									},
-									Status: "STATE_PENDING",
+									Status: v1alpha1.WorkflowStatePending,
 								},
 							},
 						},
@@ -304,7 +304,7 @@ tasks:
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         "STATE_PENDING",
+					State:         v1alpha1.WorkflowStatePending,
 					GlobalTimeout: 1800,
 					Tasks: []v1alpha1.Task{
 						{
@@ -326,7 +326,7 @@ tasks:
 										"DEST_DISK":  "/dev/nvme0n1",
 										"IMG_URL":    "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz",
 									},
-									Status: "STATE_PENDING",
+									Status: v1alpha1.WorkflowStatePending,
 								},
 							},
 						},
@@ -538,7 +538,7 @@ tasks:
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         "STATE_RUNNING",
+					State:         v1alpha1.WorkflowStateRunning,
 					GlobalTimeout: 600,
 					Tasks: []v1alpha1.Task{
 						{
@@ -559,7 +559,7 @@ tasks:
 										"DEST_DISK":  "/dev/nvme0n1",
 										"IMG_URL":    "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz",
 									},
-									Status:    "STATE_RUNNING",
+									Status:    v1alpha1.WorkflowStateRunning,
 									StartedAt: TestTime.MetaV1BeforeSec(601),
 								},
 							},
@@ -624,7 +624,7 @@ tasks:
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         "STATE_TIMEOUT",
+					State:         v1alpha1.WorkflowStateTimeout,
 					GlobalTimeout: 600,
 					Tasks: []v1alpha1.Task{
 						{
@@ -645,7 +645,7 @@ tasks:
 										"DEST_DISK":  "/dev/nvme0n1",
 										"IMG_URL":    "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz",
 									},
-									Status:    "STATE_TIMEOUT",
+									Status:    v1alpha1.WorkflowStateTimeout,
 									StartedAt: TestTime.MetaV1BeforeSec(601),
 									Seconds:   601,
 									Message:   "Action timed out",
