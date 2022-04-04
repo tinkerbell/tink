@@ -17,7 +17,11 @@ import (
 )
 
 const (
-	WorkerAddr = "status.tasks.workeraddr"
+	WorkflowWorkerAddrIndex             = ".status.tasks.workerAddr"
+	WorkflowWorkerNonTerminalStateIndex = ".status.state.nonTerminalWorker"
+	WorkflowStateIndex                  = ".status.state"
+	HardwareMACAddrIndex                = ".spec.interfaces.dhcp.mac"
+	HardwareIPAddrIndex                 = ".spec.interfaces.dhcp.ip"
 )
 
 var (
@@ -47,6 +51,14 @@ func GetControllerOptions() controllerruntime.Options {
 		MetricsBindAddress:     fmt.Sprintf(":%d", options.MetricsPort),
 		HealthProbeBindAddress: fmt.Sprintf(":%d", options.HealthProbePort),
 	}
+}
+
+// GetNamespacedControllerOptions returns a set of options used by the Tink controller.
+// These options include leader election enabled.
+func GetNamespacedControllerOptions(namespace string) controllerruntime.Options {
+	opts := GetControllerOptions()
+	opts.Namespace = namespace
+	return opts
 }
 
 // GetServerOptions returns a set of options used by the Tink API.
@@ -83,8 +95,28 @@ func NewManager(config *rest.Config, options controllerruntime.Options) (Manager
 	}{
 		{
 			&v1alpha1.Workflow{},
-			WorkerAddr,
-			wokerIndexFunc,
+			WorkflowWorkerAddrIndex,
+			workflowWorkerAddrIndexFunc,
+		},
+		{
+			&v1alpha1.Workflow{},
+			WorkflowWorkerNonTerminalStateIndex,
+			workflowWorkerNonTerminalStateIndexFunc,
+		},
+		{
+			&v1alpha1.Workflow{},
+			WorkflowStateIndex,
+			workflowStateIndexFunc,
+		},
+		{
+			&v1alpha1.Hardware{},
+			HardwareIPAddrIndex,
+			hardwareIPIndexFunc,
+		},
+		{
+			&v1alpha1.Hardware{},
+			HardwareMACAddrIndex,
+			hardwareMacIndexFunc,
 		},
 	}
 	for _, indexer := range indexers {
@@ -118,8 +150,8 @@ func (m *GenericControllerManager) RegisterControllers(ctx context.Context, cont
 	return m
 }
 
-// workerIndex func returns a list of worker addresses from a workflow.
-func wokerIndexFunc(obj client.Object) []string {
+// workflowWorkerAddrIndexFunc func returns a list of worker addresses from a workflow.
+func workflowWorkerAddrIndexFunc(obj client.Object) []string {
 	wf, ok := obj.(*v1alpha1.Workflow)
 	if !ok {
 		return nil
@@ -128,6 +160,64 @@ func wokerIndexFunc(obj client.Object) []string {
 	for _, task := range wf.Status.Tasks {
 		if task.WorkerAddr != "" {
 			resp = append(resp, task.WorkerAddr)
+		}
+	}
+	return resp
+}
+
+// workflowWorkerNonTerminalStateIndexFunc func indexes workflow by worker for non terminal workflows.
+func workflowWorkerNonTerminalStateIndexFunc(obj client.Object) []string {
+	wf, ok := obj.(*v1alpha1.Workflow)
+	if !ok {
+		return nil
+	}
+
+	resp := []string{}
+	if !(wf.Status.State == v1alpha1.WorkflowStateRunning || wf.Status.State == v1alpha1.WorkflowStatePending) {
+		return resp
+	}
+	for _, task := range wf.Status.Tasks {
+		if task.WorkerAddr != "" {
+			resp = append(resp, task.WorkerAddr)
+		}
+	}
+	return resp
+}
+
+// workflowStateIndexFunc func indexes workflow by worker for non terminal workflows.
+func workflowStateIndexFunc(obj client.Object) []string {
+	wf, ok := obj.(*v1alpha1.Workflow)
+	if !ok {
+		return nil
+	}
+	return []string{string(wf.Status.State)}
+}
+
+// hardwareMacIndexFunc returns a list of mac addresses from a hardware.
+func hardwareMacIndexFunc(obj client.Object) []string {
+	hw, ok := obj.(*v1alpha1.Hardware)
+	if !ok {
+		return nil
+	}
+	resp := []string{}
+	for _, iface := range hw.Spec.Interfaces {
+		if iface.DHCP != nil && iface.DHCP.MAC != "" {
+			resp = append(resp, iface.DHCP.MAC)
+		}
+	}
+	return resp
+}
+
+// hardwareIPIndexFunc returns a list of mac addresses from a hardware.
+func hardwareIPIndexFunc(obj client.Object) []string {
+	hw, ok := obj.(*v1alpha1.Hardware)
+	if !ok {
+		return nil
+	}
+	resp := []string{}
+	for _, iface := range hw.Spec.Interfaces {
+		if iface.DHCP != nil && iface.DHCP.IP != nil && iface.DHCP.IP.Address != "" {
+			resp = append(resp, iface.DHCP.IP.Address)
 		}
 	}
 	return resp
