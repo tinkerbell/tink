@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -12,6 +13,82 @@ import (
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestWorkflowToWorkflowContext(t *testing.T) {
+	cases := []struct {
+		name  string
+		input *v1alpha1.Workflow
+		want  *protoworkflow.WorkflowContext
+	}{
+		{
+			"nil workflow",
+			nil,
+			nil,
+		},
+		{
+			"empty workflow",
+			&v1alpha1.Workflow{},
+			&protoworkflow.WorkflowContext{
+				WorkflowId:           "",
+				CurrentWorker:        "",
+				CurrentTask:          "",
+				CurrentAction:        "",
+				CurrentActionIndex:   0,
+				CurrentActionState:   0,
+				TotalNumberOfActions: 0,
+			},
+		},
+		{
+			"running workflow",
+			&v1alpha1.Workflow{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "wf1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{},
+				Status: v1alpha1.WorkflowStatus{
+					State:         "STATE_RUNNING",
+					GlobalTimeout: 600,
+					Tasks: []v1alpha1.Task{
+						{
+							Name:       "task1",
+							WorkerAddr: "worker1",
+							Actions: []v1alpha1.Action{
+								{
+									Name:   "action1",
+									Status: "STATE_SUCCESS",
+								},
+								{
+									Name:   "action2",
+									Status: "STATE_RUNNING",
+								},
+							},
+						},
+					},
+				},
+			},
+			&protoworkflow.WorkflowContext{
+				WorkflowId:           "wf1",
+				CurrentWorker:        "worker1",
+				CurrentTask:          "task1",
+				CurrentAction:        "action2",
+				CurrentActionIndex:   1,
+				CurrentActionState:   protoworkflow.State_STATE_RUNNING,
+				TotalNumberOfActions: 2,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := WorkflowToWorkflowContext(tc.input)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Unexpedted response: wanted\n\t%#v\ngot\n\t%#v", tc.want, got)
+			}
+		})
+	}
+}
 
 func TestWorkflowCRDToProto(t *testing.T) {
 	cases := []struct {

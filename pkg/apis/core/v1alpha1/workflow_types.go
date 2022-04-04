@@ -4,6 +4,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type WorkflowState string
+
+const (
+	WorkflowStatePending = WorkflowState("STATE_PENDING")
+	WorkflowStateRunning = WorkflowState("STATE_RUNNING")
+	WorkflowStateFailed  = WorkflowState("STATE_FAILED")
+	WorkflowStateTimeout = WorkflowState("STATE_TIMEOUT")
+	WorkflowStateSuccess = WorkflowState("STATE_SUCCESS")
+)
+
 // WorkflowSpec defines the desired state of Workflow.
 type WorkflowSpec struct {
 	// Name of the Template associated with this workflow.
@@ -16,7 +26,7 @@ type WorkflowSpec struct {
 // WorkflowStatus defines the observed state of Workflow.
 type WorkflowStatus struct {
 	// State is the state of the workflow in Tinkerbell.
-	State string `json:"state,omitempty"`
+	State WorkflowState `json:"state,omitempty"`
 
 	// GlobalTimeout represents the max execution time
 	GlobalTimeout int64 `json:"globalTimeout,omitempty"`
@@ -43,7 +53,7 @@ type Action struct {
 	Volumes     []string          `json:"volumes,omitempty"`
 	Pid         string            `json:"pid,omitempty"`
 	Environment map[string]string `json:"environment,omitempty"`
-	Status      string            `json:"status,omitempty"`
+	Status      WorkflowState     `json:"status,omitempty"`
 	StartedAt   *metav1.Time      `json:"startedAt,omitempty"`
 	Seconds     int64             `json:"seconds,omitempty"`
 	Message     string            `json:"message,omitempty"`
