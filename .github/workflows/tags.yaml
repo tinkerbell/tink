@@ -1,0 +1,55 @@
+on:
+  push:
+    tags:
+      - "v*"
+name: Create release
+env:
+  REGISTRY: quay.io
+  IMAGE_NAME: ${{ github.repository }}
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Generate Release Notes
+        run: |
+          release_notes=$(gh api repos/{owner}/{repo}/releases/generate-notes -F tag_name=${{ github.ref }} --jq .body)
+          echo 'RELEASE_NOTES<<EOF' >> $GITHUB_ENV
+          echo "${release_notes}" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+
+      - name: Docker manager metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: latest=false
+          tags: type=ref,event=tag
+
+      - name: Set the from image tag
+        run: echo "FROM_TAG=sha-${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      - name: Copy the image using skopeo
+        run: skopeo copy --all --dest-creds="${DST_REG_USER}":"${DST_REG_PASS}" docker://"${SRC_IMAGE}" docker://"${DST_IMAGE}"
+        env:
+          SRC_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FROM_TAG }}
+          DST_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+          DST_REG_USER: ${{ secrets.QUAY_USERNAME }}
+          DST_REG_PASS: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: ${{ env.RELEASE_NOTES }}
+          draft: false
+          prerelease: true

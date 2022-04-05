@@ -1,6 +1,10 @@
 name: For each commit and PR
 on:
   push:
+    branches:
+      - "*"
+    tags-ignore:
+      - "v*"
   pull_request:
 env:
   CGO_ENABLED: 0
