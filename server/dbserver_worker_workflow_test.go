@@ -1,4 +1,4 @@
-package grpcserver
+package server
 
 import (
 	"context"
@@ -28,14 +28,14 @@ const (
 
 var wfData = []byte("{'os': 'ubuntu', 'base_url': 'http://192.168.1.1/'}")
 
-func testServer(t *testing.T, d db.Database) *server {
+func testServer(t *testing.T, d db.Database) *DBServer {
 	t.Helper()
 	l, err := log.Init("github.com/tinkerbell/tink")
 	if err != nil {
 		t.Errorf("log init failed: %v", err)
 	}
 
-	return &server{
+	return &DBServer{
 		logger: l,
 		db:     d,
 	}

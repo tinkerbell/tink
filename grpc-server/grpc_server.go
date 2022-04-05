@@ -7,148 +7,87 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
-	"sync"
 	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
-	"github.com/tinkerbell/tink/db"
-	"github.com/tinkerbell/tink/protos/hardware"
-	"github.com/tinkerbell/tink/protos/template"
-	"github.com/tinkerbell/tink/protos/workflow"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
-// Server is the gRPC server for tinkerbell.
-type server struct {
-	cert []byte
-	modT time.Time
-
-	db   db.Database
-	quit <-chan struct{}
-
-	dbLock  sync.RWMutex
-	dbReady bool
-
-	watchLock sync.RWMutex
-	watch     map[string]chan string
-
-	logger log.Logger
-}
-
-type ConfigGRPCServer struct {
-	Facility      string
-	TLSCert       string
-	GRPCAuthority string
-	DB            db.Database
-}
-
-// SetupGRPC setup and return a gRPC server.
-func SetupGRPC(ctx context.Context, logger log.Logger, config *ConfigGRPCServer, errCh chan<- error) ([]byte, time.Time) {
-	params := []grpc.ServerOption{
-		grpc_middleware.WithUnaryServerChain(grpc_prometheus.UnaryServerInterceptor, otelgrpc.UnaryServerInterceptor()),
-		grpc_middleware.WithStreamServerChain(grpc_prometheus.StreamServerInterceptor, otelgrpc.StreamServerInterceptor()),
-	}
-	server := &server{
-		db:      config.DB,
-		dbReady: true,
-		logger:  logger,
-	}
-	cert := config.TLSCert
-	switch cert {
-	case "insecure":
-		// server.cert *must* be nil, which it is because that is the default value
-		// server.modT doesn't matter
-	case "":
-		tlsCert, certPEM, modT := getCerts(config.Facility, logger)
-		params = append(params, grpc.Creds(credentials.NewServerTLSFromCert(&tlsCert)))
-		server.cert = certPEM
-		server.modT = modT
-	default:
-		server.cert = []byte(cert)
-		server.modT = time.Now()
-	}
-
-	// register servers
-	s := grpc.NewServer(params...)
-	template.RegisterTemplateServiceServer(s, server)
-	workflow.RegisterWorkflowServiceServer(s, server)
-	hardware.RegisterHardwareServiceServer(s, server)
-	reflection.Register(s)
-
-	grpc_prometheus.Register(s)
-
-	go func() {
-		lis, err := net.Listen("tcp", config.GRPCAuthority)
-		if err != nil {
-			err = errors.Wrap(err, "failed to listen")
-			logger.Error(err)
-			panic(err)
-		}
-
-		errCh <- s.Serve(lis)
-	}()
-
-	go func() {
-		<-ctx.Done()
-		s.GracefulStop()
-	}()
-	return server.cert, server.modT
-}
-
-func getCerts(facility string, logger log.Logger) (tls.Certificate, []byte, time.Time) {
-	var (
-		certPEM []byte
-		modT    time.Time
-	)
-
-	certsDir := os.Getenv("TINKERBELL_CERTS_DIR")
-	if certsDir == "" {
-		certsDir = "/certs/" + facility
-	}
-	if !strings.HasSuffix(certsDir, "/") {
-		certsDir += "/"
-	}
-
-	certFile, err := os.Open(filepath.Clean(certsDir + "bundle.pem"))
+// GetCerts returns a TLS certificate, PEM bytes, and file modification time for a
+// given path. An error is returned for any failure.
+//
+// The public key is expected to be named "bundle.pem" and the private key
+// "server.pem".
+func GetCerts(certsDir string) (*tls.Certificate, []byte, *time.Time, error) {
+	certFile, err := os.Open(filepath.Join(certsDir, "bundle.pem"))
 	if err != nil {
-		err = errors.Wrap(err, "failed to open TLS cert")
-		logger.Error(err)
-		panic(err)
+		return nil, nil, nil, errors.Wrap(err, "failed to open TLS cert")
 	}
 
-	if stat, err := certFile.Stat(); err != nil {
-		err = errors.Wrap(err, "failed to stat TLS cert")
-		logger.Error(err)
-		panic(err)
-	} else {
-		modT = stat.ModTime()
+	stat, err := certFile.Stat()
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "failed to stat TLS cert")
+	}
+	modT := stat.ModTime()
+	certPEM, err := ioutil.ReadAll(certFile)
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "failed to read TLS cert")
+	}
+	err = certFile.Close()
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "failed to close TLS cert")
 	}
 
-	certPEM, err = ioutil.ReadAll(certFile)
+	keyPEM, err := ioutil.ReadFile(filepath.Join(certsDir, "server-key.pem"))
 	if err != nil {
-		err = errors.Wrap(err, "failed to read TLS cert")
-		logger.Error(err)
-		panic(err)
-	}
-	keyPEM, err := ioutil.ReadFile(filepath.Clean(certsDir + "server-key.pem"))
-	if err != nil {
-		err = errors.Wrap(err, "failed to read TLS key")
-		logger.Error(err)
-		panic(err)
+		return nil, nil, nil, errors.Wrap(err, "failed to read TLS key")
 	}
 
 	cert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
-		err = errors.Wrap(err, "failed to ingest TLS files")
-		logger.Error(err)
-		panic(err)
+		return nil, nil, nil, errors.Wrap(err, "failed to parse TLS file content")
 	}
-	return cert, certPEM, modT
+
+	return &cert, certPEM, &modT, nil
+}
+
+// Registrar is an interface for registering APIs on a gRPC server.
+type Registrar interface {
+	Register(*grpc.Server)
+}
+
+// SetupGRPC opens a listener and serves a given Registrar's APIs on a gRPC server
+// and returns the listener's address or an error.
+func SetupGRPC(ctx context.Context, r Registrar, listenAddr string, opts []grpc.ServerOption, errCh chan<- error) (serverAddr string, err error) {
+	params := []grpc.ServerOption{
+		grpc_middleware.WithUnaryServerChain(grpc_prometheus.UnaryServerInterceptor, otelgrpc.UnaryServerInterceptor()),
+		grpc_middleware.WithStreamServerChain(grpc_prometheus.StreamServerInterceptor, otelgrpc.StreamServerInterceptor()),
+	}
+	params = append(params, opts...)
+
+	// register servers
+	s := grpc.NewServer(params...)
+	r.Register(s)
+	reflection.Register(s)
+	grpc_prometheus.Register(s)
+
+	lis, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to listen")
+	}
+
+	go func(errChan chan<- error) {
+		errChan <- s.Serve(lis)
+	}(errCh)
+
+	go func(ctx context.Context, s *grpc.Server) {
+		<-ctx.Done()
+		s.GracefulStop()
+	}(ctx, s)
+
+	return lis.Addr().String(), nil
 }

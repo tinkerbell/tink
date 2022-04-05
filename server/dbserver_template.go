@@ -1,4 +1,4 @@
-package grpcserver
+package server
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 // CreateTemplate implements template.CreateTemplate.
-func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTemplate) (*template.CreateResponse, error) {
+func (s *DBServer) CreateTemplate(ctx context.Context, in *template.WorkflowTemplate) (*template.CreateResponse, error) {
 	s.logger.Info("createtemplate")
 	labels := prometheus.Labels{"method": "CreateTemplate", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -44,7 +44,7 @@ func (s *server) CreateTemplate(ctx context.Context, in *template.WorkflowTempla
 }
 
 // GetTemplate implements template.GetTemplate.
-func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*template.WorkflowTemplate, error) {
+func (s *DBServer) GetTemplate(ctx context.Context, in *template.GetRequest) (*template.WorkflowTemplate, error) {
 	s.logger.Info("gettemplate")
 	labels := prometheus.Labels{"method": "GetTemplate", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -76,7 +76,7 @@ func (s *server) GetTemplate(ctx context.Context, in *template.GetRequest) (*tem
 }
 
 // DeleteTemplate implements template.DeleteTemplate.
-func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*template.Empty, error) {
+func (s *DBServer) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*template.Empty, error) {
 	s.logger.Info("deletetemplate")
 	labels := prometheus.Labels{"method": "DeleteTemplate", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()
@@ -104,7 +104,7 @@ func (s *server) DeleteTemplate(ctx context.Context, in *template.GetRequest) (*
 }
 
 // ListTemplates implements template.ListTemplates.
-func (s *server) ListTemplates(in *template.ListRequest, stream template.TemplateService_ListTemplatesServer) error {
+func (s *DBServer) ListTemplates(in *template.ListRequest, stream template.TemplateService_ListTemplatesServer) error {
 	s.logger.Info("listtemplates")
 	labels := prometheus.Labels{"method": "ListTemplates", "op": "list"}
 	metrics.CacheTotals.With(labels).Inc()
@@ -139,7 +139,7 @@ func (s *server) ListTemplates(in *template.ListRequest, stream template.Templat
 }
 
 // UpdateTemplate implements template.UpdateTemplate.
-func (s *server) UpdateTemplate(ctx context.Context, in *template.WorkflowTemplate) (*template.Empty, error) {
+func (s *DBServer) UpdateTemplate(ctx context.Context, in *template.WorkflowTemplate) (*template.Empty, error) {
 	s.logger.Info("updatetemplate")
 	labels := prometheus.Labels{"method": "UpdateTemplate", "op": ""}
 	metrics.CacheInFlight.With(labels).Inc()

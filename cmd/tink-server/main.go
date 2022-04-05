@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
-	"database/sql"
+	"crypto/tls"
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/env"
@@ -15,10 +17,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tinkerbell/tink/db"
-	grpcServer "github.com/tinkerbell/tink/grpc-server"
-	httpServer "github.com/tinkerbell/tink/http-server"
+	"github.com/tinkerbell/tink/cmd/tink-server/internal"
+	grpcserver "github.com/tinkerbell/tink/grpc-server"
+	httpserver "github.com/tinkerbell/tink/http-server"
 	"github.com/tinkerbell/tink/metrics"
+	"github.com/tinkerbell/tink/server"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // version is set at build time.
@@ -130,48 +135,59 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				config.PGPassword,
 				config.PGSSLMode,
 			)
-
-			dbCon, err := sql.Open("postgres", connInfo)
+			database, err := internal.SetupPostgres(connInfo, config.OnlyMigration, logger)
 			if err != nil {
 				return err
 			}
-			tinkDB := db.Connect(dbCon, logger)
-
 			if config.OnlyMigration {
-				logger.Info("Applying migrations. This process will end when migrations will take place.")
-				numAppliedMigrations, err := tinkDB.Migrate()
-				if err != nil {
-					return err
-				}
-				logger.With("num_applied_migrations", numAppliedMigrations).Info("Migrations applied successfully")
 				return nil
 			}
 
-			numAvailableMigrations, err := tinkDB.CheckRequiredMigrations()
+			var (
+				grpcOpts    []grpc.ServerOption
+				certPEM     []byte
+				certModTime *time.Time
+			)
+			if config.TLS {
+				certsDir := os.Getenv("TINKERBELL_CERTS_DIR")
+				if certsDir == "" {
+					certsDir = filepath.Join("/certs", config.Facility)
+				}
+				var cert *tls.Certificate
+				cert, certPEM, certModTime, err = grpcserver.GetCerts(certsDir)
+				if err != nil {
+					return err
+				}
+				grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewServerTLSFromCert(cert)))
+			}
+
+			tinkAPI, err := server.NewDBServer(
+				logger,
+				database,
+				server.WithCerts(*certModTime, certPEM),
+			)
 			if err != nil {
 				return err
 			}
-			if numAvailableMigrations != 0 {
-				logger.Info("Your database schema is not up to date. Please apply migrations running tink-server with env var ONLY_MIGRATION set.")
-			}
 
-			grpcConfig := &grpcServer.ConfigGRPCServer{
-				Facility:      config.Facility,
-				TLSCert:       "insecure",
-				GRPCAuthority: config.GRPCAuthority,
-				DB:            tinkDB,
+			// Start the gRPC server in the background
+			addr, err := grpcserver.SetupGRPC(
+				ctx,
+				tinkAPI,
+				config.GRPCAuthority,
+				grpcOpts,
+				errCh)
+			if err != nil {
+				return err
 			}
-			if config.TLS {
-				grpcConfig.TLSCert = config.TLSCert
-			}
-			cert, modT := grpcServer.SetupGRPC(ctx, logger, grpcConfig, errCh)
+			logger.With("address", addr).Info("started listener")
 
-			httpConfig := &httpServer.Config{
+			httpConfig := &httpserver.Config{
 				HTTPAuthority: config.HTTPAuthority,
-				CertPEM:       cert,
-				ModTime:       modT,
+				CertPEM:       certPEM,
+				ModTime:       *certModTime,
 			}
-			httpServer.SetupHTTP(ctx, logger, httpConfig, errCh)
+			httpserver.SetupHTTP(ctx, logger, httpConfig, errCh)
 
 			select {
 			case err = <-errCh:
