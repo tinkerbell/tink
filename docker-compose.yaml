@@ -1,6 +1,31 @@
 version: "3.8"
 services:
-  tinkerbell:
+  ##### Actual services first #####
+  db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: tinkerbell
+      POSTGRES_PASSWORD: tinkerbell
+      POSTGRES_USER: tinkerbell
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: "512M"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U tinkerbell
+      interval: 1s
+      timeout: 1s
+      retries: 30
+    restart: unless-stopped
+
+  tink-server:
     build:
       context: ./cmd/tink-server/
       dockerfile: Dockerfile
@@ -8,52 +33,52 @@ services:
       FACILITY: ${FACILITY:-onprem}
       PACKET_ENV: ${PACKET_ENV:-testing}
       PACKET_VERSION: ${PACKET_VERSION:-ignored}
-      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
-      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
       PGDATABASE: tinkerbell
       PGHOST: db
       PGPASSWORD: tinkerbell
       PGPORT: 5432
       PGSSLMODE: disable
       PGUSER: tinkerbell
+      ROLLBAR_DISABLE: ${ROLLBAR_DISABLE:-1}
+      ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
       TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     volumes:
-      - certs:/certs/${FACILITY:-onprem}:rw
+      - certs:/certs/${FACILITY:-onprem}:ro
     ports:
       - 42113:42113/tcp
       - 42114:42114/tcp
     depends_on:
       db:
         condition: service_healthy
-      tink-server-migration:
-        condition: service_started
-      tls-gen:
-        condition: service_started
+      generate-tls-certs:
+        condition: service_completed_successfully
+      db-migrations:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: "512M"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- 127.0.0.1:42114/healthz"] # port needs to match TINKERBELL_HTTP_AUTHORITY
+      # port needs to match TINKERBELL_HTTP_AUTHORITY
+      test:
+        - CMD-SHELL
+        - wget -qO- 127.0.0.1:42114/healthz
       interval: 5s
       timeout: 2s
-      retries: 3
+      retries: 30
     restart: unless-stopped
 
-  tls-gen:
-    image: cfssl/cfssl
-    entrypoint: /bin/bash
-    command:
-      - /code/tls/generate.sh
+  ##### One-off setup processes #####
+  db-migrations:
+    build:
+      context: ./cmd/tink-server/
+      dockerfile: Dockerfile
     environment:
       FACILITY: ${FACILITY:-onprem}
-    volumes:
-      - ${PWD}/deploy:/code
-      - certs:/certs/${FACILITY:-onprem}:rw
-
-  tink-server-migration:
-    image: quay.io/tinkerbell/tink:latest
-    environment:
       ONLY_MIGRATION: "true"
-      FACILITY: ${FACILITY:-onprem}
       PGDATABASE: tinkerbell
       PGHOST: db
       PGPASSWORD: tinkerbell
@@ -68,35 +93,33 @@ services:
         condition: service_healthy
     restart: on-failure
 
-  db:
-    image: postgres:14-alpine
+  generate-tls-certs:
+    image: cfssl/cfssl
+    entrypoint: /app/generate.sh
     environment:
-      POSTGRES_DB: tinkerbell
-      POSTGRES_PASSWORD: tinkerbell
-      POSTGRES_USER: tinkerbell
+      FACILITY: ${FACILITY:-onprem}
     volumes:
-      - postgres_data:/var/lib/postgresql/data:rw
-    ports:
-      - 5432:5432
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tinkerbell"]
-      interval: 1s
-      timeout: 1s
-      retries: 30
-    restart: unless-stopped
+      - certs:/certs/${FACILITY:-onprem}
+      - ./deploy/generate-tls-certs/:/app:ro
 
+  ##### Debugging/interactive commands #####
   tink-cli:
     build:
       context: ./cmd/tink-cli/
       dockerfile: Dockerfile
     environment:
-      TINKERBELL_GRPC_AUTHORITY: tinkerbell:42113
+      TINKERBELL_GRPC_AUTHORITY: tink-server:42113
       TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
     depends_on:
-      tinkerbell:
+      tink-server:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: "512M"
     restart: unless-stopped
 
 volumes:
-  postgres_data:
   certs:
+  postgres_data:
