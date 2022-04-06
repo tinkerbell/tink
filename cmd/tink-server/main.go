@@ -72,7 +72,7 @@ func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
 	c.CertDir = env.Get("TINKERBELL_CERTS_DIR", c.CertDir)
 	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
 	c.HTTPAuthority = env.Get("TINKERBELL_HTTP_AUTHORITY", c.HTTPAuthority)
-	c.TLS = env.Bool("TINKERBELL_LS", c.TLS)
+	c.TLS = env.Bool("TINKERBELL_TLS", c.TLS)
 }
 
 func main() {
