@@ -471,7 +471,7 @@ func (w *Worker) getWorkflowData(ctx context.Context, workflowID string) {
 	}
 
 	if len(res.GetData()) != 0 {
-		wfDir := filepath.Join(w.dataDir, w.workerID)
+		wfDir := filepath.Join(w.dataDir, workflowID)
 		f := openDataFile(wfDir, l)
 		defer func() {
 			if err := f.Close(); err != nil {
