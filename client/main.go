@@ -1,8 +1,6 @@
 package client
 
 import (
-	"log"
-
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/protos/hardware"
@@ -83,7 +81,7 @@ func Setup() error {
 func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return hardware.NewHardwareServiceClient(conn), nil
 }
@@ -92,7 +90,7 @@ func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 func TinkTemplateClient() (template.TemplateServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return template.NewTemplateServiceClient(conn), nil
 }
@@ -101,7 +99,7 @@ func TinkTemplateClient() (template.TemplateServiceClient, error) {
 func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return workflow.NewWorkflowServiceClient(conn), nil
 }
