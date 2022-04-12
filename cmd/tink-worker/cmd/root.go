@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -42,11 +41,8 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			retryInterval, _ := cmd.Flags().GetDuration("retry-interval")
 			retries, _ := cmd.Flags().GetInt("max-retry")
-			// TODO(displague) is log-level no longer useful?
-			// logLevel, _ := cmd.Flags().GetString("log-level")
 			workerID, _ := cmd.Flags().GetString("id")
 			maxFileSize, _ := cmd.Flags().GetInt64("max-file-size")
-			timeOut, _ := cmd.Flags().GetDuration("timeout")
 			user, _ := cmd.Flags().GetString("registry-username")
 			pwd, _ := cmd.Flags().GetString("registry-password")
 			registry, _ := cmd.Flags().GetString("docker-registry")
@@ -55,13 +51,6 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			logger.With("version", version).Info("starting")
 			if setupErr := client.Setup(); setupErr != nil {
 				return setupErr
-			}
-
-			ctx := context.Background()
-			if timeOut > 0 {
-				var cancel context.CancelFunc
-				ctx, cancel = context.WithTimeout(ctx, timeOut)
-				defer cancel()
 			}
 
 			conn, err := tryClientConnection(logger, retryInterval, retries)
@@ -96,7 +85,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 				worker.WithLogCapture(captureActionLogs),
 				worker.WithPrivileged(true))
 
-			err = w.ProcessWorkflowActions(ctx)
+			err = w.ProcessWorkflowActions(cmd.Context())
 			if err != nil {
 				return errors.Wrap(err, "worker Finished with error")
 			}
@@ -113,8 +102,6 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes (MAX_FILE_SIZE)")
 
 	rootCmd.Flags().Bool("capture-action-logs", true, "Capture action container output as part of worker logs")
-
-	// rootCmd.Flags().String("log-level", "info", "Sets the worker log level (panic, fatal, error, warn, info, debug, trace)")
 
 	must := func(err error) {
 		if err != nil {
