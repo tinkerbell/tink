@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 )
 
@@ -57,7 +56,7 @@ func TestLogCapturer(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := logr.Discard()
 			ctx := context.Background()
 			clogger := NewDockerLogCapturer(
 				newFakeDockerLoggerClient(tc.content, tc.wanterr),
@@ -68,43 +67,6 @@ func TestLogCapturer(t *testing.T) {
 			if got != tc.content {
 				t.Errorf("Wrong content written to buffer. Expected '%s', got '%s'", tc.content, got)
 			}
-		})
-	}
-}
-
-func TestLogCapturerContextLogger(t *testing.T) {
-	cases := []struct {
-		name   string
-		logger func() *log.Logger
-		writer bytes.Buffer
-	}{
-		{
-			name:   "no context logger",
-			logger: nil,
-		},
-		{
-			name: "with context logger",
-			logger: func() *log.Logger {
-				l := log.Test(t, "github.com/tinkerbell/tink/test")
-				return &l
-			},
-			writer: *bytes.NewBufferString(""),
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
-			ctx := context.Background()
-			if tc.logger != nil {
-				ctx = context.WithValue(ctx, loggingContextKey, tc.logger())
-			}
-			clogger := &DockerLogCapturer{
-				newFakeDockerLoggerClient("", nil),
-				logger,
-				os.Stdout,
-			}
-			clogger.getLogger(ctx)
 		})
 	}
 }

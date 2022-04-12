@@ -8,7 +8,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 )
@@ -27,27 +27,18 @@ type DockerClient interface {
 }
 
 type containerManager struct {
-	logger          log.Logger
+	logger          logr.Logger
 	cli             DockerClient
 	registryDetails RegistryConnDetails
 }
 
-// getLogger is a helper function to get logging out of a context, or use the default logger.
-func (m *containerManager) getLogger(ctx context.Context) *log.Logger {
-	loggerIface := ctx.Value(loggingContextKey)
-	if loggerIface == nil {
-		return &m.logger
-	}
-	return loggerIface.(*log.Logger)
-}
-
 // NewContainerManager returns a new container manager.
-func NewContainerManager(logger log.Logger, cli DockerClient, registryDetails RegistryConnDetails) ContainerManager {
+func NewContainerManager(logger logr.Logger, cli DockerClient, registryDetails RegistryConnDetails) ContainerManager {
 	return &containerManager{logger, cli, registryDetails}
 }
 
 func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs, privileged bool) (string, error) {
-	l := m.getLogger(ctx)
+	l := m.logger
 	config := &container.Config{
 		Image:        path.Join(m.registryDetails.Registry, action.GetImage()),
 		AttachStdout: true,
@@ -73,7 +64,7 @@ func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wf
 	}
 
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
-	l.With("command", cmd).Info("creating container")
+	l.Info("creating container", "command", cmd)
 	resp, err := m.cli.ContainerCreate(ctx, config, hostConfig, nil, nil, action.GetName())
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
@@ -82,7 +73,7 @@ func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wf
 }
 
 func (m *containerManager) StartContainer(ctx context.Context, id string) error {
-	m.getLogger(ctx).With("containerID", id).Debug("starting container")
+	m.logger.V(1).Info("starting container", "containerID", id)
 	return errors.Wrap(m.cli.ContainerStart(ctx, id, types.ContainerStartOptions{}), "DOCKER START")
 }
 
@@ -109,7 +100,7 @@ func (m *containerManager) WaitForContainer(ctx context.Context, id string) (pb.
 }
 
 func (m *containerManager) WaitForFailedContainer(ctx context.Context, id string, failedActionStatus chan pb.State) {
-	l := m.getLogger(ctx)
+	l := m.logger
 	// send API call to wait for the container completion
 	wait, errC := m.cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 
@@ -121,10 +112,10 @@ func (m *containerManager) WaitForFailedContainer(ctx context.Context, id string
 		}
 		failedActionStatus <- pb.State_STATE_FAILED
 	case err := <-errC:
-		l.Error(err)
+		l.Error(err, "")
 		failedActionStatus <- pb.State_STATE_FAILED
 	case <-ctx.Done():
-		l.Error(ctx.Err())
+		l.Error(ctx.Err(), "")
 		failedActionStatus <- pb.State_STATE_TIMEOUT
 	}
 }
@@ -136,7 +127,7 @@ func (m *containerManager) RemoveContainer(ctx context.Context, id string) error
 		RemoveLinks:   false,
 		RemoveVolumes: true,
 	}
-	m.getLogger(ctx).With("containerID", id).Info("removing container")
+	m.logger.Info("removing container", "containerID", id)
 
 	// send API call to remove the container
 	return errors.Wrap(m.cli.ContainerRemove(ctx, id, opts), "DOCKER STOP")

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/docker/docker/api/types"
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 )
 
 func (c *fakeDockerClient) ImagePull(context.Context, string, types.ImagePullOptions) (io.ReadCloser, error) {
@@ -49,7 +49,7 @@ func TestContainerManagerPullImage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := logr.Discard()
 			mgr := NewContainerManager(logger, newFakeDockerClient("", tc.responseContent, 0, 0, tc.clientErr, nil), tc.registry)
 
 			ctx := context.Background()

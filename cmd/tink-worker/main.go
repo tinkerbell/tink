@@ -2,33 +2,29 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/equinix-labs/otel-init-go/otelinit"
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/cmd/tink-worker/cmd"
 )
 
-const (
-	serviceKey = "github.com/tinkerbell/tink"
-)
-
-// version is set at build time.
-var version = "devel"
-
 func main() {
-	logger, err := log.Init(serviceKey)
-	if err != nil {
-		panic(err)
+	exitCode := 0
+	defer func() {
+		os.Exit(exitCode)
+	}()
+
+	ctx, done := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
+	defer done()
+	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "github.com/tinkerbell/tink")
+	defer otelShutdown(ctx)
+
+	if err := cmd.Execute(ctx, os.Args[1:]); err != nil && !errors.Is(err, context.Canceled) {
+		fmt.Fprintln(os.Stderr, err)
+		exitCode = 1
 	}
-
-	ctx, otelShutdown := otelinit.InitOpenTelemetry(context.Background(), "github.com/tinkerbell/tink")
-
-	rootCmd := cmd.NewRootCommand(version, logger)
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
-
-	logger.Close()
-	otelShutdown(ctx)
 }

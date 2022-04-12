@@ -30,7 +30,7 @@ type ImagePullStatus struct {
 
 // PullImage outputs to stdout the contents of the requested image (relative to the registry).
 func (m *containerManager) PullImage(ctx context.Context, image string) error {
-	l := m.getLogger(ctx)
+	l := m.logger
 	authConfig := types.AuthConfig{
 		Username:      m.registryDetails.Username,
 		Password:      m.registryDetails.Password,
@@ -48,7 +48,7 @@ func (m *containerManager) PullImage(ctx context.Context, image string) error {
 	}
 	defer func() {
 		if err := out.Close(); err != nil {
-			l.Error(err)
+			l.Error(err, "")
 		}
 	}()
 	fd := json.NewDecoder(out)
