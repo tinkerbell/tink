@@ -143,7 +143,6 @@ func defaultLogger(level string) logr.Logger {
 func tryClientConnection(certURL string, server string) (*grpc.ClientConn, error) {
 	opts := &client.ConnOptions{CertURL: certURL, GRPCAuthority: server, TLS: true}
 	c, err := client.NewClientConn(opts)
-	//c, err := client.GetConnection()
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +172,7 @@ func customUsageFunc(c *ffcli.Command) string {
 		for _, subcommand := range c.Subcommands {
 			fmt.Fprintf(tw, "  %s\t%s\n", subcommand.Name, subcommand.ShortHelp)
 		}
-		tw.Flush()
+		_ = tw.Flush()
 		fmt.Fprintf(&b, "\n")
 	}
 
