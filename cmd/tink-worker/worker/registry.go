@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"path"
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
@@ -42,7 +43,7 @@ func (m *containerManager) PullImage(ctx context.Context, image string) error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	out, err := m.cli.ImagePull(ctx, m.registryDetails.Registry+"/"+image, types.ImagePullOptions{RegistryAuth: authStr})
+	out, err := m.cli.ImagePull(ctx, path.Join(m.registryDetails.Registry, image), types.ImagePullOptions{RegistryAuth: authStr})
 	if err != nil {
 		return errors.Wrap(err, "DOCKER PULL")
 	}
