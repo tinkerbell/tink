@@ -27,11 +27,13 @@ type Command struct {
 	// Log is the logging implementation.
 	Log logr.Logger
 	// LogLevel defines the logging level.
-	LogLevel string
-	Registry string
-	RegUser  string
-	RegPass  string
-	ID       string `validate:"required,uuid4"`
+	LogLevel          string
+	Registry          string
+	RegUser           string
+	RegPass           string
+	ID                string `validate:"required,uuid4"`
+	TinkCertURL       string `validate:"required,url"`
+	TinkGRPCAuthority string `validate:"required,hostname_port"`
 }
 
 // Execute is an opinionated way to run the tink-worker.
@@ -76,15 +78,13 @@ func (c *Command) RegisterFlags(f *flag.FlagSet) {
 	f.StringVar(&c.RegPass, "reg-pass", "", "Container registry password.")
 	f.StringVar(&c.ID, "id", "", "Worker ID.")
 	f.StringVar(&c.LogLevel, "log-level", "info", "Logging level.")
+	f.StringVar(&c.TinkCertURL, "tink-cert-url", "", "URL to Tink TLS certificate.")
+	f.StringVar(&c.TinkGRPCAuthority, "tink-grpc-authority", "", "Hostname:port of Tink GRPC server.")
 }
 
 // Run Tink worker.
 func (c *Command) Run(ctx context.Context) error {
-	if err := client.Setup(); err != nil {
-		return err
-	}
-
-	conn, err := tryClientConnection()
+	conn, err := tryClientConnection(c.TinkCertURL, c.TinkGRPCAuthority)
 	if err != nil {
 		return err
 	}
@@ -140,8 +140,10 @@ func defaultLogger(level string) logr.Logger {
 	return zerologr.New(&zl)
 }
 
-func tryClientConnection() (*grpc.ClientConn, error) {
-	c, err := client.GetConnection()
+func tryClientConnection(certURL string, server string) (*grpc.ClientConn, error) {
+	opts := &client.ConnOptions{CertURL: certURL, GRPCAuthority: server, TLS: true}
+	c, err := client.NewClientConn(opts)
+	//c, err := client.GetConnection()
 	if err != nil {
 		return nil, err
 	}
