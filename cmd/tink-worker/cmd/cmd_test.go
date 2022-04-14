@@ -26,3 +26,22 @@ FLAGS
 		t.Fatal(diff)
 	}
 }
+
+func TestValidate(t *testing.T) {
+	tests := map[string]struct {
+		cmd *Command
+		err bool
+	}{
+		"success":          {cmd: &Command{ID: "0eba0bf8-3772-4b4a-ab9f-6ebe93b90a95"}},
+		"failure - bad ID": {cmd: &Command{ID: "asdf"}, err: true},
+		"failure - no ID":  {cmd: &Command{}, err: true},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := tt.cmd.Validate()
+			if (got != nil) != tt.err {
+				t.Fatalf("Command.Validate() error = %v, want %v", got, tt.err)
+			}
+		})
+	}
+}
