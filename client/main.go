@@ -1,14 +1,8 @@
 package client
 
 import (
-	"crypto/x509"
-	"io/ioutil"
-	"log"
-	"net/http"
-
 	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/template"
 	"github.com/tinkerbell/tink/protos/workflow"
@@ -41,55 +35,16 @@ func NewFullClient(conn grpc.ClientConnInterface) *FullClient {
 	}
 }
 
-type ConnOptions struct {
-	CertURL       string
-	GRPCAuthority string
-	TLS           bool
-}
-
-func (o *ConnOptions) SetFlags(flagSet *pflag.FlagSet) {
-	flagSet.StringVar(&o.CertURL, "tinkerbell-cert-url", "http://127.0.0.1:42114/cert", "The URL where the certificate is located")
-	flagSet.StringVar(&o.GRPCAuthority, "tinkerbell-grpc-authority", "127.0.0.1:42113", "Connection info for tink-server")
-	flagSet.BoolVar(&o.TLS, "tinkerbell-tls", true, "Connect to server via TLS or not")
-}
-
-// This function is bad and ideally should be removed, but for now it moves all the bad into one place.
-// This is the legacy of packethost/cacher running behind an ingress that couldn't terminate TLS on behalf
-// of GRPC. All of this functionality should be ripped out in favor of either using trusted certificates
-// or moving the establishment of trust in the certificate out to the environment (or running in no-tls mode
-// e.g. for development.)
-func grpcCredentialFromCertEndpoint(url string) (credentials.TransportCredentials, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, errors.Wrap(err, "fetch cert")
-	}
-	defer resp.Body.Close()
-
-	certs, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "read cert")
+func NewClientConn(authority string, tls bool) (*grpc.ClientConn, error) {
+	var creds grpc.DialOption
+	if tls {
+		creds = grpc.WithTransportCredentials(credentials.NewTLS(nil))
+	} else {
+		creds = grpc.WithInsecure()
 	}
 
-	cp := x509.NewCertPool()
-	ok := cp.AppendCertsFromPEM(certs)
-	if !ok {
-		return nil, errors.Wrap(err, "parse cert")
-	}
-
-	return credentials.NewClientTLSFromCert(cp, ""), nil
-}
-
-func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
-	method := grpc.WithInsecure()
-	if opt.TLS {
-		creds, err := grpcCredentialFromCertEndpoint(opt.CertURL)
-		if err != nil {
-			return nil, err
-		}
-		method = grpc.WithTransportCredentials(creds)
-	}
-	conn, err := grpc.Dial(opt.GRPCAuthority,
-		method,
+	conn, err := grpc.Dial(authority,
+		creds,
 		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
 		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 	)
@@ -101,22 +56,13 @@ func NewClientConn(opt *ConnOptions) (*grpc.ClientConn, error) {
 
 // GetConnection returns a gRPC client connection.
 func GetConnection() (*grpc.ClientConn, error) {
-	opts := ConnOptions{
-		CertURL:       env.Get("TINKERBELL_CERT_URL"),
-		GRPCAuthority: env.Get("TINKERBELL_GRPC_AUTHORITY"),
-		TLS:           env.Bool("TINKERBELL_TLS", true),
-	}
-
-	if opts.GRPCAuthority == "" {
+	authority := env.Get("TINKERBELL_GRPC_AUTHORITY")
+	if authority == "" {
 		return nil, errors.New("undefined TINKERBELL_GRPC_AUTHORITY")
 	}
 
-	if opts.TLS {
-		if opts.CertURL == "" {
-			return nil, errors.New("undefined TINKERBELL_CERT_URL")
-		}
-	}
-	return NewClientConn(&opts)
+	tls := env.Bool("TINKERBELL_TLS", true)
+	return NewClientConn(authority, tls)
 }
 
 // Setup : create a connection to server.
@@ -135,16 +81,38 @@ func Setup() error {
 func TinkHardwareClient() (hardware.HardwareServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return hardware.NewHardwareServiceClient(conn), nil
+}
+
+// TinkTemplateClient creates a new hardware client.
+func TinkTemplateClient() (template.TemplateServiceClient, error) {
+	conn, err := GetConnection()
+	if err != nil {
+		return nil, err
+	}
+	return template.NewTemplateServiceClient(conn), nil
 }
 
 // TinkWorkflowClient creates a new workflow client.
 func TinkWorkflowClient() (workflow.WorkflowServiceClient, error) {
 	conn, err := GetConnection()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return workflow.NewWorkflowServiceClient(conn), nil
+}
+
+// TinkFullClient creates a new full client.
+func TinkFullClient() (FullClient, error) {
+	conn, err := GetConnection()
+	if err != nil {
+		return FullClient{}, err
+	}
+	return FullClient{
+		HardwareClient: hardware.NewHardwareServiceClient(conn),
+		TemplateClient: template.NewTemplateServiceClient(conn),
+		WorkflowClient: workflow.NewWorkflowServiceClient(conn),
+	}, nil
 }

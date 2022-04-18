@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -19,25 +18,14 @@ var (
 	logger    log.Logger
 )
 
-type Config struct {
-	CertPEM       []byte
-	ModTime       time.Time
-	HTTPAuthority string
-}
-
 // SetupHTTP setup and return an HTTP server.
-func SetupHTTP(ctx context.Context, logger log.Logger, config *Config, errCh chan<- error) {
-	if config.CertPEM != nil {
-		http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeContent(w, r, "server.pem", config.ModTime, bytes.NewReader(config.CertPEM))
-		})
-	}
+func SetupHTTP(ctx context.Context, logger log.Logger, authority string, errCh chan<- error) {
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/version", getGitRevJSONHandler())
 	http.HandleFunc("/healthz", healthCheckHandler)
 
 	srv := &http.Server{
-		Addr: config.HTTPAuthority,
+		Addr: authority,
 	}
 	go func() {
 		logger.Info("serving http")

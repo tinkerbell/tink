@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/get"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/internal/clientctx"
 	"github.com/tinkerbell/tink/protos/template"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -68,11 +69,10 @@ func TestGetTemplate(t *testing.T) {
 			}
 			stdout := bytes.NewBufferString("")
 			opt := NewGetOptions()
-			opt.SetFullClient(cl)
 			cmd := get.NewGetCommand(opt)
 			cmd.SetOut(stdout)
 			cmd.SetArgs(s.Args)
-			err := cmd.Execute()
+			err := cmd.ExecuteContext(clientctx.Set(context.Background(), cl))
 			if err != nil {
 				t.Error(err)
 			}

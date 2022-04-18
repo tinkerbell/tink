@@ -2,14 +2,12 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/packethost/pkg/env"
@@ -39,7 +37,6 @@ type DaemonConfig struct {
 	PGSSLMode     string
 	OnlyMigration bool
 	GRPCAuthority string
-	TLSCert       string
 	CertDir       string
 	HTTPAuthority string
 	TLS           bool
@@ -53,7 +50,6 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.PGSSLMode, "postgres-sslmode", "disable", "Enable or disable SSL mode in postgres")
 	fs.BoolVar(&c.OnlyMigration, "only-migration", false, "When enabled the server applies the migration to postgres database and it exits")
 	fs.StringVar(&c.GRPCAuthority, "grpc-authority", ":42113", "The address used to expose the gRPC server")
-	fs.StringVar(&c.TLSCert, "tls-cert", "", "")
 	fs.StringVar(&c.CertDir, "cert-dir", "", "")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
 	fs.BoolVar(&c.TLS, "tls", true, "Run in tls protected mode (disabling should only be done for development or if behind TLS terminating proxy)")
@@ -68,11 +64,10 @@ func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
 	c.PGSSLMode = env.Get("PGSSLMODE", c.PGSSLMode)
 	c.OnlyMigration = env.Bool("ONLY_MIGRATION", c.OnlyMigration)
 
-	c.TLSCert = env.Get("TINKERBELL_TLS_CERT", c.TLSCert)
 	c.CertDir = env.Get("TINKERBELL_CERTS_DIR", c.CertDir)
 	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
 	c.HTTPAuthority = env.Get("TINKERBELL_HTTP_AUTHORITY", c.HTTPAuthority)
-	c.TLS = env.Bool("TINKERBELL_LS", c.TLS)
+	c.TLS = env.Bool("TINKERBELL_TLS", c.TLS)
 }
 
 func main() {
@@ -143,29 +138,20 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				return nil
 			}
 
-			var (
-				grpcOpts    []grpc.ServerOption
-				certPEM     []byte
-				certModTime *time.Time
-			)
+			var grpcOpts []grpc.ServerOption
 			if config.TLS {
-				certsDir := os.Getenv("TINKERBELL_CERTS_DIR")
-				if certsDir == "" {
-					certsDir = filepath.Join("/certs", config.Facility)
+				certDir := config.CertDir
+				if certDir == "" {
+					certDir = env.Get("TINKERBELL_CERTS_DIR", filepath.Join("/certs", config.Facility))
 				}
-				var cert *tls.Certificate
-				cert, certPEM, certModTime, err = grpcserver.GetCerts(certsDir)
+				cert, err := grpcserver.GetCerts(certDir)
 				if err != nil {
 					return err
 				}
 				grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewServerTLSFromCert(cert)))
 			}
 
-			tinkAPI, err := server.NewDBServer(
-				logger,
-				database,
-				server.WithCerts(*certModTime, certPEM),
-			)
+			tinkAPI, err := server.NewDBServer(logger, database)
 			if err != nil {
 				return err
 			}
@@ -182,12 +168,7 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			}
 			logger.With("address", addr).Info("started listener")
 
-			httpConfig := &httpserver.Config{
-				HTTPAuthority: config.HTTPAuthority,
-				CertPEM:       certPEM,
-				ModTime:       *certModTime,
-			}
-			httpserver.SetupHTTP(ctx, logger, httpConfig, errCh)
+			httpserver.SetupHTTP(ctx, logger, config.HTTPAuthority, errCh)
 
 			select {
 			case err = <-errCh:

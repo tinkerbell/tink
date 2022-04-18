@@ -11,6 +11,7 @@ import (
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/internal/clientctx"
 )
 
 func TestNewGetCommand(t *testing.T) {
@@ -181,11 +182,10 @@ func TestNewGetCommand(t *testing.T) {
 				t.Skip(s.Skip)
 			}
 			stdout := bytes.NewBufferString("")
-			s.Opt.SetFullClient(&client.FullClient{})
 			cmd := NewGetCommand(s.Opt)
 			cmd.SetOut(stdout)
 			cmd.SetArgs(s.Args)
-			err := cmd.Execute()
+			err := cmd.ExecuteContext(clientctx.Set(context.Background(), &client.FullClient{}))
 			if err != nil {
 				t.Error(err)
 			}

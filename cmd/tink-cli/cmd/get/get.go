@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/tink/client"
-	"google.golang.org/grpc"
+	"github.com/tinkerbell/tink/cmd/tink-cli/cmd/internal/clientctx"
 )
 
 type Options struct {
@@ -22,22 +22,11 @@ type Options struct {
 	// PopulateTable populates a table with the data retrieved with the RetrieveData function.
 	PopulateTable func([]interface{}, table.Writer) error
 
-	clientConnOpt *client.ConnOptions
-	fullClient    *client.FullClient
-
 	// Format specifies the format you want the list of resources printed
 	// out. By default it is table but it can be JSON ar CSV.
 	Format string
 	// NoHeaders does not print the header line
 	NoHeaders bool
-}
-
-func (o *Options) SetClientConnOpt(co *client.ConnOptions) {
-	o.clientConnOpt = co
-}
-
-func (o *Options) SetFullClient(cl *client.FullClient) {
-	o.fullClient = cl
 }
 
 const shortDescr = `display one or many resources`
@@ -64,29 +53,6 @@ func NewGetCommand(opt Options) *cobra.Command {
 		Long:                  longDescr,
 		Example:               exampleDescr,
 		DisableFlagsInUseLine: true,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if opt.fullClient != nil {
-				return nil
-			}
-			return nil
-		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if opt.fullClient == nil {
-				var err error
-				var conn *grpc.ClientConn
-				conn, err = client.NewClientConn(opt.clientConnOpt)
-				if err != nil {
-					fmt.Fprintf(cmd.ErrOrStderr(), "Flag based client configuration failed with err: %s. Trying with env var legacy method...", err)
-					// Fallback to legacy Setup via env var
-					conn, err = client.GetConnection()
-					if err != nil {
-						return errors.Wrap(err, "failed to setup connection to tink-server")
-					}
-				}
-				opt.SetFullClient(client.NewFullClient(conn))
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			var data []interface{}
@@ -94,19 +60,20 @@ func NewGetCommand(opt Options) *cobra.Command {
 			t := table.NewWriter()
 			t.SetOutputMirror(cmd.OutOrStdout())
 
+			client := clientctx.Get(cmd.Context())
 			if len(args) != 0 {
 				if opt.RetrieveByID == nil {
 					return errors.New("option RetrieveByID is not implemented for this resource yet. Please have a look at the issue in GitHub or open a new one")
 				}
 				for _, requestedID := range args {
-					s, err := opt.RetrieveByID(cmd.Context(), opt.fullClient, requestedID)
+					s, err := opt.RetrieveByID(cmd.Context(), client, requestedID)
 					if err != nil {
 						continue
 					}
 					data = append(data, s)
 				}
 			} else {
-				data, err = opt.RetrieveData(cmd.Context(), opt.fullClient)
+				data, err = opt.RetrieveData(cmd.Context(), client)
 			}
 			if err != nil {
 				return err
@@ -148,9 +115,5 @@ func NewGetCommand(opt Options) *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVarP(&opt.Format, "format", "", "table", "The format you expect the list to be printed out. Currently supported format are table, JSON and CSV")
 	cmd.PersistentFlags().BoolVar(&opt.NoHeaders, "no-headers", false, "Table contains an header with the columns' name. You can disable it from being printed out")
-	if opt.clientConnOpt == nil {
-		opt.SetClientConnOpt(&client.ConnOptions{})
-	}
-	opt.clientConnOpt.SetFlags(cmd.PersistentFlags())
 	return cmd
 }

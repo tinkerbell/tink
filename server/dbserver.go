@@ -2,7 +2,6 @@ package server
 
 import (
 	"sync"
-	"time"
 
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/db"
@@ -28,20 +27,8 @@ const (
 // DBServerOption is a type for modifying a DBServer.
 type DBServerOption func(*DBServer) error
 
-// WithCerts sets a certificate mod time and material on a server.
-func WithCerts(modTime time.Time, publicCertPEM []byte) DBServerOption {
-	return func(s *DBServer) error {
-		s.modT = modTime
-		s.cert = publicCertPEM
-		return nil
-	}
-}
-
 // DBServer is a gRPC Server for database-backed Tinkerbell.
 type DBServer struct {
-	cert []byte
-	modT time.Time
-
 	db   db.Database
 	quit <-chan struct{}
 

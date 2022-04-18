@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -14,15 +13,14 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
-	pb "github.com/tinkerbell/tink/protos/workflow"
-	"google.golang.org/grpc"
+	"github.com/tinkerbell/tink/protos/workflow"
 )
 
 const (
-	defaultRetryIntervalSeconds       = 3
-	defaultRetryCount                 = 3
-	defaultMaxFileSize          int64 = 10 * 1024 * 1024 // 10MB
-	defaultTimeoutMinutes             = 60
+	defaultRetryIntervalSeconds = 3
+	defaultRetryCount           = 3
+	defaultMaxFileSize          = 10 * 1024 * 1024 // 10MB
+	defaultTimeoutMinutes       = 60
 )
 
 // NewRootCommand creates a new Tink Worker Cobra root command.
@@ -32,32 +30,28 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 		Short:   "Tink Worker",
 		Version: version,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			viper, err := createViper(logger)
-			if err != nil {
-				return err
-			}
-			return applyViper(viper, cmd)
+			return initViper(logger, cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			retryInterval, _ := cmd.Flags().GetDuration("retry-interval")
-			retries, _ := cmd.Flags().GetInt("max-retry")
-			workerID, _ := cmd.Flags().GetString("id")
-			maxFileSize, _ := cmd.Flags().GetInt64("max-file-size")
-			user, _ := cmd.Flags().GetString("registry-username")
-			pwd, _ := cmd.Flags().GetString("registry-password")
-			registry, _ := cmd.Flags().GetString("docker-registry")
-			captureActionLogs, _ := cmd.Flags().GetBool("capture-action-logs")
+			retryInterval := viper.GetDuration("retry-interval")
+			retries := viper.GetInt("max-retry")
+			workerID := viper.GetString("id")
+			maxFileSize := viper.GetInt64("max-file-size")
+			user := viper.GetString("registry-username")
+			pwd := viper.GetString("registry-password")
+			registry := viper.GetString("docker-registry")
+			captureActionLogs := viper.GetBool("capture-action-logs")
 
 			logger.With("version", version).Info("starting")
-			if setupErr := client.Setup(); setupErr != nil {
-				return setupErr
-			}
 
-			conn, err := tryClientConnection(logger, retryInterval, retries)
+			conn, err := client.NewClientConn(
+				viper.GetString("tinkerbell-grpc-authority"),
+				viper.GetBool("tinkerbell-tls"),
+			)
 			if err != nil {
 				return err
 			}
-			rClient := pb.NewWorkflowServiceClient(conn)
+			workflowClient := workflow.NewWorkflowServiceClient(conn)
 
 			dockerClient, err := dockercli.NewClientWithOpts(dockercli.FromEnv, dockercli.WithAPIVersionNegotiation())
 			if err != nil {
@@ -76,7 +70,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 
 			w := worker.NewWorker(
 				workerID,
-				rClient,
+				workflowClient,
 				containerManager,
 				logCapturer,
 				logger,
@@ -94,14 +88,11 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	}
 
 	rootCmd.Flags().Duration("retry-interval", defaultRetryIntervalSeconds*time.Second, "Retry interval in seconds (RETRY_INTERVAL)")
-
-	rootCmd.Flags().Duration("timeout", defaultTimeoutMinutes*time.Minute, "Max duration to wait for worker to complete (TIMEOUT)")
-
+	rootCmd.Flags().Duration("timeout", defaultTimeoutMinutes*time.Minute, "Max duration to wait for worker to complete. Set to '0' for no timeout (TIMEOUT)")
 	rootCmd.Flags().Int("max-retry", defaultRetryCount, "Maximum number of retries to attempt (MAX_RETRY)")
-
 	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes (MAX_FILE_SIZE)")
-
 	rootCmd.Flags().Bool("capture-action-logs", true, "Capture action container output as part of worker logs")
+	rootCmd.Flags().Bool("tinkerbell-tls", true, "Connect to server via TLS or not (TINKERBELL_TLS)")
 
 	must := func(err error) {
 		if err != nil {
@@ -121,68 +112,40 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password (REGISTRY_PASSWORD)")
 	must(rootCmd.MarkFlagRequired("registry-password"))
 
+	rootCmd.Flags().String("tinkerbell-grpc-authority", "", "tink server grpc endpoint (TINKERBELL_GRPC_AUTHORITY)")
+	must(rootCmd.MarkFlagRequired("tinkerbell-grpc-authority"))
+
+	_ = viper.BindPFlags(rootCmd.Flags())
+
 	return rootCmd
 }
 
-// createViper creates a Viper object configured to read in configuration files
+// initViper initializes Viper  configured to read in configuration files
 // (from various paths with content type specific filename extensions) and loads
 // environment variables.
-func createViper(logger log.Logger) (*viper.Viper, error) {
-	v := viper.New()
-	v.AutomaticEnv()
-	v.SetConfigName("tink-worker")
-	v.AddConfigPath("/etc/tinkerbell")
-	v.AddConfigPath(".")
-	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+func initViper(logger log.Logger, cmd *cobra.Command) error {
+	viper.AutomaticEnv()
+	viper.SetConfigName("tink-worker")
+	viper.AddConfigPath("/etc/tinkerbell")
+	viper.AddConfigPath(".")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// If a config file is found, read it in.
-	if err := v.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			logger.With("configFile", v.ConfigFileUsed()).Error(err, "could not load config file")
-			return nil, err
+			logger.With("configFile", viper.ConfigFileUsed()).Error(err, "could not load config file")
+			return err
 		}
 		logger.Info("no config file found")
 	} else {
-		logger.With("configFile", v.ConfigFileUsed()).Info("loaded config file")
+		logger.With("configFile", viper.ConfigFileUsed()).Info("loaded config file")
 	}
 
-	return v, nil
-}
-
-func applyViper(v *viper.Viper, cmd *cobra.Command) error {
-	errs := []error{}
-
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
-		if !f.Changed && v.IsSet(f.Name) {
-			val := v.Get(f.Name)
-			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
-				errs = append(errs, err)
-				return
-			}
+		if viper.IsSet(f.Name) {
+			_ = cmd.Flags().SetAnnotation(f.Name, cobra.BashCompOneRequiredFlag, []string{"false"})
 		}
 	})
 
-	if len(errs) > 0 {
-		es := []string{}
-		for _, err := range errs {
-			es = append(es, err.Error())
-		}
-		return fmt.Errorf(strings.Join(es, ", "))
-	}
-
 	return nil
-}
-
-func tryClientConnection(logger log.Logger, retryInterval time.Duration, retries int) (*grpc.ClientConn, error) {
-	for ; retries > 0; retries-- {
-		c, err := client.GetConnection()
-		if err != nil {
-			logger.With("error", err, "duration", retryInterval).Info("failed to connect, sleeping before retrying")
-			<-time.After(retryInterval)
-			continue
-		}
-
-		return c, nil
-	}
-	return nil, fmt.Errorf("retries exceeded")
 }

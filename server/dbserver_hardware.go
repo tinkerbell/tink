@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -239,16 +238,6 @@ func (s *DBServer) DeprecatedWatch(in *hardware.GetRequest, stream hardware.Hard
 			}
 		}
 	}
-}
-
-// Cert returns the public cert that can be served to clients.
-func (s *DBServer) Cert() []byte {
-	return s.cert
-}
-
-// ModTime returns the modified-time of the grpc cert.
-func (s *DBServer) ModTime() time.Time {
-	return s.modT
 }
 
 func (s *DBServer) Delete(ctx context.Context, in *hardware.DeleteRequest) (*hardware.Empty, error) {

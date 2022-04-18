@@ -6,6 +6,5 @@ EXPOSE 42114
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-RUN apk add --update ca-certificates && \
-    apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing cfssl
+RUN apk add --no-cache --update --upgrade ca-certificates
 COPY tink-server-linux-${TARGETARCH:-amd64}${TARGETVARIANT} /usr/bin/tink-server
