@@ -107,6 +107,12 @@ jobs:
           name: tink-worker
           path: cmd/tink-worker/tink-worker-*
 
+      - name: Upload virtual-worker binaries
+        uses: actions/upload-artifact@v2
+        with:
+          name: virtual-worker
+          path: cmd/virtual-worker/virtual-worker-*
+
       - name: Upload tink-controller binaries
         uses: actions/upload-artifact@v2
         with:
