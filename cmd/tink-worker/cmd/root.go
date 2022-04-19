@@ -93,6 +93,9 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes (MAX_FILE_SIZE)")
 	rootCmd.Flags().Bool("capture-action-logs", true, "Capture action container output as part of worker logs")
 	rootCmd.Flags().Bool("tinkerbell-tls", true, "Connect to server via TLS or not (TINKERBELL_TLS)")
+	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry (DOCKER_REGISTRY)")
+	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username (REGISTRY_USERNAME)")
+	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password (REGISTRY_PASSWORD)")
 
 	must := func(err error) {
 		if err != nil {
@@ -102,15 +105,6 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 
 	rootCmd.Flags().StringP("id", "i", "", "Sets the worker id (ID)")
 	must(rootCmd.MarkFlagRequired("id"))
-
-	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry (DOCKER_REGISTRY)")
-	must(rootCmd.MarkFlagRequired("docker-registry"))
-
-	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username (REGISTRY_USERNAME)")
-	must(rootCmd.MarkFlagRequired("registry-username"))
-
-	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password (REGISTRY_PASSWORD)")
-	must(rootCmd.MarkFlagRequired("registry-password"))
 
 	rootCmd.Flags().String("tinkerbell-grpc-authority", "", "tink server grpc endpoint (TINKERBELL_GRPC_AUTHORITY)")
 	must(rootCmd.MarkFlagRequired("tinkerbell-grpc-authority"))
