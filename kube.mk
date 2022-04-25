@@ -15,4 +15,12 @@ generate-manifests: bin/controller-gen # Generate manifests e.g. CRD, RBAC etc.
 		output:crd:dir=./config/crd/bases \
 		output:webhook:dir=./config/webhook \
 		webhook
-	prettier --write ./config/crd/
+	controller-gen \
+		paths=./pkg/controllers/... \
+		output:rbac:dir=./config/rbac/ \
+		rbac:roleName=manager-role
+	controller-gen \
+		paths=./server/... \
+		output:rbac:dir=./config/server-rbac \
+		rbac:roleName=server-role
+	prettier --write ./config/

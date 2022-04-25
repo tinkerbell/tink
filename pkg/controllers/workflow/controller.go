@@ -31,6 +31,10 @@ func NewController(kubeClient client.Client) *Controller {
 	}
 }
 
+// +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=tinkerbell.org,resources=templates;templates/status,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch;delete
+
 func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	stored := &v1alpha1.Workflow{}
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, stored); err != nil {
