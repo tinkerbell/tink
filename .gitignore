@@ -23,3 +23,6 @@ out/
 
 .*.swp
 hack/tools
+
+# test worker files
+tests/worker

@@ -40,19 +40,35 @@ type DaemonConfig struct {
 	CertDir       string
 	HTTPAuthority string
 	TLS           bool
+	Backend       string
+
+	KubeconfigPath string
+	KubeAPI        string
+}
+
+const (
+	backendPostgres   = "postgres"
+	backendKubernetes = "kubernetes"
+)
+
+func backends() []string {
+	return []string{backendPostgres, backendKubernetes}
 }
 
 func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Facility, "facility", "deprecated", "This is temporary. It will be removed")
-	fs.StringVar(&c.PGDatabase, "postgres-database", "tinkerbell", "The Postgres database name")
-	fs.StringVar(&c.PGUSer, "postgres-user", "tinkerbell", "The Postgres database username")
-	fs.StringVar(&c.PGPassword, "postgres-password", "tinkerbell", "The Postgres database password")
-	fs.StringVar(&c.PGSSLMode, "postgres-sslmode", "disable", "Enable or disable SSL mode in postgres")
-	fs.BoolVar(&c.OnlyMigration, "only-migration", false, "When enabled the server applies the migration to postgres database and it exits")
+	fs.StringVar(&c.PGDatabase, "postgres-database", "tinkerbell", "The Postgres database name. Only takes effect if `--backend=postgres`")
+	fs.StringVar(&c.PGUSer, "postgres-user", "tinkerbell", "The Postgres database username. Only takes effect if `--backend=postgres`")
+	fs.StringVar(&c.PGPassword, "postgres-password", "tinkerbell", "The Postgres database password. Only takes effect if `--backend=postgres`")
+	fs.StringVar(&c.PGSSLMode, "postgres-sslmode", "disable", "Enable or disable SSL mode in postgres. Only takes effect if `--backend=postgres`")
+	fs.BoolVar(&c.OnlyMigration, "only-migration", false, "When enabled the server applies the migration to postgres database and it exits. Only takes effect if `--backend=postgres`")
 	fs.StringVar(&c.GRPCAuthority, "grpc-authority", ":42113", "The address used to expose the gRPC server")
 	fs.StringVar(&c.CertDir, "cert-dir", "", "")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
 	fs.BoolVar(&c.TLS, "tls", true, "Run in tls protected mode (disabling should only be done for development or if behind TLS terminating proxy)")
+	fs.StringVar(&c.Backend, "backend", backendPostgres, fmt.Sprintf("The backend datastore to use. Must be one of %s", strings.Join(backends(), ", ")))
+	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "", "The path to the Kubeconfig. Only takes effect if `--backend=kubernetes`")
+	fs.StringVar(&c.KubeAPI, "kube-api", "", "The Kubernetes API endpoint. Only takes effect if `--backend=kubernetes`")
 }
 
 func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
@@ -119,26 +135,11 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			// graceful shutdown and error management but I want to
 			// figure this out in another PR
 			errCh := make(chan error, 2)
-
-			// TODO(gianarb): I moved this up because we need to be sure that both
-			// connection, the one used for the resources and the one used for
-			// listening to events and notification are coming in the same way.
-			// BUT we should be using the right flags
-			connInfo := fmt.Sprintf("dbname=%s user=%s password=%s sslmode=%s",
-				config.PGDatabase,
-				config.PGUSer,
-				config.PGPassword,
-				config.PGSSLMode,
+			var (
+				registrar grpcserver.Registrar
+				grpcOpts  []grpc.ServerOption
+				err       error
 			)
-			database, err := internal.SetupPostgres(connInfo, config.OnlyMigration, logger)
-			if err != nil {
-				return err
-			}
-			if config.OnlyMigration {
-				return nil
-			}
-
-			var grpcOpts []grpc.ServerOption
 			if config.TLS {
 				certDir := config.CertDir
 				if certDir == "" {
@@ -150,16 +151,46 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 				}
 				grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewServerTLSFromCert(cert)))
 			}
+			switch config.Backend {
+			case backendKubernetes:
+				var err error
+				registrar, err = server.NewKubeBackedServer(logger, config.KubeconfigPath, config.KubeAPI)
+				if err != nil {
+					return err
+				}
+			case backendPostgres:
+				// TODO(gianarb): I moved this up because we need to be sure that both
+				// connection, the one used for the resources and the one used for
+				// listening to events and notification are coming in the same way.
+				// BUT we should be using the right flags
+				connInfo := fmt.Sprintf("dbname=%s user=%s password=%s sslmode=%s",
+					config.PGDatabase,
+					config.PGUSer,
+					config.PGPassword,
+					config.PGSSLMode,
+				)
+				database, err := internal.SetupPostgres(connInfo, config.OnlyMigration, logger)
+				if err != nil {
+					return err
+				}
+				if config.OnlyMigration {
+					return nil
+				}
 
-			tinkAPI, err := server.NewDBServer(logger, database)
-			if err != nil {
-				return err
+				registrar, err = server.NewDBServer(
+					logger,
+					database,
+				)
+				if err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("invalid backend: %s", config.Backend)
 			}
-
 			// Start the gRPC server in the background
 			addr, err := grpcserver.SetupGRPC(
 				ctx,
-				tinkAPI,
+				registrar,
 				config.GRPCAuthority,
 				grpcOpts,
 				errCh)

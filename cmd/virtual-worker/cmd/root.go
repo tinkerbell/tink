@@ -60,6 +60,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 				logger,
 				tinkWorker.WithMaxFileSize(maxFileSize),
 				tinkWorker.WithRetries(retryInterval, retries),
+				tinkWorker.WithDataDir("./worker"),
 				tinkWorker.WithLogCapture(captureActionLogs))
 
 			err = w.ProcessWorkflowActions(cmd.Context())

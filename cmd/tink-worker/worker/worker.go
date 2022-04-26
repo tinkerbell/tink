@@ -208,10 +208,8 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 		return st, errors.Wrap(err, "wait container")
 	}
 
-	l.With("status", st.String()).Info("container removed")
-
 	if st == pb.State_STATE_SUCCESS {
-		l.With("status", st).Info("action container exited with success", st)
+		l.With("status", st).Info("action container exited with success")
 		return st, nil
 	}
 
@@ -299,15 +297,6 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 					nextAction = actions.GetActionList()[wfContext.GetCurrentActionIndex()]
 					actionIndex = int(wfContext.GetCurrentActionIndex())
 				}
-				l := l.With(
-					"currentWorker", wfContext.GetCurrentWorker(),
-					"currentTask", wfContext.GetCurrentTask(),
-					"currentAction", wfContext.GetCurrentAction(),
-					"currentActionIndex", strconv.FormatInt(wfContext.GetCurrentActionIndex(), 10),
-					"currentActionState", wfContext.GetCurrentActionState(),
-					"totalNumberOfActions", wfContext.GetTotalNumberOfActions(),
-				)
-				l.Info("current context")
 				if nextAction.GetWorkerId() == w.workerID {
 					turn = true
 				}
@@ -338,12 +327,13 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 						os.Exit(1)
 					}
 				}
-				l.Info("starting with action")
+				l.Info("starting action")
 			}
 
 			for turn {
 				action := actions.GetActionList()[actionIndex]
-				l := l.With("actionName", action.GetName(),
+				l := l.With(
+					"actionName", action.GetName(),
 					"taskName", action.GetTaskName(),
 				)
 				ctx := context.WithValue(ctx, loggingContextKey, &l)
@@ -361,7 +351,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 					if err != nil {
 						exitWithGrpcError(err, l)
 					}
-					l.With("duration", strconv.FormatInt(actionStatus.Seconds, 10)).Info("sent action status")
+					l.With("status", actionStatus.ActionStatus, "duration", strconv.FormatInt(actionStatus.Seconds, 10)).Info("sent action status")
 				}
 
 				// get workflow data
@@ -445,6 +435,7 @@ func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.Workfl
 		"workerID", actionStatus.GetWorkerId(),
 		"actionName", actionStatus.GetActionName(),
 		"taskName", actionStatus.GetTaskName(),
+		"status", actionStatus.ActionStatus,
 	)
 	var err error
 	for r := 1; r <= w.retries; r++ {

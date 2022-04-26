@@ -1,0 +1,44 @@
+apiVersion: "tinkerbell.org/v1alpha1"
+kind: Hardware
+metadata:
+  name: "hardware1"
+  namespace: default
+spec:
+  metadata:
+    facility:
+      facility_code: onprem
+    manufacturer:
+      slug: supermicro
+    instance:
+      userdata: ""
+      hostname: "sm01"
+      id: "3c:ec:ef:4c:4f:54"
+      operating_system:
+        distro: "ubuntu"
+        os_slug: "ubuntu_20_04"
+        version: "20.04"
+      storage:
+        disks:
+          - device: /dev/nvme0n1
+            partitions:
+              - label: ROOT
+                number: 1
+                size: 0
+            wipe_table: true
+  interfaces:
+    - dhcp:
+        arch: x86_64
+        hostname: sm01
+        ip:
+          address: 172.16.10.100
+          gateway: 172.16.10.1
+          netmask: 255.255.255.0
+        lease_time: 86400
+        mac: 3c:ec:ef:4c:4f:54
+        name_servers:
+          - 172.16.10.1
+          - 10.1.1.11
+        uefi: true
+      netboot:
+        allowPXE: true
+        allowWorkflow: true

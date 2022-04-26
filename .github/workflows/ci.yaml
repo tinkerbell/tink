@@ -41,6 +41,9 @@ jobs:
       - name: Generate
         run: nix-shell --run 'make generate'
 
+      - name: e2etest
+        run: make e2etest-setup
+
       - name: go test
         run: make test
 
@@ -63,21 +66,12 @@ jobs:
       - run: make bin/gofumpt
 
       - run: PATH=$PWD/bin/:$PATH ./ci-checks.sh
-  validation:
-    runs-on: ubuntu-latest
-    needs:
-      - ci-checks
-
-      - test
-
-      - verify
-    steps:
-      - name: fake
-        run: echo ":+1:"
   crosscompile:
     runs-on: ubuntu-latest
     needs:
-      - validation
+      - ci-checks
+      - test
+      - verify
     steps:
       - name: Checkout code
         uses: actions/checkout@v2

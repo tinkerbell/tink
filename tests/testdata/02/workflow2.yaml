@@ -1,0 +1,10 @@
+apiVersion: "tinkerbell.org/v1alpha1"
+kind: Workflow
+metadata:
+  name: wf2
+  namespace: default
+spec:
+  templateRef: template2
+  hardwareMap:
+    device_1: 3c:ec:ef:4c:4f:54
+    device_2: pnj

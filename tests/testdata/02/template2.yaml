@@ -1,0 +1,65 @@
+apiVersion: "tinkerbell.org/v1alpha1"
+kind: Template
+metadata:
+  name: template2
+  namespace: default
+spec:
+  data: |
+    version: "0.1"
+    name: template1
+    global_timeout: 1800
+    tasks:
+      - name: "bmc-setup"
+        worker: "{{.device_2}}"
+        volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+        actions:
+          - name: "setup-netboot"
+            image: quay.io/tinkerbell-actions/pbnj:v1.0.0
+            timeout: 60
+            environment:
+              NET_BOOT: IPXE
+              MACHINE: "{{.device_1}}"
+          - name: "power-on"
+            image: quay.io/tinkerbell-actions/pbnj:v1.0.0
+            timeout: 60
+            environment:
+              POWER: ON
+              MACHINE: "{{.device_1}}"
+      - name: "os-installation"
+        worker: "{{.device_1}}"
+        volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+        actions:
+          - name: "stream-debian-image"
+            image: quay.io/tinkerbell-actions/image2disk:v1.0.0
+            timeout: 600
+            environment:
+              DEST_DISK: /dev/nvme0n1
+              # Hegel IP
+              IMG_URL: "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz"
+              COMPRESSED: true
+          - name: "add-tink-cloud-init-ds-config"
+            image: writefile:v1.0.0
+            timeout: 90
+            environment:
+              DEST_DISK: /dev/nvme0n1p1
+              FS_TYPE: ext4
+              DEST_PATH: /etc/cloud/ds-identify.cfg
+              UID: 0
+              GID: 0
+              MODE: 0600
+              DIRMODE: 0700
+              CONTENTS: |
+                datasource: Ec2
+          - name: "kexec-debian"
+            image: quay.io/tinkerbell-actions/kexec:v1.0.1
+            timeout: 90
+            pid: host
+            environment:
+              BLOCK_DEVICE: /dev/nvme0n1p1
+              FS_TYPE: ext4

@@ -93,3 +93,6 @@ check-pbfiles: pbfiles
 	  echo "Protobuf files need to be regenerated!";
 	  git diff --no-ext-diff --exit-code --stat -- protos/*/*.pb.*
 	)
+
+e2etest-setup: $(toolsBins)
+	setup-envtest use

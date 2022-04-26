@@ -3,62 +3,109 @@ package tests
 import (
 	"time"
 
+	"github.com/golang/protobuf/ptypes/timestamp"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// FrozenTime is an interface for testing out fake times with additional
-// methods for protobuf and Kubernetes time formats.
-type FrozenTime interface {
-	// Now never changes
-	Now() time.Time
-	Before(time.Duration) time.Time
-	After(time.Duration) time.Time
+type TimeFunc func() time.Time
 
-	// Before Now() by int64 seconds
-	BeforeSec(int64) time.Time
-	// After Now() by int64 seconds
-	AfterSec(int64) time.Time
+type MetaV1TimeFunc func() *metav1.Time
 
-	MetaV1Now() *metav1.Time
-	MetaV1Before(time.Duration) *metav1.Time
-	MetaV1After(time.Duration) *metav1.Time
-	MetaV1BeforeSec(int64) *metav1.Time
-	MetaV1AfterSec(int64) *metav1.Time
+type ProtobufTimeFunc func() *timestamppb.Timestamp
 
-	PbNow() *timestamppb.Timestamp
-	PbBefore(time.Duration) *timestamppb.Timestamp
-	PbAfter(time.Duration) *timestamppb.Timestamp
-	PbBeforeSec(int64) *timestamppb.Timestamp
-	PbAfterSec(int64) *timestamppb.Timestamp
+// NewFrozenTime returns a FrozenTime for a given unix second.
+func NewFrozenTimeUnix(unix int64) *FrozenTime {
+	return &FrozenTime{t: time.Unix(unix, 0).UTC()}
 }
 
-func NewFrozenTimeUnix(unix int64) FrozenTime {
-	return &ft{t: time.Unix(unix, 0)}
+// NewFrozenTime returns a FrozenTime for a given time.Time.
+func NewFrozenTime(t time.Time) *FrozenTime {
+	return &FrozenTime{t.UTC()}
 }
 
-func NewFrozenTime(t time.Time) FrozenTime {
-	return &ft{t}
-}
-
-type ft struct {
+// FrozenTime is a type for testing out fake times.
+type FrozenTime struct {
 	t time.Time
 }
 
-func (f *ft) Now() time.Time                   { return f.t }
-func (f *ft) Before(d time.Duration) time.Time { return f.Now().Add(d) }
-func (f *ft) After(d time.Duration) time.Time  { return f.Now().Add(-d) }
-func (f *ft) BeforeSec(s int64) time.Time      { return f.Now().Add(time.Duration(-s) * time.Second) }
-func (f *ft) AfterSec(s int64) time.Time       { return f.Now().Add(time.Duration(s) * time.Second) }
+// Now never changes.
+func (f *FrozenTime) Now() time.Time { return f.t }
 
-func (f *ft) MetaV1Now() *metav1.Time                   { t := metav1.NewTime(f.Now()); return &t }
-func (f *ft) MetaV1Before(d time.Duration) *metav1.Time { t := metav1.NewTime(f.Before(d)); return &t }
-func (f *ft) MetaV1After(d time.Duration) *metav1.Time  { t := metav1.NewTime(f.After(d)); return &t }
-func (f *ft) MetaV1BeforeSec(s int64) *metav1.Time      { t := metav1.NewTime(f.BeforeSec(s)); return &t }
-func (f *ft) MetaV1AfterSec(s int64) *metav1.Time       { t := metav1.NewTime(f.AfterSec(s)); return &t }
+// Before returns a time before FrozenTime.Now() by a given duration.
+func (f *FrozenTime) Before(d time.Duration) time.Time { return f.Now().Add(-d) }
 
-func (f *ft) PbNow() *timestamppb.Timestamp                   { return timestamppb.New(f.Now()) }
-func (f *ft) PbBefore(d time.Duration) *timestamppb.Timestamp { return timestamppb.New(f.Before(d)) }
-func (f *ft) PbAfter(d time.Duration) *timestamppb.Timestamp  { return timestamppb.New(f.After(d)) }
-func (f *ft) PbBeforeSec(s int64) *timestamppb.Timestamp      { return timestamppb.New(f.BeforeSec(s)) }
-func (f *ft) PbAfterSec(s int64) *timestamppb.Timestamp       { return timestamppb.New(f.AfterSec(s)) }
+// After returns a time after FrozenTime.Now() by a given duration.
+func (f *FrozenTime) After(d time.Duration) time.Time { return f.Now().Add(d) }
+
+// Before Now() by int64 seconds.
+func (f *FrozenTime) BeforeSec(s int64) time.Time {
+	return f.Now().Add(time.Duration(-s) * time.Second)
+}
+
+// After Now() by int64 seconds.
+func (f *FrozenTime) AfterSec(s int64) time.Time { return f.Now().Add(time.Duration(s) * time.Second) }
+
+// BeforeFunc returns a TimeFunc where the return value is a time before FrozenTime.Now() by a given duration.
+func (f *FrozenTime) BeforeFunc(d time.Duration) TimeFunc {
+	return func() time.Time { return f.Before(d) }
+}
+
+// AfterFunc returns a TimeFunc where the return value is a time after FrozenTime.Now() by a given duration.
+func (f *FrozenTime) AfterFunc(d time.Duration) TimeFunc {
+	return func() time.Time { return f.After(d) }
+}
+
+func (f *FrozenTime) MetaV1Now() *metav1.Time { t := metav1.NewTime(f.Now()); return &t }
+func (f *FrozenTime) MetaV1Before(d time.Duration) *metav1.Time {
+	t := metav1.NewTime(f.Before(d))
+	return &t
+}
+
+func (f *FrozenTime) MetaV1After(d time.Duration) *metav1.Time {
+	t := metav1.NewTime(f.After(d))
+	return &t
+}
+
+func (f *FrozenTime) MetaV1BeforeSec(s int64) *metav1.Time {
+	t := metav1.NewTime(f.BeforeSec(s))
+	return &t
+}
+
+func (f *FrozenTime) MetaV1AfterSec(s int64) *metav1.Time {
+	t := metav1.NewTime(f.AfterSec(s))
+	return &t
+}
+
+func (f *FrozenTime) MetaV1BeforeFunc(d time.Duration) MetaV1TimeFunc {
+	return func() *metav1.Time { return f.MetaV1Before(d) }
+}
+
+func (f *FrozenTime) MetaV1AfterFunc(d time.Duration) MetaV1TimeFunc {
+	return func() *metav1.Time { return f.MetaV1After(d) }
+}
+
+func (f *FrozenTime) PbNow() *timestamppb.Timestamp { return timestamppb.New(f.Now()) }
+func (f *FrozenTime) PbBefore(d time.Duration) *timestamppb.Timestamp {
+	return timestamppb.New(f.Before(d))
+}
+
+func (f *FrozenTime) PbAfter(d time.Duration) *timestamppb.Timestamp {
+	return timestamppb.New(f.After(d))
+}
+
+func (f *FrozenTime) PbBeforeSec(s int64) *timestamppb.Timestamp {
+	return timestamppb.New(f.BeforeSec(s))
+}
+
+func (f *FrozenTime) PbAfterSec(s int64) *timestamppb.Timestamp {
+	return timestamppb.New(f.AfterSec(s))
+}
+
+func (f *FrozenTime) PbBeforeFunc(d time.Duration) ProtobufTimeFunc {
+	return func() *timestamp.Timestamp { return f.PbBefore(d) }
+}
+
+func (f *FrozenTime) PbAfterFunc(d time.Duration) ProtobufTimeFunc {
+	return func() *timestamp.Timestamp { return f.PbAfter(d) }
+}
