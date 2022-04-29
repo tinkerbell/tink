@@ -18,6 +18,7 @@ const (
 	errInvalidActionName     = "invalid action name"
 	errInvalidTaskReported   = "reported task name does not match the current action details"
 	errInvalidActionReported = "reported action name does not match the current action details"
+	errInvalidActionIndex    = "invalid action index for workflow"
 
 	msgReceivedStatus   = "received action status: %s"
 	msgCurrentWfContext = "current workflow context"
