@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  namespace: system
+  labels:
+    control-plane: server
+spec:
+  selector:
+    matchLabels:
+      control-plane: server
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: server
+      labels:
+        control-plane: server
+    spec:
+      containers:
+        - args:
+            - "--backend=kubernetes"
+            - "--tls=false"
+          image: server:latest
+          imagePullPolicy: IfNotPresent
+          name: tink-server
+          ports:
+            - containerPort: 42113
+              hostPort: 42113
+              name: grpc
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+      serviceAccountName: server
+      terminationGracePeriodSeconds: 10

@@ -14,6 +14,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=tinkerbell.org,resources=templates;templates/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch
+
 // NewKubeBackedServer returns a server that implements the Workflow server interface for a given kubeconfig.
 func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver string) (*KubernetesBackedServer, error) {
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
