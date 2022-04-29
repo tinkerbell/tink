@@ -96,9 +96,11 @@ func (s *DBServer) ReportActionStatus(ctx context.Context, req *workflow.Workflo
 			actionIndex++
 		}
 	}
-	if actionIndex == wfContext.TotalNumberOfActions-1 {
+
+	if wfContext.TotalNumberOfActions > 1 && actionIndex == wfContext.TotalNumberOfActions-1 {
 		return nil, status.Errorf(codes.FailedPrecondition, errInvalidActionIndex)
 	}
+
 	action := wfActions.ActionList[actionIndex]
 	if action.GetTaskName() != req.GetTaskName() {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidTaskReported)
