@@ -13,22 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var workflowData = make(map[string]int)
-
-const (
-	errInvalidWorkerID       = "invalid worker id"
-	errInvalidWorkflowID     = "invalid workflow id"
-	errInvalidTaskName       = "invalid task name"
-	errInvalidActionName     = "invalid action name"
-	errInvalidTaskReported   = "reported task name does not match the current action details"
-	errInvalidActionReported = "reported action name does not match the current action details"
-	errInvalidActionIndex    = "invalid action index for workflow"
-
-	msgReceivedStatus   = "received action status: %s"
-	msgCurrentWfContext = "current workflow context"
-	msgSendWfContext    = "send workflow context: %s"
-)
-
 // GetWorkflowContexts implements tinkerbell.GetWorkflowContexts.
 func (s *DBServer) GetWorkflowContexts(req *workflow.WorkflowContextRequest, stream workflow.WorkflowService_GetWorkflowContextsServer) error {
 	wfs, err := getWorkflowsForWorker(stream.Context(), s.db, req.WorkerId)
