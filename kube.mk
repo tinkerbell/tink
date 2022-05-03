@@ -35,7 +35,10 @@ generate-go: bin/controller-gen bin/gofumpt # Generate Go code.
 	gofumpt -w -s ./pkg/apis
 
 .PHONY: generate-manifests
-generate-manifests: bin/controller-gen # Generate manifests e.g. CRD, RBAC etc.
+generate-manifests: generate-crds generate-rbacs generate-server-rbacs # Generate manifests e.g. CRD, RBAC etc.
+
+.PHONY: generate-crds
+generate-crds: bin/controller-gen
 	controller-gen \
 		paths=./pkg/apis/... \
 		crd:crdVersions=v1 \
@@ -43,15 +46,23 @@ generate-manifests: bin/controller-gen # Generate manifests e.g. CRD, RBAC etc.
 		output:crd:dir=./config/crd/bases \
 		output:webhook:dir=./config/webhook \
 		webhook
+	prettier --write ./config/crd/bases
+
+.PHONY: generate-rbacs
+generate-rbacs: bin/controller-gen
 	controller-gen \
 		paths=./pkg/controllers/... \
 		output:rbac:dir=./config/rbac/ \
 		rbac:roleName=manager-role
+	prettier --write ./config/rbac
+
+.PHONY: generate-server-rbacs
+generate-server-rbacs: bin/controller-gen
 	controller-gen \
 		paths=./server/... \
 		output:rbac:dir=./config/server-rbac \
 		rbac:roleName=server-role
-	prettier --write ./config/
+	prettier --write ./config/server-rbac/
 
 ## --------------------------------------
 ## Generate
