@@ -1,27 +1,3 @@
-# Directories
-TOOLS_DIR := hack/tools
-TOOLS_BIN_DIR := $(abspath $(TOOLS_DIR)/bin)
-GO_INSTALL = ./scripts/go_install.sh
-
-# Binaries
-CONTROLLER_GEN_VER := v0.8.0
-CONTROLLER_GEN_BIN := controller-gen
-CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
-
-KUSTOMIZE_VER := v4.5.4
-KUSTOMIZE_BIN := kustomize
-KUSTOMIZE := $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)
-
-## --------------------------------------
-## Tooling Binaries
-## --------------------------------------
-
-$(CONTROLLER_GEN): ## Build controller-gen from tools folder.
-	GOBIN=$(TOOLS_BIN_DIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VER)
-
-$(KUSTOMIZE): ## Build kustomize from tools folder.
-	GOBIN=$(TOOLS_BIN_DIR) go install sigs.k8s.io/kustomize/kustomize/v4@$(KUSTOMIZE_VER)
-
 ## --------------------------------------
 ## Generate
 ## --------------------------------------
@@ -64,10 +40,6 @@ generate-server-rbacs: bin/controller-gen
 		rbac:roleName=server-role
 	prettier --write ./config/server-rbac/
 
-## --------------------------------------
-## Generate
-## --------------------------------------
-
 RELEASE_DIR ?= out/release
 
 $(RELEASE_DIR):
@@ -96,8 +68,8 @@ release: clean-release
 	$(MAKE) release-manifests
 
 .PHONY: release-manifests ## Builds the manifests to publish with a release.
-release-manifests: $(KUSTOMIZE) $(RELEASE_DIR)
-	$(KUSTOMIZE) build config/default > $(RELEASE_DIR)/tink.yaml
+release-manifests: bin/kustomize $(RELEASE_DIR)
+	kustomize build config/default > $(RELEASE_DIR)/tink.yaml
 
 .PHONY: clean-release
 clean-release: ## Remove the release folder
