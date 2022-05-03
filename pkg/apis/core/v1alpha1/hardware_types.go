@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,6 +44,12 @@ type Hardware struct {
 // HardwareSpec defines the desired state of Hardware.
 type HardwareSpec struct {
 
+	// BMCRef contains a relation to a BMC state management type in the same
+	// namespace as the Hardware. This may be used for BMC management by
+	// orchestrators.
+	//+optional
+	BMCRef *corev1.TypedLocalObjectReference `json:"bmcRef,omitempty"`
+
 	//+optional
 	Interfaces []Interface `json:"interfaces,omitempty"`
 
@@ -56,6 +64,11 @@ type HardwareSpec struct {
 
 	//+optional
 	Disks []Disk `json:"disks,omitempty"`
+
+	// Resources represents known resources that are available on a machine.
+	// Resources may be used for scheduling by orchestrators.
+	//+optional
+	Resources map[string]resource.Quantity `json:"resources,omitempty"`
 
 	// UserData is the user data to configure in the hardware's
 	// metadata
