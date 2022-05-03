@@ -62,11 +62,11 @@ PATH := ${GOBIN}:${PATH}
 export PATH
 endif
 
-toolsBins := $(addprefix bin/,$(notdir $(shell awk -F'"' '/^\s*_/ {print $$2}' tools.go)))
+toolsBins := $(addprefix bin/,$(notdir $(shell awk -F'"' '/^\s*_/ {print $$2}' tools.go | sed 's|/v[[:digit:]]\+||')))
 
 # installs cli tools defined in tools.go
 $(toolsBins): go.mod go.sum tools.go
-$(toolsBins): CMD=$(shell awk -F'"' '/$(@F)"/ {print $$2}' tools.go)
+$(toolsBins): CMD=$(shell grep -w '$(@F)' tools.go | awk -F'"' '{print $$2}')
 $(toolsBins):
 	go install $(CMD)
 
