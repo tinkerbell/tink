@@ -40,37 +40,26 @@ generate-server-rbacs: bin/controller-gen
 		rbac:roleName=server-role
 	prettier --write ./config/server-rbac/
 
-RELEASE_DIR ?= out/release
-
-$(RELEASE_DIR):
-	mkdir -p $(RELEASE_DIR)/
-
 REGISTRY ?= quay.io/tinkerbell
 TINK_SERVER_IMAGE_NAME ?= tink-server
 TINK_CONTROLLER_IMAGE_NAME ?= tink-controller
 TINK_SERVER_IMAGE_TAG ?= latest
 TINK_CONTROLLER_IMAGE_TAG ?= latest
 
-.PHONY: set-manager-manifest-image
-set-manager-manifest-image:
-	$(info Updating kustomize image patch file for tink-controller)
-	sed -i'' -e 's@image: .*@image: '"${MANIFEST_IMG}:$(MANIFEST_TAG)"'@' ./config/default/manager_image_patch.yaml
+out/release/default/manager_image.yaml: config/default/manager_image.yaml out/release/default/kustomization.yaml
+out/release/default/manager_image.yaml: TAG=$(REGISTRY)/$(TINK_CONTROLLER_IMAGE_NAME):$(TINK_CONTROLLER_IMAGE_TAG)
+out/release/default/server_image.yaml: config/default/server_image.yaml out/release/default/kustomization.yaml
+out/release/default/server_image.yaml: TAG=$(REGISTRY)/$(TINK_SERVER_IMAGE_NAME):$(TINK_SERVER_IMAGE_TAG)
+out/release/default/manager_image.yaml out/release/default/server_image.yaml:
+	sed -e 's|image: .*|image: "$(TAG)"|' $^ >$@
 
-.PHONY: set-server-manifest-image
-set-server-manifest-image:
-	$(info Updating kustomize image patch file for tink-server)
-	sed -i'' -e 's@image: .*@image: '"${MANIFEST_IMG}:$(MANIFEST_TAG)"'@' ./config/default/server_image_patch.yaml
+out/release/default/kustomization.yaml: config/default/kustomization.yaml
+	rm -rf out/
+	mkdir -p out/
+	cp -a config/ out/release/
 
-.PHONY: release
-release: clean-release
-	$(MAKE) set-manager-manifest-image MANIFEST_IMG=$(REGISTRY)/$(TINK_SERVER_IMAGE_NAME) MANIFEST_TAG=$(TINK_CONTROLLER_IMAGE_TAG)
-	$(MAKE) set-server-manifest-image MANIFEST_IMG=$(REGISTRY)/$(TINK_SERVER_IMAGE_NAME) MANIFEST_TAG=$(TINK_SERVER_IMAGE_TAG)
-	$(MAKE) release-manifests
+out/release/tink.yaml: bin/kustomize generate-manifests out/release/default/manager_image.yaml out/release/default/manager_image.yaml
+	kustomize build out/release/default -o $@
+	prettier --write $@
 
-.PHONY: release-manifests ## Builds the manifests to publish with a release.
-release-manifests: bin/kustomize $(RELEASE_DIR)
-	kustomize build config/default > $(RELEASE_DIR)/tink.yaml
-
-.PHONY: clean-release
-clean-release: ## Remove the release folder
-	rm -rf $(RELEASE_DIR)
+release-manifests: out/release/tink.yaml ## Builds the manifests to publish with a release.
