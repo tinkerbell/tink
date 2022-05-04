@@ -2,7 +2,7 @@
 ## Generate
 ## --------------------------------------
 
-PHONY: generate
+.PHONY: generate
 generate: generate-go generate-manifests # Generate code, manifests etc.
 
 .PHONY: generate-go
@@ -40,25 +40,18 @@ generate-server-rbacs: bin/controller-gen
 		rbac:roleName=server-role
 	prettier --write ./config/server-rbac/
 
-REGISTRY ?= quay.io/tinkerbell
-TINK_SERVER_IMAGE_NAME ?= tink-server
-TINK_CONTROLLER_IMAGE_NAME ?= tink-controller
-TINK_SERVER_IMAGE_TAG ?= latest
-TINK_CONTROLLER_IMAGE_TAG ?= latest
-
-out/release/default/manager_image.yaml: config/default/manager_image.yaml out/release/default/kustomization.yaml
-out/release/default/manager_image.yaml: TAG=$(REGISTRY)/$(TINK_CONTROLLER_IMAGE_NAME):$(TINK_CONTROLLER_IMAGE_TAG)
-out/release/default/server_image.yaml: config/default/server_image.yaml out/release/default/kustomization.yaml
-out/release/default/server_image.yaml: TAG=$(REGISTRY)/$(TINK_SERVER_IMAGE_NAME):$(TINK_SERVER_IMAGE_TAG)
-out/release/default/manager_image.yaml out/release/default/server_image.yaml:
-	sed -e 's|image: .*|image: "$(TAG)"|' $^ >$@
+TINK_SERVER_IMAGE ?= quay.io/tinkerbell/tink-server
+TINK_CONTROLLER_IMAGE ?= quay.io/tinkerbell/tink-controller
+TINK_SERVER_TAG ?= latest
+TINK_CONTROLLER_TAG ?= latest
 
 out/release/default/kustomization.yaml: config/default/kustomization.yaml
 	rm -rf out/
 	mkdir -p out/
 	cp -a config/ out/release/
 
-out/release/tink.yaml: bin/kustomize generate-manifests out/release/default/manager_image.yaml out/release/default/manager_image.yaml
+out/release/tink.yaml: bin/kustomize generate-manifests out/release/default/kustomization.yaml
+	(cd out/release/default && kustomize edit set image server=$(TINK_SERVER_IMAGE):$(TINK_CONTROLLER_TAG) controller=$(TINK_CONTROLLER_IMAGE):$(TINK_CONTROLLER_TAG))
 	kustomize build out/release/default -o $@
 	prettier --write $@
 
