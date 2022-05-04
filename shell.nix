@@ -20,6 +20,8 @@ mkShell {
     nodePackages.prettier
     protobuf
     python3Packages.codespell
+    python3Packages.pip
+    python3Packages.setuptools
     shellcheck
     shfmt
     vagrant
