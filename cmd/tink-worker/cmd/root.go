@@ -40,6 +40,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			user := viper.GetString("registry-username")
 			pwd := viper.GetString("registry-password")
 			registry := viper.GetString("docker-registry")
+			useAbsoluteImageURI := viper.GetBool("use-absolute-image-uri")
 			captureActionLogs := viper.GetBool("capture-action-logs")
 
 			logger.With("version", version).Info("starting")
@@ -61,9 +62,10 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 				logger,
 				dockerClient,
 				worker.RegistryConnDetails{
-					Registry: registry,
-					Username: user,
-					Password: pwd,
+					Registry:            registry,
+					Username:            user,
+					Password:            pwd,
+					UseAbsoluteImageURI: useAbsoluteImageURI,
 				})
 
 			logCapturer := worker.NewDockerLogCapturer(dockerClient, logger, os.Stdout)
@@ -96,6 +98,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry (DOCKER_REGISTRY)")
 	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username (REGISTRY_USERNAME)")
 	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password (REGISTRY_PASSWORD)")
+	rootCmd.Flags().BoolP("use-absolute-image-uri", "a", false, "Do not prepend docker_registry to template action images (USE_ABSOLUTE_IMAGE_URI)")
 
 	must := func(err error) {
 		if err != nil {

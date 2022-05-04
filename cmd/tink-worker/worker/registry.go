@@ -13,9 +13,10 @@ import (
 
 // RegistryConnDetails are the connection details for accessing a Docker registry.
 type RegistryConnDetails struct {
-	Registry string
-	Username string
-	Password string
+	Registry            string
+	Username            string
+	Password            string
+	UseAbsoluteImageURI bool
 }
 
 // ImagePullStatus is the status of the downloaded Image chunk.
@@ -43,7 +44,12 @@ func (m *containerManager) PullImage(ctx context.Context, image string) error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	out, err := m.cli.ImagePull(ctx, path.Join(m.registryDetails.Registry, image), types.ImagePullOptions{RegistryAuth: authStr})
+	imageURI := image
+	if !m.registryDetails.UseAbsoluteImageURI && len(m.registryDetails.Registry) > 0 {
+		imageURI = path.Join(m.registryDetails.Registry, image)
+	}
+
+	out, err := m.cli.ImagePull(ctx, imageURI, types.ImagePullOptions{RegistryAuth: authStr})
 	if err != nil {
 		return errors.Wrap(err, "DOCKER PULL")
 	}

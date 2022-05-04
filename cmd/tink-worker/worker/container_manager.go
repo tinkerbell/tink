@@ -48,8 +48,13 @@ func NewContainerManager(logger log.Logger, cli DockerClient, registryDetails Re
 
 func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs, privileged bool) (string, error) {
 	l := m.getLogger(ctx)
+
+	actionImage := action.GetImage()
+	if !m.registryDetails.UseAbsoluteImageURI && len(m.registryDetails.Registry) > 0 {
+		actionImage = path.Join(m.registryDetails.Registry, action.GetImage())
+	}
 	config := &container.Config{
-		Image:        path.Join(m.registryDetails.Registry, action.GetImage()),
+		Image:        actionImage,
 		AttachStdout: true,
 		AttachStderr: true,
 		Cmd:          cmd,
