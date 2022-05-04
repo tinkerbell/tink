@@ -362,7 +362,7 @@ func TestGetTemplateWithInvalidID(t *testing.T) {
 	want := "no rows in result set"
 	// TODO: replace with errors.Is
 	if !strings.Contains(err.Error(), want) {
-		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error())) // nolint:errorlint // non-wrapping format verb for fmt.Errorf
+		t.Error(fmt.Errorf("unexpected output, looking for %q as a substring in %q", want, err.Error()))
 	}
 }
 

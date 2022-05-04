@@ -26,19 +26,18 @@ var GetCmd = &cobra.Command{
 		if len(args) == 0 {
 			return fmt.Errorf("%v requires an argument", c.UseLine())
 		}
-		for _, arg := range args {
-			if _, err := uuid.Parse(arg); err != nil {
-				return fmt.Errorf("invalid uuid: %s", arg)
-			}
-		}
 		return nil
 	},
 	Run: func(c *cobra.Command, args []string) {
 		for _, arg := range args {
-			req := template.GetRequest{
-				GetBy: &template.GetRequest_Id{
-					Id: arg,
-				},
+			req := template.GetRequest{}
+			// Parse arg[0] to see if it is a UUID
+			if _, err := uuid.Parse(arg); err == nil {
+				// UUID
+				req.GetBy = &template.GetRequest_Id{Id: arg}
+			} else {
+				// String (Name)
+				req.GetBy = &template.GetRequest_Name{Name: arg}
 			}
 			t, err := client.TemplateClient.GetTemplate(context.Background(), &req)
 			if err != nil {
@@ -57,6 +56,14 @@ func (h *getTemplate) RetrieveByID(ctx context.Context, cl *client.FullClient, r
 	return cl.TemplateClient.GetTemplate(ctx, &template.GetRequest{
 		GetBy: &template.GetRequest_Id{
 			Id: requestedID,
+		},
+	})
+}
+
+func (h *getTemplate) RetrieveByName(_ context.Context, cl *client.FullClient, requestName string) (interface{}, error) {
+	return cl.TemplateClient.GetTemplate(context.Background(), &template.GetRequest{
+		GetBy: &template.GetRequest_Name{
+			Name: requestName,
 		},
 	})
 }
@@ -98,9 +105,10 @@ func (h *getTemplate) PopulateTable(data []interface{}, t table.Writer) error {
 func NewGetOptions() get.Options {
 	h := getTemplate{}
 	return get.Options{
-		Headers:       []string{"ID", "Name", "Created At", "Updated At"},
-		RetrieveByID:  h.RetrieveByID,
-		RetrieveData:  h.RetrieveData,
-		PopulateTable: h.PopulateTable,
+		Headers:        []string{"ID", "Name", "Created At", "Updated At"},
+		RetrieveByID:   h.RetrieveByID,
+		RetrieveByName: h.RetrieveByName,
+		RetrieveData:   h.RetrieveData,
+		PopulateTable:  h.PopulateTable,
 	}
 }
