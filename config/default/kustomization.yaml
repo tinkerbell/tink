@@ -17,7 +17,3 @@ bases:
   - ../manager
   - ../server
   - ../server-rbac
-
-patchesStrategicMerge:
-  - manager_image.yaml
-  - server_image.yaml
