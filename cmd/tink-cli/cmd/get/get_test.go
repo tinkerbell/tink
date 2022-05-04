@@ -214,6 +214,10 @@ func TestNewGetCommand(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name:        "no opts",
+			ExpectError: errors.New("get-all-data is not implemented for this resource yet, please have a look at the issue in GitHub or open a new one"),
+		},
 	}
 
 	for _, s := range tests {

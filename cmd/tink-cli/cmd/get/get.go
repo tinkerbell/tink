@@ -67,6 +67,9 @@ func NewGetCommand(opt Options) *cobra.Command {
 			if len(args) != 0 {
 				data, err = retrieveMulti(cmd.Context(), opt, client, args)
 			} else {
+				if opt.RetrieveData == nil {
+					return errors.New("get-all-data is not implemented for this resource yet, please have a look at the issue in GitHub or open a new one")
+				}
 				data, err = opt.RetrieveData(cmd.Context(), client)
 			}
 			if err != nil {
