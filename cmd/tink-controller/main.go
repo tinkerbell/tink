@@ -27,7 +27,7 @@ type DaemonConfig struct {
 }
 
 func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.K8sAPI, "kubernetes", "", "The Kubernetes URL")
+	fs.StringVar(&c.K8sAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction.")
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", "", "Absolute path to the kubeconfig file")
 }
 

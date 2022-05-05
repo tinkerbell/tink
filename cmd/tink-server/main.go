@@ -68,7 +68,7 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.TLS, "tls", true, "Run in tls protected mode (disabling should only be done for development or if behind TLS terminating proxy)")
 	fs.StringVar(&c.Backend, "backend", backendPostgres, fmt.Sprintf("The backend datastore to use. Must be one of %s", strings.Join(backends(), ", ")))
 	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "", "The path to the Kubeconfig. Only takes effect if `--backend=kubernetes`")
-	fs.StringVar(&c.KubeAPI, "kube-api", "", "The Kubernetes API endpoint. Only takes effect if `--backend=kubernetes`")
+	fs.StringVar(&c.KubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only takes effect if `--backend=kubernetes`")
 }
 
 func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
