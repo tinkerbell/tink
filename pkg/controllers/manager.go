@@ -96,27 +96,27 @@ func NewManager(config *rest.Config, options controllerruntime.Options) (Manager
 		{
 			&v1alpha1.Workflow{},
 			WorkflowWorkerAddrIndex,
-			workflowWorkerAddrIndexFunc,
+			WorkflowWorkerAddrIndexFunc,
 		},
 		{
 			&v1alpha1.Workflow{},
 			WorkflowWorkerNonTerminalStateIndex,
-			workflowWorkerNonTerminalStateIndexFunc,
+			WorkflowWorkerNonTerminalStateIndexFunc,
 		},
 		{
 			&v1alpha1.Workflow{},
 			WorkflowStateIndex,
-			workflowStateIndexFunc,
+			WorkflowStateIndexFunc,
 		},
 		{
 			&v1alpha1.Hardware{},
 			HardwareIPAddrIndex,
-			hardwareIPIndexFunc,
+			HardwareIPIndexFunc,
 		},
 		{
 			&v1alpha1.Hardware{},
 			HardwareMACAddrIndex,
-			hardwareMacIndexFunc,
+			HardwareMacIndexFunc,
 		},
 	}
 	for _, indexer := range indexers {
@@ -150,8 +150,8 @@ func (m *GenericControllerManager) RegisterControllers(ctx context.Context, cont
 	return m
 }
 
-// workflowWorkerAddrIndexFunc func returns a list of worker addresses from a workflow.
-func workflowWorkerAddrIndexFunc(obj client.Object) []string {
+// WorkflowWorkerAddrIndexFunc func returns a list of worker addresses from a workflow.
+func WorkflowWorkerAddrIndexFunc(obj client.Object) []string {
 	wf, ok := obj.(*v1alpha1.Workflow)
 	if !ok {
 		return nil
@@ -165,8 +165,9 @@ func workflowWorkerAddrIndexFunc(obj client.Object) []string {
 	return resp
 }
 
-// workflowWorkerNonTerminalStateIndexFunc func indexes workflow by worker for non terminal workflows.
-func workflowWorkerNonTerminalStateIndexFunc(obj client.Object) []string {
+// WorkflowWorkerNonTerminalStateIndexFunc func returns a list of worker addresses for workflows
+// in a running or pending state.
+func WorkflowWorkerNonTerminalStateIndexFunc(obj client.Object) []string {
 	wf, ok := obj.(*v1alpha1.Workflow)
 	if !ok {
 		return nil
@@ -184,8 +185,8 @@ func workflowWorkerNonTerminalStateIndexFunc(obj client.Object) []string {
 	return resp
 }
 
-// workflowStateIndexFunc func indexes workflow by worker for non terminal workflows.
-func workflowStateIndexFunc(obj client.Object) []string {
+// WorkflowStateIndexFunc func returns the workflow state.
+func WorkflowStateIndexFunc(obj client.Object) []string {
 	wf, ok := obj.(*v1alpha1.Workflow)
 	if !ok {
 		return nil
@@ -193,8 +194,8 @@ func workflowStateIndexFunc(obj client.Object) []string {
 	return []string{string(wf.Status.State)}
 }
 
-// hardwareMacIndexFunc returns a list of mac addresses from a hardware.
-func hardwareMacIndexFunc(obj client.Object) []string {
+// HardwareMacIndexFunc returns a list of mac addresses from a hardware.
+func HardwareMacIndexFunc(obj client.Object) []string {
 	hw, ok := obj.(*v1alpha1.Hardware)
 	if !ok {
 		return nil
@@ -208,8 +209,8 @@ func hardwareMacIndexFunc(obj client.Object) []string {
 	return resp
 }
 
-// hardwareIPIndexFunc returns a list of mac addresses from a hardware.
-func hardwareIPIndexFunc(obj client.Object) []string {
+// HardwareIPIndexFunc returns a list of IP addresses from a hardware.
+func HardwareIPIndexFunc(obj client.Object) []string {
 	hw, ok := obj.(*v1alpha1.Hardware)
 	if !ok {
 		return nil
