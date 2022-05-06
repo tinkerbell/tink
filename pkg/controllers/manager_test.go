@@ -91,15 +91,15 @@ func TestWorkflowIndexFuncs(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotAddr := workflowWorkerAddrIndexFunc(tc.input)
+			gotAddr := WorkflowWorkerAddrIndexFunc(tc.input)
 			if !reflect.DeepEqual(tc.wantAddrs, gotAddr) {
 				t.Errorf("Unexpected wokerAddr response: wanted %#v, got %#v", tc.wantAddrs, gotAddr)
 			}
-			gotStateAddrs := workflowWorkerNonTerminalStateIndexFunc(tc.input)
+			gotStateAddrs := WorkflowWorkerNonTerminalStateIndexFunc(tc.input)
 			if !reflect.DeepEqual(tc.wantStateAddrs, gotStateAddrs) {
 				t.Errorf("Unexpected non-terminating workflow response: wanted %#v, got %#v", tc.wantStateAddrs, gotStateAddrs)
 			}
-			gotStates := workflowStateIndexFunc(tc.input)
+			gotStates := WorkflowStateIndexFunc(tc.input)
 			if !reflect.DeepEqual(tc.wantStates, gotStates) {
 				t.Errorf("Unexpected workflow state response: wanted %#v, got %#v", tc.wantStates, gotStates)
 			}
@@ -203,11 +203,11 @@ func TestHardwareIndexFunc(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotMac := hardwareMacIndexFunc(tc.input)
+			gotMac := HardwareMacIndexFunc(tc.input)
 			if !reflect.DeepEqual(tc.wantMac, gotMac) {
 				t.Errorf("Unexpected response: wanted %#v, got %#v", tc.wantMac, gotMac)
 			}
-			gotIPs := hardwareIPIndexFunc(tc.input)
+			gotIPs := HardwareIPIndexFunc(tc.input)
 			if !reflect.DeepEqual(tc.wantIP, gotIPs) {
 				t.Errorf("Unexpected response: wanted %#v, got %#v", tc.wantIP, gotIPs)
 			}
