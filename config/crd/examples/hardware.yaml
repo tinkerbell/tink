@@ -4,6 +4,8 @@ metadata:
   name: sm01
   namespace: default
 spec:
+  disks:
+    - device: /dev/nvme0n1
   metadata:
     facility:
       facility_code: onprem
@@ -17,14 +19,6 @@ spec:
         distro: "ubuntu"
         os_slug: "ubuntu_20_04"
         version: "20.04"
-      storage:
-        disks:
-          - device: /dev/nvme0n1
-            partitions:
-              - label: ROOT
-                number: 1
-                size: 0
-            wipe_table: true
   interfaces:
     - dhcp:
         arch: x86_64

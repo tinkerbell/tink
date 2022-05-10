@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/pkg/controllers"
-	hwctrl "github.com/tinkerbell/tink/pkg/controllers/hardware"
 	wfctrl "github.com/tinkerbell/tink/pkg/controllers/workflow"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -82,7 +81,6 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 
 			return manager.RegisterControllers(
 				cmd.Context(),
-				hwctrl.NewController(manager.GetClient()),
 				wfctrl.NewController(manager.GetClient()),
 			).Start(cmd.Context())
 		},
