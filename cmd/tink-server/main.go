@@ -44,6 +44,7 @@ type DaemonConfig struct {
 
 	KubeconfigPath string
 	KubeAPI        string
+	KubeNamespace  string
 }
 
 const (
@@ -69,6 +70,7 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Backend, "backend", backendPostgres, fmt.Sprintf("The backend datastore to use. Must be one of %s", strings.Join(backends(), ", ")))
 	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "", "The path to the Kubeconfig. Only takes effect if `--backend=kubernetes`")
 	fs.StringVar(&c.KubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only takes effect if `--backend=kubernetes`")
+	fs.StringVar(&c.KubeNamespace, "kube-namespace", "", "The Kubernetes namespace to target")
 }
 
 func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
@@ -154,7 +156,12 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			switch config.Backend {
 			case backendKubernetes:
 				var err error
-				registrar, err = server.NewKubeBackedServer(logger, config.KubeconfigPath, config.KubeAPI)
+				registrar, err = server.NewKubeBackedServer(
+					logger,
+					config.KubeconfigPath,
+					config.KubeAPI,
+					config.KubeNamespace,
+				)
 				if err != nil {
 					return err
 				}
