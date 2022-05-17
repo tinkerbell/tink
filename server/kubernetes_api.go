@@ -19,17 +19,25 @@ import (
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch
 
 // NewKubeBackedServer returns a server that implements the Workflow server interface for a given kubeconfig.
-func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver string) (*KubernetesBackedServer, error) {
+func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver, namespace string) (*KubernetesBackedServer, error) {
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
-		&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: apiserver}})
+		&clientcmd.ConfigOverrides{
+			ClusterInfo: clientcmdapi.Cluster{
+				Server: apiserver,
+			},
+			Context: clientcmdapi.Context{
+				Namespace: namespace,
+			},
+		},
+	)
 
 	cfg, err := ccfg.ClientConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	namespace, _, err := ccfg.Namespace()
+	namespace, _, err = ccfg.Namespace()
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +51,9 @@ func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver string) (*Kube
 // NewKubeBackedServerFromREST returns a server that implements the Workflow
 // server interface with the given Kubernetes rest client and namespace.
 func NewKubeBackedServerFromREST(logger log.Logger, config *rest.Config, namespace string) *KubernetesBackedServer {
-	manager := controllers.NewManagerOrDie(config, controllers.GetServerOptions())
+	options := controllers.GetServerOptions()
+	options.Namespace = namespace
+	manager := controllers.NewManagerOrDie(config, options)
 	go func() {
 		err := manager.Start(context.Background())
 		if err != nil {
