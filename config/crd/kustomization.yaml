@@ -8,6 +8,11 @@ resources:
   - bases/tinkerbell.org_workflowdata.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
+# Labels to add to all resources and selectors.
+commonLabels:
+  clusterctl.cluster.x-k8s.io: ""
+  clusterctl.cluster.x-k8s.io/move: ""
+
 # the following config is for teaching kustomize how to do kustomization for CRDs.
 configurations:
   - kustomizeconfig.yaml
