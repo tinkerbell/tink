@@ -44,6 +44,7 @@ TINK_SERVER_IMAGE ?= quay.io/tinkerbell/tink-server
 TINK_CONTROLLER_IMAGE ?= quay.io/tinkerbell/tink-controller
 TINK_SERVER_TAG ?= latest
 TINK_CONTROLLER_TAG ?= latest
+NAMESPACE ?= tink-system
 
 out/release/default/kustomization.yaml: config/default/kustomization.yaml
 	rm -rf out/
@@ -51,7 +52,10 @@ out/release/default/kustomization.yaml: config/default/kustomization.yaml
 	cp -a config/ out/release/
 
 out/release/tink.yaml: bin/kustomize generate-manifests out/release/default/kustomization.yaml
-	(cd out/release/default && kustomize edit set image server=$(TINK_SERVER_IMAGE):$(TINK_CONTROLLER_TAG) controller=$(TINK_CONTROLLER_IMAGE):$(TINK_CONTROLLER_TAG))
+	(cd out/release/default && \
+		kustomize edit set image server=$(TINK_SERVER_IMAGE):$(TINK_CONTROLLER_TAG) controller=$(TINK_CONTROLLER_IMAGE):$(TINK_CONTROLLER_TAG) && \
+		kustomize edit set namespace $(NAMESPACE) \
+	)
 	kustomize build out/release/default -o $@
 	prettier --write $@
 
