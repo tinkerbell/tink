@@ -28,14 +28,11 @@ worker : cmd/tink-worker/tink-worker
 virtual-worker : cmd/virtual-worker/virtual-worker
 
 crossbinaries := $(addsuffix -linux-,$(binaries))
-crossbinaries := $(crossbinaries:=386) $(crossbinaries:=amd64) $(crossbinaries:=arm64) $(crossbinaries:=armv6) $(crossbinaries:=armv7)
+crossbinaries := $(crossbinaries:=amd64) $(crossbinaries:=arm64)
 
 .PHONY: crosscompile $(crossbinaries)
-%-386:   FLAGS=GOOS=linux GOARCH=386
 %-amd64: FLAGS=GOOS=linux GOARCH=amd64
 %-arm64: FLAGS=GOOS=linux GOARCH=arm64
-%-armv6: FLAGS=GOOS=linux GOARCH=arm GOARM=6
-%-armv7: FLAGS=GOOS=linux GOARCH=arm GOARM=7
 $(binaries) $(crossbinaries):
 	$(FLAGS) go build $(LDFLAGS) -o $@ ./$(@D)
 

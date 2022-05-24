@@ -173,4 +173,4 @@ jobs:
           cache-from: type=registry,ref=${{ matrix.repository }}:latest
           push: ${{ startsWith(github.ref, 'refs/heads/main') }}
           tags: ${{ steps.docker-image-tag.outputs.tags }}
-          platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+          platforms: linux/amd64,linux/arm64
