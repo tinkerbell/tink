@@ -115,6 +115,7 @@ type OSIE struct {
 
 // DHCP configuration.
 type DHCP struct {
+	// +kubebuilder:validation:Pattern="([0-9a-f]{2}[:]){5}([0-9a-f]{2})"
 	MAC         string   `json:"mac,omitempty"`
 	Hostname    string   `json:"hostname,omitempty"`
 	LeaseTime   int64    `json:"lease_time,omitempty"`
