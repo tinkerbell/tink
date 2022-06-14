@@ -43,7 +43,7 @@ services:
       ROLLBAR_TOKEN: ${ROLLBAR_TOKEN:-ignored}
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
-      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:-"true"}
     volumes:
       - certs:/certs/${FACILITY:-onprem}:ro
     ports:
@@ -87,7 +87,7 @@ services:
       PGUSER: tinkerbell
       TINKERBELL_GRPC_AUTHORITY: :42113
       TINKERBELL_HTTP_AUTHORITY: :42114
-      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:-"true"}
     depends_on:
       db:
         condition: service_healthy
@@ -109,7 +109,7 @@ services:
       dockerfile: Dockerfile
     environment:
       TINKERBELL_GRPC_AUTHORITY: tink-server:42113
-      TINKERBELL_TLS: ${TINKERBERLL_TLS:"true"}
+      TINKERBELL_TLS: ${TINKERBERLL_TLS:-"true"}
     depends_on:
       tink-server:
         condition: service_healthy
