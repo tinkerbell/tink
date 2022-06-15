@@ -212,6 +212,73 @@ func TestModifyWorkflowState(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "failed task",
+			inputWf: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					State:         "STATE_RUNNING",
+					GlobalTimeout: 600,
+					Tasks: []v1alpha1.Task{
+						{
+							Name:       "provision",
+							WorkerAddr: "machine-mac-1",
+							Actions: []v1alpha1.Action{
+								{
+									Name:      "stream",
+									Image:     "quay.io/tinkerbell-actions/image2disk:v1.0.0",
+									Timeout:   300,
+									Status:    "STATE_RUNNING",
+									StartedAt: TestTime.MetaV1Before(time.Second * 30),
+								},
+								{
+									Name:    "kexec",
+									Image:   "quay.io/tinkerbell-actions/kexec:v1.0.0",
+									Timeout: 5,
+									Status:  "STATE_PENDING",
+								},
+							},
+						},
+					},
+				},
+			},
+			inputWfContext: &workflow.WorkflowContext{
+				CurrentWorker:        "machine-mac-1",
+				CurrentTask:          "provision",
+				CurrentAction:        "stream",
+				CurrentActionIndex:   0,
+				CurrentActionState:   workflow.State_STATE_FAILED,
+				TotalNumberOfActions: 2,
+			},
+			want: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					State:         "STATE_FAILED",
+					GlobalTimeout: 600,
+					Tasks: []v1alpha1.Task{
+						{
+							Name:       "provision",
+							WorkerAddr: "machine-mac-1",
+							Actions: []v1alpha1.Action{
+								{
+									Name:      "stream",
+									Image:     "quay.io/tinkerbell-actions/image2disk:v1.0.0",
+									Timeout:   300,
+									Status:    "STATE_FAILED",
+									StartedAt: TestTime.MetaV1Before(time.Second * 30),
+									Seconds:   30,
+								},
+								{
+									Name:    "kexec",
+									Image:   "quay.io/tinkerbell-actions/kexec:v1.0.0",
+									Timeout: 5,
+									Status:  "STATE_PENDING",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name: "successful task",
 			inputWf: &v1alpha1.Workflow{
 				Status: v1alpha1.WorkflowStatus{

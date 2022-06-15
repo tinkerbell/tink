@@ -127,8 +127,7 @@ cont:
 			t := metav1.NewTime(s.nowFunc())
 			return &t
 		}()
-	case pb.State_STATE_FAILED:
-	case pb.State_STATE_TIMEOUT:
+	case pb.State_STATE_FAILED, pb.State_STATE_TIMEOUT:
 		// Handle terminal statuses by updating the workflow state and time
 		wf.Status.State = v1alpha1.WorkflowState(pb.State_name[int32(wfContext.CurrentActionState)])
 		if wf.Status.Tasks[taskIndex].Actions[actionIndex].StartedAt != nil {
