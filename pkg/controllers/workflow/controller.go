@@ -36,6 +36,9 @@ func NewController(kubeClient client.Client) *Controller {
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch;delete
 
 func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+	logger := controllerruntime.LoggerFrom(ctx)
+	logger.Info("Reconciling")
+
 	stored := &v1alpha1.Workflow{}
 	if err := c.kubeClient.Get(ctx, req.NamespacedName, stored); err != nil {
 		if errors.IsNotFound(err) {
@@ -74,7 +77,12 @@ func (c *Controller) processNewWorkflow(ctx context.Context, stored *v1alpha1.Wo
 	tpl := &v1alpha1.Template{}
 	if err := c.kubeClient.Get(ctx, client.ObjectKey{Name: stored.Spec.TemplateRef, Namespace: stored.Namespace}, tpl); err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, nil
+			// Throw an error to raise awareness and take advantage of immediate requeue.
+			return reconcile.Result{}, fmt.Errorf(
+				"no template found: name=%v; namespace=%v",
+				stored.Spec.TemplateRef,
+				stored.Namespace,
+			)
 		}
 		return controllers.RetryIfError(ctx, err)
 	}

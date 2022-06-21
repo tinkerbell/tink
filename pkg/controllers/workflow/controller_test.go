@@ -416,7 +416,7 @@ tasks:
 					ResourceVersion: "999",
 				},
 			},
-			wantErr: nil,
+			wantErr: errors.New("no template found: name=debian; namespace=default"),
 		},
 		// *****
 		{
