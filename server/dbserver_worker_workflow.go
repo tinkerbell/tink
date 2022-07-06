@@ -97,7 +97,7 @@ func (s *DBServer) ReportActionStatus(ctx context.Context, req *workflow.Workflo
 		}
 	}
 
-	if wfContext.TotalNumberOfActions > 1 && actionIndex == wfContext.TotalNumberOfActions-1 {
+	if wfContext.TotalNumberOfActions > 1 && actionIndex >= wfContext.TotalNumberOfActions {
 		return nil, status.Errorf(codes.FailedPrecondition, errInvalidActionIndex)
 	}
 

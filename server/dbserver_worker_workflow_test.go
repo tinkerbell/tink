@@ -351,6 +351,103 @@ func TestReportActionStatus(t *testing.T) {
 				expectedError: false,
 			},
 		},
+		"report status for final action": {
+			args: args{
+				db: &mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 2,
+							CurrentActionState:   pb.State_STATE_RUNNING,
+							CurrentAction:        actionName,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     "first-action",
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+					UpdateWorkflowStateFunc: func(ctx context.Context, wfContext *pb.WorkflowContext) error {
+						return nil
+					},
+					InsertIntoWorkflowEventTableFunc: func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
+						return nil
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    taskName,
+				actionName:  actionName,
+				actionState: pb.State_STATE_RUNNING,
+			},
+			want: want{
+				expectedError: false,
+			},
+		},
+		"report status for after final action": {
+			args: args{
+				db: &mock.DB{
+					GetWorkflowContextsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowContext, error) {
+						return &pb.WorkflowContext{
+							WorkflowId:           workflowID,
+							TotalNumberOfActions: 2,
+							CurrentActionState:   pb.State_STATE_SUCCESS,
+							CurrentAction:        actionName,
+							CurrentActionIndex:   2,
+						}, nil
+					},
+					GetWorkflowActionsFunc: func(ctx context.Context, wfID string) (*pb.WorkflowActionList, error) {
+						return &pb.WorkflowActionList{
+							ActionList: []*pb.WorkflowAction{
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     "first-action",
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+								{
+									WorkerId: workerID,
+									Image:    actionName,
+									Name:     actionName,
+									Timeout:  int64(90),
+									TaskName: taskName,
+								},
+							},
+						}, nil
+					},
+					UpdateWorkflowStateFunc: func(ctx context.Context, wfContext *pb.WorkflowContext) error {
+						return nil
+					},
+					InsertIntoWorkflowEventTableFunc: func(ctx context.Context, wfEvent *pb.WorkflowActionStatus, time time.Time) error {
+						return nil
+					},
+				},
+				workflowID:  workflowID,
+				workerID:    workerID,
+				taskName:    taskName,
+				actionName:  actionName,
+				actionState: pb.State_STATE_RUNNING,
+			},
+			want: want{
+				expectedError: true,
+			},
+		},
 		"report status for second action": {
 			args: args{
 				db: &mock.DB{
