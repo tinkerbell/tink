@@ -60,10 +60,12 @@ service HardwareService {
     };
   };
 
-  // DeprecatedWatch watches for events on the given hardware and streams the matching Hardware.
-  // We would like to keep Watch as the function used to stream events,
-  // and ideally Watch should be more powerful than the DeprecatedWatch
-	rpc DeprecatedWatch(GetRequest) returns (stream Hardware);
+  // Watch watches for events on the given hardware and streams the matching Hardware.
+  rpc Watch(GetRequest) returns (stream Hardware) {
+    option (google.api.http) = {
+      get: "/v1/hardware/{id}"
+    };
+  };
 
   // Delete deletes the given hardware from the data store.
   rpc Delete(DeleteRequest) returns (Empty) {
