@@ -5,10 +5,9 @@ package hardware
 
 import (
 	context "context"
-	sync "sync"
-
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	sync "sync"
 )
 
 // Ensure, that HardwareServiceClientMock does implement HardwareServiceClient.
@@ -36,11 +35,11 @@ var _ HardwareServiceClient = &HardwareServiceClientMock{}
 // 			DeleteFunc: func(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*Empty, error) {
 // 				panic("mock out the Delete method")
 // 			},
-// 			DeprecatedWatchFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_DeprecatedWatchClient, error) {
-// 				panic("mock out the DeprecatedWatch method")
-// 			},
 // 			PushFunc: func(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error) {
 // 				panic("mock out the Push method")
+// 			},
+// 			WatchFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_WatchClient, error) {
+// 				panic("mock out the Watch method")
 // 			},
 // 		}
 //
@@ -64,11 +63,11 @@ type HardwareServiceClientMock struct {
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*Empty, error)
 
-	// DeprecatedWatchFunc mocks the DeprecatedWatch method.
-	DeprecatedWatchFunc func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_DeprecatedWatchClient, error)
-
 	// PushFunc mocks the Push method.
 	PushFunc func(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error)
+
+	// WatchFunc mocks the Watch method.
+	WatchFunc func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_WatchClient, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -117,15 +116,6 @@ type HardwareServiceClientMock struct {
 			// Opts is the opts argument value.
 			Opts []grpc.CallOption
 		}
-		// DeprecatedWatch holds details about calls to the DeprecatedWatch method.
-		DeprecatedWatch []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// In is the in argument value.
-			In *GetRequest
-			// Opts is the opts argument value.
-			Opts []grpc.CallOption
-		}
 		// Push holds details about calls to the Push method.
 		Push []struct {
 			// Ctx is the ctx argument value.
@@ -135,14 +125,23 @@ type HardwareServiceClientMock struct {
 			// Opts is the opts argument value.
 			Opts []grpc.CallOption
 		}
+		// Watch holds details about calls to the Watch method.
+		Watch []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// In is the in argument value.
+			In *GetRequest
+			// Opts is the opts argument value.
+			Opts []grpc.CallOption
+		}
 	}
-	lockAll             sync.RWMutex
-	lockByID            sync.RWMutex
-	lockByIP            sync.RWMutex
-	lockByMAC           sync.RWMutex
-	lockDelete          sync.RWMutex
-	lockDeprecatedWatch sync.RWMutex
-	lockPush            sync.RWMutex
+	lockAll    sync.RWMutex
+	lockByID   sync.RWMutex
+	lockByIP   sync.RWMutex
+	lockByMAC  sync.RWMutex
+	lockDelete sync.RWMutex
+	lockPush   sync.RWMutex
+	lockWatch  sync.RWMutex
 }
 
 // All calls AllFunc.
@@ -340,45 +339,6 @@ func (mock *HardwareServiceClientMock) DeleteCalls() []struct {
 	return calls
 }
 
-// DeprecatedWatch calls DeprecatedWatchFunc.
-func (mock *HardwareServiceClientMock) DeprecatedWatch(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_DeprecatedWatchClient, error) {
-	if mock.DeprecatedWatchFunc == nil {
-		panic("HardwareServiceClientMock.DeprecatedWatchFunc: method is nil but HardwareServiceClient.DeprecatedWatch was just called")
-	}
-	callInfo := struct {
-		Ctx  context.Context
-		In   *GetRequest
-		Opts []grpc.CallOption
-	}{
-		Ctx:  ctx,
-		In:   in,
-		Opts: opts,
-	}
-	mock.lockDeprecatedWatch.Lock()
-	mock.calls.DeprecatedWatch = append(mock.calls.DeprecatedWatch, callInfo)
-	mock.lockDeprecatedWatch.Unlock()
-	return mock.DeprecatedWatchFunc(ctx, in, opts...)
-}
-
-// DeprecatedWatchCalls gets all the calls that were made to DeprecatedWatch.
-// Check the length with:
-//     len(mockedHardwareServiceClient.DeprecatedWatchCalls())
-func (mock *HardwareServiceClientMock) DeprecatedWatchCalls() []struct {
-	Ctx  context.Context
-	In   *GetRequest
-	Opts []grpc.CallOption
-} {
-	var calls []struct {
-		Ctx  context.Context
-		In   *GetRequest
-		Opts []grpc.CallOption
-	}
-	mock.lockDeprecatedWatch.RLock()
-	calls = mock.calls.DeprecatedWatch
-	mock.lockDeprecatedWatch.RUnlock()
-	return calls
-}
-
 // Push calls PushFunc.
 func (mock *HardwareServiceClientMock) Push(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error) {
 	if mock.PushFunc == nil {
@@ -415,6 +375,45 @@ func (mock *HardwareServiceClientMock) PushCalls() []struct {
 	mock.lockPush.RLock()
 	calls = mock.calls.Push
 	mock.lockPush.RUnlock()
+	return calls
+}
+
+// Watch calls WatchFunc.
+func (mock *HardwareServiceClientMock) Watch(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_WatchClient, error) {
+	if mock.WatchFunc == nil {
+		panic("HardwareServiceClientMock.WatchFunc: method is nil but HardwareServiceClient.Watch was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		In   *GetRequest
+		Opts []grpc.CallOption
+	}{
+		Ctx:  ctx,
+		In:   in,
+		Opts: opts,
+	}
+	mock.lockWatch.Lock()
+	mock.calls.Watch = append(mock.calls.Watch, callInfo)
+	mock.lockWatch.Unlock()
+	return mock.WatchFunc(ctx, in, opts...)
+}
+
+// WatchCalls gets all the calls that were made to Watch.
+// Check the length with:
+//     len(mockedHardwareServiceClient.WatchCalls())
+func (mock *HardwareServiceClientMock) WatchCalls() []struct {
+	Ctx  context.Context
+	In   *GetRequest
+	Opts []grpc.CallOption
+} {
+	var calls []struct {
+		Ctx  context.Context
+		In   *GetRequest
+		Opts []grpc.CallOption
+	}
+	mock.lockWatch.RLock()
+	calls = mock.calls.Watch
+	mock.lockWatch.RUnlock()
 	return calls
 }
 
@@ -480,13 +479,17 @@ type HardwareService_AllClientMock struct {
 	// calls tracks calls to the methods.
 	calls struct {
 		// CloseSend holds details about calls to the CloseSend method.
-		CloseSend []struct{}
+		CloseSend []struct {
+		}
 		// Context holds details about calls to the Context method.
-		Context []struct{}
+		Context []struct {
+		}
 		// Header holds details about calls to the Header method.
-		Header []struct{}
+		Header []struct {
+		}
 		// Recv holds details about calls to the Recv method.
-		Recv []struct{}
+		Recv []struct {
+		}
 		// RecvMsg holds details about calls to the RecvMsg method.
 		RecvMsg []struct {
 			// M is the m argument value.
@@ -498,7 +501,8 @@ type HardwareService_AllClientMock struct {
 			M interface{}
 		}
 		// Trailer holds details about calls to the Trailer method.
-		Trailer []struct{}
+		Trailer []struct {
+		}
 	}
 	lockCloseSend sync.RWMutex
 	lockContext   sync.RWMutex
@@ -514,7 +518,8 @@ func (mock *HardwareService_AllClientMock) CloseSend() error {
 	if mock.CloseSendFunc == nil {
 		panic("HardwareService_AllClientMock.CloseSendFunc: method is nil but HardwareService_AllClient.CloseSend was just called")
 	}
-	callInfo := struct{}{}
+	callInfo := struct {
+	}{}
 	mock.lockCloseSend.Lock()
 	mock.calls.CloseSend = append(mock.calls.CloseSend, callInfo)
 	mock.lockCloseSend.Unlock()
@@ -524,8 +529,10 @@ func (mock *HardwareService_AllClientMock) CloseSend() error {
 // CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.CloseSendCalls())
-func (mock *HardwareService_AllClientMock) CloseSendCalls() []struct{} {
-	var calls []struct{}
+func (mock *HardwareService_AllClientMock) CloseSendCalls() []struct {
+} {
+	var calls []struct {
+	}
 	mock.lockCloseSend.RLock()
 	calls = mock.calls.CloseSend
 	mock.lockCloseSend.RUnlock()
@@ -537,7 +544,8 @@ func (mock *HardwareService_AllClientMock) Context() context.Context {
 	if mock.ContextFunc == nil {
 		panic("HardwareService_AllClientMock.ContextFunc: method is nil but HardwareService_AllClient.Context was just called")
 	}
-	callInfo := struct{}{}
+	callInfo := struct {
+	}{}
 	mock.lockContext.Lock()
 	mock.calls.Context = append(mock.calls.Context, callInfo)
 	mock.lockContext.Unlock()
@@ -547,8 +555,10 @@ func (mock *HardwareService_AllClientMock) Context() context.Context {
 // ContextCalls gets all the calls that were made to Context.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.ContextCalls())
-func (mock *HardwareService_AllClientMock) ContextCalls() []struct{} {
-	var calls []struct{}
+func (mock *HardwareService_AllClientMock) ContextCalls() []struct {
+} {
+	var calls []struct {
+	}
 	mock.lockContext.RLock()
 	calls = mock.calls.Context
 	mock.lockContext.RUnlock()
@@ -560,7 +570,8 @@ func (mock *HardwareService_AllClientMock) Header() (metadata.MD, error) {
 	if mock.HeaderFunc == nil {
 		panic("HardwareService_AllClientMock.HeaderFunc: method is nil but HardwareService_AllClient.Header was just called")
 	}
-	callInfo := struct{}{}
+	callInfo := struct {
+	}{}
 	mock.lockHeader.Lock()
 	mock.calls.Header = append(mock.calls.Header, callInfo)
 	mock.lockHeader.Unlock()
@@ -570,8 +581,10 @@ func (mock *HardwareService_AllClientMock) Header() (metadata.MD, error) {
 // HeaderCalls gets all the calls that were made to Header.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.HeaderCalls())
-func (mock *HardwareService_AllClientMock) HeaderCalls() []struct{} {
-	var calls []struct{}
+func (mock *HardwareService_AllClientMock) HeaderCalls() []struct {
+} {
+	var calls []struct {
+	}
 	mock.lockHeader.RLock()
 	calls = mock.calls.Header
 	mock.lockHeader.RUnlock()
@@ -583,7 +596,8 @@ func (mock *HardwareService_AllClientMock) Recv() (*Hardware, error) {
 	if mock.RecvFunc == nil {
 		panic("HardwareService_AllClientMock.RecvFunc: method is nil but HardwareService_AllClient.Recv was just called")
 	}
-	callInfo := struct{}{}
+	callInfo := struct {
+	}{}
 	mock.lockRecv.Lock()
 	mock.calls.Recv = append(mock.calls.Recv, callInfo)
 	mock.lockRecv.Unlock()
@@ -593,8 +607,10 @@ func (mock *HardwareService_AllClientMock) Recv() (*Hardware, error) {
 // RecvCalls gets all the calls that were made to Recv.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.RecvCalls())
-func (mock *HardwareService_AllClientMock) RecvCalls() []struct{} {
-	var calls []struct{}
+func (mock *HardwareService_AllClientMock) RecvCalls() []struct {
+} {
+	var calls []struct {
+	}
 	mock.lockRecv.RLock()
 	calls = mock.calls.Recv
 	mock.lockRecv.RUnlock()
@@ -668,7 +684,8 @@ func (mock *HardwareService_AllClientMock) Trailer() metadata.MD {
 	if mock.TrailerFunc == nil {
 		panic("HardwareService_AllClientMock.TrailerFunc: method is nil but HardwareService_AllClient.Trailer was just called")
 	}
-	callInfo := struct{}{}
+	callInfo := struct {
+	}{}
 	mock.lockTrailer.Lock()
 	mock.calls.Trailer = append(mock.calls.Trailer, callInfo)
 	mock.lockTrailer.Unlock()
@@ -678,8 +695,10 @@ func (mock *HardwareService_AllClientMock) Trailer() metadata.MD {
 // TrailerCalls gets all the calls that were made to Trailer.
 // Check the length with:
 //     len(mockedHardwareService_AllClient.TrailerCalls())
-func (mock *HardwareService_AllClientMock) TrailerCalls() []struct{} {
-	var calls []struct{}
+func (mock *HardwareService_AllClientMock) TrailerCalls() []struct {
+} {
+	var calls []struct {
+	}
 	mock.lockTrailer.RLock()
 	calls = mock.calls.Trailer
 	mock.lockTrailer.RUnlock()

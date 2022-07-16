@@ -180,7 +180,7 @@ func (s *DBServer) All(_ *hardware.Empty, stream hardware.HardwareService_AllSer
 	return nil
 }
 
-func (s *DBServer) DeprecatedWatch(in *hardware.GetRequest, stream hardware.HardwareService_DeprecatedWatchServer) error {
+func (s *DBServer) Watch(in *hardware.GetRequest, stream hardware.HardwareService_WatchServer) error {
 	l := s.logger.With("id", in.Id)
 
 	ch := make(chan string, 1)
