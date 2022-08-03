@@ -18,7 +18,7 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-        - image: controller:latest
+        - image: tink-controller:latest
           imagePullPolicy: IfNotPresent
           name: manager
           resources:

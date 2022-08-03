@@ -19,6 +19,8 @@ type WorkflowSpec struct {
 	// Name of the Template associated with this workflow.
 	TemplateRef string `json:"templateRef,omitempty"`
 
+	HardwareRef string `json:"hardwareRef,omitempty"`
+
 	// A mapping of template devices to hadware mac addresses
 	HardwareMap map[string]string `json:"hardwareMap,omitempty"`
 }
