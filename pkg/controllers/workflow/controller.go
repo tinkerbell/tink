@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/pkg/controllers"
 	"github.com/tinkerbell/tink/pkg/convert"
@@ -57,7 +58,7 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	)
 	switch wflow.Status.State {
 	case "":
-		resp, err = c.processNewWorkflow(ctx, wflow)
+		resp, err = c.processNewWorkflow(ctx, logger, wflow)
 	case v1alpha1.WorkflowStateRunning:
 		resp = c.processRunningWorkflow(ctx, wflow)
 	default:
@@ -73,11 +74,12 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	return resp, err
 }
 
-func (c *Controller) processNewWorkflow(ctx context.Context, stored *v1alpha1.Workflow) (reconcile.Result, error) {
+func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger, stored *v1alpha1.Workflow) (reconcile.Result, error) {
 	tpl := &v1alpha1.Template{}
 	if err := c.kubeClient.Get(ctx, client.ObjectKey{Name: stored.Spec.TemplateRef, Namespace: stored.Namespace}, tpl); err != nil {
 		if errors.IsNotFound(err) {
 			// Throw an error to raise awareness and take advantage of immediate requeue.
+			logger.Error(err, "error getting Template object in processNewWorkflow function")
 			return reconcile.Result{}, fmt.Errorf(
 				"no template found: name=%v; namespace=%v",
 				stored.Spec.TemplateRef,
@@ -87,7 +89,35 @@ func (c *Controller) processNewWorkflow(ctx context.Context, stored *v1alpha1.Wo
 		return controllers.RetryIfError(ctx, err)
 	}
 
-	tinkWf, _, err := tinkworkflow.RenderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), stored.Spec.HardwareMap)
+	data := make(map[string]interface{})
+
+	for key, val := range stored.Spec.HardwareMap {
+		data[key] = val
+	}
+	var hardware v1alpha1.Hardware
+
+	err := c.kubeClient.Get(ctx, client.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
+	if err != nil && !errors.IsNotFound(err) {
+		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
+		return reconcile.Result{}, err
+	}
+
+	if stored.Spec.HardwareRef != "" && errors.IsNotFound(err) {
+		logger.Error(err, "hardware not found in processNewWorkflow function")
+		return reconcile.Result{}, fmt.Errorf(
+			"hardware not found: name=%v; namespace=%v",
+			stored.Spec.HardwareRef,
+			stored.Namespace,
+		)
+	}
+
+	if err == nil {
+		// convert between hardware and hardwareTemplate type
+		contract := toTemplateHardware(hardware)
+		data["Hardware"] = contract
+	}
+
+	tinkWf, _, err := tinkworkflow.RenderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -97,6 +127,18 @@ func (c *Controller) processNewWorkflow(ctx context.Context, stored *v1alpha1.Wo
 
 	stored.Status.State = v1alpha1.WorkflowStatePending
 	return reconcile.Result{}, nil
+}
+
+type hardwareTemplate struct {
+	Disks []string
+}
+
+func toTemplateHardware(hardware v1alpha1.Hardware) hardwareTemplate {
+	var contract hardwareTemplate
+	for _, disk := range hardware.Spec.Disks {
+		contract.Disks = append(contract.Disks, disk.Device)
+	}
+	return contract
 }
 
 func (c *Controller) processRunningWorkflow(_ context.Context, stored *v1alpha1.Workflow) reconcile.Result {

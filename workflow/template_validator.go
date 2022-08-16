@@ -62,7 +62,7 @@ func MustParseFromFile(path string) *Workflow {
 
 // RenderTemplate renders the workflow template with regard to the given hardware details.
 func RenderTemplate(templateID, templateData string, devices []byte) (string, error) {
-	var hardware map[string]string
+	var hardware map[string]interface{}
 	err := json.Unmarshal(devices, &hardware)
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
@@ -77,7 +77,7 @@ func RenderTemplate(templateID, templateData string, devices []byte) (string, er
 }
 
 // RenderTemplateHardware renders the workflow template and returns the Workflow and the interpolated bytes.
-func RenderTemplateHardware(templateID, templateData string, hardware map[string]string) (*Workflow, *bytes.Buffer, error) {
+func RenderTemplateHardware(templateID, templateData string, hardware map[string]interface{}) (*Workflow, *bytes.Buffer, error) {
 	t := template.New("workflow-template").Option("missingkey=error")
 	_, err := t.Parse(templateData)
 	if err != nil {
@@ -85,6 +85,7 @@ func RenderTemplateHardware(templateID, templateData string, hardware map[string
 		return nil, nil, err
 	}
 
+	// introduces hardware to the template rendering
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, hardware)
 	if err != nil {

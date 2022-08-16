@@ -46,6 +46,9 @@ spec:
                     type: string
                   description: A mapping of template devices to hadware mac addresses
                   type: object
+                hardwareRef:
+                  description: Name of the Hardware associated with this workflow.
+                  type: string
                 templateRef:
                   description: Name of the Template associated with this workflow.
                   type: string
