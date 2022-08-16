@@ -15,5 +15,5 @@ bases:
   - ../crd
   - ../rbac
   - ../manager
-  # - ../server
-  # - ../server-rbac
+  - ../server
+  - ../server-rbac
