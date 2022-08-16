@@ -779,7 +779,7 @@ tasks:
 				},
 				Spec: v1alpha1.HardwareSpec{
 					Disks: []v1alpha1.Disk{
-						{"/dev/nvme0n1"},
+						{Device: "/dev/nvme0n1"},
 					},
 					Interfaces: []v1alpha1.Interface{
 						{
