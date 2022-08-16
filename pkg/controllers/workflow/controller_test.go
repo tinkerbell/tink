@@ -55,6 +55,26 @@ tasks:
           IMG_URL: "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz"
           COMPRESSED: true`
 
+var templateWithDiskTemplate = `version: "0.1"
+name: debian
+global_timeout: 1800
+tasks:
+  - name: "os-installation"
+    worker: "{{.device_1}}"
+    volumes:
+      - /dev:/dev
+      - /dev/console:/dev/console
+      - /lib/firmware:/lib/firmware:ro
+    actions:
+      - name: "stream-debian-image"
+        image: quay.io/tinkerbell-actions/image2disk:v1.0.0
+        timeout: 600
+        environment:
+          DEST_DISK: {{ index .Hardware.Disks 0 }}
+          # Hegel IP
+          IMG_URL: "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz"
+          COMPRESSED: true`
+
 func TestReconcile(t *testing.T) {
 	cases := []struct {
 		name         string
@@ -649,6 +669,221 @@ tasks:
 									StartedAt: TestTime.MetaV1BeforeSec(601),
 									Seconds:   601,
 									Message:   "Action timed out",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Error getting hardware ref",
+			seedTemplate: &v1alpha1.Template{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Template",
+					APIVersion: "tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "debian",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.TemplateSpec{
+					Data: &minimalTemplate,
+				},
+				Status: v1alpha1.TemplateStatus{},
+			},
+			seedWorkflow: &v1alpha1.Workflow{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Workflow",
+					APIVersion: "tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "debian",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{
+					TemplateRef: "debian",
+					HardwareRef: "i_dont_exist",
+					HardwareMap: map[string]string{
+						"device_1": "3c:ec:ef:4c:4f:54",
+					},
+				},
+				Status: v1alpha1.WorkflowStatus{},
+			},
+			req: reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "debian",
+					Namespace: "default",
+				},
+			},
+			want: reconcile.Result{},
+			wantWflow: &v1alpha1.Workflow{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Workflow",
+					APIVersion: "tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1000",
+					Name:            "debian",
+					Namespace:       "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{
+					TemplateRef: "debian",
+					HardwareMap: map[string]string{
+						"device_1": "3c:ec:ef:4c:4f:54",
+					},
+				},
+				Status: v1alpha1.WorkflowStatus{
+					State:         v1alpha1.WorkflowStatePending,
+					GlobalTimeout: 1800,
+					Tasks: []v1alpha1.Task{
+						{
+							Name: "os-installation",
+
+							WorkerAddr: "3c:ec:ef:4c:4f:54",
+							Volumes: []string{
+								"/dev:/dev",
+								"/dev/console:/dev/console",
+								"/lib/firmware:/lib/firmware:ro",
+							},
+							Actions: []v1alpha1.Action{
+								{
+									Name:    "stream-debian-image",
+									Image:   "quay.io/tinkerbell-actions/image2disk:v1.0.0",
+									Timeout: 600,
+									Environment: map[string]string{
+										"COMPRESSED": "true",
+										"DEST_DISK":  "/dev/nvme0n1",
+										"IMG_URL":    "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz",
+									},
+									Status: v1alpha1.WorkflowStatePending,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("hardware not found: name=i_dont_exist; namespace=default"),
+		},
+		{
+			name: "success with hardware ref",
+			seedHardware: &v1alpha1.Hardware{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Hardware",
+					APIVersion: "tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "machine1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Disks: []v1alpha1.Disk{
+						{"/dev/nvme0n1"},
+					},
+					Interfaces: []v1alpha1.Interface{
+						{
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE:      &[]bool{true}[0],
+								AllowWorkflow: &[]bool{true}[0],
+							},
+							DHCP: &v1alpha1.DHCP{
+								Arch:     "x86_64",
+								Hostname: "sm01",
+								IP: &v1alpha1.IP{
+									Address: "172.16.10.100",
+									Gateway: "172.16.10.1",
+									Netmask: "255.255.255.0",
+								},
+								LeaseTime:   86400,
+								MAC:         "3c:ec:ef:4c:4f:54",
+								NameServers: []string{},
+								UEFI:        true,
+							},
+						},
+					},
+				},
+			},
+			seedTemplate: &v1alpha1.Template{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Template",
+					APIVersion: "tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "debian",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.TemplateSpec{
+					Data: &templateWithDiskTemplate,
+				},
+				Status: v1alpha1.TemplateStatus{},
+			},
+			seedWorkflow: &v1alpha1.Workflow{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Workflow",
+					APIVersion: "tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "debian",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{
+					TemplateRef: "debian",
+					HardwareRef: "machine1",
+					HardwareMap: map[string]string{
+						"device_1": "3c:ec:ef:4c:4f:54",
+					},
+				},
+				Status: v1alpha1.WorkflowStatus{},
+			},
+			req: reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "debian",
+					Namespace: "default",
+				},
+			},
+			want: reconcile.Result{},
+			wantWflow: &v1alpha1.Workflow{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Workflow",
+					APIVersion: "tinkerbell.org/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1000",
+					Name:            "debian",
+					Namespace:       "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{
+					TemplateRef: "debian",
+					HardwareRef: "machine1",
+					HardwareMap: map[string]string{
+						"device_1": "3c:ec:ef:4c:4f:54",
+					},
+				},
+				Status: v1alpha1.WorkflowStatus{
+					State:         v1alpha1.WorkflowStatePending,
+					GlobalTimeout: 1800,
+					Tasks: []v1alpha1.Task{
+						{
+							Name: "os-installation",
+
+							WorkerAddr: "3c:ec:ef:4c:4f:54",
+							Volumes: []string{
+								"/dev:/dev",
+								"/dev/console:/dev/console",
+								"/lib/firmware:/lib/firmware:ro",
+							},
+							Actions: []v1alpha1.Action{
+								{
+									Name:    "stream-debian-image",
+									Image:   "quay.io/tinkerbell-actions/image2disk:v1.0.0",
+									Timeout: 600,
+									Environment: map[string]string{
+										"COMPRESSED": "true",
+										"DEST_DISK":  "/dev/nvme0n1",
+										"IMG_URL":    "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz",
+									},
+									Status: v1alpha1.WorkflowStatePending,
 								},
 							},
 						},
