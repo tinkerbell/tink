@@ -332,6 +332,13 @@ spec:
                         userdata:
                           type: string
                       type: object
+                    manufacturer:
+                      properties:
+                        id:
+                          type: string
+                        slug:
+                          type: string
+                      type: object
                     state:
                       type: string
                   type: object
