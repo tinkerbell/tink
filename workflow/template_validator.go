@@ -85,7 +85,6 @@ func RenderTemplateHardware(templateID, templateData string, hardware map[string
 		return nil, nil, err
 	}
 
-	//hardware["Hardware"] = retrievedHardware
 	//? introduces hardware to the template rendering
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, hardware)

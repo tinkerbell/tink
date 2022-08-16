@@ -79,6 +79,7 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	if err := c.kubeClient.Get(ctx, client.ObjectKey{Name: stored.Spec.TemplateRef, Namespace: stored.Namespace}, tpl); err != nil {
 		if errors.IsNotFound(err) {
 			// Throw an error to raise awareness and take advantage of immediate requeue.
+			logger.Error(err, "error getting Template object in processNewWorkflow function")
 			return reconcile.Result{}, fmt.Errorf(
 				"no template found: name=%v; namespace=%v",
 				stored.Spec.TemplateRef,
@@ -97,10 +98,12 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	err := c.kubeClient.Get(ctx, client.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
 	if err != nil && !errors.IsNotFound(err) {
+		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
 		return reconcile.Result{}, err
 	}
 
 	if stored.Spec.HardwareRef != "" && errors.IsNotFound(err) {
+		logger.Error(err, "hardware not found in processNewWorkflow function")
 		return reconcile.Result{}, fmt.Errorf(
 			"hardware not found: name=%v; namespace=%v",
 			stored.Spec.HardwareRef,
@@ -109,7 +112,7 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	}
 
 	if err == nil {
-		//convert between hardware and hardwareTemplate type
+		// convert between hardware and hardwareTemplate type
 		contract := toTemplateHardware(hardware)
 		data["Hardware"] = contract
 	}
