@@ -19,11 +19,14 @@ const shortDescr = `show all events for a workflow`
 
 const longDescr = `Prints a table containing all events for a workflow.
 You can specify the kind of output you want to receive.
-It can be table or json.
+It can be table, csv or json.
 `
 
 const exampleDescr = `# Lists all events for a workflow in table output format.
 tink workflow events [id]
+
+# List all workflow in csv output format.
+tink workflow events [id] --format csv
 
 # List a single template in json output format.
 tink workflow events [id] --format json
@@ -74,7 +77,7 @@ func NewShowCommand(opt Options) *cobra.Command {
 				}
 				fmt.Fprint(c.OutOrStdout(), string(b))
 			default:
-				render(allEvents)
+				render(allEvents, opt)
 			}
 
 			return nil
@@ -105,12 +108,16 @@ func fetchEvents(args []string) [][]interface{} {
 	return allEvents
 }
 
-func render(allEvents [][]interface{}) {
+func render(allEvents [][]interface{}, opt Options) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{hWorkerID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
 
 	listEvents(t, allEvents)
+	if opt.Format == "csv" {
+		t.RenderCSV()
+		return
+	}
 	t.Render()
 }
 
