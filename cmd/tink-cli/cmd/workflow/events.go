@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -33,7 +34,7 @@ func NewEventsOptions() Options {
 	return Options{}
 }
 
-func NewShowCommand(_ Options) *cobra.Command {
+func NewShowCommand(opt Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "events [id]",
 		Short:                 "show all events for a workflow",
@@ -45,10 +46,26 @@ func NewShowCommand(_ Options) *cobra.Command {
 			}
 			return nil
 		},
-		Run: func(c *cobra.Command, args []string) {
-			render(args)
+		RunE: func(c *cobra.Command, args []string) error {
+			allEvents := fetchEvents(args)
+
+			switch opt.Format {
+			case "json":
+				b, err := json.Marshal(struct {
+					Data interface{} `json:"data"`
+				}{Data: allEvents})
+				if err != nil {
+					return err
+				}
+				fmt.Fprint(c.OutOrStdout(), string(b))
+			default:
+				render(allEvents)
+			}
+
+			return nil
 		},
 	}
+	cmd.PersistentFlags().StringVarP(&opt.Format, "format", "", "table", "The format you expect the list to be printed out. Currently supported format are table, JSON and CSV")
 	return cmd
 }
 
@@ -73,12 +90,10 @@ func fetchEvents(args []string) [][]interface{} {
 	return allEvents
 }
 
-func render(args []string) {
+func render(allEvents [][]interface{}) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{hWorkerID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
-
-	allEvents := fetchEvents(args)
 
 	listEvents(t, allEvents)
 	t.Render()
