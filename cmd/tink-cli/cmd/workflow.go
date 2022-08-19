@@ -26,7 +26,7 @@ func NewWorkflowCommand() *cobra.Command {
 	cmd.AddCommand(workflow.NewCreateCommand())
 	cmd.AddCommand(workflow.NewDataCommand())
 	cmd.AddCommand(delete.NewDeleteCommand(workflow.NewDeleteOptions()))
-	cmd.AddCommand(workflow.NewShowCommand())
+	cmd.AddCommand(workflow.NewShowCommand(workflow.NewEventsOptions()))
 	cmd.AddCommand(workflow.NewListCommand())
 	cmd.AddCommand(workflow.NewStateCommand())
 
