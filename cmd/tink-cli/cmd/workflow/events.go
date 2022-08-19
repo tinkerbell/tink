@@ -15,6 +15,20 @@ import (
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
+const shortDescr = `show all events for a workflow`
+
+const longDescr = `Prints a table containing all events for a workflow.
+You can specify the kind of output you want to receive.
+It can be table or json.
+`
+
+const exampleDescr = `# Lists all events for a workflow in table output format.
+tink workflow events [id]
+
+# List a single template in json output format.
+tink workflow events [id] --format json
+`
+
 var (
 	hWorkerID      = "Worker ID"
 	hTaskName      = "Task Name"
@@ -37,9 +51,10 @@ func NewEventsOptions() Options {
 func NewShowCommand(opt Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "events [id]",
-		Short:                 "show all events for a workflow",
+		Short:                 shortDescr,
+		Long:                  longDescr,
+		Example:               exampleDescr,
 		DisableFlagsInUseLine: true,
-		Example:               "tink workflow events [id]",
 		Args: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("%v takes an arguments", c.UseLine())
