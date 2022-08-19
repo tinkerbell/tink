@@ -46,17 +46,14 @@ func NewShowCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(c *cobra.Command, args []string) {
-			t := table.NewWriter()
-			t.SetOutputMirror(os.Stdout)
-			t.AppendHeader(table.Row{hWorkerID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
-			listEvents(t, args)
-			t.Render()
+			render(args)
 		},
 	}
 	return cmd
 }
 
-func listEvents(t table.Writer, args []string) {
+func fetchEvents(args []string) [][]interface{} {
+	allEvents := make([][]interface{}, 0)
 	for _, arg := range args {
 		req := workflow.GetRequest{Id: arg}
 		events, err := client.WorkflowClient.ShowWorkflowEvents(context.Background(), &req)
@@ -66,12 +63,29 @@ func listEvents(t table.Writer, args []string) {
 		// var wf *workflow.Workflow
 		err = nil
 		for event, err := events.Recv(); err == nil && event != nil; event, err = events.Recv() {
-			t.AppendRows([]table.Row{
-				{event.WorkerId, event.TaskName, event.ActionName, event.Seconds, event.Message, event.ActionStatus},
-			})
+			allEvents = append(allEvents, []interface{}{event.WorkerId, event.TaskName, event.ActionName, event.Seconds, event.Message, event.ActionStatus})
 		}
 		if err != nil && !errors.Is(err, io.EOF) {
 			log.Fatal(err)
 		}
+	}
+
+	return allEvents
+}
+
+func render(args []string) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{hWorkerID, hTaskName, hActionName, hExecutionTime, hMessage, hStatus})
+
+	allEvents := fetchEvents(args)
+
+	listEvents(t, allEvents)
+	t.Render()
+}
+
+func listEvents(t table.Writer, allEvents [][]interface{}) {
+	for _, event := range allEvents {
+		t.AppendRows([]table.Row{event})
 	}
 }
