@@ -23,6 +23,16 @@ var (
 	hStatus        = "Action Status"
 )
 
+type Options struct {
+	// Format specifies the format you want the list of resources printed
+	// out. By default, it is table, but it can be JSON ar CSV.
+	Format string
+}
+
+func NewEventsOptions() Options {
+	return Options{}
+}
+
 func NewShowCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "events [id]",
