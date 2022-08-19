@@ -33,7 +33,7 @@ func NewEventsOptions() Options {
 	return Options{}
 }
 
-func NewShowCommand() *cobra.Command {
+func NewShowCommand(_ Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "events [id]",
 		Short:                 "show all events for a workflow",
