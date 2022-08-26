@@ -421,6 +421,351 @@ tasks:
 	}
 }
 
+func TestRenderTemplateHardwareCustomFuncs(t *testing.T) {
+	cases := []struct {
+		name         string
+		hwAddress    []byte
+		templateID   string
+		templateData string
+		expected     Workflow
+	}{
+		{
+			name:       "contains/isFalse",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test{{ if ( contains "foo" "bar" ) }}test{{ end }}"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "test",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "contains/isTrue",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test{{ if ( contains "foo" "foo" ) }}test{{ end }}"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "testtest",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "hasPrefix/isFalse",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test{{ if ( hasPrefix "foo" "bar" ) }}test{{ end }}"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "test",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "hasPrefix/isTrue",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test{{ if ( hasPrefix "foo" "foo" ) }}test{{ end }}"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "testtest",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "hasSuffix/isFalse",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test{{ if ( hasSuffix "foo" "bar" ) }}test{{ end }}"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "test",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "hasSuffix/isTrue",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test{{ if ( hasSuffix "foo" "foo" ) }}test{{ end }}"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "testtest",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "formatPartition/block device",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+      environment:
+        DEST_DISK: {{ formatPartition "/dev/sda" 1 }}
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "test",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+								Environment: map[string]string{
+									"DEST_DISK": "/dev/sda1",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "formatPartition/nvme device",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+      environment:
+        DEST_DISK: {{ formatPartition "/dev/nvme0n1" 1 }}
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "test",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+								Environment: map[string]string{
+									"DEST_DISK": "/dev/nvme0n1p1",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "formatPartition/unknown",
+			templateID: "test",
+			templateData: `
+version: "0.1"
+name: test
+global_timeout: 1
+tasks:
+  - name: "test"
+    worker: "test"
+    actions:
+    - name: "test"
+      image: test
+      timeout: 60
+      environment:
+        DEST_DISK: {{ formatPartition "/dev/foobar" 1 }}
+`,
+			expected: Workflow{
+				Name:          "test",
+				GlobalTimeout: 1,
+				Version:       "0.1",
+				Tasks: []Task{
+					{
+						Name:       "test",
+						WorkerAddr: "test",
+						Actions: []Action{
+							{
+								Name:    "test",
+								Image:   "test",
+								Timeout: 60,
+								Environment: map[string]string{
+									"DEST_DISK": "/dev/foobar",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			wflw, _, err := RenderTemplateHardware(tc.templateID, tc.templateData, map[string]interface{}{})
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if diff := cmp.Diff(*wflw, tc.expected); diff != "" {
+				t.Errorf("unexpected workflow (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 type workflowModifier func(*Workflow)
 
 func workflow(m ...workflowModifier) *Workflow {

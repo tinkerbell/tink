@@ -90,12 +90,11 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	}
 
 	data := make(map[string]interface{})
-
 	for key, val := range stored.Spec.HardwareMap {
 		data[key] = val
 	}
-	var hardware v1alpha1.Hardware
 
+	var hardware v1alpha1.Hardware
 	err := c.kubeClient.Get(ctx, client.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
 	if err != nil && !errors.IsNotFound(err) {
 		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
@@ -112,8 +111,7 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	}
 
 	if err == nil {
-		// convert between hardware and hardwareTemplate type
-		contract := toTemplateHardware(hardware)
+		contract := toTemplateHardwareData(hardware)
 		data["Hardware"] = contract
 	}
 
@@ -129,12 +127,15 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	return reconcile.Result{}, nil
 }
 
-type hardwareTemplate struct {
+// templateHardwareData defines the data exposed for a Hardware instance to a Template.
+type templateHardwareData struct {
 	Disks []string
 }
 
-func toTemplateHardware(hardware v1alpha1.Hardware) hardwareTemplate {
-	var contract hardwareTemplate
+// toTemplateHardwareData converts a Hardware instance of templateHardwareData for use in template
+// rendering.
+func toTemplateHardwareData(hardware v1alpha1.Hardware) templateHardwareData {
+	var contract templateHardwareData
 	for _, disk := range hardware.Spec.Disks {
 		contract.Disks = append(contract.Disks, disk.Device)
 	}
