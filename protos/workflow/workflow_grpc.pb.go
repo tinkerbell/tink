@@ -19,27 +19,21 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkflowServiceClient interface {
-	//
 	// CreateWorkflow targets a specific hardware and it starts from a particular
 	// template. The selected hardware is capable of picking the
 	// workflow up for execution.
 	CreateWorkflow(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
-	//
 	// GetWorkflow returns a specific workflow by its identifier.
 	GetWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error)
-	//
 	// DeleteWorkflow deletes a workflow. This is a logical deletion. Workflow
 	// will stay available for inspection
 	DeleteWorkflow(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error)
-	//
 	// ListWorkflows returns a list of workflows
 	ListWorkflows(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowService_ListWorkflowsClient, error)
-	//
 	// GetWorkflowContext returns specific information about where it is running,
 	// its state and so on. Useful to debug a workflow and to understand its
 	// current state.
 	GetWorkflowContext(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowContext, error)
-	//
 	// ShowWorkflowEvents returns a list of events for a specific workflows
 	ShowWorkflowEvents(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (WorkflowService_ShowWorkflowEventsClient, error)
 	GetWorkflowContextList(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (*WorkflowContextList, error)
@@ -259,27 +253,21 @@ func (c *workflowServiceClient) UpdateWorkflowData(ctx context.Context, in *Upda
 // All implementations should embed UnimplementedWorkflowServiceServer
 // for forward compatibility
 type WorkflowServiceServer interface {
-	//
 	// CreateWorkflow targets a specific hardware and it starts from a particular
 	// template. The selected hardware is capable of picking the
 	// workflow up for execution.
 	CreateWorkflow(context.Context, *CreateRequest) (*CreateResponse, error)
-	//
 	// GetWorkflow returns a specific workflow by its identifier.
 	GetWorkflow(context.Context, *GetRequest) (*Workflow, error)
-	//
 	// DeleteWorkflow deletes a workflow. This is a logical deletion. Workflow
 	// will stay available for inspection
 	DeleteWorkflow(context.Context, *GetRequest) (*Empty, error)
-	//
 	// ListWorkflows returns a list of workflows
 	ListWorkflows(*Empty, WorkflowService_ListWorkflowsServer) error
-	//
 	// GetWorkflowContext returns specific information about where it is running,
 	// its state and so on. Useful to debug a workflow and to understand its
 	// current state.
 	GetWorkflowContext(context.Context, *GetRequest) (*WorkflowContext, error)
-	//
 	// ShowWorkflowEvents returns a list of events for a specific workflows
 	ShowWorkflowEvents(*GetRequest, WorkflowService_ShowWorkflowEventsServer) error
 	GetWorkflowContextList(context.Context, *WorkflowContextRequest) (*WorkflowContextList, error)

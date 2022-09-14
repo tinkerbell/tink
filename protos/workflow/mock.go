@@ -17,58 +17,58 @@ var _ WorkflowServiceClient = &WorkflowServiceClientMock{}
 
 // WorkflowServiceClientMock is a mock implementation of WorkflowServiceClient.
 //
-// 	func TestSomethingThatUsesWorkflowServiceClient(t *testing.T) {
+//	func TestSomethingThatUsesWorkflowServiceClient(t *testing.T) {
 //
-// 		// make and configure a mocked WorkflowServiceClient
-// 		mockedWorkflowServiceClient := &WorkflowServiceClientMock{
-// 			CreateWorkflowFunc: func(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
-// 				panic("mock out the CreateWorkflow method")
-// 			},
-// 			DeleteWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 				panic("mock out the DeleteWorkflow method")
-// 			},
-// 			GetWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error) {
-// 				panic("mock out the GetWorkflow method")
-// 			},
-// 			GetWorkflowActionsFunc: func(ctx context.Context, in *WorkflowActionsRequest, opts ...grpc.CallOption) (*WorkflowActionList, error) {
-// 				panic("mock out the GetWorkflowActions method")
-// 			},
-// 			GetWorkflowContextFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowContext, error) {
-// 				panic("mock out the GetWorkflowContext method")
-// 			},
-// 			GetWorkflowContextListFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (*WorkflowContextList, error) {
-// 				panic("mock out the GetWorkflowContextList method")
-// 			},
-// 			GetWorkflowContextsFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (WorkflowService_GetWorkflowContextsClient, error) {
-// 				panic("mock out the GetWorkflowContexts method")
-// 			},
-// 			GetWorkflowDataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
-// 				panic("mock out the GetWorkflowData method")
-// 			},
-// 			GetWorkflowDataVersionFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
-// 				panic("mock out the GetWorkflowDataVersion method")
-// 			},
-// 			GetWorkflowMetadataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
-// 				panic("mock out the GetWorkflowMetadata method")
-// 			},
-// 			ListWorkflowsFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowService_ListWorkflowsClient, error) {
-// 				panic("mock out the ListWorkflows method")
-// 			},
-// 			ReportActionStatusFunc: func(ctx context.Context, in *WorkflowActionStatus, opts ...grpc.CallOption) (*Empty, error) {
-// 				panic("mock out the ReportActionStatus method")
-// 			},
-// 			ShowWorkflowEventsFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (WorkflowService_ShowWorkflowEventsClient, error) {
-// 				panic("mock out the ShowWorkflowEvents method")
-// 			},
-// 			UpdateWorkflowDataFunc: func(ctx context.Context, in *UpdateWorkflowDataRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 				panic("mock out the UpdateWorkflowData method")
-// 			},
-// 		}
+//		// make and configure a mocked WorkflowServiceClient
+//		mockedWorkflowServiceClient := &WorkflowServiceClientMock{
+//			CreateWorkflowFunc: func(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
+//				panic("mock out the CreateWorkflow method")
+//			},
+//			DeleteWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
+//				panic("mock out the DeleteWorkflow method")
+//			},
+//			GetWorkflowFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Workflow, error) {
+//				panic("mock out the GetWorkflow method")
+//			},
+//			GetWorkflowActionsFunc: func(ctx context.Context, in *WorkflowActionsRequest, opts ...grpc.CallOption) (*WorkflowActionList, error) {
+//				panic("mock out the GetWorkflowActions method")
+//			},
+//			GetWorkflowContextFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowContext, error) {
+//				panic("mock out the GetWorkflowContext method")
+//			},
+//			GetWorkflowContextListFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (*WorkflowContextList, error) {
+//				panic("mock out the GetWorkflowContextList method")
+//			},
+//			GetWorkflowContextsFunc: func(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (WorkflowService_GetWorkflowContextsClient, error) {
+//				panic("mock out the GetWorkflowContexts method")
+//			},
+//			GetWorkflowDataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
+//				panic("mock out the GetWorkflowData method")
+//			},
+//			GetWorkflowDataVersionFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
+//				panic("mock out the GetWorkflowDataVersion method")
+//			},
+//			GetWorkflowMetadataFunc: func(ctx context.Context, in *GetWorkflowDataRequest, opts ...grpc.CallOption) (*GetWorkflowDataResponse, error) {
+//				panic("mock out the GetWorkflowMetadata method")
+//			},
+//			ListWorkflowsFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (WorkflowService_ListWorkflowsClient, error) {
+//				panic("mock out the ListWorkflows method")
+//			},
+//			ReportActionStatusFunc: func(ctx context.Context, in *WorkflowActionStatus, opts ...grpc.CallOption) (*Empty, error) {
+//				panic("mock out the ReportActionStatus method")
+//			},
+//			ShowWorkflowEventsFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (WorkflowService_ShowWorkflowEventsClient, error) {
+//				panic("mock out the ShowWorkflowEvents method")
+//			},
+//			UpdateWorkflowDataFunc: func(ctx context.Context, in *UpdateWorkflowDataRequest, opts ...grpc.CallOption) (*Empty, error) {
+//				panic("mock out the UpdateWorkflowData method")
+//			},
+//		}
 //
-// 		// use mockedWorkflowServiceClient in code that requires WorkflowServiceClient
-// 		// and then make assertions.
+//		// use mockedWorkflowServiceClient in code that requires WorkflowServiceClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type WorkflowServiceClientMock struct {
 	// CreateWorkflowFunc mocks the CreateWorkflow method.
 	CreateWorkflowFunc func(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
@@ -279,7 +279,8 @@ func (mock *WorkflowServiceClientMock) CreateWorkflow(ctx context.Context, in *C
 
 // CreateWorkflowCalls gets all the calls that were made to CreateWorkflow.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.CreateWorkflowCalls())
+//
+//	len(mockedWorkflowServiceClient.CreateWorkflowCalls())
 func (mock *WorkflowServiceClientMock) CreateWorkflowCalls() []struct {
 	Ctx  context.Context
 	In   *CreateRequest
@@ -318,7 +319,8 @@ func (mock *WorkflowServiceClientMock) DeleteWorkflow(ctx context.Context, in *G
 
 // DeleteWorkflowCalls gets all the calls that were made to DeleteWorkflow.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.DeleteWorkflowCalls())
+//
+//	len(mockedWorkflowServiceClient.DeleteWorkflowCalls())
 func (mock *WorkflowServiceClientMock) DeleteWorkflowCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -357,7 +359,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflow(ctx context.Context, in *GetR
 
 // GetWorkflowCalls gets all the calls that were made to GetWorkflow.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -396,7 +399,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflowActions(ctx context.Context, i
 
 // GetWorkflowActionsCalls gets all the calls that were made to GetWorkflowActions.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowActionsCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowActionsCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowActionsCalls() []struct {
 	Ctx  context.Context
 	In   *WorkflowActionsRequest
@@ -435,7 +439,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflowContext(ctx context.Context, i
 
 // GetWorkflowContextCalls gets all the calls that were made to GetWorkflowContext.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowContextCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowContextCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowContextCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -474,7 +479,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflowContextList(ctx context.Contex
 
 // GetWorkflowContextListCalls gets all the calls that were made to GetWorkflowContextList.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowContextListCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowContextListCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowContextListCalls() []struct {
 	Ctx  context.Context
 	In   *WorkflowContextRequest
@@ -513,7 +519,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflowContexts(ctx context.Context, 
 
 // GetWorkflowContextsCalls gets all the calls that were made to GetWorkflowContexts.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowContextsCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowContextsCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowContextsCalls() []struct {
 	Ctx  context.Context
 	In   *WorkflowContextRequest
@@ -552,7 +559,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflowData(ctx context.Context, in *
 
 // GetWorkflowDataCalls gets all the calls that were made to GetWorkflowData.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowDataCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowDataCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowDataCalls() []struct {
 	Ctx  context.Context
 	In   *GetWorkflowDataRequest
@@ -591,7 +599,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflowDataVersion(ctx context.Contex
 
 // GetWorkflowDataVersionCalls gets all the calls that were made to GetWorkflowDataVersion.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowDataVersionCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowDataVersionCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowDataVersionCalls() []struct {
 	Ctx  context.Context
 	In   *GetWorkflowDataRequest
@@ -630,7 +639,8 @@ func (mock *WorkflowServiceClientMock) GetWorkflowMetadata(ctx context.Context, 
 
 // GetWorkflowMetadataCalls gets all the calls that were made to GetWorkflowMetadata.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.GetWorkflowMetadataCalls())
+//
+//	len(mockedWorkflowServiceClient.GetWorkflowMetadataCalls())
 func (mock *WorkflowServiceClientMock) GetWorkflowMetadataCalls() []struct {
 	Ctx  context.Context
 	In   *GetWorkflowDataRequest
@@ -669,7 +679,8 @@ func (mock *WorkflowServiceClientMock) ListWorkflows(ctx context.Context, in *Em
 
 // ListWorkflowsCalls gets all the calls that were made to ListWorkflows.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.ListWorkflowsCalls())
+//
+//	len(mockedWorkflowServiceClient.ListWorkflowsCalls())
 func (mock *WorkflowServiceClientMock) ListWorkflowsCalls() []struct {
 	Ctx  context.Context
 	In   *Empty
@@ -708,7 +719,8 @@ func (mock *WorkflowServiceClientMock) ReportActionStatus(ctx context.Context, i
 
 // ReportActionStatusCalls gets all the calls that were made to ReportActionStatus.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.ReportActionStatusCalls())
+//
+//	len(mockedWorkflowServiceClient.ReportActionStatusCalls())
 func (mock *WorkflowServiceClientMock) ReportActionStatusCalls() []struct {
 	Ctx  context.Context
 	In   *WorkflowActionStatus
@@ -747,7 +759,8 @@ func (mock *WorkflowServiceClientMock) ShowWorkflowEvents(ctx context.Context, i
 
 // ShowWorkflowEventsCalls gets all the calls that were made to ShowWorkflowEvents.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.ShowWorkflowEventsCalls())
+//
+//	len(mockedWorkflowServiceClient.ShowWorkflowEventsCalls())
 func (mock *WorkflowServiceClientMock) ShowWorkflowEventsCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -786,7 +799,8 @@ func (mock *WorkflowServiceClientMock) UpdateWorkflowData(ctx context.Context, i
 
 // UpdateWorkflowDataCalls gets all the calls that were made to UpdateWorkflowData.
 // Check the length with:
-//     len(mockedWorkflowServiceClient.UpdateWorkflowDataCalls())
+//
+//	len(mockedWorkflowServiceClient.UpdateWorkflowDataCalls())
 func (mock *WorkflowServiceClientMock) UpdateWorkflowDataCalls() []struct {
 	Ctx  context.Context
 	In   *UpdateWorkflowDataRequest
@@ -809,37 +823,37 @@ var _ WorkflowService_ListWorkflowsClient = &WorkflowService_ListWorkflowsClient
 
 // WorkflowService_ListWorkflowsClientMock is a mock implementation of WorkflowService_ListWorkflowsClient.
 //
-// 	func TestSomethingThatUsesWorkflowService_ListWorkflowsClient(t *testing.T) {
+//	func TestSomethingThatUsesWorkflowService_ListWorkflowsClient(t *testing.T) {
 //
-// 		// make and configure a mocked WorkflowService_ListWorkflowsClient
-// 		mockedWorkflowService_ListWorkflowsClient := &WorkflowService_ListWorkflowsClientMock{
-// 			CloseSendFunc: func() error {
-// 				panic("mock out the CloseSend method")
-// 			},
-// 			ContextFunc: func() context.Context {
-// 				panic("mock out the Context method")
-// 			},
-// 			HeaderFunc: func() (metadata.MD, error) {
-// 				panic("mock out the Header method")
-// 			},
-// 			RecvFunc: func() (*Workflow, error) {
-// 				panic("mock out the Recv method")
-// 			},
-// 			RecvMsgFunc: func(m interface{}) error {
-// 				panic("mock out the RecvMsg method")
-// 			},
-// 			SendMsgFunc: func(m interface{}) error {
-// 				panic("mock out the SendMsg method")
-// 			},
-// 			TrailerFunc: func() metadata.MD {
-// 				panic("mock out the Trailer method")
-// 			},
-// 		}
+//		// make and configure a mocked WorkflowService_ListWorkflowsClient
+//		mockedWorkflowService_ListWorkflowsClient := &WorkflowService_ListWorkflowsClientMock{
+//			CloseSendFunc: func() error {
+//				panic("mock out the CloseSend method")
+//			},
+//			ContextFunc: func() context.Context {
+//				panic("mock out the Context method")
+//			},
+//			HeaderFunc: func() (metadata.MD, error) {
+//				panic("mock out the Header method")
+//			},
+//			RecvFunc: func() (*Workflow, error) {
+//				panic("mock out the Recv method")
+//			},
+//			RecvMsgFunc: func(m interface{}) error {
+//				panic("mock out the RecvMsg method")
+//			},
+//			SendMsgFunc: func(m interface{}) error {
+//				panic("mock out the SendMsg method")
+//			},
+//			TrailerFunc: func() metadata.MD {
+//				panic("mock out the Trailer method")
+//			},
+//		}
 //
-// 		// use mockedWorkflowService_ListWorkflowsClient in code that requires WorkflowService_ListWorkflowsClient
-// 		// and then make assertions.
+//		// use mockedWorkflowService_ListWorkflowsClient in code that requires WorkflowService_ListWorkflowsClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type WorkflowService_ListWorkflowsClientMock struct {
 	// CloseSendFunc mocks the CloseSend method.
 	CloseSendFunc func() error
@@ -908,7 +922,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) CloseSend() error {
 
 // CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
-//     len(mockedWorkflowService_ListWorkflowsClient.CloseSendCalls())
+//
+//	len(mockedWorkflowService_ListWorkflowsClient.CloseSendCalls())
 func (mock *WorkflowService_ListWorkflowsClientMock) CloseSendCalls() []struct{} {
 	var calls []struct{}
 	mock.lockCloseSend.RLock()
@@ -931,7 +946,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Context() context.Context {
 
 // ContextCalls gets all the calls that were made to Context.
 // Check the length with:
-//     len(mockedWorkflowService_ListWorkflowsClient.ContextCalls())
+//
+//	len(mockedWorkflowService_ListWorkflowsClient.ContextCalls())
 func (mock *WorkflowService_ListWorkflowsClientMock) ContextCalls() []struct{} {
 	var calls []struct{}
 	mock.lockContext.RLock()
@@ -954,7 +970,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Header() (metadata.MD, erro
 
 // HeaderCalls gets all the calls that were made to Header.
 // Check the length with:
-//     len(mockedWorkflowService_ListWorkflowsClient.HeaderCalls())
+//
+//	len(mockedWorkflowService_ListWorkflowsClient.HeaderCalls())
 func (mock *WorkflowService_ListWorkflowsClientMock) HeaderCalls() []struct{} {
 	var calls []struct{}
 	mock.lockHeader.RLock()
@@ -977,7 +994,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Recv() (*Workflow, error) {
 
 // RecvCalls gets all the calls that were made to Recv.
 // Check the length with:
-//     len(mockedWorkflowService_ListWorkflowsClient.RecvCalls())
+//
+//	len(mockedWorkflowService_ListWorkflowsClient.RecvCalls())
 func (mock *WorkflowService_ListWorkflowsClientMock) RecvCalls() []struct{} {
 	var calls []struct{}
 	mock.lockRecv.RLock()
@@ -1004,7 +1022,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) RecvMsg(m interface{}) erro
 
 // RecvMsgCalls gets all the calls that were made to RecvMsg.
 // Check the length with:
-//     len(mockedWorkflowService_ListWorkflowsClient.RecvMsgCalls())
+//
+//	len(mockedWorkflowService_ListWorkflowsClient.RecvMsgCalls())
 func (mock *WorkflowService_ListWorkflowsClientMock) RecvMsgCalls() []struct {
 	M interface{}
 } {
@@ -1035,7 +1054,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) SendMsg(m interface{}) erro
 
 // SendMsgCalls gets all the calls that were made to SendMsg.
 // Check the length with:
-//     len(mockedWorkflowService_ListWorkflowsClient.SendMsgCalls())
+//
+//	len(mockedWorkflowService_ListWorkflowsClient.SendMsgCalls())
 func (mock *WorkflowService_ListWorkflowsClientMock) SendMsgCalls() []struct {
 	M interface{}
 } {
@@ -1062,7 +1082,8 @@ func (mock *WorkflowService_ListWorkflowsClientMock) Trailer() metadata.MD {
 
 // TrailerCalls gets all the calls that were made to Trailer.
 // Check the length with:
-//     len(mockedWorkflowService_ListWorkflowsClient.TrailerCalls())
+//
+//	len(mockedWorkflowService_ListWorkflowsClient.TrailerCalls())
 func (mock *WorkflowService_ListWorkflowsClientMock) TrailerCalls() []struct{} {
 	var calls []struct{}
 	mock.lockTrailer.RLock()

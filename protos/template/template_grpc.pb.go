@@ -19,19 +19,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TemplateServiceClient interface {
-	//
 	// CreateTemplate stores a template in the Tinkerbell server.
 	CreateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error)
-	//
 	// GetTemplate returns a specific template via its identifier.
 	GetTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error)
-	//
 	// DeleteTemplate deletes a template via its identifier.
 	DeleteTemplate(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error)
-	//
 	// ListTemplates returns all the template stored in Tinkerbell server
 	ListTemplates(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error)
-	//
 	// UpdateTemplate updates a template
 	// TODO: Read the code and figure out how an update work
 	UpdateTemplate(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error)
@@ -117,19 +112,14 @@ func (c *templateServiceClient) UpdateTemplate(ctx context.Context, in *Workflow
 // All implementations should embed UnimplementedTemplateServiceServer
 // for forward compatibility
 type TemplateServiceServer interface {
-	//
 	// CreateTemplate stores a template in the Tinkerbell server.
 	CreateTemplate(context.Context, *WorkflowTemplate) (*CreateResponse, error)
-	//
 	// GetTemplate returns a specific template via its identifier.
 	GetTemplate(context.Context, *GetRequest) (*WorkflowTemplate, error)
-	//
 	// DeleteTemplate deletes a template via its identifier.
 	DeleteTemplate(context.Context, *GetRequest) (*Empty, error)
-	//
 	// ListTemplates returns all the template stored in Tinkerbell server
 	ListTemplates(*ListRequest, TemplateService_ListTemplatesServer) error
-	//
 	// UpdateTemplate updates a template
 	// TODO: Read the code and figure out how an update work
 	UpdateTemplate(context.Context, *WorkflowTemplate) (*Empty, error)

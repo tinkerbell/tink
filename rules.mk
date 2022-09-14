@@ -81,6 +81,7 @@ check-protomocks:
 
 .PHONY: pbfiles
 pbfiles: buf.gen.yaml buf.lock $(shell git ls-files 'protos/*/*.proto') $(toolsBins)
+	buf mod update
 	buf generate
 	gofumpt -w protos/*/*.pb.*
 

@@ -17,37 +17,37 @@ var _ HardwareServiceClient = &HardwareServiceClientMock{}
 
 // HardwareServiceClientMock is a mock implementation of HardwareServiceClient.
 //
-// 	func TestSomethingThatUsesHardwareServiceClient(t *testing.T) {
+//	func TestSomethingThatUsesHardwareServiceClient(t *testing.T) {
 //
-// 		// make and configure a mocked HardwareServiceClient
-// 		mockedHardwareServiceClient := &HardwareServiceClientMock{
-// 			AllFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error) {
-// 				panic("mock out the All method")
-// 			},
-// 			ByIDFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
-// 				panic("mock out the ByID method")
-// 			},
-// 			ByIPFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
-// 				panic("mock out the ByIP method")
-// 			},
-// 			ByMACFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
-// 				panic("mock out the ByMAC method")
-// 			},
-// 			DeleteFunc: func(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 				panic("mock out the Delete method")
-// 			},
-// 			DeprecatedWatchFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_DeprecatedWatchClient, error) {
-// 				panic("mock out the DeprecatedWatch method")
-// 			},
-// 			PushFunc: func(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error) {
-// 				panic("mock out the Push method")
-// 			},
-// 		}
+//		// make and configure a mocked HardwareServiceClient
+//		mockedHardwareServiceClient := &HardwareServiceClientMock{
+//			AllFunc: func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error) {
+//				panic("mock out the All method")
+//			},
+//			ByIDFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
+//				panic("mock out the ByID method")
+//			},
+//			ByIPFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
+//				panic("mock out the ByIP method")
+//			},
+//			ByMACFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Hardware, error) {
+//				panic("mock out the ByMAC method")
+//			},
+//			DeleteFunc: func(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*Empty, error) {
+//				panic("mock out the Delete method")
+//			},
+//			DeprecatedWatchFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (HardwareService_DeprecatedWatchClient, error) {
+//				panic("mock out the DeprecatedWatch method")
+//			},
+//			PushFunc: func(ctx context.Context, in *PushRequest, opts ...grpc.CallOption) (*Empty, error) {
+//				panic("mock out the Push method")
+//			},
+//		}
 //
-// 		// use mockedHardwareServiceClient in code that requires HardwareServiceClient
-// 		// and then make assertions.
+//		// use mockedHardwareServiceClient in code that requires HardwareServiceClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type HardwareServiceClientMock struct {
 	// AllFunc mocks the All method.
 	AllFunc func(ctx context.Context, in *Empty, opts ...grpc.CallOption) (HardwareService_AllClient, error)
@@ -167,7 +167,8 @@ func (mock *HardwareServiceClientMock) All(ctx context.Context, in *Empty, opts 
 
 // AllCalls gets all the calls that were made to All.
 // Check the length with:
-//     len(mockedHardwareServiceClient.AllCalls())
+//
+//	len(mockedHardwareServiceClient.AllCalls())
 func (mock *HardwareServiceClientMock) AllCalls() []struct {
 	Ctx  context.Context
 	In   *Empty
@@ -206,7 +207,8 @@ func (mock *HardwareServiceClientMock) ByID(ctx context.Context, in *GetRequest,
 
 // ByIDCalls gets all the calls that were made to ByID.
 // Check the length with:
-//     len(mockedHardwareServiceClient.ByIDCalls())
+//
+//	len(mockedHardwareServiceClient.ByIDCalls())
 func (mock *HardwareServiceClientMock) ByIDCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -245,7 +247,8 @@ func (mock *HardwareServiceClientMock) ByIP(ctx context.Context, in *GetRequest,
 
 // ByIPCalls gets all the calls that were made to ByIP.
 // Check the length with:
-//     len(mockedHardwareServiceClient.ByIPCalls())
+//
+//	len(mockedHardwareServiceClient.ByIPCalls())
 func (mock *HardwareServiceClientMock) ByIPCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -284,7 +287,8 @@ func (mock *HardwareServiceClientMock) ByMAC(ctx context.Context, in *GetRequest
 
 // ByMACCalls gets all the calls that were made to ByMAC.
 // Check the length with:
-//     len(mockedHardwareServiceClient.ByMACCalls())
+//
+//	len(mockedHardwareServiceClient.ByMACCalls())
 func (mock *HardwareServiceClientMock) ByMACCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -323,7 +327,8 @@ func (mock *HardwareServiceClientMock) Delete(ctx context.Context, in *DeleteReq
 
 // DeleteCalls gets all the calls that were made to Delete.
 // Check the length with:
-//     len(mockedHardwareServiceClient.DeleteCalls())
+//
+//	len(mockedHardwareServiceClient.DeleteCalls())
 func (mock *HardwareServiceClientMock) DeleteCalls() []struct {
 	Ctx  context.Context
 	In   *DeleteRequest
@@ -362,7 +367,8 @@ func (mock *HardwareServiceClientMock) DeprecatedWatch(ctx context.Context, in *
 
 // DeprecatedWatchCalls gets all the calls that were made to DeprecatedWatch.
 // Check the length with:
-//     len(mockedHardwareServiceClient.DeprecatedWatchCalls())
+//
+//	len(mockedHardwareServiceClient.DeprecatedWatchCalls())
 func (mock *HardwareServiceClientMock) DeprecatedWatchCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -401,7 +407,8 @@ func (mock *HardwareServiceClientMock) Push(ctx context.Context, in *PushRequest
 
 // PushCalls gets all the calls that were made to Push.
 // Check the length with:
-//     len(mockedHardwareServiceClient.PushCalls())
+//
+//	len(mockedHardwareServiceClient.PushCalls())
 func (mock *HardwareServiceClientMock) PushCalls() []struct {
 	Ctx  context.Context
 	In   *PushRequest
@@ -424,37 +431,37 @@ var _ HardwareService_AllClient = &HardwareService_AllClientMock{}
 
 // HardwareService_AllClientMock is a mock implementation of HardwareService_AllClient.
 //
-// 	func TestSomethingThatUsesHardwareService_AllClient(t *testing.T) {
+//	func TestSomethingThatUsesHardwareService_AllClient(t *testing.T) {
 //
-// 		// make and configure a mocked HardwareService_AllClient
-// 		mockedHardwareService_AllClient := &HardwareService_AllClientMock{
-// 			CloseSendFunc: func() error {
-// 				panic("mock out the CloseSend method")
-// 			},
-// 			ContextFunc: func() context.Context {
-// 				panic("mock out the Context method")
-// 			},
-// 			HeaderFunc: func() (metadata.MD, error) {
-// 				panic("mock out the Header method")
-// 			},
-// 			RecvFunc: func() (*Hardware, error) {
-// 				panic("mock out the Recv method")
-// 			},
-// 			RecvMsgFunc: func(m interface{}) error {
-// 				panic("mock out the RecvMsg method")
-// 			},
-// 			SendMsgFunc: func(m interface{}) error {
-// 				panic("mock out the SendMsg method")
-// 			},
-// 			TrailerFunc: func() metadata.MD {
-// 				panic("mock out the Trailer method")
-// 			},
-// 		}
+//		// make and configure a mocked HardwareService_AllClient
+//		mockedHardwareService_AllClient := &HardwareService_AllClientMock{
+//			CloseSendFunc: func() error {
+//				panic("mock out the CloseSend method")
+//			},
+//			ContextFunc: func() context.Context {
+//				panic("mock out the Context method")
+//			},
+//			HeaderFunc: func() (metadata.MD, error) {
+//				panic("mock out the Header method")
+//			},
+//			RecvFunc: func() (*Hardware, error) {
+//				panic("mock out the Recv method")
+//			},
+//			RecvMsgFunc: func(m interface{}) error {
+//				panic("mock out the RecvMsg method")
+//			},
+//			SendMsgFunc: func(m interface{}) error {
+//				panic("mock out the SendMsg method")
+//			},
+//			TrailerFunc: func() metadata.MD {
+//				panic("mock out the Trailer method")
+//			},
+//		}
 //
-// 		// use mockedHardwareService_AllClient in code that requires HardwareService_AllClient
-// 		// and then make assertions.
+//		// use mockedHardwareService_AllClient in code that requires HardwareService_AllClient
+//		// and then make assertions.
 //
-// 	}
+//	}
 type HardwareService_AllClientMock struct {
 	// CloseSendFunc mocks the CloseSend method.
 	CloseSendFunc func() error
@@ -523,7 +530,8 @@ func (mock *HardwareService_AllClientMock) CloseSend() error {
 
 // CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
-//     len(mockedHardwareService_AllClient.CloseSendCalls())
+//
+//	len(mockedHardwareService_AllClient.CloseSendCalls())
 func (mock *HardwareService_AllClientMock) CloseSendCalls() []struct{} {
 	var calls []struct{}
 	mock.lockCloseSend.RLock()
@@ -546,7 +554,8 @@ func (mock *HardwareService_AllClientMock) Context() context.Context {
 
 // ContextCalls gets all the calls that were made to Context.
 // Check the length with:
-//     len(mockedHardwareService_AllClient.ContextCalls())
+//
+//	len(mockedHardwareService_AllClient.ContextCalls())
 func (mock *HardwareService_AllClientMock) ContextCalls() []struct{} {
 	var calls []struct{}
 	mock.lockContext.RLock()
@@ -569,7 +578,8 @@ func (mock *HardwareService_AllClientMock) Header() (metadata.MD, error) {
 
 // HeaderCalls gets all the calls that were made to Header.
 // Check the length with:
-//     len(mockedHardwareService_AllClient.HeaderCalls())
+//
+//	len(mockedHardwareService_AllClient.HeaderCalls())
 func (mock *HardwareService_AllClientMock) HeaderCalls() []struct{} {
 	var calls []struct{}
 	mock.lockHeader.RLock()
@@ -592,7 +602,8 @@ func (mock *HardwareService_AllClientMock) Recv() (*Hardware, error) {
 
 // RecvCalls gets all the calls that were made to Recv.
 // Check the length with:
-//     len(mockedHardwareService_AllClient.RecvCalls())
+//
+//	len(mockedHardwareService_AllClient.RecvCalls())
 func (mock *HardwareService_AllClientMock) RecvCalls() []struct{} {
 	var calls []struct{}
 	mock.lockRecv.RLock()
@@ -619,7 +630,8 @@ func (mock *HardwareService_AllClientMock) RecvMsg(m interface{}) error {
 
 // RecvMsgCalls gets all the calls that were made to RecvMsg.
 // Check the length with:
-//     len(mockedHardwareService_AllClient.RecvMsgCalls())
+//
+//	len(mockedHardwareService_AllClient.RecvMsgCalls())
 func (mock *HardwareService_AllClientMock) RecvMsgCalls() []struct {
 	M interface{}
 } {
@@ -650,7 +662,8 @@ func (mock *HardwareService_AllClientMock) SendMsg(m interface{}) error {
 
 // SendMsgCalls gets all the calls that were made to SendMsg.
 // Check the length with:
-//     len(mockedHardwareService_AllClient.SendMsgCalls())
+//
+//	len(mockedHardwareService_AllClient.SendMsgCalls())
 func (mock *HardwareService_AllClientMock) SendMsgCalls() []struct {
 	M interface{}
 } {
@@ -677,7 +690,8 @@ func (mock *HardwareService_AllClientMock) Trailer() metadata.MD {
 
 // TrailerCalls gets all the calls that were made to Trailer.
 // Check the length with:
-//     len(mockedHardwareService_AllClient.TrailerCalls())
+//
+//	len(mockedHardwareService_AllClient.TrailerCalls())
 func (mock *HardwareService_AllClientMock) TrailerCalls() []struct{} {
 	var calls []struct{}
 	mock.lockTrailer.RLock()
