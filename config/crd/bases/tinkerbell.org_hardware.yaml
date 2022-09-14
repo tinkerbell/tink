@@ -120,6 +120,8 @@ spec:
                             type: array
                           uefi:
                             type: boolean
+                          vlan_id:
+                            type: integer
                         type: object
                       netboot:
                         description: Netboot configuration.

@@ -130,6 +130,7 @@ type DHCP struct {
 	UEFI        bool     `json:"uefi,omitempty"`
 	IfaceName   string   `json:"iface_name,omitempty"`
 	IP          *IP      `json:"ip,omitempty"`
+	VLANID      uint     `json:"vlan_id,omitempty"`
 }
 
 // IP configuration.
