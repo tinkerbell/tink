@@ -3,7 +3,7 @@ package grpcserver
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -127,11 +127,11 @@ func TestGetCerts(t *testing.T) {
 			func(t *testing.T) (string, error) {
 				t.Helper()
 				tdir := t.TempDir()
-				err := ioutil.WriteFile(filepath.Join(tdir, "bundle.pem"), []byte{}, 0o644)
+				err := os.WriteFile(filepath.Join(tdir, "bundle.pem"), []byte{}, 0o644)
 				if err != nil {
 					return "", err
 				}
-				err = ioutil.WriteFile(filepath.Join(tdir, "server-key.pem"), []byte{}, 0o644)
+				err = os.WriteFile(filepath.Join(tdir, "server-key.pem"), []byte{}, 0o644)
 				if err != nil {
 					return "", err
 				}

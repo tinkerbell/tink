@@ -117,7 +117,7 @@ func (s *DBServer) ListTemplates(in *template.ListRequest, stream template.Templ
 	}
 
 	s.dbLock.RLock()
-	ready := s.dbReady
+	ready := s.dbReady //nolint:ifshort // needed for locking
 	s.dbLock.RUnlock()
 	if !ready {
 		metrics.CacheStalls.With(labels).Inc()

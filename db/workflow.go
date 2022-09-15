@@ -257,7 +257,7 @@ func (d TinkDB) GetfromWfDataTable(ctx context.Context, req *pb.GetWorkflowDataR
 		return buf, nil
 	}
 
-	if err != sql.ErrNoRows {
+	if err != sql.ErrNoRows { //nolint:errorlint // there's no wrapping going on here
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
 	}
@@ -288,7 +288,7 @@ func (d TinkDB) GetWorkflowMetadata(ctx context.Context, req *pb.GetWorkflowData
 		return buf, nil
 	}
 
-	if err != sql.ErrNoRows {
+	if err != sql.ErrNoRows { //nolint:errorlint // there's no wrapping going on here
 		err = errors.Wrap(err, "SELECT from workflow_data")
 		d.logger.Error(err)
 	}
@@ -359,7 +359,7 @@ func (d TinkDB) GetWorkflow(ctx context.Context, id string) (Workflow, error) {
 			UpdatedAt: updatedAt,
 		}, nil
 	}
-	if err != sql.ErrNoRows {
+	if err != sql.ErrNoRows { //nolint:errorlint // there's no wrapping going on here
 		err = errors.Wrap(err, "SELECT")
 		d.logger.Error(err)
 		return Workflow{}, err
@@ -538,7 +538,7 @@ func (d TinkDB) GetWorkflowContexts(ctx context.Context, wfID string) (*pb.Workf
 			TotalNumberOfActions: tact,
 		}, nil
 	}
-	if err != sql.ErrNoRows {
+	if err != sql.ErrNoRows { //nolint:errorlint // there's no wrapping going on here
 		err = errors.Wrap(err, "SELECT from worflow_state")
 		d.logger.Error(err)
 		return &pb.WorkflowContext{}, err
@@ -566,7 +566,7 @@ func (d TinkDB) GetWorkflowActions(ctx context.Context, wfID string) (*pb.Workfl
 			ActionList: actions,
 		}, nil
 	}
-	if err != sql.ErrNoRows {
+	if err != sql.ErrNoRows { //nolint:errorlint // there's no wrapping going on here
 		err = errors.Wrap(err, "SELECT from worflow_state")
 		d.logger.Error(err)
 	}

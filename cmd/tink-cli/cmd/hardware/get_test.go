@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -101,7 +100,7 @@ func TestGetHardware(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			out, err := ioutil.ReadAll(stdout)
+			out, err := io.ReadAll(stdout)
 			if err != nil {
 				t.Error(err)
 			}

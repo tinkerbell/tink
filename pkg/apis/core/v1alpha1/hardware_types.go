@@ -43,7 +43,6 @@ type Hardware struct {
 
 // HardwareSpec defines the desired state of Hardware.
 type HardwareSpec struct {
-
 	// BMCRef contains a relation to a BMC state management type in the same
 	// namespace as the Hardware. This may be used for BMC management by
 	// orchestrators.

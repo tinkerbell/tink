@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -53,7 +53,7 @@ func MustParse(yamlContent []byte) *Workflow {
 // MustParseFromFile parse a template from a file and it panics if any error is
 // detected. Ideal to be used in testing.
 func MustParseFromFile(path string) *Workflow {
-	content, err := ioutil.ReadFile(filepath.Clean(path))
+	content, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		panic(err)
 	}

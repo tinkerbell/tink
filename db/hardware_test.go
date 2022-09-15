@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -364,10 +364,8 @@ func TestGetByIP(t *testing.T) {
 				for ii := 0; ii < 10; ii++ {
 					hw := readHardwareData("./testdata/hardware.json")
 					hw.Id = uuid.New().String()
-					hw.Network.Interfaces[0].Dhcp.Ip.Address =
-						strings.Replace(hw.Network.Interfaces[0].Dhcp.Ip.Address, "1", fmt.Sprintf("%d", ii), 1)
-					hw.Network.Interfaces[0].Dhcp.Mac =
-						strings.Replace(hw.Network.Interfaces[0].Dhcp.Mac, "00", fmt.Sprintf("0%d", ii), 1)
+					hw.Network.Interfaces[0].Dhcp.Ip.Address = strings.Replace(hw.Network.Interfaces[0].Dhcp.Ip.Address, "1", fmt.Sprintf("%d", ii), 1)
+					hw.Network.Interfaces[0].Dhcp.Mac = strings.Replace(hw.Network.Interfaces[0].Dhcp.Mac, "00", fmt.Sprintf("0%d", ii), 1)
 				}
 				return input
 			}(),
@@ -477,8 +475,7 @@ func TestGetByMAC(t *testing.T) {
 				for ii := 0; ii < 10; ii++ {
 					hw := readHardwareData("./testdata/hardware.json")
 					hw.Id = uuid.New().String()
-					hw.Network.Interfaces[0].Dhcp.Mac =
-						strings.Replace(hw.Network.Interfaces[0].Dhcp.Mac, "00", fmt.Sprintf("0%d", ii), 1)
+					hw.Network.Interfaces[0].Dhcp.Mac = strings.Replace(hw.Network.Interfaces[0].Dhcp.Mac, "00", fmt.Sprintf("0%d", ii), 1)
 				}
 				return input
 			}(),
@@ -549,7 +546,7 @@ func TestGetByMAC_WithNonExistingMAC(t *testing.T) {
 }
 
 func readHardwareData(file string) *hardware.Hardware {
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		panic(err)
 	}

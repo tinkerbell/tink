@@ -39,7 +39,8 @@ func newFakeDockerClient(containerID, imagePullContent string, delay time.Durati
 }
 
 func (c *fakeDockerClient) ContainerCreate(
-	context.Context, *containertypes.Config, *containertypes.HostConfig, *networktypes.NetworkingConfig, *specs.Platform, string) (containertypes.ContainerCreateCreatedBody, error) {
+	context.Context, *containertypes.Config, *containertypes.HostConfig, *networktypes.NetworkingConfig, *specs.Platform, string,
+) (containertypes.ContainerCreateCreatedBody, error) {
 	if c.err != nil {
 		return containertypes.ContainerCreateCreatedBody{}, c.err
 	}

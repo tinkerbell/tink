@@ -3,7 +3,7 @@ package tests_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -22,7 +22,7 @@ import (
 )
 
 func parseFile(filename string, obj interface{}) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}

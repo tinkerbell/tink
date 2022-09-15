@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -82,7 +82,7 @@ func isInputFromPipe() bool {
 }
 
 func readDataFromStdin() string {
-	data, err := ioutil.ReadAll(os.Stdin)
+	data, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return ""
 	}
@@ -96,7 +96,7 @@ func readDataFromFile() (string, error) {
 	}
 	defer f.Close()
 
-	data, err := ioutil.ReadAll(f)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return "", err
 	}

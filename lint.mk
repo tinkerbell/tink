@@ -54,7 +54,7 @@ hadolint-lint: $(HADOLINT_BIN)
 	$(HADOLINT_BIN) --no-fail $(shell find . -name "*Dockerfile")
 
 GOLANGCI_LINT_CONFIG := $(LINT_ROOT)/.golangci.yml
-GOLANGCI_LINT_VERSION ?= v1.43.0
+GOLANGCI_LINT_VERSION ?= v1.49.0
 GOLANGCI_LINT_BIN := out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
 $(GOLANGCI_LINT_BIN):
 	mkdir -p out/linters

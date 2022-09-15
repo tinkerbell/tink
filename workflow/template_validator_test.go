@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -101,13 +100,13 @@ func TestMustParseFromFile(t *testing.T) {
 				}
 			}()
 
-			file, err := ioutil.TempFile(os.TempDir(), "tinktest")
+			file, err := os.CreateTemp(os.TempDir(), "tinktest")
 			if err != nil {
 				t.Error(err)
 			}
 			defer os.Remove(file.Name())
 
-			err = ioutil.WriteFile(file.Name(), []byte(s.Input), os.ModeAppend)
+			err = os.WriteFile(file.Name(), []byte(s.Input), os.ModeAppend)
 			if err != nil {
 				t.Error(err)
 			}

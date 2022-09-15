@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -234,7 +233,7 @@ func TestNewGetCommand(t *testing.T) {
 			if fmt.Sprint(err) != fmt.Sprint(s.ExpectError) {
 				t.Errorf("unexpected error: want=%v, got=%v", s.ExpectError, err)
 			}
-			out, err := ioutil.ReadAll(stdout)
+			out, err := io.ReadAll(stdout)
 			if err != nil {
 				t.Error(err)
 			}
