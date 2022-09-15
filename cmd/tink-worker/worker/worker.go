@@ -403,7 +403,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 				if len(actions.GetActionList()) == actionIndex+1 {
 					l.Info("reached to end of workflow")
 					delete(workflowcontexts, wfID)
-					turn = false //nolint:wastedassign // assigned to turn, but reassigned without using the value
+					turn = false
 					break
 				}
 
