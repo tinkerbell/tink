@@ -27,24 +27,30 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+//
 // The various state a workflow can be
 type State int32
 
 const (
+	//
 	// A workflow is in pending state when it is waiting for the hardware to pick
 	// it up and start the execution.
 	State_STATE_PENDING State = 0
+	//
 	// A workflow is in a running state when the tink-worker started the
 	// exeuction of it, and it is currently in execution inside the device
 	// itself.
 	State_STATE_RUNNING State = 1
+	//
 	// Failed is a final state. Something wrong happened during the execution of
 	// the workflow inside the target. Have a look at the logs to see if you can
 	// spot what is going on.
 	State_STATE_FAILED State = 2
+	//
 	// Timeout is final state, almost like FAILED but it communicate to you that
 	// an action or the overall workflow reached the specified timeout.
 	State_STATE_TIMEOUT State = 3
+	//
 	// This is the state we all deserve. The execution of the workflow is over
 	// and everything is just fine. Sit down, and enjoy your great work.
 	State_STATE_SUCCESS State = 4
@@ -95,6 +101,7 @@ func (State) EnumDescriptor() ([]byte, []int) {
 	return file_protos_workflow_workflow_proto_rawDescGZIP(), []int{0}
 }
 
+//
 // Empty represents an empty response
 type Empty struct {
 	state         protoimpl.MessageState
@@ -134,24 +141,32 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_protos_workflow_workflow_proto_rawDescGZIP(), []int{0}
 }
 
+//
 // Workflow represent a single workflow
 type Workflow struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// The unique identifier for a workflow
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	//
 	// The template this workflows starts from
 	Template string `protobuf:"bytes,2,opt,name=template,proto3" json:"template,omitempty"`
+	//
 	// The hardware assigned to a workflow
 	Hardware string `protobuf:"bytes,3,opt,name=hardware,proto3" json:"hardware,omitempty"`
+	//
 	// Current state of the workflow. Pending, success, failed, running.
 	State State `protobuf:"varint,4,opt,name=state,proto3,enum=github.com.tinkerbell.tink.protos.workflow.State" json:"state,omitempty"`
+	//
 	// When the workflow was created
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	//
 	// The last time the workflow was modified
 	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	//
 	// When the workflow was deleted
 	DeletedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
 	Data      string                 `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
@@ -245,6 +260,7 @@ func (x *Workflow) GetData() string {
 	return ""
 }
 
+//
 // CreateRequest registers a workflow in the Tinkerbell server. From this point
 // in time it is in pending state, waiting to be executed from the tink-worker
 // inside the selected hardware
@@ -253,8 +269,10 @@ type CreateRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// The idenfier of the template the workflow starts from.
 	Template string `protobuf:"bytes,1,opt,name=template,proto3" json:"template,omitempty"`
+	//
 	// The target hardware for this workflow.
 	Hardware string `protobuf:"bytes,2,opt,name=hardware,proto3" json:"hardware,omitempty"`
 }
@@ -305,6 +323,7 @@ func (x *CreateRequest) GetHardware() string {
 	return ""
 }
 
+//
 // This is the response returned after a successful workflow creation. It
 // contains the workflow id.
 type CreateResponse struct {
@@ -354,6 +373,7 @@ func (x *CreateResponse) GetId() string {
 	return ""
 }
 
+//
 // GetRequest contains the workflow idenfier you want to get back from the
 // Tinkerbell server.
 type GetRequest struct {
@@ -403,6 +423,7 @@ func (x *GetRequest) GetId() string {
 	return ""
 }
 
+//
 // WorkflowContext represents the state of the execution of this workflow in detail.
 // How many tasks are currently executed, the number of actions and their state.
 type WorkflowContext struct {
@@ -410,16 +431,23 @@ type WorkflowContext struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// The workflow ID
-	WorkflowId    string `protobuf:"bytes,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	WorkflowId string `protobuf:"bytes,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	//
 	CurrentWorker string `protobuf:"bytes,2,opt,name=current_worker,json=currentWorker,proto3" json:"current_worker,omitempty"`
-	CurrentTask   string `protobuf:"bytes,3,opt,name=current_task,json=currentTask,proto3" json:"current_task,omitempty"`
+	//
+	CurrentTask string `protobuf:"bytes,3,opt,name=current_task,json=currentTask,proto3" json:"current_task,omitempty"`
+	//
 	// the name of the current action
 	CurrentAction string `protobuf:"bytes,4,opt,name=current_action,json=currentAction,proto3" json:"current_action,omitempty"`
+	//
 	// The index of the current action
 	CurrentActionIndex int64 `protobuf:"varint,5,opt,name=current_action_index,json=currentActionIndex,proto3" json:"current_action_index,omitempty"`
+	//
 	// The state of the current action
-	CurrentActionState   State `protobuf:"varint,6,opt,name=current_action_state,json=currentActionState,proto3,enum=github.com.tinkerbell.tink.protos.workflow.State" json:"current_action_state,omitempty"`
+	CurrentActionState State `protobuf:"varint,6,opt,name=current_action_state,json=currentActionState,proto3,enum=github.com.tinkerbell.tink.protos.workflow.State" json:"current_action_state,omitempty"`
+	//
 	TotalNumberOfActions int64 `protobuf:"varint,7,opt,name=total_number_of_actions,json=totalNumberOfActions,proto3" json:"total_number_of_actions,omitempty"`
 }
 
@@ -504,6 +532,7 @@ func (x *WorkflowContext) GetTotalNumberOfActions() int64 {
 	return 0
 }
 
+//
 // WorkflowActionStatus represents the state of all the action part of a
 // workflow
 type WorkflowActionStatus struct {
@@ -511,23 +540,31 @@ type WorkflowActionStatus struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// The workflow id
 	WorkflowId string `protobuf:"bytes,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	//
 	// The name of the task this action is part of
 	TaskName string `protobuf:"bytes,2,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
+	//
 	// The name of the action
 	ActionName string `protobuf:"bytes,3,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
+	//
 	// The state of the action. Those are the same described for workflow as
 	// well. pending, running, successful and so on.
 	ActionStatus State `protobuf:"varint,4,opt,name=action_status,json=actionStatus,proto3,enum=github.com.tinkerbell.tink.protos.workflow.State" json:"action_status,omitempty"`
+	//
 	// The execution time for the action
 	Seconds int64 `protobuf:"varint,5,opt,name=seconds,proto3" json:"seconds,omitempty"`
+	//
 	// The message returned from the action.
 	Message string `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	//
 	// When the status got created for this aciton. You can see it as the time
 	// when the action started its execution inside the hardware itself.
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	WorkerId  string                 `protobuf:"bytes,8,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
+	//
+	WorkerId string `protobuf:"bytes,8,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
 }
 
 func (x *WorkflowActionStatus) Reset() {
@@ -618,11 +655,13 @@ func (x *WorkflowActionStatus) GetWorkerId() string {
 	return ""
 }
 
+//
 type WorkflowContextRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	WorkerId string `protobuf:"bytes,1,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
 }
 
@@ -665,6 +704,7 @@ func (x *WorkflowContextRequest) GetWorkerId() string {
 	return ""
 }
 
+//
 type WorkflowContextList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -712,6 +752,7 @@ func (x *WorkflowContextList) GetWorkflowContexts() []*WorkflowContext {
 	return nil
 }
 
+//
 // WorkflowActionsRequest is used to get actions for a particular workflow
 type WorkflowActionsRequest struct {
 	state         protoimpl.MessageState
@@ -760,35 +801,46 @@ func (x *WorkflowActionsRequest) GetWorkflowId() string {
 	return ""
 }
 
+//
 // WorkflowAction represents a single aciton part of a workflow
 type WorkflowAction struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// The name of the task the action belong to.
 	TaskName string `protobuf:"bytes,1,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
+	//
 	// The name of the action
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	//
 	// The docker/oci image the action starts from
 	Image string `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
+	//
 	// Every action has a timeout, after that the execution stops and the action
 	// gets in a timeout state.
 	Timeout int64 `protobuf:"varint,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	//
 	// You can override the command executed for the container
 	Command []string `protobuf:"bytes,5,rep,name=command,proto3" json:"command,omitempty"`
+	//
 	// On timeout used to be a way to execute an action if the current one times out
 	// but with the event system in place this is not needed anymore
 	OnTimeout []string `protobuf:"bytes,6,rep,name=on_timeout,json=onTimeout,proto3" json:"on_timeout,omitempty"`
+	//
 	// On failure used to be a way to execute an action if the current one fails
 	// but with the event system in place this is not needed anymore
 	OnFailure []string `protobuf:"bytes,7,rep,name=on_failure,json=onFailure,proto3" json:"on_failure,omitempty"`
 	WorkerId  string   `protobuf:"bytes,8,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
+	//
 	// You can mount directory from your host to the running action, mainly to
 	// share files, or state
 	Volumes []string `protobuf:"bytes,9,rep,name=volumes,proto3" json:"volumes,omitempty"`
+	//
 	// Set environment variables usable from the action itself.
 	Environment []string `protobuf:"bytes,10,rep,name=environment,proto3" json:"environment,omitempty"`
+	//
 	// Set the namespace that the process IDs will be in.
 	Pid string `protobuf:"bytes,11,opt,name=pid,proto3" json:"pid,omitempty"`
 }
@@ -902,6 +954,7 @@ func (x *WorkflowAction) GetPid() string {
 	return ""
 }
 
+//
 // A list of actions
 type WorkflowActionList struct {
 	state         protoimpl.MessageState
@@ -950,6 +1003,7 @@ func (x *WorkflowActionList) GetActionList() []*WorkflowAction {
 	return nil
 }
 
+//
 // When a workflow gets created we have the ability to replace variables
 // declared in the template with concrete variables. This is the request you
 // can use to visualize those data.
@@ -1008,6 +1062,7 @@ func (x *GetWorkflowDataRequest) GetVersion() int32 {
 	return 0
 }
 
+//
 // List of data passed during workflow creation.
 type GetWorkflowDataResponse struct {
 	state         protoimpl.MessageState
@@ -1064,6 +1119,7 @@ func (x *GetWorkflowDataResponse) GetVersion() int32 {
 	return 0
 }
 
+//
 // You can change data passed to a workflow
 type UpdateWorkflowDataRequest struct {
 	state         protoimpl.MessageState

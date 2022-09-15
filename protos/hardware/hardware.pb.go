@@ -26,6 +26,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+//
 // PushRequest is the body for the Push method. It contains information about
 // a piece of hardware.
 type PushRequest struct {
@@ -33,6 +34,7 @@ type PushRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// Hardware describes the hardware you want to register to Tinkerbell and
 	// what it looks like.
 	// Hostname, MAC address, DHCP, network interfaces, metadata and so on.
@@ -78,6 +80,7 @@ func (x *PushRequest) GetData() *Hardware {
 	return nil
 }
 
+//
 // Empty represents an empty response
 type Empty struct {
 	state         protoimpl.MessageState
@@ -117,6 +120,7 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_protos_hardware_hardware_proto_rawDescGZIP(), []int{1}
 }
 
+//
 // GetRequest is the request used by the Get various get methods exposed by the
 // hardware service.
 type GetRequest struct {
@@ -182,17 +186,21 @@ func (x *GetRequest) GetId() string {
 	return ""
 }
 
+//
 // Hardware describes a specific device managed by Tinkerbell
 type Hardware struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// Describe network layout for your hardware
 	Network *Hardware_Network `protobuf:"bytes,6,opt,name=network,proto3" json:"network,omitempty"`
+	//
 	// A UUID representing a unique identifier for your hardware
 	Id      string `protobuf:"bytes,7,opt,name=id,proto3" json:"id,omitempty"`
 	Version int64  `protobuf:"varint,8,opt,name=version,proto3" json:"version,omitempty"`
+	//
 	// Metadata served by Hegel and that are accessible from the server itself To
 	// know more about what Hegel is have a look at the documentation
 	// https://docs.tinkerbell.org/services/hegel/
@@ -263,6 +271,7 @@ func (x *Hardware) GetMetadata() string {
 	return ""
 }
 
+//
 // DeleteRequest gets used when you want to delete an hardware by its identifier.
 // Usually it is a UUID.
 type DeleteRequest struct {
@@ -312,27 +321,36 @@ func (x *DeleteRequest) GetId() string {
 	return ""
 }
 
+//
 // DHCP represents
 type Hardware_DHCP struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// The MAC address for your hardware.  It is important to get it
 	// right because it is used from Tinkerbell to dispatch workflows to the
 	// right destination.
 	Mac string `protobuf:"bytes,1,opt,name=mac,proto3" json:"mac,omitempty"`
+	//
 	// Hostname represents the hostname of your server
-	Hostname    string   `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	LeaseTime   int64    `protobuf:"varint,4,opt,name=lease_time,json=leaseTime,proto3" json:"lease_time,omitempty"`
+	Hostname  string `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	LeaseTime int64  `protobuf:"varint,4,opt,name=lease_time,json=leaseTime,proto3" json:"lease_time,omitempty"`
+	//
 	NameServers []string `protobuf:"bytes,5,rep,name=name_servers,json=nameServers,proto3" json:"name_servers,omitempty"`
+	//
 	TimeServers []string `protobuf:"bytes,6,rep,name=time_servers,json=timeServers,proto3" json:"time_servers,omitempty"`
+	//
 	// The CPU architecture like arm64, amd64, x86_64 and so on.
 	Arch string `protobuf:"bytes,8,opt,name=arch,proto3" json:"arch,omitempty"`
 	Uefi bool   `protobuf:"varint,9,opt,name=uefi,proto3" json:"uefi,omitempty"`
+	//
 	// The name of the interface in your hardware like eth0, en1 and so on.
-	IfaceName string            `protobuf:"bytes,10,opt,name=iface_name,json=ifaceName,proto3" json:"iface_name,omitempty"`
-	Ip        *Hardware_DHCP_IP `protobuf:"bytes,11,opt,name=ip,proto3" json:"ip,omitempty"`
+	IfaceName string `protobuf:"bytes,10,opt,name=iface_name,json=ifaceName,proto3" json:"iface_name,omitempty"`
+	//
+	//
+	Ip *Hardware_DHCP_IP `protobuf:"bytes,11,opt,name=ip,proto3" json:"ip,omitempty"`
 }
 
 func (x *Hardware_DHCP) Reset() {
@@ -430,6 +448,7 @@ func (x *Hardware_DHCP) GetIp() *Hardware_DHCP_IP {
 	return nil
 }
 
+//
 // Netboot is the model used to represent and configure the netbooting
 // behavior From there you can customise the IPXE chained during boot, the in
 // memory operating system tand so on.
@@ -438,19 +457,25 @@ type Hardware_Netboot struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// This is a boolean value that tells to Tinkerbell if the hardware has PXE
 	// enabled. If set to false Tinkerbell won't attempt a provisioning at the
 	// moment.
 	AllowPxe bool `protobuf:"varint,1,opt,name=allow_pxe,json=allowPxe,proto3" json:"allow_pxe,omitempty"`
+	//
 	// When set to true Osie will lookup and execute the workflows assigned to
 	// a particular hardware.
 	//
 	// When set to false Osie will be executed but no workflows will be
 	// applied. This is useful if you don't want to execute any workflows but
 	// you simply need an operating system running in memory
-	AllowWorkflow bool                   `protobuf:"varint,2,opt,name=allow_workflow,json=allowWorkflow,proto3" json:"allow_workflow,omitempty"`
-	Ipxe          *Hardware_Netboot_IPXE `protobuf:"bytes,3,opt,name=ipxe,proto3" json:"ipxe,omitempty"`
-	Osie          *Hardware_Netboot_Osie `protobuf:"bytes,5,opt,name=osie,proto3" json:"osie,omitempty"`
+	AllowWorkflow bool `protobuf:"varint,2,opt,name=allow_workflow,json=allowWorkflow,proto3" json:"allow_workflow,omitempty"`
+	//
+	//
+	Ipxe *Hardware_Netboot_IPXE `protobuf:"bytes,3,opt,name=ipxe,proto3" json:"ipxe,omitempty"`
+	//
+	//
+	Osie *Hardware_Netboot_Osie `protobuf:"bytes,5,opt,name=osie,proto3" json:"osie,omitempty"`
 }
 
 func (x *Hardware_Netboot) Reset() {
@@ -513,6 +538,7 @@ func (x *Hardware_Netboot) GetOsie() *Hardware_Netboot_Osie {
 	return nil
 }
 
+//
 // Network describes the networking you expect in your hardware.
 // The number of interfaces, their name, gateway and IP.
 type Hardware_Network struct {
@@ -520,6 +546,7 @@ type Hardware_Network struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// Configure the network interfaces you have in your hardware and defines their
 	// behavior.
 	Interfaces []*Hardware_Network_Interface `protobuf:"bytes,3,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
@@ -635,6 +662,7 @@ func (x *Hardware_DHCP_IP) GetFamily() int64 {
 	return 0
 }
 
+//
 // IPXE is the network boot firmware Tinkerbell uses to start the
 // provisioning in the hardware
 type Hardware_Netboot_IPXE struct {
@@ -642,8 +670,10 @@ type Hardware_Netboot_IPXE struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// This is the location of the IPXE script
-	Url      string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	//
 	Contents string `protobuf:"bytes,2,opt,name=contents,proto3" json:"contents,omitempty"`
 }
 
@@ -693,6 +723,7 @@ func (x *Hardware_Netboot_IPXE) GetContents() string {
 	return ""
 }
 
+//
 // Osie is the in memory operating system
 type Hardware_Netboot_Osie struct {
 	state         protoimpl.MessageState
@@ -757,15 +788,18 @@ func (x *Hardware_Netboot_Osie) GetInitrd() string {
 	return ""
 }
 
+//
 // Interface represents a single network interface in your hardware
 type Hardware_Network_Interface struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	//
 	// DHCP configures the behavior of DHCP connection for your hardware.
 	// IP you expect, gateway and netmask.
 	Dhcp *Hardware_DHCP `protobuf:"bytes,1,opt,name=dhcp,proto3" json:"dhcp,omitempty"`
+	//
 	// Netboot pilots netbooting. You can select Osie, the in memory
 	// operating system used during netbooting.
 	Netboot *Hardware_Netboot `protobuf:"bytes,2,opt,name=netboot,proto3" json:"netboot,omitempty"`
