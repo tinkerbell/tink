@@ -19,7 +19,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.18.6"
+          go-version: "1.18.5"
 
       - name: make verify
         run: make verify
@@ -32,7 +32,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.18.6"
+          go-version: "1.18.5"
 
       - name: Install nix
         uses: cachix/install-nix-action@v16
@@ -83,7 +83,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.18.6"
+          go-version: "1.18.5"
 
       - run: make crosscompile -j$(nproc)
 
