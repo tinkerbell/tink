@@ -17,31 +17,31 @@ var _ TemplateServiceClient = &TemplateServiceClientMock{}
 
 // TemplateServiceClientMock is a mock implementation of TemplateServiceClient.
 //
-//	func TestSomethingThatUsesTemplateServiceClient(t *testing.T) {
+// 	func TestSomethingThatUsesTemplateServiceClient(t *testing.T) {
 //
-//		// make and configure a mocked TemplateServiceClient
-//		mockedTemplateServiceClient := &TemplateServiceClientMock{
-//			CreateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
-//				panic("mock out the CreateTemplate method")
-//			},
-//			DeleteTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
-//				panic("mock out the DeleteTemplate method")
-//			},
-//			GetTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
-//				panic("mock out the GetTemplate method")
-//			},
-//			ListTemplatesFunc: func(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error) {
-//				panic("mock out the ListTemplates method")
-//			},
-//			UpdateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
-//				panic("mock out the UpdateTemplate method")
-//			},
-//		}
+// 		// make and configure a mocked TemplateServiceClient
+// 		mockedTemplateServiceClient := &TemplateServiceClientMock{
+// 			CreateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error) {
+// 				panic("mock out the CreateTemplate method")
+// 			},
+// 			DeleteTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the DeleteTemplate method")
+// 			},
+// 			GetTemplateFunc: func(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WorkflowTemplate, error) {
+// 				panic("mock out the GetTemplate method")
+// 			},
+// 			ListTemplatesFunc: func(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (TemplateService_ListTemplatesClient, error) {
+// 				panic("mock out the ListTemplates method")
+// 			},
+// 			UpdateTemplateFunc: func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*Empty, error) {
+// 				panic("mock out the UpdateTemplate method")
+// 			},
+// 		}
 //
-//		// use mockedTemplateServiceClient in code that requires TemplateServiceClient
-//		// and then make assertions.
+// 		// use mockedTemplateServiceClient in code that requires TemplateServiceClient
+// 		// and then make assertions.
 //
-//	}
+// 	}
 type TemplateServiceClientMock struct {
 	// CreateTemplateFunc mocks the CreateTemplate method.
 	CreateTemplateFunc func(ctx context.Context, in *WorkflowTemplate, opts ...grpc.CallOption) (*CreateResponse, error)
@@ -135,8 +135,7 @@ func (mock *TemplateServiceClientMock) CreateTemplate(ctx context.Context, in *W
 
 // CreateTemplateCalls gets all the calls that were made to CreateTemplate.
 // Check the length with:
-//
-//	len(mockedTemplateServiceClient.CreateTemplateCalls())
+//     len(mockedTemplateServiceClient.CreateTemplateCalls())
 func (mock *TemplateServiceClientMock) CreateTemplateCalls() []struct {
 	Ctx  context.Context
 	In   *WorkflowTemplate
@@ -175,8 +174,7 @@ func (mock *TemplateServiceClientMock) DeleteTemplate(ctx context.Context, in *G
 
 // DeleteTemplateCalls gets all the calls that were made to DeleteTemplate.
 // Check the length with:
-//
-//	len(mockedTemplateServiceClient.DeleteTemplateCalls())
+//     len(mockedTemplateServiceClient.DeleteTemplateCalls())
 func (mock *TemplateServiceClientMock) DeleteTemplateCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -215,8 +213,7 @@ func (mock *TemplateServiceClientMock) GetTemplate(ctx context.Context, in *GetR
 
 // GetTemplateCalls gets all the calls that were made to GetTemplate.
 // Check the length with:
-//
-//	len(mockedTemplateServiceClient.GetTemplateCalls())
+//     len(mockedTemplateServiceClient.GetTemplateCalls())
 func (mock *TemplateServiceClientMock) GetTemplateCalls() []struct {
 	Ctx  context.Context
 	In   *GetRequest
@@ -255,8 +252,7 @@ func (mock *TemplateServiceClientMock) ListTemplates(ctx context.Context, in *Li
 
 // ListTemplatesCalls gets all the calls that were made to ListTemplates.
 // Check the length with:
-//
-//	len(mockedTemplateServiceClient.ListTemplatesCalls())
+//     len(mockedTemplateServiceClient.ListTemplatesCalls())
 func (mock *TemplateServiceClientMock) ListTemplatesCalls() []struct {
 	Ctx  context.Context
 	In   *ListRequest
@@ -295,8 +291,7 @@ func (mock *TemplateServiceClientMock) UpdateTemplate(ctx context.Context, in *W
 
 // UpdateTemplateCalls gets all the calls that were made to UpdateTemplate.
 // Check the length with:
-//
-//	len(mockedTemplateServiceClient.UpdateTemplateCalls())
+//     len(mockedTemplateServiceClient.UpdateTemplateCalls())
 func (mock *TemplateServiceClientMock) UpdateTemplateCalls() []struct {
 	Ctx  context.Context
 	In   *WorkflowTemplate
@@ -319,37 +314,37 @@ var _ TemplateService_ListTemplatesClient = &TemplateService_ListTemplatesClient
 
 // TemplateService_ListTemplatesClientMock is a mock implementation of TemplateService_ListTemplatesClient.
 //
-//	func TestSomethingThatUsesTemplateService_ListTemplatesClient(t *testing.T) {
+// 	func TestSomethingThatUsesTemplateService_ListTemplatesClient(t *testing.T) {
 //
-//		// make and configure a mocked TemplateService_ListTemplatesClient
-//		mockedTemplateService_ListTemplatesClient := &TemplateService_ListTemplatesClientMock{
-//			CloseSendFunc: func() error {
-//				panic("mock out the CloseSend method")
-//			},
-//			ContextFunc: func() context.Context {
-//				panic("mock out the Context method")
-//			},
-//			HeaderFunc: func() (metadata.MD, error) {
-//				panic("mock out the Header method")
-//			},
-//			RecvFunc: func() (*WorkflowTemplate, error) {
-//				panic("mock out the Recv method")
-//			},
-//			RecvMsgFunc: func(m interface{}) error {
-//				panic("mock out the RecvMsg method")
-//			},
-//			SendMsgFunc: func(m interface{}) error {
-//				panic("mock out the SendMsg method")
-//			},
-//			TrailerFunc: func() metadata.MD {
-//				panic("mock out the Trailer method")
-//			},
-//		}
+// 		// make and configure a mocked TemplateService_ListTemplatesClient
+// 		mockedTemplateService_ListTemplatesClient := &TemplateService_ListTemplatesClientMock{
+// 			CloseSendFunc: func() error {
+// 				panic("mock out the CloseSend method")
+// 			},
+// 			ContextFunc: func() context.Context {
+// 				panic("mock out the Context method")
+// 			},
+// 			HeaderFunc: func() (metadata.MD, error) {
+// 				panic("mock out the Header method")
+// 			},
+// 			RecvFunc: func() (*WorkflowTemplate, error) {
+// 				panic("mock out the Recv method")
+// 			},
+// 			RecvMsgFunc: func(m interface{}) error {
+// 				panic("mock out the RecvMsg method")
+// 			},
+// 			SendMsgFunc: func(m interface{}) error {
+// 				panic("mock out the SendMsg method")
+// 			},
+// 			TrailerFunc: func() metadata.MD {
+// 				panic("mock out the Trailer method")
+// 			},
+// 		}
 //
-//		// use mockedTemplateService_ListTemplatesClient in code that requires TemplateService_ListTemplatesClient
-//		// and then make assertions.
+// 		// use mockedTemplateService_ListTemplatesClient in code that requires TemplateService_ListTemplatesClient
+// 		// and then make assertions.
 //
-//	}
+// 	}
 type TemplateService_ListTemplatesClientMock struct {
 	// CloseSendFunc mocks the CloseSend method.
 	CloseSendFunc func() error
@@ -418,8 +413,7 @@ func (mock *TemplateService_ListTemplatesClientMock) CloseSend() error {
 
 // CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
-//
-//	len(mockedTemplateService_ListTemplatesClient.CloseSendCalls())
+//     len(mockedTemplateService_ListTemplatesClient.CloseSendCalls())
 func (mock *TemplateService_ListTemplatesClientMock) CloseSendCalls() []struct{} {
 	var calls []struct{}
 	mock.lockCloseSend.RLock()
@@ -442,8 +436,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Context() context.Context {
 
 // ContextCalls gets all the calls that were made to Context.
 // Check the length with:
-//
-//	len(mockedTemplateService_ListTemplatesClient.ContextCalls())
+//     len(mockedTemplateService_ListTemplatesClient.ContextCalls())
 func (mock *TemplateService_ListTemplatesClientMock) ContextCalls() []struct{} {
 	var calls []struct{}
 	mock.lockContext.RLock()
@@ -466,8 +459,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Header() (metadata.MD, erro
 
 // HeaderCalls gets all the calls that were made to Header.
 // Check the length with:
-//
-//	len(mockedTemplateService_ListTemplatesClient.HeaderCalls())
+//     len(mockedTemplateService_ListTemplatesClient.HeaderCalls())
 func (mock *TemplateService_ListTemplatesClientMock) HeaderCalls() []struct{} {
 	var calls []struct{}
 	mock.lockHeader.RLock()
@@ -490,8 +482,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Recv() (*WorkflowTemplate, 
 
 // RecvCalls gets all the calls that were made to Recv.
 // Check the length with:
-//
-//	len(mockedTemplateService_ListTemplatesClient.RecvCalls())
+//     len(mockedTemplateService_ListTemplatesClient.RecvCalls())
 func (mock *TemplateService_ListTemplatesClientMock) RecvCalls() []struct{} {
 	var calls []struct{}
 	mock.lockRecv.RLock()
@@ -518,8 +509,7 @@ func (mock *TemplateService_ListTemplatesClientMock) RecvMsg(m interface{}) erro
 
 // RecvMsgCalls gets all the calls that were made to RecvMsg.
 // Check the length with:
-//
-//	len(mockedTemplateService_ListTemplatesClient.RecvMsgCalls())
+//     len(mockedTemplateService_ListTemplatesClient.RecvMsgCalls())
 func (mock *TemplateService_ListTemplatesClientMock) RecvMsgCalls() []struct {
 	M interface{}
 } {
@@ -550,8 +540,7 @@ func (mock *TemplateService_ListTemplatesClientMock) SendMsg(m interface{}) erro
 
 // SendMsgCalls gets all the calls that were made to SendMsg.
 // Check the length with:
-//
-//	len(mockedTemplateService_ListTemplatesClient.SendMsgCalls())
+//     len(mockedTemplateService_ListTemplatesClient.SendMsgCalls())
 func (mock *TemplateService_ListTemplatesClientMock) SendMsgCalls() []struct {
 	M interface{}
 } {
@@ -578,8 +567,7 @@ func (mock *TemplateService_ListTemplatesClientMock) Trailer() metadata.MD {
 
 // TrailerCalls gets all the calls that were made to Trailer.
 // Check the length with:
-//
-//	len(mockedTemplateService_ListTemplatesClient.TrailerCalls())
+//     len(mockedTemplateService_ListTemplatesClient.TrailerCalls())
 func (mock *TemplateService_ListTemplatesClientMock) TrailerCalls() []struct{} {
 	var calls []struct{}
 	mock.lockTrailer.RLock()
