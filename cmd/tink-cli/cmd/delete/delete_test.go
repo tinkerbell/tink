@@ -1,9 +1,9 @@
-package delete // nolint:predeclared // package name delete has same name as predeclared identifier
+package delete //nolint:predeclared // package name delete has same name as predeclared identifier
 
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -86,7 +86,7 @@ func TestNewDeleteCommand(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			out, err := ioutil.ReadAll(stdout)
+			out, err := io.ReadAll(stdout)
 			if err != nil {
 				t.Error(err)
 			}

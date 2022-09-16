@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // gRPC clients.
@@ -40,7 +41,7 @@ func NewClientConn(authority string, tls bool) (*grpc.ClientConn, error) {
 	if tls {
 		creds = grpc.WithTransportCredentials(credentials.NewTLS(nil))
 	} else {
-		creds = grpc.WithInsecure()
+		creds = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
 	conn, err := grpc.Dial(authority,

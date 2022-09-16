@@ -38,7 +38,9 @@ func (m *containerManager) getLogger(ctx context.Context) *log.Logger {
 	if loggerIface == nil {
 		return &m.logger
 	}
-	return loggerIface.(*log.Logger)
+	l, _ := loggerIface.(*log.Logger)
+
+	return l
 }
 
 // NewContainerManager returns a new container manager.
@@ -89,7 +91,7 @@ func (m *containerManager) StartContainer(ctx context.Context, id string) error 
 func (m *containerManager) WaitForContainer(ctx context.Context, id string) (pb.State, error) {
 	// Inspect whether the container is in running state
 	if _, err := m.cli.ContainerInspect(ctx, id); err != nil {
-		return pb.State_STATE_FAILED, nil // nolint:nilerr // error is not nil, but it returns nil
+		return pb.State_STATE_FAILED, nil //nolint:nilerr // error is not nil, but it returns nil
 	}
 
 	// send API call to wait for the container completion

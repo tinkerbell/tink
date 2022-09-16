@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"testing"
 	"time"
 
@@ -76,7 +75,7 @@ func TestGetTemplate(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			out, err := ioutil.ReadAll(stdout)
+			out, err := io.ReadAll(stdout)
 			if err != nil {
 				t.Error(err)
 			}

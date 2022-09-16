@@ -24,7 +24,7 @@ func SetupHTTP(ctx context.Context, logger log.Logger, authority string, errCh c
 	http.HandleFunc("/version", getGitRevJSONHandler())
 	http.HandleFunc("/healthz", healthCheckHandler)
 
-	srv := &http.Server{
+	srv := &http.Server{ //nolint:gosec // TODO: fix Potential Slowloris Attack because ReadHeaderTimeout is not configured
 		Addr: authority,
 	}
 	go func() {

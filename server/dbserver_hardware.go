@@ -155,7 +155,7 @@ func (s *DBServer) All(_ *hardware.Empty, stream hardware.HardwareService_AllSer
 	defer metrics.CacheInFlight.With(labels).Dec()
 
 	s.dbLock.RLock()
-	ready := s.dbReady
+	ready := s.dbReady //nolint:ifshort // needed for locking
 	s.dbLock.RUnlock()
 	if !ready {
 		metrics.CacheStalls.With(labels).Inc()

@@ -92,10 +92,10 @@ linters-settings:
       - name: waitgroup-by-value
 
   staticcheck:
-    go: "1.17"
+    go: "1.18"
 
   unused:
-    go: "1.17"
+    go: "1.18"
 
 output:
   sort-results: true

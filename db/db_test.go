@@ -76,7 +76,7 @@ func NewPostgresDatabaseClient(ctx context.Context, t *testing.T, req NewPostgre
 		if err != nil {
 			t.Error(err)
 		}
-		t.Log(fmt.Sprintf("applied %d migrations", n))
+		t.Logf("applied %d migrations", n)
 	}
 	return dbCon, tinkDB, func() error {
 		return postgresC.Terminate(ctx)

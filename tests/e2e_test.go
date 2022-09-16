@@ -3,7 +3,7 @@ package tests_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -15,14 +15,13 @@ import (
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/protobuf/proto"
-
 	"k8s.io/apimachinery/pkg/types"
 
 	"sigs.k8s.io/yaml"
 )
 
 func parseFile(filename string, obj interface{}) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
