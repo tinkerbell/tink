@@ -129,7 +129,9 @@ type DHCP struct {
 	UEFI        bool     `json:"uefi,omitempty"`
 	IfaceName   string   `json:"iface_name,omitempty"`
 	IP          *IP      `json:"ip,omitempty"`
-	VLANID      uint     `json:"vlan_id,omitempty"`
+	// validation pattern for VLANDID is a string number between 0-4096
+	// +kubebuilder:validation:Pattern="^(([0-9][0-9]{0,2}|[1-3][0-9][0-9][0-9]|40([0-8][0-9]|9[0-6]))(,[1-9][0-9]{0,2}|[1-3][0-9][0-9][0-9]|40([0-8][0-9]|9[0-6]))*)$"
+	VLANID string `json:"vlan_id,omitempty"`
 }
 
 // IP configuration.
