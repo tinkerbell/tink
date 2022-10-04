@@ -42,7 +42,7 @@ jobs:
           DST_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           DST_REG_USER: ${{ secrets.QUAY_USERNAME }}
           DST_REG_PASS: ${{ secrets.QUAY_PASSWORD }}
-          
+
       - name: Copy the tink-controller image using skopeo
         run: skopeo copy --all --dest-creds="${DST_REG_USER}":"${DST_REG_PASS}" docker://"${SRC_IMAGE}" docker://"${DST_IMAGE}"
         env:
@@ -50,7 +50,7 @@ jobs:
           DST_IMAGE: ${{ env.REGISTRY }}/tink-controller:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           DST_REG_USER: ${{ secrets.QUAY_USERNAME }}
           DST_REG_PASS: ${{ secrets.QUAY_PASSWORD }}
-          
+
       - name: Copy the tink-worker image using skopeo
         run: skopeo copy --all --dest-creds="${DST_REG_USER}":"${DST_REG_PASS}" docker://"${SRC_IMAGE}" docker://"${DST_IMAGE}"
         env:
@@ -58,7 +58,7 @@ jobs:
           DST_IMAGE: ${{ env.REGISTRY }}/tink-worker:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           DST_REG_USER: ${{ secrets.QUAY_USERNAME }}
           DST_REG_PASS: ${{ secrets.QUAY_PASSWORD }}
-          
+
       - name: Copy the tink-cli image using skopeo
         run: skopeo copy --all --dest-creds="${DST_REG_USER}":"${DST_REG_PASS}" docker://"${SRC_IMAGE}" docker://"${DST_IMAGE}"
         env:
