@@ -45,7 +45,7 @@ type Options struct {
 }
 
 type Event struct {
-	WorkerId string          `json:"worker_id"`
+	WorkerID string          `json:"worker_id"`
 	Tasks    map[string]Task `json:"tasks"`
 }
 
@@ -117,7 +117,6 @@ func fetchEvents(args []string) []*workflow.WorkflowActionStatus {
 		err = nil
 		for event, err := events.Recv(); err == nil && event != nil; event, err = events.Recv() {
 			allEvents = append(allEvents, event)
-
 		}
 		if err != nil && !errors.Is(err, io.EOF) {
 			log.Fatal(err)
@@ -143,7 +142,6 @@ func getFormattedEvents(events []*workflow.WorkflowActionStatus) []Event {
 }
 
 func constructEvent(event *workflow.WorkflowActionStatus, allEvents map[string]Event) {
-
 	stage := ActionStage{
 		ExecutionTime: event.GetSeconds(),
 		Message:       event.GetMessage(),
@@ -158,7 +156,7 @@ func constructEvent(event *workflow.WorkflowActionStatus, allEvents map[string]E
 
 	if len(ev.Tasks) == 0 {
 		ev = Event{
-			WorkerId: event.GetWorkerId(),
+			WorkerID: event.GetWorkerId(),
 			Tasks:    make(map[string]Task, 0),
 		}
 	}
