@@ -160,7 +160,7 @@ func (s *DBServer) ListWorkflows(_ *workflow.Empty, stream workflow.WorkflowServ
 	defer metrics.CacheInFlight.With(labels).Dec()
 
 	s.dbLock.RLock()
-	ready := s.dbReady
+	ready := s.dbReady //nolint:ifshort // needed for locking
 	s.dbLock.RUnlock()
 	if !ready {
 		metrics.CacheStalls.With(labels).Inc()
@@ -244,7 +244,7 @@ func (s *DBServer) ShowWorkflowEvents(req *workflow.GetRequest, stream workflow.
 	defer metrics.CacheInFlight.With(labels).Dec()
 
 	s.dbLock.RLock()
-	ready := s.dbReady
+	ready := s.dbReady //nolint:ifshort // needed for locking
 	s.dbLock.RUnlock()
 	if !ready {
 		metrics.CacheStalls.With(labels).Inc()

@@ -1,4 +1,4 @@
-package delete // nolint:predeclared // package name delete has same name as predeclared identifier
+package delete //nolint:predeclared // package name delete has same name as predeclared identifier
 
 import (
 	"context"

@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -127,7 +127,8 @@ func NewWorker(
 	containerManager ContainerManager,
 	logCapturer LogCapturer,
 	logger log.Logger,
-	opts ...Option) *Worker {
+	opts ...Option,
+) *Worker {
 	w := &Worker{
 		workerID:         workerID,
 		dataDir:          defaultDataDir,
@@ -154,7 +155,9 @@ func (w Worker) getLogger(ctx context.Context) *log.Logger {
 	if loggerIface == nil {
 		return &w.logger
 	}
-	return loggerIface.(*log.Logger)
+	l, _ := loggerIface.(*log.Logger)
+
+	return l
 }
 
 // execute executes a workflow action, optionally capturing logs.
@@ -400,7 +403,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 				if len(actions.GetActionList()) == actionIndex+1 {
 					l.Info("reached to end of workflow")
 					delete(workflowcontexts, wfID)
-					turn = false // nolint:wastedassign // assigned to turn, but reassigned without using the value
+					turn = false
 					break
 				}
 
@@ -494,7 +497,7 @@ func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.Workfl
 		}
 	}()
 
-	data, err := ioutil.ReadAll(f)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		l.Error(err)
 	}

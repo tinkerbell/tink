@@ -3,7 +3,6 @@ package cmd
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -63,7 +62,7 @@ func Test_docsCmd(t *testing.T) {
 			cmdFunc: func(t *testing.T, c *cobra.Command) {
 				t.Helper()
 
-				dir, err := ioutil.TempDir("", "tink-test-*")
+				dir, err := os.MkdirTemp("", "tink-test-*")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -95,7 +94,7 @@ func Test_docsCmd(t *testing.T) {
 			cmdFunc: func(t *testing.T, c *cobra.Command) {
 				t.Helper()
 
-				dir, err := ioutil.TempDir("", "tink-test-*")
+				dir, err := os.MkdirTemp("", "tink-test-*")
 				if err != nil {
 					t.Fatal(err)
 				}

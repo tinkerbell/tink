@@ -24,7 +24,9 @@ func (l *DockerLogCapturer) getLogger(ctx context.Context) *log.Logger {
 	if loggerIface == nil {
 		return &l.logger
 	}
-	return loggerIface.(*log.Logger)
+	lg, _ := loggerIface.(*log.Logger)
+
+	return lg
 }
 
 // NewDockerLogCapturer returns a LogCapturer that can stream container logs to a given writer.

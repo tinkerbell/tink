@@ -6,6 +6,8 @@ collaborators:
     permission: maintain
   - username: mmlb
     permission: maintain
+  - username: chrisdoherty4
+    permission: maintain
   # Approvers
   - username: displague
     permission: push
@@ -16,8 +18,6 @@ collaborators:
   - username: tstromberg
     permission: push
   # Reviewers
-  - username: chrisdoherty4
-    permission: triage
   - username: detiber
     permission: triage
   - username: stephen-fox

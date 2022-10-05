@@ -357,7 +357,6 @@ func TestWorkflowProtoToCRD(t *testing.T) {
 					APIVersion: "tinkerbell.org/v1alpha1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-
 					Annotations: map[string]string{
 						"workflow.tinkerbell.org/id": "7d9031ee-18d4-4ba4-b934-c3a78a1330f6",
 					},

@@ -12,7 +12,6 @@ type WorkflowDataSpec struct {
 
 // WorkflowStatus defines the observed state of Workflow.
 type WorkflowDataStatus struct {
-
 	// Data is the populated Workflow Data in Tinkerbell.
 	Data string `json:"data,omitempty"`
 

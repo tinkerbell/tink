@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -53,7 +53,7 @@ func MustParse(yamlContent []byte) *Workflow {
 // MustParseFromFile parse a template from a file and it panics if any error is
 // detected. Ideal to be used in testing.
 func MustParseFromFile(path string) *Workflow {
-	content, err := ioutil.ReadFile(filepath.Clean(path))
+	content, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		panic(err)
 	}
@@ -78,17 +78,17 @@ func RenderTemplate(templateID, templateData string, devices []byte) (string, er
 
 // RenderTemplateHardware renders the workflow template and returns the Workflow and the interpolated bytes.
 func RenderTemplateHardware(templateID, templateData string, hardware map[string]interface{}) (*Workflow, *bytes.Buffer, error) {
-	t := template.New("workflow-template").Option("missingkey=error")
+	t := template.New("workflow-template").
+		Option("missingkey=error").
+		Funcs(templateFuncs)
 	_, err := t.Parse(templateData)
 	if err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		return nil, nil, err
 	}
 
-	// introduces hardware to the template rendering
 	buf := new(bytes.Buffer)
-	err = t.Execute(buf, hardware)
-	if err != nil {
+	if err = t.Execute(buf, hardware); err != nil {
 		err = errors.Wrapf(err, errTemplateParsing, templateID)
 		return nil, nil, err
 	}
