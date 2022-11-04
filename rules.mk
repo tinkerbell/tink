@@ -13,7 +13,7 @@ SHELL := bash
 
 binaries := cmd/tink-cli/tink-cli cmd/tink-controller/tink-controller cmd/tink-server/tink-server cmd/tink-worker/tink-worker cmd/virtual-worker/virtual-worker
 version := $(shell git rev-parse --short HEAD)
-tag := $(shell git tag --points-at HEAD)
+tag := $(shell git tag --points-at HEAD | head -n 1)
 ifneq (,$(tag))
 version := $(tag)-$(version)
 endif
