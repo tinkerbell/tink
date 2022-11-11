@@ -15,7 +15,7 @@ test: e2etest-setup ## Run tests
 	source <(setup-envtest use  -p env) && go test -coverprofile=coverage.txt ./...
 
 verify: lint check-generated ## Verify code style, is lint free, freshness ...
-	gofumpt -s -d .
+	$(GOFUMPT) -s -d .
 
 generated: pbfiles protomocks generate-manifests ## Generate dynamically created files
 check-generated: check-pbfiles check-protomocks ## Check if generated files are up to date

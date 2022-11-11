@@ -67,7 +67,8 @@ jobs:
       - name: Fetch Nix Packages
         run: nix-shell --run 'true'
 
-      - run: make bin/gofumpt
+      - name: Install gofumpt for ci-checks.sh
+        run: make bin/gofumpt
 
       - run: PATH=$PWD/bin/:$PATH ./ci-checks.sh
   crosscompile:
