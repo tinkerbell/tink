@@ -15,6 +15,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	errInvalidWorkflowID     = "invalid workflow id"
+	errInvalidTaskName       = "invalid task name"
+	errInvalidActionName     = "invalid action name"
+	errInvalidTaskReported   = "reported task name does not match the current action details"
+	errInvalidActionReported = "reported action name does not match the current action details"
+)
+
 func getWorkflowContext(wf v1alpha1.Workflow) *pb.WorkflowContext {
 	return &pb.WorkflowContext{
 		WorkflowId:           wf.Name,
@@ -203,15 +211,5 @@ func (s *KubernetesBackedServer) ReportActionStatus(ctx context.Context, req *pb
 		l.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
-	return &pb.Empty{}, nil
-}
-
-// GetWorkflowData is deprecated, responding with empty values until it is removed.
-func (s *KubernetesBackedServer) GetWorkflowData(_ context.Context, _ *pb.GetWorkflowDataRequest) (*pb.GetWorkflowDataResponse, error) {
-	return &pb.GetWorkflowDataResponse{Data: []byte("")}, nil
-}
-
-// UpdateWorkflowData is deprecated, responding with empty values until it is removed.
-func (s *KubernetesBackedServer) UpdateWorkflowData(_ context.Context, _ *pb.UpdateWorkflowDataRequest) (*pb.Empty, error) {
 	return &pb.Empty{}, nil
 }

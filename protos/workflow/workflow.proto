@@ -6,9 +6,8 @@ syntax = "proto3";
 
 option go_package = "github.com/tinkerbell/tink/protos/workflow";
 
-package github.com.tinkerbell.tink.protos.workflow;
+package tinkerbell.tink.workflow;
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 /*
@@ -16,116 +15,21 @@ import "google/protobuf/timestamp.proto";
  * monitoring a workflow
  */
 service WorkflowService {
-  /*
-   * CreateWorkflow targets a specific hardware and it starts from a particular
-   * template. The selected hardware is capable of picking the
-   * workflow up for execution.
-   */
-  rpc CreateWorkflow(CreateRequest) returns (CreateResponse) {
-    option (google.api.http) = {
-      post: "/v1/workflows"
-      body: "*"
-    };
-  };
-  /*
-   * GetWorkflow returns a specific workflow by its identifier.
-   */
-  rpc GetWorkflow(GetRequest) returns (Workflow) {
-    option (google.api.http) = {
-      get: "/v1/workflows/{id}"
-    };
-  };
-  /*
-   * DeleteWorkflow deletes a workflow. This is a logical deletion. Workflow
-   * will stay available for inspection
-   */
-  rpc DeleteWorkflow(GetRequest) returns (Empty) {
-    option (google.api.http) = {
-      delete: "/v1/workflows/{id}"
-    };
-  };
-  /*
-   * ListWorkflows returns a list of workflows
-   */
-  rpc ListWorkflows(Empty) returns (stream Workflow) {
-    option (google.api.http) = {
-      get: "/v1/workflows"
-    };
-  };
-  /*
-   * GetWorkflowContext returns specific information about where it is running,
-   * its state and so on. Useful to debug a workflow and to understand its
-   * current state.
-   */
-  rpc GetWorkflowContext(GetRequest) returns (WorkflowContext) {
-    option (google.api.http) = {
-      get: "/v1/workflows/{id}/state"
-    };
-  };
-  /*
-   * ShowWorkflowEvents returns a list of events for a specific workflows
-   */
-  rpc ShowWorkflowEvents(GetRequest) returns (stream WorkflowActionStatus) {
-    option (google.api.http) = {
-      get: "/v1/workflows/{id}/events"
-    };
-  };
-
-  rpc GetWorkflowContextList(WorkflowContextRequest) returns (WorkflowContextList) {}
   rpc GetWorkflowContexts(WorkflowContextRequest) returns (stream WorkflowContext) {}
   rpc GetWorkflowActions(WorkflowActionsRequest) returns (WorkflowActionList) {}
   rpc ReportActionStatus(WorkflowActionStatus) returns (Empty) {}
-  rpc GetWorkflowData(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
-  rpc GetWorkflowMetadata(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
-  rpc GetWorkflowDataVersion(GetWorkflowDataRequest) returns (GetWorkflowDataResponse) {}
-  rpc UpdateWorkflowData(UpdateWorkflowDataRequest) returns (Empty) {}
 }
 
-/*
- * Empty represents an empty response
- */
-message Empty {
-}
+message Empty {}
 
-/*
- * Workflow represent a single workflow
- */
-message Workflow {
-  /*
-   * The unique identifier for a workflow
-   */
-  string id = 1;
-  /*
-   * The template this workflows starts from
-   */
-  string template = 2;
-  /*
-   * The hardware assigned to a workflow
-   */
-  string hardware = 3;
-  /*
-   * Current state of the workflow. Pending, success, failed, running.
-   */
-  State state = 4;
-  /*
-   * When the workflow was created
-   */
-  google.protobuf.Timestamp created_at = 5;
-  /*
-   * The last time the workflow was modified
-   */
-  google.protobuf.Timestamp updated_at = 6;
-  /*
-   * When the workflow was deleted
-   */
-  google.protobuf.Timestamp deleted_at = 7;
-  string data = 8;
+message WorkflowContextRequest {
+  string worker_id = 1;
 }
 
 /*
  * The various state a workflow can be
  */
-enum State {
+ enum State {
   /*
    * A workflow is in pending state when it is waiting for the hardware to pick
    * it up and start the execution.
@@ -156,38 +60,6 @@ enum State {
 }
 
 /*
- * CreateRequest registers a workflow in the Tinkerbell server. From this point
- * in time it is in pending state, waiting to be executed from the tink-worker
- * inside the selected hardware
- */
-message CreateRequest {
-  /*
-   * The idenfier of the template the workflow starts from.
-   */
-  string template = 1;
-  /*
-   * The target hardware for this workflow.
-   */
-  string hardware = 2;
-}
-
-/*
- * This is the response returned after a successful workflow creation. It
- * contains the workflow id.
- */
-message CreateResponse {
-  string id = 1;
-}
-
-/*
- * GetRequest contains the workflow idenfier you want to get back from the
- * Tinkerbell server.
- */
-message GetRequest {
-  string id = 1;
-}
-
-/*
  * WorkflowContext represents the state of the execution of this workflow in detail.
  * How many tasks are currently executed, the number of actions and their state.
  */
@@ -196,11 +68,9 @@ message WorkflowContext {
    * The workflow ID
    */
   string workflow_id = 1;
-  /*
-   */
+
   string current_worker = 2;
-  /*
-   */
+
   string current_task = 3;
   /*
    * the name of the current action
@@ -214,63 +84,8 @@ message WorkflowContext {
    * The state of the current action
    */
   State current_action_state = 6;
-  /*
-   */
+
   int64 total_number_of_actions = 7;
-}
-
-/*
- * WorkflowActionStatus represents the state of all the action part of a
- * workflow
- */
-message WorkflowActionStatus {
-  /*
-   * The workflow id
-   */
-  string workflow_id = 1;
-  /*
-   * The name of the task this action is part of
-   */
-  string task_name = 2;
-  /*
-   * The name of the action
-   */
-  string action_name = 3;
-  /*
-   * The state of the action. Those are the same described for workflow as
-   * well. pending, running, successful and so on.
-   */
-  State action_status = 4;
-  /*
-   * The execution time for the action
-   */
-  int64 seconds = 5;
-  /*
-   * The message returned from the action.
-   */
-  string message = 6;
-  /*
-   * When the status got created for this aciton. You can see it as the time
-   * when the action started its execution inside the hardware itself.
-   */
-  google.protobuf.Timestamp created_at = 7;
-  /*
-   */
-  string worker_id = 8;
-}
-
-/*
- */
-message WorkflowContextRequest {
-  /*
-   */
-  string worker_id = 1;
-}
-
-/*
- */
-message WorkflowContextList {
-  repeated WorkflowContext workflow_contexts = 1;
 }
 
 /*
@@ -278,6 +93,13 @@ message WorkflowContextList {
  */
 message WorkflowActionsRequest {
   string workflow_id = 1;
+}
+
+/*
+ * A list of actions
+ */
+message WorkflowActionList {
+  repeated WorkflowAction action_list = 1;
 }
 
 /*
@@ -332,35 +154,40 @@ message WorkflowAction {
 }
 
 /*
- * A list of actions
+ * WorkflowActionStatus represents the state of all the action part of a
+ * workflow
  */
-message WorkflowActionList {
-  repeated WorkflowAction action_list = 1;
-}
-
-/*
- * When a workflow gets created we have the ability to replace variables
- * declared in the template with concrete variables. This is the request you
- * can use to visualize those data.
- */
-message GetWorkflowDataRequest {
+ message WorkflowActionStatus {
+  /*
+   * The workflow id
+   */
   string workflow_id = 1;
-  int32 version = 2;
-}
+  /*
+   * The name of the task this action is part of
+   */
+  string task_name = 2;
+  /*
+   * The name of the action
+   */
+  string action_name = 3;
+  /*
+   * The state of the action. Those are the same described for workflow as
+   * well. pending, running, successful and so on.
+   */
+  State action_status = 4;
+  /*
+   * The execution time for the action
+   */
+  int64 seconds = 5;
+  /*
+   * The message returned from the action.
+   */
+  string message = 6;
+  /*
+   * When the status got created for this aciton. You can see it as the time
+   * when the action started its execution inside the hardware itself.
+   */
+  google.protobuf.Timestamp created_at = 7;
 
-/*
- * List of data passed during workflow creation.
- */
-message GetWorkflowDataResponse {
-  bytes data = 1;
-  int32 version = 2;
-}
-
-/*
- * You can change data passed to a workflow
- */
-message UpdateWorkflowDataRequest {
-  string workflow_id = 1;
-  bytes metadata = 2;
-  bytes data = 3;
+  string worker_id = 8;
 }

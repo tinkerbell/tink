@@ -112,73 +112,18 @@ This is a nonexhaustive list important packages that happen to cover most of the
 
 The `cmd` package is home for three core binaries for Tinkerbell:
 
--   `tink-cli` - the CLI for interacting with the `tink-server`
 -   `tink-server` - the tink API server
 -   `tink-worker` - responsible for executing the workload
-
-```
-.
-├── cmd
-│   ├── tink-cli
-│   │   └── cmd
-│   │       ├── delete
-│   │       ├── get
-│   │       ├── hardware
-│   │       ├── template
-│   │       └── workflow
-│   ├── tink-server
-│   └── tink-worker
-│       ├── cmd
-│       └── internal
-```
-
-### db
-
-The `db` holds everything you need to deal with the database.
-We use [PostgreSQL](https://www.postgresql.org/) as the data store.
-The package contains database migrations, and an API to interact with database.
-
-```
-.
-├── db
-│   ├── migration
-│   ├── mock
-│   └── testdata
-```
 
 ### deploy
 
 The `deploy` directory contains all the essentials to setup Tinkerbell stack.
 You can setup a local stack with `docker-compose` or Vagrant.
 
-```
-.
-├── deploy
-│   ├── db
-│   ├── registry
-│   ├── tls
-│   └── vagrant
-│       └── scripts
-```
-
 ### grpc-server
 
 The `grpc-server` exposes a gRPC API that connects everything together.
 It has a base server that implements the API.
-
-```
-.
-├── grpc-server
-│   ├── grpc_server.go
-│   ├── hardware.go
-│   ├── hardware_test.go
-│   ├── template.go
-│   ├── template_test.go
-│   ├── tinkerbell.go
-│   ├── tinkerbell_test.go
-│   ├── workflow.go
-│   └── workflow_test.go
-```
 
 ### protos
 
@@ -188,15 +133,6 @@ The protubuf/grpc files are not generated as part of the build pipeline to keep 
 CI will ensure generated files are up to date.
 
 [buf]: https://buf.build/
-
-```
-.
-├── protos
-│   ├── hardware
-│   ├── packet
-│   ├── template
-│   └── workflow
-```
 
 ### environment variables
 

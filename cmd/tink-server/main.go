@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tinkerbell/tink/cmd/tink-server/internal"
 	grpcserver "github.com/tinkerbell/tink/grpc-server"
 	httpserver "github.com/tinkerbell/tink/http-server"
 	"github.com/tinkerbell/tink/metrics"
@@ -47,27 +46,19 @@ type DaemonConfig struct {
 	KubeNamespace  string
 }
 
-const (
-	backendPostgres   = "postgres"
-	backendKubernetes = "kubernetes"
-)
+const backendKubernetes = "kubernetes"
 
 func backends() []string {
-	return []string{backendPostgres, backendKubernetes}
+	return []string{backendKubernetes}
 }
 
 func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Facility, "facility", "deprecated", "This is temporary. It will be removed")
-	fs.StringVar(&c.PGDatabase, "postgres-database", "tinkerbell", "The Postgres database name. Only takes effect if `--backend=postgres`")
-	fs.StringVar(&c.PGUSer, "postgres-user", "tinkerbell", "The Postgres database username. Only takes effect if `--backend=postgres`")
-	fs.StringVar(&c.PGPassword, "postgres-password", "tinkerbell", "The Postgres database password. Only takes effect if `--backend=postgres`")
-	fs.StringVar(&c.PGSSLMode, "postgres-sslmode", "disable", "Enable or disable SSL mode in postgres. Only takes effect if `--backend=postgres`")
-	fs.BoolVar(&c.OnlyMigration, "only-migration", false, "When enabled the server applies the migration to postgres database and it exits. Only takes effect if `--backend=postgres`")
 	fs.StringVar(&c.GRPCAuthority, "grpc-authority", ":42113", "The address used to expose the gRPC server")
 	fs.StringVar(&c.CertDir, "cert-dir", "", "")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
 	fs.BoolVar(&c.TLS, "tls", true, "Run in tls protected mode (disabling should only be done for development or if behind TLS terminating proxy)")
-	fs.StringVar(&c.Backend, "backend", backendPostgres, fmt.Sprintf("The backend datastore to use. Must be one of %s", strings.Join(backends(), ", ")))
+	fs.StringVar(&c.Backend, "backend", backendKubernetes, fmt.Sprintf("The backend datastore to use. Must be one of %s", strings.Join(backends(), ", ")))
 	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "", "The path to the Kubeconfig. Only takes effect if `--backend=kubernetes`")
 	fs.StringVar(&c.KubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only takes effect if `--backend=kubernetes`")
 	fs.StringVar(&c.KubeNamespace, "kube-namespace", "", "The Kubernetes namespace to target")
@@ -75,12 +66,6 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
 	c.Facility = env.Get("FACILITY", c.Facility)
-
-	c.PGDatabase = env.Get("PGDATABASE", c.PGDatabase)
-	c.PGUSer = env.Get("PGUSER", c.PGUSer)
-	c.PGPassword = env.Get("PGPASSWORD", c.PGPassword)
-	c.PGSSLMode = env.Get("PGSSLMODE", c.PGSSLMode)
-	c.OnlyMigration = env.Bool("ONLY_MIGRATION", c.OnlyMigration)
 
 	c.CertDir = env.Get("TINKERBELL_CERTS_DIR", c.CertDir)
 	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
@@ -161,32 +146,6 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 					config.KubeconfigPath,
 					config.KubeAPI,
 					config.KubeNamespace,
-				)
-				if err != nil {
-					return err
-				}
-			case backendPostgres:
-				// TODO(gianarb): I moved this up because we need to be sure that both
-				// connection, the one used for the resources and the one used for
-				// listening to events and notification are coming in the same way.
-				// BUT we should be using the right flags
-				connInfo := fmt.Sprintf("dbname=%s user=%s password=%s sslmode=%s",
-					config.PGDatabase,
-					config.PGUSer,
-					config.PGPassword,
-					config.PGSSLMode,
-				)
-				database, err := internal.SetupPostgres(connInfo, config.OnlyMigration, logger)
-				if err != nil {
-					return err
-				}
-				if config.OnlyMigration {
-					return nil
-				}
-
-				registrar, err = server.NewDBServer(
-					logger,
-					database,
 				)
 				if err != nil {
 					return err
