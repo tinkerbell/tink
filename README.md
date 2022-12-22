@@ -31,7 +31,7 @@ The Tinkerbell stack consists of several microservices, and a gRPC API:
 
 ### Tink
 
-[Tink][1] is the short-hand name for the tink-server, tink-worker, and tink-cli.
+[Tink][1] is the short-hand name for the tink-server and tink-worker.
 `tink-worker` and `tink-server` communicate over gRPC, and are responsible for processing workflows.
 The CLI is the user-interactive piece for creating workflows and their building blocks, templates and hardware data.
 

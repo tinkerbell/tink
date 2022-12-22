@@ -7,8 +7,6 @@ import (
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	protoworkflow "github.com/tinkerbell/tink/protos/workflow"
 	"github.com/tinkerbell/tink/workflow"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func WorkflowToWorkflowContext(wf *v1alpha1.Workflow) *protoworkflow.WorkflowContext {
@@ -59,24 +57,6 @@ func WorkflowYAMLToStatus(wf *workflow.Workflow) *v1alpha1.WorkflowStatus {
 	}
 }
 
-func WorkflowCRDToProto(w *v1alpha1.Workflow) *protoworkflow.Workflow {
-	if w == nil {
-		return nil
-	}
-	v, ok := protoworkflow.State_value[string(w.Status.State)]
-	state := protoworkflow.State(v)
-	if !ok {
-		state = protoworkflow.State_STATE_PENDING
-	}
-	return &protoworkflow.Workflow{
-		Id:        w.TinkID(),
-		Template:  w.Spec.TemplateRef,
-		State:     state,
-		CreatedAt: timestamppb.New(w.CreationTimestamp.Time),
-		DeletedAt: metav1ToTimestamppb(w.DeletionTimestamp),
-	}
-}
-
 func WorkflowActionListCRDToProto(wf *v1alpha1.Workflow) *protoworkflow.WorkflowActionList {
 	if wf == nil {
 		return nil
@@ -114,31 +94,6 @@ func WorkflowActionListCRDToProto(wf *v1alpha1.Workflow) *protoworkflow.Workflow
 				Pid: action.Pid,
 			})
 		}
-	}
-	return resp
-}
-
-func WorkflowProtoToCRD(w *protoworkflow.Workflow) *v1alpha1.Workflow {
-	if w == nil {
-		return nil
-	}
-	resp := &v1alpha1.Workflow{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Workflow",
-			APIVersion: "tinkerbell.org/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Annotations: map[string]string{
-				v1alpha1.WorkflowIDAnnotation: w.Id,
-			},
-			CreationTimestamp: metav1.NewTime(w.CreatedAt.AsTime()),
-		},
-		Spec:   v1alpha1.WorkflowSpec{},
-		Status: v1alpha1.WorkflowStatus{},
-	}
-
-	if v, ok := protoworkflow.State_name[int32(w.State)]; ok {
-		resp.Status.State = v1alpha1.WorkflowState(v)
 	}
 	return resp
 }

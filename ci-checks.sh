@@ -28,10 +28,6 @@ if ! nixfmt shell.nix; then
 	failed=1
 fi
 
-if ! git ls-files '*.go' | xargs -I% sh -c 'sed -i "/^import (/,/^)/ { /^\s*$/ d }" % && gofumpt -w -s %'; then
-	failed=1
-fi
-
 if ! git diff | (! grep .); then
 	failed=1
 fi

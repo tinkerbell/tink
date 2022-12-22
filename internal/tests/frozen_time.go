@@ -3,8 +3,7 @@ package tests
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes/timestamp"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -103,9 +102,9 @@ func (f *FrozenTime) PbAfterSec(s int64) *timestamppb.Timestamp {
 }
 
 func (f *FrozenTime) PbBeforeFunc(d time.Duration) ProtobufTimeFunc {
-	return func() *timestamp.Timestamp { return f.PbBefore(d) }
+	return func() *timestamppb.Timestamp { return f.PbBefore(d) }
 }
 
 func (f *FrozenTime) PbAfterFunc(d time.Duration) ProtobufTimeFunc {
-	return func() *timestamp.Timestamp { return f.PbAfter(d) }
+	return func() *timestamppb.Timestamp { return f.PbAfter(d) }
 }

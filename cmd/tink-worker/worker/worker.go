@@ -2,15 +2,10 @@ package worker
 
 import (
 	"context"
-	sha "crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/packethost/pkg/log"
@@ -34,10 +29,7 @@ type loggingContext string
 
 var loggingContextKey loggingContext = "logger"
 
-var (
-	workflowcontexts = map[string]*pb.WorkflowContext{}
-	workflowDataSHA  = map[string]string{}
-)
+var workflowcontexts = map[string]*pb.WorkflowContext{}
 
 // WorkflowMetadata is the metadata related to workflow data.
 type WorkflowMetadata struct {
@@ -357,9 +349,6 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 					l.With("status", actionStatus.ActionStatus, "duration", strconv.FormatInt(actionStatus.Seconds, 10)).Info("sent action status")
 				}
 
-				// get workflow data
-				w.getWorkflowData(ctx, wfID)
-
 				// start executing the action
 				start := time.Now()
 				st, err := w.execute(ctx, wfID, action)
@@ -396,9 +385,6 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 					exitWithGrpcError(err, l)
 				}
 				l.Info("sent action status")
-
-				// send workflow data, if updated
-				w.updateWorkflowData(ctx, actionStatus)
 
 				if len(actions.GetActionList()) == actionIndex+1 {
 					l.Info("reached to end of workflow")
@@ -455,98 +441,6 @@ func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.Workfl
 	return err
 }
 
-func (w *Worker) getWorkflowData(ctx context.Context, workflowID string) {
-	l := w.getLogger(ctx).With("workflowID", workflowID,
-		"workerID", w.workerID,
-	)
-	res, err := w.tinkClient.GetWorkflowData(ctx, &pb.GetWorkflowDataRequest{WorkflowId: workflowID})
-	if err != nil {
-		l.Error(err)
-	}
-
-	if len(res.GetData()) != 0 {
-		wfDir := filepath.Join(w.dataDir, workflowID)
-		f := openDataFile(wfDir, l)
-		defer func() {
-			if err := f.Close(); err != nil {
-				l.With("file", f.Name()).Error(err)
-			}
-		}()
-
-		_, err := f.Write(res.GetData())
-		if err != nil {
-			l.Error(err)
-		}
-		h := sha.New()
-		workflowDataSHA[workflowID] = base64.StdEncoding.EncodeToString(h.Sum(res.Data))
-	}
-}
-
-func (w *Worker) updateWorkflowData(ctx context.Context, actionStatus *pb.WorkflowActionStatus) {
-	l := w.getLogger(ctx).With("workflowID", actionStatus.GetWorkflowId,
-		"workerID", actionStatus.GetWorkerId(),
-		"actionName", actionStatus.GetActionName(),
-		"taskName", actionStatus.GetTaskName(),
-	)
-
-	wfDir := filepath.Join(w.dataDir, actionStatus.GetWorkflowId())
-	f := openDataFile(wfDir, l)
-	defer func() {
-		if err := f.Close(); err != nil {
-			l.With("file", f.Name()).Error(err)
-		}
-	}()
-
-	data, err := io.ReadAll(f)
-	if err != nil {
-		l.Error(err)
-	}
-
-	if isValidDataFile(f, w.maxSize, data, l) {
-		h := sha.New()
-		if _, ok := workflowDataSHA[actionStatus.GetWorkflowId()]; !ok {
-			checksum := base64.StdEncoding.EncodeToString(h.Sum(data))
-			workflowDataSHA[actionStatus.GetWorkflowId()] = checksum
-			w.sendUpdate(ctx, actionStatus, data, checksum)
-		} else {
-			newSHA := base64.StdEncoding.EncodeToString(h.Sum(data))
-			if !strings.EqualFold(workflowDataSHA[actionStatus.GetWorkflowId()], newSHA) {
-				w.sendUpdate(ctx, actionStatus, data, newSHA)
-			}
-		}
-	}
-}
-
-func (w *Worker) sendUpdate(ctx context.Context, st *pb.WorkflowActionStatus, data []byte, checksum string) {
-	l := w.getLogger(ctx).With("workflowID", st.GetWorkflowId,
-		"workerID", st.GetWorkerId(),
-		"actionName", st.GetActionName(),
-		"taskName", st.GetTaskName(),
-	)
-	meta := WorkflowMetadata{
-		WorkerID:  st.GetWorkerId(),
-		Action:    st.GetActionName(),
-		Task:      st.GetTaskName(),
-		UpdatedAt: time.Now(),
-		SHA:       checksum,
-	}
-	metadata, err := json.Marshal(meta)
-	if err != nil {
-		l.Error(err)
-		os.Exit(1)
-	}
-
-	_, err = w.tinkClient.UpdateWorkflowData(ctx, &pb.UpdateWorkflowDataRequest{
-		WorkflowId: st.GetWorkflowId(),
-		Data:       data,
-		Metadata:   metadata,
-	})
-	if err != nil {
-		l.Error(err)
-		os.Exit(1)
-	}
-}
-
 func openDataFile(wfDir string, l log.Logger) *os.File {
 	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
@@ -554,21 +448,4 @@ func openDataFile(wfDir string, l log.Logger) *os.File {
 		os.Exit(1)
 	}
 	return f
-}
-
-func isValidDataFile(f *os.File, maxSize int64, data []byte, l log.Logger) bool {
-	var dataMap map[string]interface{}
-	err := json.Unmarshal(data, &dataMap)
-	if err != nil {
-		l.Error(err)
-		return false
-	}
-
-	stat, err := f.Stat()
-	if err != nil {
-		l.Error(err)
-		return false
-	}
-
-	return stat.Size() <= maxSize
 }

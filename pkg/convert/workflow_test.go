@@ -3,16 +3,17 @@ package convert
 import (
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/tinkerbell/tink/internal/tests"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	protoworkflow "github.com/tinkerbell/tink/protos/workflow"
 	"github.com/tinkerbell/tink/workflow"
 	"google.golang.org/protobuf/testing/protocmp"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var TestTime = tests.NewFrozenTimeUnix(1637361794)
 
 func TestWorkflowToWorkflowContext(t *testing.T) {
 	cases := []struct {
@@ -85,78 +86,6 @@ func TestWorkflowToWorkflowContext(t *testing.T) {
 			got := WorkflowToWorkflowContext(tc.input)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("Unexpedted response: wanted\n\t%#v\ngot\n\t%#v", tc.want, got)
-			}
-		})
-	}
-}
-
-func TestWorkflowCRDToProto(t *testing.T) {
-	cases := []struct {
-		name  string
-		input *v1alpha1.Workflow
-		want  *protoworkflow.Workflow
-	}{
-		{
-			"nil arg",
-			nil,
-			nil,
-		},
-		{
-			"empty workflow",
-			&v1alpha1.Workflow{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Workflow",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              "wf1",
-					CreationTimestamp: *TestTime.MetaV1Now(),
-				},
-				Spec:   v1alpha1.WorkflowSpec{},
-				Status: v1alpha1.WorkflowStatus{},
-			},
-			&protoworkflow.Workflow{
-				Id:        "",
-				Template:  "",
-				State:     protoworkflow.State_STATE_PENDING,
-				CreatedAt: TestTime.PbNow(),
-			},
-		},
-		{
-			"full workflow",
-			&v1alpha1.Workflow{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Workflow",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "wf1",
-					Annotations: map[string]string{
-						"workflow.tinkerbell.org/id": "7d9031ee-18d4-4ba4-b934-c3a78a1330f6",
-					},
-					CreationTimestamp: *TestTime.MetaV1Now(),
-				},
-				Spec: v1alpha1.WorkflowSpec{
-					TemplateRef: "MyCoolWorkflow",
-				},
-				Status: v1alpha1.WorkflowStatus{
-					State: "STATE_SUCCESS",
-				},
-			},
-			&protoworkflow.Workflow{
-				Id:        "7d9031ee-18d4-4ba4-b934-c3a78a1330f6",
-				Template:  "MyCoolWorkflow",
-				State:     protoworkflow.State_STATE_SUCCESS,
-				CreatedAt: TestTime.PbNow(),
-			},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := WorkflowCRDToProto(tc.input)
-			if diff := cmp.Diff(tc.want, got, protocmp.Transform()); diff != "" {
-				t.Errorf("unexpected difference:\n%v", diff)
 			}
 		})
 	}
@@ -302,77 +231,6 @@ func TestWorkflowActionListCRDToProto(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			got := WorkflowActionListCRDToProto(tc.input)
-			if diff := cmp.Diff(tc.want, got, protocmp.Transform()); diff != "" {
-				t.Errorf("unexpected difference:\n%v", diff)
-			}
-		})
-	}
-}
-
-func TestWorkflowProtoToCRD(t *testing.T) {
-	cases := []struct {
-		name  string
-		input *protoworkflow.Workflow
-		want  *v1alpha1.Workflow
-	}{
-		{
-			"nil arg",
-			nil,
-			nil,
-		},
-		{
-			"empty workflow",
-			&protoworkflow.Workflow{
-				Id:       "",
-				Template: "",
-				// State:     protoworkflow.State_STATE_PENDING,
-				CreatedAt: timestamppb.New(time.Unix(1637361794, 0)),
-			},
-			&v1alpha1.Workflow{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Workflow",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations:       map[string]string{"workflow.tinkerbell.org/id": ""},
-					CreationTimestamp: metav1.NewTime(time.Unix(1637361794, 0)),
-				},
-				Spec: v1alpha1.WorkflowSpec{},
-				Status: v1alpha1.WorkflowStatus{
-					State: "STATE_PENDING",
-				},
-			},
-		},
-		{
-			"full workflow",
-			&protoworkflow.Workflow{
-				Id:        "7d9031ee-18d4-4ba4-b934-c3a78a1330f6",
-				Template:  "MyCoolWorkflow",
-				State:     protoworkflow.State_STATE_SUCCESS,
-				CreatedAt: timestamppb.New(time.Unix(1637361794, 0)),
-			},
-			&v1alpha1.Workflow{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Workflow",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						"workflow.tinkerbell.org/id": "7d9031ee-18d4-4ba4-b934-c3a78a1330f6",
-					},
-					CreationTimestamp: metav1.NewTime(time.Unix(1637361794, 0)),
-				},
-				Spec: v1alpha1.WorkflowSpec{},
-				Status: v1alpha1.WorkflowStatus{
-					State: "STATE_SUCCESS",
-				},
-			},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := WorkflowProtoToCRD(tc.input)
 			if diff := cmp.Diff(tc.want, got, protocmp.Transform()); diff != "" {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}
