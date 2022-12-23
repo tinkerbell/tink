@@ -1,10 +1,10 @@
 FROM alpine:3.15
-ENTRYPOINT ["/usr/bin/tink-controller"]
-EXPOSE 42113
-EXPOSE 42114
 
+ARG TARGETOS
 ARG TARGETARCH
-ARG TARGETVARIANT
 
 RUN apk add --no-cache --update --upgrade ca-certificates
-COPY tink-controller-linux-${TARGETARCH:-amd64}${TARGETVARIANT} /usr/bin/tink-controller
+
+COPY bin/tink-controller-${TARGETOS}-${TARGETARCH} /usr/bin/tink-controller
+
+ENTRYPOINT ["/usr/bin/tink-controller"]

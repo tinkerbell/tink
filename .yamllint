@@ -14,3 +14,6 @@ rules:
     max: 160
     allow-non-breakable-inline-mappings: true
   truthy: disable
+
+ignore: |
+  out
