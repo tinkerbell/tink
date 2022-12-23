@@ -57,7 +57,7 @@ build: $(BINARIES) ## Build all tink binaries. Cross build by setting GOOS and G
 # See https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html.
 .PHONY: $(BINARIES)
 $(BINARIES):
-	CGO_ENABLED=false \
+	CGO_ENABLED=0 \
 	GOOS=$(GOOS) \
 	GOARCH=$(GOARCH) \
 	$(GO) build \
