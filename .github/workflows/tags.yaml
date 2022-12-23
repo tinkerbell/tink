@@ -22,7 +22,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
-
       - name: Docker manager metadata
         id: meta
         uses: docker/metadata-action@v3
@@ -30,10 +29,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: latest=false
           tags: type=ref,event=tag
-
       - name: Set the from image tag
         run: echo "FROM_TAG=sha-${GITHUB_SHA::8}" >> $GITHUB_ENV
-
       # This is for tink server. quay.io/tinkerbell/tink
       - name: Copy the image using skopeo
         run: skopeo copy --all --dest-creds="${DST_REG_USER}":"${DST_REG_PASS}" docker://"${SRC_IMAGE}" docker://"${DST_IMAGE}"
@@ -42,7 +39,6 @@ jobs:
           DST_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           DST_REG_USER: ${{ secrets.QUAY_USERNAME }}
           DST_REG_PASS: ${{ secrets.QUAY_PASSWORD }}
-
       - name: Copy the tink-controller image using skopeo
         run: skopeo copy --all --dest-creds="${DST_REG_USER}":"${DST_REG_PASS}" docker://"${SRC_IMAGE}" docker://"${DST_IMAGE}"
         env:
@@ -50,7 +46,6 @@ jobs:
           DST_IMAGE: ${{ env.REGISTRY }}/tinkerbell/tink-controller:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           DST_REG_USER: ${{ secrets.QUAY_USERNAME }}
           DST_REG_PASS: ${{ secrets.QUAY_PASSWORD }}
-
       - name: Copy the tink-worker image using skopeo
         run: skopeo copy --all --dest-creds="${DST_REG_USER}":"${DST_REG_PASS}" docker://"${SRC_IMAGE}" docker://"${DST_IMAGE}"
         env:
@@ -58,7 +53,6 @@ jobs:
           DST_IMAGE: ${{ env.REGISTRY }}/tinkerbell/tink-worker:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           DST_REG_USER: ${{ secrets.QUAY_USERNAME }}
           DST_REG_PASS: ${{ secrets.QUAY_PASSWORD }}
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1

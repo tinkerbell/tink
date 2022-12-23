@@ -1,8 +1,10 @@
 FROM alpine:3.15
-ENTRYPOINT [ "/usr/bin/tink-worker" ]
 
+ARG TARGETOS
 ARG TARGETARCH
-ARG TARGETVARIANT
 
 RUN apk add --no-cache --update --upgrade ca-certificates
-COPY tink-worker-linux-${TARGETARCH:-amd64}${TARGETVARIANT} /usr/bin/tink-worker
+
+COPY bin/tink-worker-${TARGETOS}-${TARGETARCH} /usr/bin/tink-worker
+
+ENTRYPOINT [ "/usr/bin/tink-worker" ]

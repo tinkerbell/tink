@@ -5,7 +5,6 @@ queue_rules:
       - check-success=DCO
       - check-success~=docker-images.*tink-server
       - check-success~=docker-images.*tink-worker
-
 pull_request_rules:
   - name: Automatic merge on approval
     conditions:
