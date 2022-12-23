@@ -3,8 +3,7 @@ package worker
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io"
 	"strconv"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 )
 
 const (
-	dataFile       = "data"
 	defaultDataDir = "/worker"
 
 	errGetWfContext       = "failed to get workflow context"
@@ -28,8 +26,6 @@ const (
 type loggingContext string
 
 var loggingContextKey loggingContext = "logger"
-
-var workflowcontexts = map[string]*pb.WorkflowContext{}
 
 // WorkflowMetadata is the metadata related to workflow data.
 type WorkflowMetadata struct {
@@ -252,20 +248,31 @@ func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []str
 // ProcessWorkflowActions gets all Workflow contexts and processes their actions.
 func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 	l := w.logger.With("workerID", w.workerID)
+	l.Info("starting to process workflow actions")
 
 	for {
 		res, err := w.tinkClient.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: w.workerID})
 		if err != nil {
-			return errors.Wrap(err, errGetWfContext)
+			l.Error(errors.Wrap(err, errGetWfContext))
+			<-time.After(5 * time.Second)
 		}
-		for wfContext, err := res.Recv(); err == nil && wfContext != nil; wfContext, err = res.Recv() {
+		for {
+			wfContext, err := res.Recv()
+			if err != nil || wfContext == nil {
+				if !errors.Is(err, io.EOF) {
+					l.Info(err)
+				}
+				<-time.After(5 * time.Second)
+				break
+			}
 			wfID := wfContext.GetWorkflowId()
 			l = l.With("workflowID", wfID)
 			ctx := context.WithValue(ctx, loggingContextKey, &l)
 
 			actions, err := w.tinkClient.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfID})
 			if err != nil {
-				return errors.Wrap(err, errGetWfActions)
+				l.Error(errors.Wrap(err, errGetWfActions))
+				continue
 			}
 
 			turn := false
@@ -298,30 +305,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 			}
 
 			if turn {
-				wfDir := filepath.Join(w.dataDir, wfID)
-				l := l.With("actionName", actions.GetActionList()[actionIndex].GetName(),
-					"taskName", actions.GetActionList()[actionIndex].GetTaskName(),
-				)
-				if _, err := os.Stat(wfDir); os.IsNotExist(err) {
-					err := os.MkdirAll(wfDir, os.FileMode(0o755))
-					if err != nil {
-						l.Error(err)
-						os.Exit(1)
-					}
-
-					f := openDataFile(wfDir, l)
-					_, err = f.Write([]byte("{}"))
-					if err != nil {
-						l.Error(err)
-						os.Exit(1)
-					}
-
-					err = f.Close()
-					if err != nil {
-						l.Error(err)
-						os.Exit(1)
-					}
-				}
+				l := l.With("actionName", actions.GetActionList()[actionIndex].GetName(), "taskName", actions.GetActionList()[actionIndex].GetTaskName())
 				l.Info("starting action")
 			}
 
@@ -342,9 +326,11 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 						Message:      "Started execution",
 						WorkerId:     action.GetWorkerId(),
 					}
-					err := w.reportActionStatus(ctx, actionStatus)
-					if err != nil {
+				RETRY1:
+					if err := w.reportActionStatus(ctx, actionStatus); err != nil {
 						exitWithGrpcError(err, l)
+						<-time.After(5 * time.Second)
+						goto RETRY1
 					}
 					l.With("status", actionStatus.ActionStatus, "duration", strconv.FormatInt(actionStatus.Seconds, 10)).Info("sent action status")
 				}
@@ -370,25 +356,27 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 					}
 					l = l.With("actionStatus", actionStatus.ActionStatus.String())
 					l.Error(err)
-					if reportErr := w.reportActionStatus(ctx, actionStatus); reportErr != nil {
-						exitWithGrpcError(reportErr, l)
+				RETRY2:
+					if err := w.reportActionStatus(ctx, actionStatus); err != nil {
+						exitWithGrpcError(err, l)
+						<-time.After(5 * time.Second)
+						goto RETRY2
 					}
-					delete(workflowcontexts, wfID)
-					return err
+					break
 				}
 
 				actionStatus.ActionStatus = pb.State_STATE_SUCCESS
 				actionStatus.Message = "finished execution successfully"
-
-				err = w.reportActionStatus(ctx, actionStatus)
-				if err != nil {
+			RETRY3:
+				if err := w.reportActionStatus(ctx, actionStatus); err != nil {
 					exitWithGrpcError(err, l)
+					<-time.After(5 * time.Second)
+					goto RETRY3
 				}
 				l.Info("sent action status")
 
 				if len(actions.GetActionList()) == actionIndex+1 {
 					l.Info("reached to end of workflow")
-					delete(workflowcontexts, wfID)
 					turn = false
 					break
 				}
@@ -411,7 +399,6 @@ func exitWithGrpcError(err error, l log.Logger) {
 	if err != nil {
 		errStatus, _ := status.FromError(err)
 		l.With("errorCode", errStatus.Code()).Error(err)
-		os.Exit(1)
 	}
 }
 
@@ -439,13 +426,4 @@ func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.Workfl
 		return nil
 	}
 	return err
-}
-
-func openDataFile(wfDir string, l log.Logger) *os.File {
-	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0o600)
-	if err != nil {
-		l.Error(err)
-		os.Exit(1)
-	}
-	return f
 }

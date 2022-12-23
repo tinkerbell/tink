@@ -130,7 +130,6 @@ func initViper(logger log.Logger, cmd *cobra.Command) error {
 			logger.With("configFile", viper.ConfigFileUsed()).Error(err, "could not load config file")
 			return err
 		}
-		logger.Info("no config file found")
 	} else {
 		logger.With("configFile", viper.ConfigFileUsed()).Info("loaded config file")
 	}
