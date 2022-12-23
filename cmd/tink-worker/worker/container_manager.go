@@ -4,6 +4,7 @@ import (
 	"context"
 	"path"
 	"path/filepath"
+	"regexp"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -76,11 +77,20 @@ func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wf
 
 	hostConfig.Binds = append(hostConfig.Binds, action.GetVolumes()...)
 	l.With("command", cmd).Info("creating container")
-	resp, err := m.cli.ContainerCreate(ctx, config, hostConfig, nil, nil, action.GetName())
+	name := makeValidContainerName(action.GetName())
+	resp, err := m.cli.ContainerCreate(ctx, config, hostConfig, nil, nil, name)
 	if err != nil {
 		return "", errors.Wrap(err, "DOCKER CREATE")
 	}
 	return resp.ID, nil
+}
+
+// makeValidContainerName returns a valid container name for docker.
+// only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed.
+func makeValidContainerName(name string) string {
+	regex := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
+	result := "action_" // so we don't need to regex on the first character different from the rest.
+	return result + regex.ReplaceAllString(name, "_")
 }
 
 func (m *containerManager) StartContainer(ctx context.Context, id string) error {

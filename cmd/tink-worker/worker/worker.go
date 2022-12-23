@@ -3,19 +3,16 @@ package worker
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io"
 	"strconv"
 	"time"
 
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
 	pb "github.com/tinkerbell/tink/protos/workflow"
-	"google.golang.org/grpc/status"
 )
 
 const (
-	dataFile       = "data"
 	defaultDataDir = "/worker"
 
 	errGetWfContext       = "failed to get workflow context"
@@ -28,8 +25,6 @@ const (
 type loggingContext string
 
 var loggingContextKey loggingContext = "logger"
-
-var workflowcontexts = map[string]*pb.WorkflowContext{}
 
 // WorkflowMetadata is the metadata related to workflow data.
 type WorkflowMetadata struct {
@@ -165,7 +160,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *pb.WorkflowAc
 		return pb.State_STATE_RUNNING, errors.Wrap(err, "create container")
 	}
 
-	l.With("containerID", id, "command", action.GetOnTimeout()).Info("container created")
+	l.With("containerID", id, "command", action.Command).Info("container created")
 
 	var timeCtx context.Context
 	var cancel context.CancelFunc
@@ -252,20 +247,42 @@ func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []str
 // ProcessWorkflowActions gets all Workflow contexts and processes their actions.
 func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 	l := w.logger.With("workerID", w.workerID)
+	l.Info("starting to process workflow actions")
 
 	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
 		res, err := w.tinkClient.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: w.workerID})
 		if err != nil {
-			return errors.Wrap(err, errGetWfContext)
+			l.Error(errors.Wrap(err, errGetWfContext))
+			<-time.After(w.retryInterval)
+			continue
 		}
-		for wfContext, err := res.Recv(); err == nil && wfContext != nil; wfContext, err = res.Recv() {
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
+			wfContext, err := res.Recv()
+			if err != nil || wfContext == nil {
+				if !errors.Is(err, io.EOF) {
+					l.Info(err)
+				}
+				<-time.After(w.retryInterval)
+				break
+			}
 			wfID := wfContext.GetWorkflowId()
 			l = l.With("workflowID", wfID)
 			ctx := context.WithValue(ctx, loggingContextKey, &l)
 
 			actions, err := w.tinkClient.GetWorkflowActions(ctx, &pb.WorkflowActionsRequest{WorkflowId: wfID})
 			if err != nil {
-				return errors.Wrap(err, errGetWfActions)
+				l.Error(errors.Wrap(err, errGetWfActions))
+				continue
 			}
 
 			turn := false
@@ -297,35 +314,8 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 				}
 			}
 
-			if turn {
-				wfDir := filepath.Join(w.dataDir, wfID)
-				l := l.With("actionName", actions.GetActionList()[actionIndex].GetName(),
-					"taskName", actions.GetActionList()[actionIndex].GetTaskName(),
-				)
-				if _, err := os.Stat(wfDir); os.IsNotExist(err) {
-					err := os.MkdirAll(wfDir, os.FileMode(0o755))
-					if err != nil {
-						l.Error(err)
-						os.Exit(1)
-					}
-
-					f := openDataFile(wfDir, l)
-					_, err = f.Write([]byte("{}"))
-					if err != nil {
-						l.Error(err)
-						os.Exit(1)
-					}
-
-					err = f.Close()
-					if err != nil {
-						l.Error(err)
-						os.Exit(1)
-					}
-				}
-				l.Info("starting action")
-			}
-
 			for turn {
+				l.Info("starting action")
 				action := actions.GetActionList()[actionIndex]
 				l := l.With(
 					"actionName", action.GetName(),
@@ -342,10 +332,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 						Message:      "Started execution",
 						WorkerId:     action.GetWorkerId(),
 					}
-					err := w.reportActionStatus(ctx, actionStatus)
-					if err != nil {
-						exitWithGrpcError(err, l)
-					}
+					w.reportActionStatus(ctx, l, actionStatus)
 					l.With("status", actionStatus.ActionStatus, "duration", strconv.FormatInt(actionStatus.Seconds, 10)).Info("sent action status")
 				}
 
@@ -370,25 +357,17 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 					}
 					l = l.With("actionStatus", actionStatus.ActionStatus.String())
 					l.Error(err)
-					if reportErr := w.reportActionStatus(ctx, actionStatus); reportErr != nil {
-						exitWithGrpcError(reportErr, l)
-					}
-					delete(workflowcontexts, wfID)
-					return err
+					w.reportActionStatus(ctx, l, actionStatus)
+					break
 				}
 
 				actionStatus.ActionStatus = pb.State_STATE_SUCCESS
 				actionStatus.Message = "finished execution successfully"
-
-				err = w.reportActionStatus(ctx, actionStatus)
-				if err != nil {
-					exitWithGrpcError(err, l)
-				}
+				w.reportActionStatus(ctx, l, actionStatus)
 				l.Info("sent action status")
 
 				if len(actions.GetActionList()) == actionIndex+1 {
 					l.Info("reached to end of workflow")
-					delete(workflowcontexts, wfID)
 					turn = false
 					break
 				}
@@ -407,45 +386,21 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 	}
 }
 
-func exitWithGrpcError(err error, l log.Logger) {
-	if err != nil {
-		errStatus, _ := status.FromError(err)
-		l.With("errorCode", errStatus.Code()).Error(err)
-		os.Exit(1)
-	}
-}
-
 func isLastAction(wfContext *pb.WorkflowContext, actions *pb.WorkflowActionList) bool {
 	return int(wfContext.GetCurrentActionIndex()) == len(actions.GetActionList())-1
 }
 
-func (w *Worker) reportActionStatus(ctx context.Context, actionStatus *pb.WorkflowActionStatus) error {
-	l := w.getLogger(ctx).With("workflowID", actionStatus.GetWorkflowId(),
-		"workerID", actionStatus.GetWorkerId(),
-		"actionName", actionStatus.GetActionName(),
-		"taskName", actionStatus.GetTaskName(),
-		"status", actionStatus.ActionStatus,
-	)
-	var err error
-	for r := 1; r <= w.retries; r++ {
+// reportActionStatus reports the status of an action to the Tinkerbell server and retries forever on error.
+func (w *Worker) reportActionStatus(ctx context.Context, l log.Logger, actionStatus *pb.WorkflowActionStatus) {
+	for {
 		l.Info("reporting Action Status")
-		_, err = w.tinkClient.ReportActionStatus(ctx, actionStatus)
+		_, err := w.tinkClient.ReportActionStatus(ctx, actionStatus)
 		if err != nil {
 			l.Error(errors.Wrap(err, errReportActionStatus))
 			<-time.After(w.retryInterval)
 
 			continue
 		}
-		return nil
+		return
 	}
-	return err
-}
-
-func openDataFile(wfDir string, l log.Logger) *os.File {
-	f, err := os.OpenFile(filepath.Clean(wfDir+string(os.PathSeparator)+dataFile), os.O_RDWR|os.O_CREATE, 0o600)
-	if err != nil {
-		l.Error(err)
-		os.Exit(1)
-	}
-	return f
 }

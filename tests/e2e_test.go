@@ -118,7 +118,7 @@ var _ = Describe("Tink API", func() {
 			}, 8*time.Second, 1*time.Second).Should(Equal("STATE_SUCCESS"))
 
 			workerErr := <-errChan
-			Expect(workerErr.Error()).To(Equal("failed to get workflow context: rpc error: code = DeadlineExceeded desc = context deadline exceeded"))
+			Expect(workerErr).To(BeNil())
 		})
 
 		It("02 - should return the correct workflow contexts", func() {
