@@ -251,12 +251,22 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 	l.Info("starting to process workflow actions")
 
 	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
 		res, err := w.tinkClient.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: w.workerID})
 		if err != nil {
 			l.Error(errors.Wrap(err, errGetWfContext))
 			<-time.After(5 * time.Second)
 		}
 		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
 			wfContext, err := res.Recv()
 			if err != nil || wfContext == nil {
 				if !errors.Is(err, io.EOF) {
