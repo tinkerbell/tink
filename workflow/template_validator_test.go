@@ -321,8 +321,11 @@ tasks:
 				if err == nil {
 					t.Error("expected error, got nil")
 				}
-				if !strings.Contains(err.Error(), `template: workflow-template:7: unexpected "}" in operand`) {
-					t.Errorf("\nexpected err: '%s'\ngot:          '%s'", `failed to parse template with ID 98788301-d0d9-4ee9-84df-b64e6e1ef1cc: template: workflow-template:7: unexpected "}" in operand`, err)
+				e1 := `template: workflow-template:7: unexpected "}" in operand`
+				e2 := `template: workflow-template:7: bad character U+007D '}'`
+				if !strings.Contains(err.Error(), e1) && !strings.Contains(err.Error(), e2) {
+					base := "failed to parse template with ID 98788301-d0d9-4ee9-84df-b64e6e1ef1cc: "
+					t.Errorf("\nexpected err:    '%s'\nor expected err: '%s'\ngot:             '%s'", base+e1, base+e2, err)
 				}
 			},
 		},
