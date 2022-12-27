@@ -20,7 +20,6 @@ spec:
       containers:
         - args:
             - "--backend=kubernetes"
-            - "--tls=false"
           image: server:latest
           imagePullPolicy: IfNotPresent
           name: tink-server

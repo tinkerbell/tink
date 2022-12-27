@@ -2,9 +2,7 @@ package grpcserver
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
-	"path/filepath"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -14,34 +12,17 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-// GetCerts returns a TLS certificate.
-// An error is returned for any failure.
-//
-// The public key is expected to be named "bundle.pem" and the private key "server-key.pem".
-func GetCerts(certsDir string) (*tls.Certificate, error) {
-	cert, err := tls.LoadX509KeyPair(
-		filepath.Join(certsDir, "bundle.pem"),
-		filepath.Join(certsDir, "server-key.pem"),
-	)
-	if err != nil {
-		err = errors.Wrap(err, "failed to load TLS files")
-		return nil, err
-	}
-	return &cert, nil
-}
-
 // Registrar is an interface for registering APIs on a gRPC server.
 type Registrar interface {
 	Register(*grpc.Server)
 }
 
 // SetupGRPC opens a listener and serves a given Registrar's APIs on a gRPC server and returns the listener's address or an error.
-func SetupGRPC(ctx context.Context, r Registrar, listenAddr string, opts []grpc.ServerOption, errCh chan<- error) (string, error) {
+func SetupGRPC(ctx context.Context, r Registrar, listenAddr string, errCh chan<- error) (string, error) {
 	params := []grpc.ServerOption{
 		grpc_middleware.WithUnaryServerChain(grpc_prometheus.UnaryServerInterceptor, otelgrpc.UnaryServerInterceptor()),
 		grpc_middleware.WithStreamServerChain(grpc_prometheus.StreamServerInterceptor, otelgrpc.StreamServerInterceptor()),
 	}
-	params = append(params, opts...)
 
 	// register servers
 	s := grpc.NewServer(params...)

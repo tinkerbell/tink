@@ -1,4 +1,4 @@
-package tests_test
+package e2e_test
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
 	virtWorker "github.com/tinkerbell/tink/cmd/virtual-worker/worker"
+	"github.com/tinkerbell/tink/internal/client"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/protobuf/proto"

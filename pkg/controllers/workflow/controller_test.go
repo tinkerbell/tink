@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tinkerbell/tink/internal/tests"
+	"github.com/tinkerbell/tink/internal/testtime"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,7 +20,7 @@ import (
 var runtimescheme = runtime.NewScheme()
 
 // TestTime is a static time that can be used for testing.
-var TestTime = tests.NewFrozenTimeUnix(1637361793)
+var TestTime = testtime.NewFrozenTimeUnix(1637361793)
 
 func init() {
 	_ = clientgoscheme.AddToScheme(runtimescheme)

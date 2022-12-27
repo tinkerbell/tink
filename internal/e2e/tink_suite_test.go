@@ -1,4 +1,4 @@
-package tests_test
+package e2e_test
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/packethost/pkg/log"
-	grpcserver "github.com/tinkerbell/tink/grpc-server"
+	"github.com/tinkerbell/tink/internal/grpcserver"
+	"github.com/tinkerbell/tink/internal/server"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/pkg/controllers"
 	wfctrl "github.com/tinkerbell/tink/pkg/controllers/workflow"
-	server "github.com/tinkerbell/tink/server"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,7 +46,7 @@ var _ = BeforeSuite(func() {
 	// Installs CRDs into cluster
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -78,8 +78,8 @@ var _ = BeforeSuite(func() {
 		ctx,
 		tinkServer,
 		"127.0.0.1:0", // Randomly selected port
-		nil,
-		errCh)
+		errCh,
+	)
 	Expect(err).NotTo(HaveOccurred())
 	logger.Info("HTTP server: ", fmt.Sprintf("%+v", serverAddr))
 

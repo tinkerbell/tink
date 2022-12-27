@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -15,12 +14,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	grpcserver "github.com/tinkerbell/tink/grpc-server"
-	httpserver "github.com/tinkerbell/tink/http-server"
-	"github.com/tinkerbell/tink/metrics"
-	"github.com/tinkerbell/tink/server"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	"github.com/tinkerbell/tink/internal/grpcserver"
+	"github.com/tinkerbell/tink/internal/httpserver"
+	"github.com/tinkerbell/tink/internal/server"
 )
 
 // version is set at build time.
@@ -30,15 +26,8 @@ var version = "devel"
 // You can change the configuration via environment variable, or file, or command flags.
 type DaemonConfig struct {
 	Facility      string
-	PGDatabase    string
-	PGUSer        string
-	PGPassword    string
-	PGSSLMode     string
-	OnlyMigration bool
 	GRPCAuthority string
-	CertDir       string
 	HTTPAuthority string
-	TLS           bool
 	Backend       string
 
 	KubeconfigPath string
@@ -55,9 +44,7 @@ func backends() []string {
 func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Facility, "facility", "deprecated", "This is temporary. It will be removed")
 	fs.StringVar(&c.GRPCAuthority, "grpc-authority", ":42113", "The address used to expose the gRPC server")
-	fs.StringVar(&c.CertDir, "cert-dir", "", "")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
-	fs.BoolVar(&c.TLS, "tls", true, "Run in tls protected mode (disabling should only be done for development or if behind TLS terminating proxy)")
 	fs.StringVar(&c.Backend, "backend", backendKubernetes, fmt.Sprintf("The backend datastore to use. Must be one of %s", strings.Join(backends(), ", ")))
 	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "", "The path to the Kubeconfig. Only takes effect if `--backend=kubernetes`")
 	fs.StringVar(&c.KubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only takes effect if `--backend=kubernetes`")
@@ -66,11 +53,8 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
 	c.Facility = env.Get("FACILITY", c.Facility)
-
-	c.CertDir = env.Get("TINKERBELL_CERTS_DIR", c.CertDir)
 	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
 	c.HTTPAuthority = env.Get("TINKERBELL_HTTP_AUTHORITY", c.HTTPAuthority)
-	c.TLS = env.Bool("TINKERBELL_TLS", c.TLS)
 }
 
 func main() {
@@ -110,7 +94,6 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			// the most aggressive way we have to guarantee that
 			// the old way works as before.
 			config.PopulateFromLegacyEnvVar()
-			metrics.SetupMetrics(config.Facility, logger)
 
 			logger.Info("starting version " + version)
 
@@ -122,22 +105,8 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			// graceful shutdown and error management but I want to
 			// figure this out in another PR
 			errCh := make(chan error, 2)
-			var (
-				registrar grpcserver.Registrar
-				grpcOpts  []grpc.ServerOption
-				err       error
-			)
-			if config.TLS {
-				certDir := config.CertDir
-				if certDir == "" {
-					certDir = env.Get("TINKERBELL_CERTS_DIR", filepath.Join("/certs", config.Facility))
-				}
-				cert, err := grpcserver.GetCerts(certDir)
-				if err != nil {
-					return err
-				}
-				grpcOpts = append(grpcOpts, grpc.Creds(credentials.NewServerTLSFromCert(cert)))
-			}
+			var registrar grpcserver.Registrar
+
 			switch config.Backend {
 			case backendKubernetes:
 				var err error
@@ -153,13 +122,14 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			default:
 				return fmt.Errorf("invalid backend: %s", config.Backend)
 			}
+
 			// Start the gRPC server in the background
 			addr, err := grpcserver.SetupGRPC(
 				ctx,
 				registrar,
 				config.GRPCAuthority,
-				grpcOpts,
-				errCh)
+				errCh,
+			)
 			if err != nil {
 				return err
 			}
@@ -168,7 +138,7 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			httpserver.SetupHTTP(ctx, logger, config.HTTPAuthority, errCh)
 
 			select {
-			case err = <-errCh:
+			case err := <-errCh:
 				logger.Error(err)
 			case sig := <-sigs:
 				logger.With("signal", sig.String()).Info("signal received, stopping servers")

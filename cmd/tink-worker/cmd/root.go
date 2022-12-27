@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tinkerbell/tink/client"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
+	"github.com/tinkerbell/tink/internal/client"
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
