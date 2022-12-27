@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/tinkerbell/tink/internal/tests"
+	"github.com/tinkerbell/tink/internal/testtime"
+	"github.com/tinkerbell/tink/internal/workflow"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	protoworkflow "github.com/tinkerbell/tink/protos/workflow"
-	"github.com/tinkerbell/tink/workflow"
 	"google.golang.org/protobuf/testing/protocmp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var TestTime = tests.NewFrozenTimeUnix(1637361794)
+var TestTime = testtime.NewFrozenTimeUnix(1637361794)
 
 func TestWorkflowToWorkflowContext(t *testing.T) {
 	cases := []struct {

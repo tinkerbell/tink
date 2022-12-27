@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/tinkerbell/tink/internal/convert"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/pkg/controllers"
-	"github.com/tinkerbell/tink/pkg/convert"
 	pb "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

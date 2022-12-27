@@ -7,12 +7,12 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/pkg/log"
-	"github.com/tinkerbell/tink/internal/tests"
+	"github.com/tinkerbell/tink/internal/testtime"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/protos/workflow"
 )
 
-var TestTime = tests.NewFrozenTimeUnix(1637361793)
+var TestTime = testtime.NewFrozenTimeUnix(1637361793)
 
 func TestModifyWorkflowState(t *testing.T) {
 	cases := []struct {
@@ -424,7 +424,7 @@ func TestModifyWorkflowState(t *testing.T) {
 				nowFunc:    TestTime.Now,
 			}
 			gotErr := server.modifyWorkflowState(tc.inputWf, tc.inputWfContext)
-			tests.CompareErrors(t, gotErr, tc.wantErr)
+			compareErrors(t, gotErr, tc.wantErr)
 			if tc.want == nil {
 				return
 			}
@@ -433,5 +433,21 @@ func TestModifyWorkflowState(t *testing.T) {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}
 		})
+	}
+}
+
+// compareErrors is a helper function for comparing an error value and a desired error.
+func compareErrors(t *testing.T, got, want error) {
+	t.Helper()
+	if got != nil {
+		if want == nil {
+			t.Fatalf(`Got unexpected error: %v"`, got)
+		} else if got.Error() != want.Error() {
+			t.Fatalf(`Got unexpected error: got "%v" wanted "%v"`, got, want)
+		}
+		return
+	}
+	if got == nil && want != nil {
+		t.Fatalf("Missing expected error: %v", want)
 	}
 }

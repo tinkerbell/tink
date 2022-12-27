@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/tinkerbell/tink/internal/convert"
+	"github.com/tinkerbell/tink/internal/workflow"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	"github.com/tinkerbell/tink/pkg/controllers"
-	"github.com/tinkerbell/tink/pkg/convert"
-	tinkworkflow "github.com/tinkerbell/tink/workflow"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"knative.dev/pkg/ptr"
@@ -115,7 +115,7 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		data["Hardware"] = contract
 	}
 
-	tinkWf, _, err := tinkworkflow.RenderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
+	tinkWf, _, err := workflow.RenderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

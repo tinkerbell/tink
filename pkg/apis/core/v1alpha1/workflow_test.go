@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tinkerbell/tink/internal/tests"
+	"github.com/tinkerbell/tink/internal/testtime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var TestNow = tests.NewFrozenTimeUnix(1637361793)
+var TestNow = testtime.NewFrozenTimeUnix(1637361793)
 
 func TestWorkflowTinkID(t *testing.T) {
 	id := "d2c26e20-97e0-449c-b665-61efa7373f47"
