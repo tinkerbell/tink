@@ -1,11 +1,11 @@
-package controllers
+package controller
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/go-logr/zapr"
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	"github.com/tinkerbell/tink/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"

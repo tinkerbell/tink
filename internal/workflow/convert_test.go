@@ -1,25 +1,24 @@
-package convert
+package workflow
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/internal/proto"
 	"github.com/tinkerbell/tink/internal/testtime"
-	"github.com/tinkerbell/tink/internal/workflow"
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	protoworkflow "github.com/tinkerbell/tink/protos/workflow"
 	"google.golang.org/protobuf/testing/protocmp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var TestTime = testtime.NewFrozenTimeUnix(1637361794)
+var convertTestTime = testtime.NewFrozenTimeUnix(1637361794)
 
-func TestWorkflowToWorkflowContext(t *testing.T) {
+func TestToWorkflowContext(t *testing.T) {
 	cases := []struct {
 		name  string
 		input *v1alpha1.Workflow
-		want  *protoworkflow.WorkflowContext
+		want  *proto.WorkflowContext
 	}{
 		{
 			"nil workflow",
@@ -29,7 +28,7 @@ func TestWorkflowToWorkflowContext(t *testing.T) {
 		{
 			"empty workflow",
 			&v1alpha1.Workflow{},
-			&protoworkflow.WorkflowContext{
+			&proto.WorkflowContext{
 				WorkflowId:           "",
 				CurrentWorker:        "",
 				CurrentTask:          "",
@@ -69,13 +68,13 @@ func TestWorkflowToWorkflowContext(t *testing.T) {
 					},
 				},
 			},
-			&protoworkflow.WorkflowContext{
+			&proto.WorkflowContext{
 				WorkflowId:           "wf1",
 				CurrentWorker:        "worker1",
 				CurrentTask:          "task1",
 				CurrentAction:        "action2",
 				CurrentActionIndex:   1,
-				CurrentActionState:   protoworkflow.State_STATE_RUNNING,
+				CurrentActionState:   proto.State_STATE_RUNNING,
 				TotalNumberOfActions: 2,
 			},
 		},
@@ -83,7 +82,7 @@ func TestWorkflowToWorkflowContext(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := WorkflowToWorkflowContext(tc.input)
+			got := ToWorkflowContext(tc.input)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("Unexpedted response: wanted\n\t%#v\ngot\n\t%#v", tc.want, got)
 			}
@@ -91,11 +90,11 @@ func TestWorkflowToWorkflowContext(t *testing.T) {
 	}
 }
 
-func TestWorkflowActionListCRDToProto(t *testing.T) {
+func TestActionListCRDToProto(t *testing.T) {
 	cases := []struct {
 		name  string
 		input *v1alpha1.Workflow
-		want  *protoworkflow.WorkflowActionList
+		want  *proto.WorkflowActionList
 	}{
 		{
 			"nil arg",
@@ -111,13 +110,13 @@ func TestWorkflowActionListCRDToProto(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "wf1",
-					CreationTimestamp: *TestTime.MetaV1Now(),
+					CreationTimestamp: *convertTestTime.MetaV1Now(),
 				},
 				Spec:   v1alpha1.WorkflowSpec{},
 				Status: v1alpha1.WorkflowStatus{},
 			},
-			&protoworkflow.WorkflowActionList{
-				ActionList: []*protoworkflow.WorkflowAction{},
+			&proto.WorkflowActionList{
+				ActionList: []*proto.WorkflowAction{},
 			},
 		},
 		{
@@ -132,7 +131,7 @@ func TestWorkflowActionListCRDToProto(t *testing.T) {
 					Annotations: map[string]string{
 						"workflow.tinkerbell.org/id": "7d9031ee-18d4-4ba4-b934-c3a78a1330f6",
 					},
-					CreationTimestamp: *TestTime.MetaV1Now(),
+					CreationTimestamp: *convertTestTime.MetaV1Now(),
 				},
 				Spec: v1alpha1.WorkflowSpec{
 					TemplateRef: "MyCoolWorkflow",
@@ -182,8 +181,8 @@ func TestWorkflowActionListCRDToProto(t *testing.T) {
 					},
 				},
 			},
-			&protoworkflow.WorkflowActionList{
-				ActionList: []*protoworkflow.WorkflowAction{
+			&proto.WorkflowActionList{
+				ActionList: []*proto.WorkflowAction{
 					{
 						TaskName: "worker1",
 						Name:     "stream-debian-image",
@@ -230,7 +229,7 @@ func TestWorkflowActionListCRDToProto(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := WorkflowActionListCRDToProto(tc.input)
+			got := ActionListCRDToProto(tc.input)
 			if diff := cmp.Diff(tc.want, got, protocmp.Transform()); diff != "" {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}
@@ -238,10 +237,10 @@ func TestWorkflowActionListCRDToProto(t *testing.T) {
 	}
 }
 
-func TestWorkflowYAMLToStatus(t *testing.T) {
+func TestYAMLToStatus(t *testing.T) {
 	cases := []struct {
 		name    string
-		inputWf *workflow.Workflow
+		inputWf *Workflow
 		want    *v1alpha1.WorkflowStatus
 	}{
 		{
@@ -251,16 +250,16 @@ func TestWorkflowYAMLToStatus(t *testing.T) {
 		},
 		{
 			"Full crd",
-			&workflow.Workflow{
+			&Workflow{
 				Version:       "1",
 				Name:          "debian-provision",
 				ID:            "0a90fac9-b509-4aa5-b294-5944128ece81",
 				GlobalTimeout: 600,
-				Tasks: []workflow.Task{
+				Tasks: []Task{
 					{
 						Name:       "do-or-do-not-there-is-no-try",
 						WorkerAddr: "00:00:53:00:53:F4",
-						Actions: []workflow.Action{
+						Actions: []Action{
 							{
 								Name:    "stream-image-to-disk",
 								Image:   "quay.io/tinkerbell-actions/image2disk:v1.0.0",
@@ -316,7 +315,7 @@ func TestWorkflowYAMLToStatus(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := WorkflowYAMLToStatus(tc.inputWf)
+			got := YAMLToStatus(tc.inputWf)
 			if diff := cmp.Diff(got, tc.want, protocmp.Transform()); diff != "" {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}

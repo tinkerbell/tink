@@ -7,12 +7,12 @@ set -eux
 failed=0
 
 # spell-checks only language files to avoid spell-checking checksums
-if ! git ls-files '*.sh' '*.go' '*.md' | xargs codespell -q 3 -I .codespell-whitelist; then
+if ! git ls-files '*.sh' '*.go' | xargs codespell -q 3 -I .codespell-whitelist; then
 	failed=1
 fi
 
 # --check doesn't show what line number fails, so write the result to disk for the diff to catch
-if ! git ls-files '*.json' '*.md' | xargs prettier --list-different --write; then
+if ! git ls-files '*.json' | xargs prettier --list-different --write; then
 	failed=1
 fi
 

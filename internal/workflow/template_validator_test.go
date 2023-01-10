@@ -155,67 +155,67 @@ func TestValidateTemplate(t *testing.T) {
 	}{
 		{
 			name:          "template name is invalid",
-			wf:            workflow(withTemplateInvalidName()),
+			wf:            toWorkflow(withTemplateInvalidName()),
 			expectedError: true,
 		},
 		{
 			name:          "template name too long",
-			wf:            workflow(withTemplateLongName()),
+			wf:            toWorkflow(withTemplateLongName()),
 			expectedError: true,
 		},
 		{
 			name:          "template version is invalid",
-			wf:            workflow(withTemplateInvalidVersion()),
+			wf:            toWorkflow(withTemplateInvalidVersion()),
 			expectedError: true,
 		},
 		{
 			name:          "template tasks is nil",
-			wf:            workflow(withTemplateNilTasks()),
+			wf:            toWorkflow(withTemplateNilTasks()),
 			expectedError: true,
 		},
 		{
 			name:          "template tasks is empty",
-			wf:            workflow(withTemplateEmptyTasks()),
+			wf:            toWorkflow(withTemplateEmptyTasks()),
 			expectedError: true,
 		},
 		{
 			name:          "task name is invalid",
-			wf:            workflow(withTaskInvalidName()),
+			wf:            toWorkflow(withTaskInvalidName()),
 			expectedError: true,
 		},
 		{
 			name:          "task name is too long",
-			wf:            workflow(withTaskLongName()),
+			wf:            toWorkflow(withTaskLongName()),
 			expectedError: true,
 		},
 		{
 			name:          "task name is duplicated",
-			wf:            workflow(withTaskDuplicateName()),
+			wf:            toWorkflow(withTaskDuplicateName()),
 			expectedError: true,
 		},
 		{
 			name:          "action name is invalid",
-			wf:            workflow(withActionInvalidName()),
+			wf:            toWorkflow(withActionInvalidName()),
 			expectedError: true,
 		},
 		{
 			name:          "action name is duplicated",
-			wf:            workflow(withActionDuplicateName()),
+			wf:            toWorkflow(withActionDuplicateName()),
 			expectedError: true,
 		},
 		{
 			name:          "action name is too long",
-			wf:            workflow(withActionLongName()),
+			wf:            toWorkflow(withActionLongName()),
 			expectedError: true,
 		},
 		{
 			name:          "action image is invalid",
-			wf:            workflow(withActionInvalidImage()),
+			wf:            toWorkflow(withActionInvalidImage()),
 			expectedError: true,
 		},
 		{
 			name: "valid task name",
-			wf:   workflow(),
+			wf:   toWorkflow(),
 		},
 	}
 	for _, test := range testCases {
@@ -770,7 +770,7 @@ tasks:
 
 type workflowModifier func(*Workflow)
 
-func workflow(m ...workflowModifier) *Workflow {
+func toWorkflow(m ...workflowModifier) *Workflow {
 	wf := &Workflow{
 		ID:            "ce2e62ed-826f-4485-a39f-a82bb74338e2",
 		GlobalTimeout: 900,
