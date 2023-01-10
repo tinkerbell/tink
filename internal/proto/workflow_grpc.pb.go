@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: protos/workflow/workflow.proto
+// source: internal/proto/workflow.proto
 
-package workflow
+package proto
 
 import (
 	context "context"
@@ -37,7 +37,7 @@ func NewWorkflowServiceClient(cc grpc.ClientConnInterface) WorkflowServiceClient
 }
 
 func (c *workflowServiceClient) GetWorkflowContexts(ctx context.Context, in *WorkflowContextRequest, opts ...grpc.CallOption) (WorkflowService_GetWorkflowContextsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &WorkflowService_ServiceDesc.Streams[0], "/tinkerbell.tink.workflow.WorkflowService/GetWorkflowContexts", opts...)
+	stream, err := c.cc.NewStream(ctx, &WorkflowService_ServiceDesc.Streams[0], "/proto.WorkflowService/GetWorkflowContexts", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (x *workflowServiceGetWorkflowContextsClient) Recv() (*WorkflowContext, err
 
 func (c *workflowServiceClient) GetWorkflowActions(ctx context.Context, in *WorkflowActionsRequest, opts ...grpc.CallOption) (*WorkflowActionList, error) {
 	out := new(WorkflowActionList)
-	err := c.cc.Invoke(ctx, "/tinkerbell.tink.workflow.WorkflowService/GetWorkflowActions", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.WorkflowService/GetWorkflowActions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (c *workflowServiceClient) GetWorkflowActions(ctx context.Context, in *Work
 
 func (c *workflowServiceClient) ReportActionStatus(ctx context.Context, in *WorkflowActionStatus, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/tinkerbell.tink.workflow.WorkflowService/ReportActionStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.WorkflowService/ReportActionStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func _WorkflowService_GetWorkflowActions_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tinkerbell.tink.workflow.WorkflowService/GetWorkflowActions",
+		FullMethod: "/proto.WorkflowService/GetWorkflowActions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowServiceServer).GetWorkflowActions(ctx, req.(*WorkflowActionsRequest))
@@ -170,7 +170,7 @@ func _WorkflowService_ReportActionStatus_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tinkerbell.tink.workflow.WorkflowService/ReportActionStatus",
+		FullMethod: "/proto.WorkflowService/ReportActionStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkflowServiceServer).ReportActionStatus(ctx, req.(*WorkflowActionStatus))
@@ -182,7 +182,7 @@ func _WorkflowService_ReportActionStatus_Handler(srv interface{}, ctx context.Co
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WorkflowService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "tinkerbell.tink.workflow.WorkflowService",
+	ServiceName: "proto.WorkflowService",
 	HandlerType: (*WorkflowServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -201,5 +201,5 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "protos/workflow/workflow.proto",
+	Metadata: "internal/proto/workflow.proto",
 }

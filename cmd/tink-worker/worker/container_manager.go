@@ -11,7 +11,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/packethost/pkg/log"
 	"github.com/pkg/errors"
-	pb "github.com/tinkerbell/tink/protos/workflow"
+	"github.com/tinkerbell/tink/internal/proto"
 )
 
 const (
@@ -49,7 +49,7 @@ func NewContainerManager(logger log.Logger, cli DockerClient, registryDetails Re
 	return &containerManager{logger, cli, registryDetails}
 }
 
-func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wfID string, action *pb.WorkflowAction, captureLogs, privileged bool) (string, error) {
+func (m *containerManager) CreateContainer(ctx context.Context, cmd []string, wfID string, action *proto.WorkflowAction, captureLogs, privileged bool) (string, error) {
 	l := m.getLogger(ctx)
 	config := &container.Config{
 		Image:        path.Join(m.registryDetails.Registry, action.GetImage()),
@@ -98,10 +98,10 @@ func (m *containerManager) StartContainer(ctx context.Context, id string) error 
 	return errors.Wrap(m.cli.ContainerStart(ctx, id, types.ContainerStartOptions{}), "DOCKER START")
 }
 
-func (m *containerManager) WaitForContainer(ctx context.Context, id string) (pb.State, error) {
+func (m *containerManager) WaitForContainer(ctx context.Context, id string) (proto.State, error) {
 	// Inspect whether the container is in running state
 	if _, err := m.cli.ContainerInspect(ctx, id); err != nil {
-		return pb.State_STATE_FAILED, nil //nolint:nilerr // error is not nil, but it returns nil
+		return proto.State_STATE_FAILED, nil //nolint:nilerr // error is not nil, but it returns nil
 	}
 
 	// send API call to wait for the container completion
@@ -110,17 +110,17 @@ func (m *containerManager) WaitForContainer(ctx context.Context, id string) (pb.
 	select {
 	case status := <-wait:
 		if status.StatusCode == 0 {
-			return pb.State_STATE_SUCCESS, nil
+			return proto.State_STATE_SUCCESS, nil
 		}
-		return pb.State_STATE_FAILED, nil
+		return proto.State_STATE_FAILED, nil
 	case err := <-errC:
-		return pb.State_STATE_FAILED, err
+		return proto.State_STATE_FAILED, err
 	case <-ctx.Done():
-		return pb.State_STATE_TIMEOUT, ctx.Err()
+		return proto.State_STATE_TIMEOUT, ctx.Err()
 	}
 }
 
-func (m *containerManager) WaitForFailedContainer(ctx context.Context, id string, failedActionStatus chan pb.State) {
+func (m *containerManager) WaitForFailedContainer(ctx context.Context, id string, failedActionStatus chan proto.State) {
 	l := m.getLogger(ctx)
 	// send API call to wait for the container completion
 	wait, errC := m.cli.ContainerWait(ctx, id, container.WaitConditionNotRunning)
@@ -128,16 +128,16 @@ func (m *containerManager) WaitForFailedContainer(ctx context.Context, id string
 	select {
 	case status := <-wait:
 		if status.StatusCode == 0 {
-			failedActionStatus <- pb.State_STATE_SUCCESS
+			failedActionStatus <- proto.State_STATE_SUCCESS
 			return
 		}
-		failedActionStatus <- pb.State_STATE_FAILED
+		failedActionStatus <- proto.State_STATE_FAILED
 	case err := <-errC:
 		l.Error(err)
-		failedActionStatus <- pb.State_STATE_FAILED
+		failedActionStatus <- proto.State_STATE_FAILED
 	case <-ctx.Done():
 		l.Error(ctx.Err())
-		failedActionStatus <- pb.State_STATE_TIMEOUT
+		failedActionStatus <- proto.State_STATE_TIMEOUT
 	}
 }
 

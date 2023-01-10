@@ -174,8 +174,8 @@ issues:
       linters:
         - noctx
     # local to tink: kubebuilder needs the stdlib invalid `inline` json struct tag
-    - path: pkg/apis/.*
-      text: "struct-tag"
+    - path: api/.*
+      text: "struct-tag: unknown option 'inline'"
     - path: main\.go
       linters:
         - noctx

@@ -95,18 +95,18 @@ test: ## Run tests
 	source <($(SETUP_ENVTEST) use -p env) && $(GO) test -coverprofile=coverage.txt ./...
 
 .PHONY: generate-proto
-generate-proto: buf.gen.yaml buf.lock $(shell git ls-files 'protos/*/*.proto') _protoc
+generate-proto: buf.gen.yaml buf.lock $(shell git ls-files '**/*.proto') _protoc
 	$(BUF) mod update
 	$(BUF) generate
-	$(GOFUMPT) -w protos/*/*.pb.*
+	$(GOFUMPT) -w internal/proto/*.pb.*
 
 .PHONY: generate
 generate: generate-proto generate-go generate-manifests ## Generate code, manifests etc.
 
 .PHONY: generate-go
 generate-go:
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate/boilerplate.generatego.txt" paths="./pkg/apis/..."
-	$(GOFUMPT) -w ./pkg/apis
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate/boilerplate.generatego.txt" paths="./api/..."
+	$(GOFUMPT) -w ./api
 
 .PHONY: generate-manifests
 generate-manifests: generate-crds generate-rbacs generate-server-rbacs ## Generate manifests e.g. CRD, RBAC etc.
@@ -114,7 +114,7 @@ generate-manifests: generate-crds generate-rbacs generate-server-rbacs ## Genera
 .PHONY: generate-crds
 generate-crds:
 	$(CONTROLLER_GEN) \
-		paths=./pkg/apis/... \
+		paths=./api/... \
 		crd:crdVersions=v1 \
 		rbac:roleName=manager-role \
 		output:crd:dir=./config/crd/bases \
@@ -123,17 +123,17 @@ generate-crds:
 	$(YAMLFMT) ./config/crd/bases/* ./config/webhook/*
 
 .PHONY: generate-rbacs
-generate-rbacs: 
+generate-rbacs:
 	$(CONTROLLER_GEN) \
-		paths=./pkg/controllers/... \
+		paths=./internal/controller/... \
 		output:rbac:dir=./config/rbac/ \
 		rbac:roleName=manager-role
 	$(YAMLFMT) ./config/rbac/*
 
 .PHONY: generate-server-rbacs
-generate-server-rbacs: 
+generate-server-rbacs:
 	$(CONTROLLER_GEN) \
-		paths=./server/... \
+		paths=./internal/server/... \
 		output:rbac:dir=./config/server-rbac \
 		rbac:roleName=server-role
 	$(YAMLFMT) ./config/server-rbac/*
@@ -168,9 +168,9 @@ check-generated: check-proto ## Check if generated files are up to date.
 
 .PHONY: check-proto
 check-proto: generate-proto
-	@git diff --no-ext-diff --quiet --exit-code -- protos/*/*.pb.* || (
+	@git diff --no-ext-diff --quiet --exit-code -- **/*.pb.* || (
 	  echo "Protobuf files need to be regenerated!";
-	  git diff --no-ext-diff --exit-code -- protos/*/*.pb.*
+	  git diff --no-ext-diff --exit-code -- **/*.pb.*
 	)
 
 .PHONY: verify

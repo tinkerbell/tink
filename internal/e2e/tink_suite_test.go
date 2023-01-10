@@ -10,11 +10,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/packethost/pkg/log"
+	"github.com/tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/internal/controller"
 	"github.com/tinkerbell/tink/internal/grpcserver"
 	"github.com/tinkerbell/tink/internal/server"
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	"github.com/tinkerbell/tink/pkg/controllers"
-	wfctrl "github.com/tinkerbell/tink/pkg/controllers/workflow"
+	"github.com/tinkerbell/tink/internal/workflow"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -84,12 +84,12 @@ var _ = BeforeSuite(func() {
 	logger.Info("HTTP server: ", fmt.Sprintf("%+v", serverAddr))
 
 	// Start the controller
-	options := controllers.GetControllerOptions()
+	options := controller.GetControllerOptions()
 	options.LeaderElectionNamespace = "default"
-	manager, err := controllers.NewManager(cfg, options)
+	manager, err := controller.NewManager(cfg, options)
 	Expect(err).NotTo(HaveOccurred())
 	go func() {
-		err := manager.RegisterControllers(ctx, wfctrl.NewController(manager.GetClient())).Start(ctx)
+		err := manager.RegisterControllers(ctx, workflow.NewController(manager.GetClient())).Start(ctx)
 		Expect(err).To(BeNil())
 	}()
 })

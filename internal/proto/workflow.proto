@@ -4,9 +4,9 @@
  */
 syntax = "proto3";
 
-option go_package = "github.com/tinkerbell/tink/protos/workflow";
+option go_package = "github.com/tinkerbell/tink/internal/proto";
 
-package tinkerbell.tink.workflow;
+package proto;
 
 import "google/protobuf/timestamp.proto";
 

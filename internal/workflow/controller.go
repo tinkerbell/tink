@@ -6,10 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/tinkerbell/tink/internal/convert"
-	"github.com/tinkerbell/tink/internal/workflow"
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	"github.com/tinkerbell/tink/pkg/controllers"
+	"github.com/tinkerbell/tink/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"knative.dev/pkg/ptr"
@@ -45,7 +42,7 @@ func (c *Controller) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
-		return controllers.RetryIfError(ctx, err)
+		return reconcile.Result{}, err
 	}
 	if !stored.DeletionTimestamp.IsZero() {
 		return reconcile.Result{}, nil
@@ -86,7 +83,7 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 				stored.Namespace,
 			)
 		}
-		return controllers.RetryIfError(ctx, err)
+		return reconcile.Result{}, err
 	}
 
 	data := make(map[string]interface{})
@@ -115,13 +112,13 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		data["Hardware"] = contract
 	}
 
-	tinkWf, _, err := workflow.RenderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
+	tinkWf, _, err := RenderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	// populate Task and Action data
-	stored.Status = *convert.WorkflowYAMLToStatus(tinkWf)
+	stored.Status = *YAMLToStatus(tinkWf)
 
 	stored.Status.State = v1alpha1.WorkflowStatePending
 	return reconcile.Result{}, nil

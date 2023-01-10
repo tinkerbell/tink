@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
 	"github.com/tinkerbell/tink/internal/client"
-	"github.com/tinkerbell/tink/protos/workflow"
+	"github.com/tinkerbell/tink/internal/proto"
 )
 
 const (
@@ -51,7 +51,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			workflowClient := workflow.NewWorkflowServiceClient(conn)
+			workflowClient := proto.NewWorkflowServiceClient(conn)
 
 			dockerClient, err := dockercli.NewClientWithOpts(dockercli.FromEnv, dockercli.WithAPIVersionNegotiation())
 			if err != nil {

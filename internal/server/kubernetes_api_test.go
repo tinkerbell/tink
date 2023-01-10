@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/pkg/log"
+	"github.com/tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/internal/proto"
 	"github.com/tinkerbell/tink/internal/testtime"
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	"github.com/tinkerbell/tink/protos/workflow"
 )
 
 var TestTime = testtime.NewFrozenTimeUnix(1637361793)
@@ -18,14 +18,14 @@ func TestModifyWorkflowState(t *testing.T) {
 	cases := []struct {
 		name           string
 		inputWf        *v1alpha1.Workflow
-		inputWfContext *workflow.WorkflowContext
+		inputWfContext *proto.WorkflowContext
 		want           *v1alpha1.Workflow
 		wantErr        error
 	}{
 		{
 			name:           "no workflow",
 			inputWf:        nil,
-			inputWfContext: &workflow.WorkflowContext{},
+			inputWfContext: &proto.WorkflowContext{},
 			want:           nil,
 			wantErr:        errors.New("no workflow provided"),
 		},
@@ -58,13 +58,13 @@ func TestModifyWorkflowState(t *testing.T) {
 					},
 				},
 			},
-			inputWfContext: &workflow.WorkflowContext{
+			inputWfContext: &proto.WorkflowContext{
 				WorkflowId:           "debian",
 				CurrentWorker:        "machine-mac-1",
 				CurrentTask:          "power-on",
 				CurrentAction:        "power-on-bmc",
 				CurrentActionIndex:   0,
-				CurrentActionState:   workflow.State_STATE_RUNNING,
+				CurrentActionState:   proto.State_STATE_RUNNING,
 				TotalNumberOfActions: 1,
 			},
 			want:    nil,
@@ -92,12 +92,12 @@ func TestModifyWorkflowState(t *testing.T) {
 					},
 				},
 			},
-			inputWfContext: &workflow.WorkflowContext{
+			inputWfContext: &proto.WorkflowContext{
 				CurrentWorker:        "machine-mac-1",
 				CurrentTask:          "provision",
 				CurrentAction:        "power-on-bmc",
 				CurrentActionIndex:   0,
-				CurrentActionState:   workflow.State_STATE_RUNNING,
+				CurrentActionState:   proto.State_STATE_RUNNING,
 				TotalNumberOfActions: 1,
 			},
 			want:    nil,
@@ -125,12 +125,12 @@ func TestModifyWorkflowState(t *testing.T) {
 					},
 				},
 			},
-			inputWfContext: &workflow.WorkflowContext{
+			inputWfContext: &proto.WorkflowContext{
 				CurrentWorker:        "machine-mac-1",
 				CurrentTask:          "provision",
 				CurrentAction:        "stream",
 				CurrentActionIndex:   0,
-				CurrentActionState:   workflow.State_STATE_RUNNING,
+				CurrentActionState:   proto.State_STATE_RUNNING,
 				TotalNumberOfActions: 1,
 			},
 			want: &v1alpha1.Workflow{
@@ -179,12 +179,12 @@ func TestModifyWorkflowState(t *testing.T) {
 					},
 				},
 			},
-			inputWfContext: &workflow.WorkflowContext{
+			inputWfContext: &proto.WorkflowContext{
 				CurrentWorker:        "machine-mac-1",
 				CurrentTask:          "provision",
 				CurrentAction:        "stream",
 				CurrentActionIndex:   0,
-				CurrentActionState:   workflow.State_STATE_TIMEOUT,
+				CurrentActionState:   proto.State_STATE_TIMEOUT,
 				TotalNumberOfActions: 1,
 			},
 			want: &v1alpha1.Workflow{
@@ -240,12 +240,12 @@ func TestModifyWorkflowState(t *testing.T) {
 					},
 				},
 			},
-			inputWfContext: &workflow.WorkflowContext{
+			inputWfContext: &proto.WorkflowContext{
 				CurrentWorker:        "machine-mac-1",
 				CurrentTask:          "provision",
 				CurrentAction:        "stream",
 				CurrentActionIndex:   0,
-				CurrentActionState:   workflow.State_STATE_FAILED,
+				CurrentActionState:   proto.State_STATE_FAILED,
 				TotalNumberOfActions: 2,
 			},
 			want: &v1alpha1.Workflow{
@@ -307,12 +307,12 @@ func TestModifyWorkflowState(t *testing.T) {
 					},
 				},
 			},
-			inputWfContext: &workflow.WorkflowContext{
+			inputWfContext: &proto.WorkflowContext{
 				CurrentWorker:        "machine-mac-1",
 				CurrentTask:          "provision",
 				CurrentAction:        "stream",
 				CurrentActionIndex:   0,
-				CurrentActionState:   workflow.State_STATE_SUCCESS,
+				CurrentActionState:   proto.State_STATE_SUCCESS,
 				TotalNumberOfActions: 2,
 			},
 			want: &v1alpha1.Workflow{
@@ -375,12 +375,12 @@ func TestModifyWorkflowState(t *testing.T) {
 					},
 				},
 			},
-			inputWfContext: &workflow.WorkflowContext{
+			inputWfContext: &proto.WorkflowContext{
 				CurrentWorker:        "machine-mac-1",
 				CurrentTask:          "provision",
 				CurrentAction:        "kexec",
 				CurrentActionIndex:   1,
-				CurrentActionState:   workflow.State_STATE_SUCCESS,
+				CurrentActionState:   proto.State_STATE_SUCCESS,
 				TotalNumberOfActions: 2,
 			},
 			want: &v1alpha1.Workflow{

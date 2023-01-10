@@ -7,7 +7,7 @@ import (
 
 	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
-	pb "github.com/tinkerbell/tink/protos/workflow"
+	"github.com/tinkerbell/tink/internal/proto"
 )
 
 func getRandHexStr(r *rand.Rand, length int) string {
@@ -51,7 +51,7 @@ func NewFakeContainerManager(l log.Logger, sleepMinimum, sleepJitter time.Durati
 	}
 }
 
-func (m *fakeManager) CreateContainer(_ context.Context, cmd []string, _ string, _ *pb.WorkflowAction, _, _ bool) (string, error) {
+func (m *fakeManager) CreateContainer(_ context.Context, cmd []string, _ string, _ *proto.WorkflowAction, _, _ bool) (string, error) {
 	m.logger.With("command", cmd).Info("creating container")
 	return getRandHexStr(m.r, 64), nil
 }
@@ -61,17 +61,17 @@ func (m *fakeManager) StartContainer(_ context.Context, id string) error {
 	return nil
 }
 
-func (m *fakeManager) WaitForContainer(_ context.Context, id string) (pb.State, error) {
+func (m *fakeManager) WaitForContainer(_ context.Context, id string) (proto.State, error) {
 	m.logger.With("containerID", id).Info("waiting for container")
 	m.sleep()
 
-	return pb.State_STATE_SUCCESS, nil
+	return proto.State_STATE_SUCCESS, nil
 }
 
-func (m *fakeManager) WaitForFailedContainer(_ context.Context, id string, failedActionStatus chan pb.State) {
+func (m *fakeManager) WaitForFailedContainer(_ context.Context, id string, failedActionStatus chan proto.State) {
 	m.logger.With("containerID", id).Info("waiting for container")
 	m.sleep()
-	failedActionStatus <- pb.State_STATE_SUCCESS
+	failedActionStatus <- proto.State_STATE_SUCCESS
 }
 
 func (m *fakeManager) RemoveContainer(_ context.Context, id string) error {

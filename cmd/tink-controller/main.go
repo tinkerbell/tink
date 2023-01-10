@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tinkerbell/tink/pkg/controllers"
-	wfctrl "github.com/tinkerbell/tink/pkg/controllers/workflow"
+	"github.com/tinkerbell/tink/internal/controller"
+	"github.com/tinkerbell/tink/internal/workflow"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -72,16 +72,16 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			options := controllers.GetControllerOptions()
+			options := controller.GetControllerOptions()
 			options.LeaderElectionNamespace = namespace
-			manager, err := controllers.NewManager(cfg, options)
+			manager, err := controller.NewManager(cfg, options)
 			if err != nil {
 				return err
 			}
 
 			return manager.RegisterControllers(
 				cmd.Context(),
-				wfctrl.NewController(manager.GetClient()),
+				workflow.NewController(manager.GetClient()),
 			).Start(cmd.Context())
 		},
 	}

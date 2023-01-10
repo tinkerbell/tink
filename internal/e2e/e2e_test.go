@@ -9,14 +9,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
-	virtWorker "github.com/tinkerbell/tink/cmd/virtual-worker/worker"
+	virtualworker "github.com/tinkerbell/tink/cmd/virtual-worker/worker"
 	"github.com/tinkerbell/tink/internal/client"
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	pb "github.com/tinkerbell/tink/protos/workflow"
-	"google.golang.org/protobuf/proto"
+	"github.com/tinkerbell/tink/internal/proto"
+	googleproto "google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/types"
-
 	"sigs.k8s.io/yaml"
 )
 
@@ -86,10 +85,10 @@ var _ = Describe("Tink API", func() {
 			By("Running a virtual worker")
 			conn, err := client.NewClientConn(serverAddr, false)
 			Expect(err).NotTo(HaveOccurred())
-			rClient := pb.NewWorkflowServiceClient(conn)
+			rClient := proto.NewWorkflowServiceClient(conn)
 
-			containerManager := virtWorker.NewFakeContainerManager(logger, time.Millisecond*100, time.Millisecond*200)
-			logCapturer := virtWorker.NewEmptyLogCapturer()
+			containerManager := virtualworker.NewFakeContainerManager(logger, time.Millisecond*100, time.Millisecond*200)
+			logCapturer := virtualworker.NewEmptyLogCapturer()
 			workerID := hardware.Spec.Interfaces[0].DHCP.MAC
 			w := worker.NewWorker(
 				workerID,
@@ -156,20 +155,20 @@ var _ = Describe("Tink API", func() {
 			By("Getting Workflow Contexts")
 			conn, err := client.NewClientConn(serverAddr, false)
 			Expect(err).NotTo(HaveOccurred())
-			rClient := pb.NewWorkflowServiceClient(conn)
+			rClient := proto.NewWorkflowServiceClient(conn)
 			workerID := hardware.Spec.Interfaces[0].DHCP.MAC
-			res, err := rClient.GetWorkflowContexts(ctx, &pb.WorkflowContextRequest{WorkerId: workerID})
+			res, err := rClient.GetWorkflowContexts(ctx, &proto.WorkflowContextRequest{WorkerId: workerID})
 			Expect(err).NotTo(HaveOccurred())
 
 			// expected workflow name to context mapping
-			expectedWorkflows := map[string]*pb.WorkflowContext{
+			expectedWorkflows := map[string]*proto.WorkflowContext{
 				"wf1": {
 					WorkflowId:           "wf1",
 					CurrentWorker:        "3c:ec:ef:4c:4f:54",
 					CurrentTask:          "os-installation",
 					CurrentAction:        "stream-image",
 					CurrentActionIndex:   0,
-					CurrentActionState:   pb.State_STATE_PENDING,
+					CurrentActionState:   proto.State_STATE_PENDING,
 					TotalNumberOfActions: 3,
 				},
 				"wf3": {
@@ -178,7 +177,7 @@ var _ = Describe("Tink API", func() {
 					CurrentTask:          "task-1",
 					CurrentAction:        "task-1-action-1",
 					CurrentActionIndex:   0,
-					CurrentActionState:   pb.State_STATE_PENDING,
+					CurrentActionState:   proto.State_STATE_PENDING,
 					TotalNumberOfActions: 2,
 				},
 			}
@@ -189,10 +188,10 @@ var _ = Describe("Tink API", func() {
 				if !ok {
 					continue
 				}
-				if !proto.Equal(want, got) {
+				if !googleproto.Equal(want, got) {
 					fmt.Printf("Expected:\n\t%#v\nGot:\n\t%#v", want, got)
 				}
-				Expect(proto.Equal(want, got)).To(Equal(true), fmt.Sprintf("Didn't find expected context for %s", got.WorkflowId))
+				Expect(googleproto.Equal(want, got)).To(Equal(true), fmt.Sprintf("Didn't find expected context for %s", got.WorkflowId))
 
 				// Remove the key from the map
 				delete(expectedWorkflows, got.WorkflowId)

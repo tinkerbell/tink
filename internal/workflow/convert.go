@@ -1,30 +1,29 @@
-package convert
+package workflow
 
 import (
 	"fmt"
 	"sort"
 
-	"github.com/tinkerbell/tink/internal/workflow"
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	protoworkflow "github.com/tinkerbell/tink/protos/workflow"
+	"github.com/tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/internal/proto"
 )
 
-func WorkflowToWorkflowContext(wf *v1alpha1.Workflow) *protoworkflow.WorkflowContext {
+func ToWorkflowContext(wf *v1alpha1.Workflow) *proto.WorkflowContext {
 	if wf == nil {
 		return nil
 	}
-	return &protoworkflow.WorkflowContext{
+	return &proto.WorkflowContext{
 		WorkflowId:           wf.GetName(),
 		CurrentWorker:        wf.GetCurrentWorker(),
 		CurrentTask:          wf.GetCurrentTask(),
 		CurrentAction:        wf.GetCurrentAction(),
 		CurrentActionIndex:   int64(wf.GetCurrentActionIndex()),
-		CurrentActionState:   protoworkflow.State(protoworkflow.State_value[string(wf.GetCurrentActionState())]),
+		CurrentActionState:   proto.State(proto.State_value[string(wf.GetCurrentActionState())]),
 		TotalNumberOfActions: int64(wf.GetTotalNumberOfActions()),
 	}
 }
 
-func WorkflowYAMLToStatus(wf *workflow.Workflow) *v1alpha1.WorkflowStatus {
+func YAMLToStatus(wf *Workflow) *v1alpha1.WorkflowStatus {
 	if wf == nil {
 		return nil
 	}
@@ -38,7 +37,7 @@ func WorkflowYAMLToStatus(wf *workflow.Workflow) *v1alpha1.WorkflowStatus {
 				Timeout:     action.Timeout,
 				Command:     action.Command,
 				Volumes:     action.Volumes,
-				Status:      v1alpha1.WorkflowState(protoworkflow.State_name[int32(protoworkflow.State_STATE_PENDING)]),
+				Status:      v1alpha1.WorkflowState(proto.State_name[int32(proto.State_STATE_PENDING)]),
 				Environment: action.Environment,
 				Pid:         action.Pid,
 			})
@@ -57,16 +56,16 @@ func WorkflowYAMLToStatus(wf *workflow.Workflow) *v1alpha1.WorkflowStatus {
 	}
 }
 
-func WorkflowActionListCRDToProto(wf *v1alpha1.Workflow) *protoworkflow.WorkflowActionList {
+func ActionListCRDToProto(wf *v1alpha1.Workflow) *proto.WorkflowActionList {
 	if wf == nil {
 		return nil
 	}
-	resp := &protoworkflow.WorkflowActionList{
-		ActionList: []*protoworkflow.WorkflowAction{},
+	resp := &proto.WorkflowActionList{
+		ActionList: []*proto.WorkflowAction{},
 	}
 	for _, task := range wf.Status.Tasks {
 		for _, action := range task.Actions {
-			resp.ActionList = append(resp.ActionList, &protoworkflow.WorkflowAction{
+			resp.ActionList = append(resp.ActionList, &proto.WorkflowAction{
 				TaskName: task.Name,
 				Name:     action.Name,
 				Image:    action.Image,

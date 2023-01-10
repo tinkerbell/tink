@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/packethost/pkg/log"
-	"github.com/tinkerbell/tink/pkg/controllers"
-	pb "github.com/tinkerbell/tink/protos/workflow"
+	"github.com/tinkerbell/tink/internal/controller"
+	"github.com/tinkerbell/tink/internal/proto"
 	"google.golang.org/grpc"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -51,9 +51,9 @@ func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver, namespace str
 // NewKubeBackedServerFromREST returns a server that implements the Workflow
 // server interface with the given Kubernetes rest client and namespace.
 func NewKubeBackedServerFromREST(logger log.Logger, config *rest.Config, namespace string) *KubernetesBackedServer {
-	options := controllers.GetServerOptions()
+	options := controller.GetServerOptions()
 	options.Namespace = namespace
-	manager := controllers.NewManagerOrDie(config, options)
+	manager := controller.NewManagerOrDie(config, options)
 	go func() {
 		err := manager.Start(context.Background())
 		if err != nil {
@@ -79,5 +79,5 @@ type KubernetesBackedServer struct {
 
 // Register registers the service on the gRPC server.
 func (s *KubernetesBackedServer) Register(server *grpc.Server) {
-	pb.RegisterWorkflowServiceServer(server, s)
+	proto.RegisterWorkflowServiceServer(server, s)
 }

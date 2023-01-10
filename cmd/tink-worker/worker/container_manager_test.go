@@ -12,7 +12,7 @@ import (
 	"github.com/docker/docker/client"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/packethost/pkg/log"
-	pb "github.com/tinkerbell/tink/protos/workflow"
+	"github.com/tinkerbell/tink/internal/proto"
 )
 
 type fakeDockerClient struct {
@@ -91,7 +91,7 @@ func TestContainerManagerCreate(t *testing.T) {
 	cases := []struct {
 		name         string
 		workflowName string
-		action       *pb.WorkflowAction
+		action       *proto.WorkflowAction
 		containerID  string
 		registry     string
 		clientErr    error
@@ -100,7 +100,7 @@ func TestContainerManagerCreate(t *testing.T) {
 		{
 			name:         "Happy Path",
 			workflowName: "saveTheRebelBase",
-			action: &pb.WorkflowAction{
+			action: &proto.WorkflowAction{
 				TaskName:    "UseTheForce",
 				Name:        "blow up the death star",
 				Image:       "yav.in/4/forestmoon",
@@ -114,7 +114,7 @@ func TestContainerManagerCreate(t *testing.T) {
 		{
 			name:         "create failure",
 			workflowName: "saveTheRebelBase",
-			action: &pb.WorkflowAction{
+			action: &proto.WorkflowAction{
 				TaskName:    "UseTheForce",
 				Name:        "blow up the death star",
 				Image:       "yav.in/4/forestmoon",
@@ -206,41 +206,41 @@ func TestContainerManagerWait(t *testing.T) {
 		contextTimeout time.Duration
 		clientErr      error
 		waitErr        error
-		wantState      pb.State
+		wantState      proto.State
 		wantErr        error
 	}{
 		{
 			name:           "Happy Path",
 			containerID:    "nomedalforchewie",
 			dockerResponse: 0,
-			wantState:      pb.State_STATE_SUCCESS,
+			wantState:      proto.State_STATE_SUCCESS,
 		},
 		{
 			name:           "start failure",
 			containerID:    "chewieDied",
 			dockerResponse: 1,
-			wantState:      pb.State_STATE_FAILED,
+			wantState:      proto.State_STATE_FAILED,
 			waitErr:        nil,
 		},
 		{
 			name:           "client wait failure",
 			containerID:    "nomedalforchewie",
 			dockerResponse: 1,
-			wantState:      pb.State_STATE_FAILED,
+			wantState:      proto.State_STATE_FAILED,
 			waitErr:        errors.New("Vader Won"),
 			wantErr:        errors.New("Vader Won"),
 		},
 		{
 			name:        "client inspect failure",
 			containerID: "nomedalforchewie",
-			wantState:   pb.State_STATE_FAILED,
+			wantState:   proto.State_STATE_FAILED,
 			clientErr:   errors.New("inspect failed"),
 			wantErr:     nil,
 		},
 		{
 			name:           "client timeout",
 			containerID:    "nomedalforchewie",
-			wantState:      pb.State_STATE_TIMEOUT,
+			wantState:      proto.State_STATE_TIMEOUT,
 			contextTimeout: time.Millisecond * 2,
 			waitErr:        errors.New("Vader Won"),
 			wantErr:        errors.New("context deadline exceeded"),
@@ -285,33 +285,33 @@ func TestContainerManagerWaitFailed(t *testing.T) {
 		contextTimeout time.Duration
 		waitTime       time.Duration
 		clientErr      error
-		wantState      pb.State
+		wantState      proto.State
 	}{
 		{
 			name:           "Happy Path",
 			containerID:    "nomedalforchewie",
 			dockerResponse: 0,
 			waitTime:       0,
-			wantState:      pb.State_STATE_SUCCESS,
+			wantState:      proto.State_STATE_SUCCESS,
 		},
 		{
 			name:           "start failure",
 			containerID:    "chewieDied",
 			dockerResponse: 1,
-			wantState:      pb.State_STATE_FAILED,
+			wantState:      proto.State_STATE_FAILED,
 			clientErr:      nil,
 		},
 		{
 			name:           "client wait failure",
 			containerID:    "nomedalforchewie",
 			dockerResponse: 1,
-			wantState:      pb.State_STATE_FAILED,
+			wantState:      proto.State_STATE_FAILED,
 			clientErr:      errors.New("Vader Won"),
 		},
 		{
 			name:           "client timeout",
 			containerID:    "nomedalforchewie",
-			wantState:      pb.State_STATE_TIMEOUT,
+			wantState:      proto.State_STATE_TIMEOUT,
 			waitTime:       time.Millisecond * 20,
 			contextTimeout: time.Millisecond * 10,
 			clientErr:      errors.New("Vader Won"),
@@ -327,7 +327,7 @@ func TestContainerManagerWaitFailed(t *testing.T) {
 			if tc.contextTimeout == 0 {
 				ctx = context.Background()
 			}
-			failedChan := make(chan pb.State)
+			failedChan := make(chan proto.State)
 			go mgr.WaitForFailedContainer(ctx, tc.containerID, failedChan)
 			got := <-failedChan
 
