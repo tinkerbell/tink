@@ -112,7 +112,7 @@ func (c *Controller) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		data["Hardware"] = contract
 	}
 
-	tinkWf, _, err := RenderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
+	tinkWf, err := renderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
