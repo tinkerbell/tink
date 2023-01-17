@@ -329,6 +329,7 @@ spec:
                           type: string
                       type: object
                     state:
+                      default: provisioning
                       type: string
                   type: object
                 resources:
