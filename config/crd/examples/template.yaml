@@ -25,7 +25,7 @@ spec:
               IMG_URL: "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz"
               COMPRESSED: true
           - name: "add-tink-cloud-init-config"
-            image: writefile:v1.0.0
+            image: quay.io/tinkerbell-actions/writefile:v1.0.0
             timeout: 90
             environment:
               DEST_DISK: /dev/nvme0n1p1
@@ -53,7 +53,7 @@ spec:
                 warnings:
                   dsid_missing_source: off
           - name: "add-tink-cloud-init-ds-config"
-            image: writefile:v1.0.0
+            image: quay.io/tinkerbell-actions/writefile:v1.0.0
             timeout: 90
             environment:
               DEST_DISK: /dev/nvme0n1p1
@@ -66,7 +66,7 @@ spec:
               CONTENTS: |
                 datasource: Ec2
           - name: "kexec-debian"
-            image: quay.io/tinkerbell-actions/kexec:v1.0.1
+            image: quay.io/tinkerbell-actions/kexec:v1.0.0
             timeout: 90
             pid: host
             environment:
