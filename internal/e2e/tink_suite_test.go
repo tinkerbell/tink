@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/zapr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/packethost/pkg/log"
@@ -14,9 +15,9 @@ import (
 	"github.com/tinkerbell/tink/internal/controller"
 	"github.com/tinkerbell/tink/internal/grpcserver"
 	"github.com/tinkerbell/tink/internal/server"
-	"github.com/tinkerbell/tink/internal/workflow"
+	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes/scheme"
-
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
@@ -39,7 +40,6 @@ var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
 
 	var err error
-	// Create Test Tink API gRPC Server
 	logger, err = log.Init("github.com/tinkerbell/tink/tests")
 	Expect(err).NotTo(HaveOccurred())
 
@@ -66,14 +66,11 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	// database, err := db.NewK8sDatabaseFromREST(cfg, logger)
-	// Expect(err).NotTo(HaveOccurred())
 	errCh := make(chan error, 2)
 
-	tinkServer := server.NewKubeBackedServerFromREST(logger,
-		cfg,
-		"default",
-	)
+	tinkServer, err := server.NewKubeBackedServerFromREST(logger, cfg, "default")
+	Expect(err).To(Succeed())
+
 	serverAddr, err = grpcserver.SetupGRPC(
 		ctx,
 		tinkServer,
@@ -84,19 +81,25 @@ var _ = BeforeSuite(func() {
 	logger.Info("HTTP server: ", fmt.Sprintf("%+v", serverAddr))
 
 	// Start the controller
-	options := controller.GetControllerOptions()
-	options.LeaderElectionNamespace = "default"
+	zapLogger, err := zap.NewDevelopment()
+	Expect(err).To(Succeed())
+
+	options := ctrl.Options{
+		Logger: zapr.NewLogger(zapLogger),
+	}
+
 	manager, err := controller.NewManager(cfg, options)
 	Expect(err).NotTo(HaveOccurred())
+
 	go func() {
-		err := manager.RegisterControllers(ctx, workflow.NewController(manager.GetClient())).Start(ctx)
+		err := manager.Start(ctx)
 		Expect(err).To(BeNil())
 	}()
 })
 
 var _ = AfterSuite(func() {
 	By("Cancelling the context")
-	cancel()
+
 	By("stopping the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())

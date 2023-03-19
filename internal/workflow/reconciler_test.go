@@ -905,9 +905,9 @@ tasks:
 		if tc.seedWorkflow != nil {
 			kc = kc.WithObjects(tc.seedWorkflow)
 		}
-		controller := &Controller{
-			kubeClient: kc.Build(),
-			nowFunc:    TestTime.Now,
+		controller := &Reconciler{
+			client:  kc.Build(),
+			nowFunc: TestTime.Now,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -929,7 +929,7 @@ tasks:
 				// Don't return, also check the modified object
 			}
 			wflow := &v1alpha1.Workflow{}
-			err := controller.kubeClient.Get(
+			err := controller.client.Get(
 				context.Background(),
 				client.ObjectKey{Name: tc.wantWflow.Name, Namespace: tc.wantWflow.Namespace},
 				wflow)

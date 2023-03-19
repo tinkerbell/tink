@@ -2,16 +2,21 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/go-logr/zapr"
 	"github.com/packethost/pkg/log"
+	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/controller"
 	"github.com/tinkerbell/tink/internal/proto"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/cluster"
 )
 
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch
@@ -45,27 +50,45 @@ func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver, namespace str
 	if err != nil {
 		return nil, err
 	}
-	return NewKubeBackedServerFromREST(logger, cfg, namespace), nil
+
+	return NewKubeBackedServerFromREST(logger, cfg, namespace)
 }
 
 // NewKubeBackedServerFromREST returns a server that implements the Workflow
 // server interface with the given Kubernetes rest client and namespace.
-func NewKubeBackedServerFromREST(logger log.Logger, config *rest.Config, namespace string) *KubernetesBackedServer {
-	options := controller.GetServerOptions()
-	options.Namespace = namespace
-	manager := controller.NewManagerOrDie(config, options)
+func NewKubeBackedServerFromREST(logger log.Logger, config *rest.Config, namespace string) (*KubernetesBackedServer, error) {
+	clstr, err := cluster.New(config, func(opts *cluster.Options) {
+		opts.Scheme = controller.DefaultScheme()
+		opts.Logger = zapr.NewLogger(zap.NewNop())
+		opts.Namespace = namespace
+	})
+	if err != nil {
+		return nil, fmt.Errorf("init client: %w", err)
+	}
+
+	err = clstr.GetFieldIndexer().IndexField(
+		context.Background(),
+		&v1alpha1.Workflow{},
+		workflowByNonTerminalState,
+		workflowByNonTerminalStateFunc,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("setup %s index: %w", workflowByNonTerminalState, err)
+	}
+
 	go func() {
-		err := manager.Start(context.Background())
+		err := clstr.Start(context.Background())
 		if err != nil {
-			logger.Error(err, "Error starting manager")
+			logger.Error(err, "Error starting cluster")
 		}
 	}()
+
 	return &KubernetesBackedServer{
 		logger:     logger,
-		ClientFunc: manager.GetClient,
+		ClientFunc: clstr.GetClient,
 		namespace:  namespace,
 		nowFunc:    time.Now,
-	}
+	}, nil
 }
 
 // KubernetesBackedServer is a server that implements a workflow API.

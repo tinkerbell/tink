@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/api/v1alpha1"
-	"github.com/tinkerbell/tink/internal/controller"
 	"github.com/tinkerbell/tink/internal/proto"
 	"github.com/tinkerbell/tink/internal/workflow"
 	"google.golang.org/grpc/codes"
@@ -38,7 +37,7 @@ func getWorkflowContext(wf v1alpha1.Workflow) *proto.WorkflowContext {
 func (s *KubernetesBackedServer) getCurrentAssignedNonTerminalWorkflowsForWorker(ctx context.Context, workerID string) ([]v1alpha1.Workflow, error) {
 	stored := &v1alpha1.WorkflowList{}
 	err := s.ClientFunc().List(ctx, stored, &client.MatchingFields{
-		controller.WorkflowWorkerNonTerminalStateIndex: workerID,
+		workflowByNonTerminalState: workerID,
 	})
 	if err != nil {
 		return nil, err
