@@ -19,7 +19,7 @@ GOPROXY ?= $(shell go env GOPROXY)
 # Runnable tools
 GO 				?= go
 BUF 			:= $(GO) run github.com/bufbuild/buf/cmd/buf@v1.11
-CONTROLLER_GEN 	:= $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.10
+CONTROLLER_GEN 	:= $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11
 GOFUMPT 		:= $(GO) run mvdan.cc/gofumpt@v0.4
 KUSTOMIZE 		:= $(GO) run sigs.k8s.io/kustomize/kustomize/v4@v4.5
 SETUP_ENVTEST   := $(GO) run sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.0.0-20220304125252-9ee63fc65a97
