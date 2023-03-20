@@ -6,58 +6,78 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/packethost/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/internal/controller"
-	"github.com/tinkerbell/tink/internal/workflow"
+	"go.uber.org/zap"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // version is set at build time.
 var version = "devel"
 
-// DaemonConfig represents all the values you can configure as part of the tink-server.
-// You can change the configuration via environment variable, or file, or command flags.
-type DaemonConfig struct {
-	K8sAPI     string
-	Kubeconfig string // only applies to out of cluster
+type Config struct {
+	K8sAPI               string
+	Kubeconfig           string // only applies to out of cluster
+	MetricsAddr          string
+	ProbeAddr            string
+	EnableLeaderElection bool
 }
 
-func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.K8sAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction.")
+func (c *Config) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.K8sAPI, "kubernetes", "",
+		"The Kubernetes API URL, used for in-cluster client construction.")
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", "", "Absolute path to the kubeconfig file")
+	fs.StringVar(&c.MetricsAddr, "metrics-bind-address", ":8080",
+		"The address the metric endpoint binds to.")
+	fs.StringVar(&c.ProbeAddr, "health-probe-bind-address", ":8081",
+		"The address the probe endpoint binds to.")
+	fs.BoolVar(&c.EnableLeaderElection, "leader-elect", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
 }
 
 func main() {
+	// Init the packet logger as its used throughout the codebase.
 	logger, err := log.Init("github.com/tinkerbell/tink")
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Close()
 
-	config := &DaemonConfig{}
-
-	cmd := NewRootCommand(config, logger)
+	cmd := NewRootCommand()
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
-		defer os.Exit(1)
+		logger.Close()
+		fmt.Fprint(os.Stderr, err.Error())
+		os.Exit(1)
 	}
+	logger.Close()
 }
 
-func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
+func NewRootCommand() *cobra.Command {
+	config := &Config{}
+	zapLogger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	logger := zapr.NewLogger(zapLogger)
+
 	cmd := &cobra.Command{
 		Use: "tink-controller",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			viper, err := createViper(logger)
 			if err != nil {
-				return err
+				return fmt.Errorf("config init: %w", err)
 			}
 			return applyViper(viper, cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.Info("starting controller version " + version)
+			logger.Info("Starting controller version " + version)
 
 			ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 				&clientcmd.ClientConfigLoadingRules{ExplicitPath: config.Kubeconfig},
@@ -72,24 +92,29 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			options := controller.GetControllerOptions()
-			options.LeaderElectionNamespace = namespace
-			manager, err := controller.NewManager(cfg, options)
-			if err != nil {
-				return err
+
+			options := ctrl.Options{
+				Logger:                  logger,
+				LeaderElection:          config.EnableLeaderElection,
+				LeaderElectionID:        "tink.tinkerbell.org",
+				LeaderElectionNamespace: namespace,
+				MetricsBindAddress:      config.MetricsAddr,
+				HealthProbeBindAddress:  config.ProbeAddr,
 			}
 
-			return manager.RegisterControllers(
-				cmd.Context(),
-				workflow.NewController(manager.GetClient()),
-			).Start(cmd.Context())
+			mgr, err := controller.NewManager(cfg, options)
+			if err != nil {
+				return fmt.Errorf("controller manager: %w", err)
+			}
+
+			return mgr.Start(cmd.Context())
 		},
 	}
 	config.AddFlags(cmd.Flags())
 	return cmd
 }
 
-func createViper(logger log.Logger) (*viper.Viper, error) {
+func createViper(logger logr.Logger) (*viper.Viper, error) {
 	v := viper.New()
 	v.AutomaticEnv()
 	v.SetConfigName("tink-controller")
@@ -100,12 +125,11 @@ func createViper(logger log.Logger) (*viper.Viper, error) {
 	// If a config file is found, read it in.
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			logger.With("configFile", v.ConfigFileUsed()).Error(err, "could not load config file")
-			return nil, err
+			return nil, fmt.Errorf("loading config file: %w", err)
 		}
 		logger.Info("no config file found")
 	} else {
-		logger.With("configFile", v.ConfigFileUsed()).Info("loaded config file")
+		logger.Info("loaded config file", "configFile", v.ConfigFileUsed())
 	}
 
 	return v, nil
