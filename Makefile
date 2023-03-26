@@ -99,6 +99,7 @@ generate-proto: buf.gen.yaml buf.lock $(shell git ls-files '**/*.proto') _protoc
 	$(BUF) mod update
 	$(BUF) generate
 	$(GOFUMPT) -w internal/proto/*.pb.*
+	$(GOFUMPT) -w internal/proto/workflow/v2/*.pb.*
 
 .PHONY: generate
 generate: generate-proto generate-go generate-manifests ## Generate code, manifests etc.

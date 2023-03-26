@@ -32,7 +32,7 @@ type WorkflowStatus struct {
 	// Actions is a list of action states.
 	Actions []ActionStatus `json:"actions"`
 
-	// StartedAt is the time the first action was requested. Nil indicates the Workflow has not
+	// StartedAt is the time the first action reports running. Nil indicates the Workflow has not
 	// started.
 	StartedAt *metav1.Time `json:"startedAt,omitempty"`
 
@@ -41,7 +41,7 @@ type WorkflowStatus struct {
 
 	// State describes the current state of the workflow. For the workflow to enter the
 	// WorkflowStateSucceeded state all actions must be in ActionStateSucceeded. The Workflow will
-	// enter a WorkflowStateFailed if 1 or more Actions fails.
+	// enter a WorkflowStateFailed if 1 or more Actions fail.
 	State WorkflowState `json:"state,omitempty"`
 
 	// Conditions details a set of observations about the Workflow.
@@ -82,8 +82,7 @@ const (
 	// WorkflowStatePending indicates the workflow is in a pending state.
 	WorkflowStatePending WorkflowState = "Pending"
 
-	// WorkflowStateRunning indicates the first Action has been requested and the Workflow is in
-	// progress.
+	// WorkflowStateRunning indicates the workflow is running.
 	WorkflowStateRunning WorkflowState = "Running"
 
 	// WorkflowStateSucceeded indicates all Workflow actions have successfully completed.

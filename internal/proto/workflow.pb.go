@@ -26,30 +26,24 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//
 // The various state a workflow can be
 type State int32
 
 const (
-	//
 	// A workflow is in pending state when it is waiting for the hardware to pick
 	// it up and start the execution.
 	State_STATE_PENDING State = 0
-	//
 	// A workflow is in a running state when the tink-worker started the
 	// exeuction of it, and it is currently in execution inside the device
 	// itself.
 	State_STATE_RUNNING State = 1
-	//
 	// Failed is a final state. Something wrong happened during the execution of
 	// the workflow inside the target. Have a look at the logs to see if you can
 	// spot what is going on.
 	State_STATE_FAILED State = 2
-	//
 	// Timeout is final state, almost like FAILED but it communicate to you that
 	// an action or the overall workflow reached the specified timeout.
 	State_STATE_TIMEOUT State = 3
-	//
 	// This is the state we all deserve. The execution of the workflow is over
 	// and everything is just fine. Sit down, and enjoy your great work.
 	State_STATE_SUCCESS State = 4
@@ -185,7 +179,6 @@ func (x *WorkflowContextRequest) GetWorkerId() string {
 	return ""
 }
 
-//
 // WorkflowContext represents the state of the execution of this workflow in detail.
 // How many tasks are currently executed, the number of actions and their state.
 type WorkflowContext struct {
@@ -193,18 +186,14 @@ type WorkflowContext struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	//
 	// The workflow ID
 	WorkflowId    string `protobuf:"bytes,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
 	CurrentWorker string `protobuf:"bytes,2,opt,name=current_worker,json=currentWorker,proto3" json:"current_worker,omitempty"`
 	CurrentTask   string `protobuf:"bytes,3,opt,name=current_task,json=currentTask,proto3" json:"current_task,omitempty"`
-	//
 	// the name of the current action
 	CurrentAction string `protobuf:"bytes,4,opt,name=current_action,json=currentAction,proto3" json:"current_action,omitempty"`
-	//
 	// The index of the current action
 	CurrentActionIndex int64 `protobuf:"varint,5,opt,name=current_action_index,json=currentActionIndex,proto3" json:"current_action_index,omitempty"`
-	//
 	// The state of the current action
 	CurrentActionState   State `protobuf:"varint,6,opt,name=current_action_state,json=currentActionState,proto3,enum=proto.State" json:"current_action_state,omitempty"`
 	TotalNumberOfActions int64 `protobuf:"varint,7,opt,name=total_number_of_actions,json=totalNumberOfActions,proto3" json:"total_number_of_actions,omitempty"`
@@ -291,7 +280,6 @@ func (x *WorkflowContext) GetTotalNumberOfActions() int64 {
 	return 0
 }
 
-//
 // WorkflowActionsRequest is used to get actions for a particular workflow
 type WorkflowActionsRequest struct {
 	state         protoimpl.MessageState
@@ -340,7 +328,6 @@ func (x *WorkflowActionsRequest) GetWorkflowId() string {
 	return ""
 }
 
-//
 // A list of actions
 type WorkflowActionList struct {
 	state         protoimpl.MessageState
@@ -389,46 +376,35 @@ func (x *WorkflowActionList) GetActionList() []*WorkflowAction {
 	return nil
 }
 
-//
 // WorkflowAction represents a single aciton part of a workflow
 type WorkflowAction struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	//
 	// The name of the task the action belong to.
 	TaskName string `protobuf:"bytes,1,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
-	//
 	// The name of the action
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	//
 	// The docker/oci image the action starts from
 	Image string `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
-	//
 	// Every action has a timeout, after that the execution stops and the action
 	// gets in a timeout state.
 	Timeout int64 `protobuf:"varint,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	//
 	// You can override the command executed for the container
 	Command []string `protobuf:"bytes,5,rep,name=command,proto3" json:"command,omitempty"`
-	//
 	// On timeout used to be a way to execute an action if the current one times out
 	// but with the event system in place this is not needed anymore
 	OnTimeout []string `protobuf:"bytes,6,rep,name=on_timeout,json=onTimeout,proto3" json:"on_timeout,omitempty"`
-	//
 	// On failure used to be a way to execute an action if the current one fails
 	// but with the event system in place this is not needed anymore
 	OnFailure []string `protobuf:"bytes,7,rep,name=on_failure,json=onFailure,proto3" json:"on_failure,omitempty"`
 	WorkerId  string   `protobuf:"bytes,8,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
-	//
 	// You can mount directory from your host to the running action, mainly to
 	// share files, or state
 	Volumes []string `protobuf:"bytes,9,rep,name=volumes,proto3" json:"volumes,omitempty"`
-	//
 	// Set environment variables usable from the action itself.
 	Environment []string `protobuf:"bytes,10,rep,name=environment,proto3" json:"environment,omitempty"`
-	//
 	// Set the namespace that the process IDs will be in.
 	Pid string `protobuf:"bytes,11,opt,name=pid,proto3" json:"pid,omitempty"`
 }
@@ -542,7 +518,6 @@ func (x *WorkflowAction) GetPid() string {
 	return ""
 }
 
-//
 // WorkflowActionStatus represents the state of all the action part of a
 // workflow
 type WorkflowActionStatus struct {
@@ -550,26 +525,19 @@ type WorkflowActionStatus struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	//
 	// The workflow id
 	WorkflowId string `protobuf:"bytes,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
-	//
 	// The name of the task this action is part of
 	TaskName string `protobuf:"bytes,2,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
-	//
 	// The name of the action
 	ActionName string `protobuf:"bytes,3,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
-	//
 	// The state of the action. Those are the same described for workflow as
 	// well. pending, running, successful and so on.
 	ActionStatus State `protobuf:"varint,4,opt,name=action_status,json=actionStatus,proto3,enum=proto.State" json:"action_status,omitempty"`
-	//
 	// The execution time for the action
 	Seconds int64 `protobuf:"varint,5,opt,name=seconds,proto3" json:"seconds,omitempty"`
-	//
 	// The message returned from the action.
 	Message string `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
-	//
 	// When the status got created for this aciton. You can see it as the time
 	// when the action started its execution inside the hardware itself.
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
