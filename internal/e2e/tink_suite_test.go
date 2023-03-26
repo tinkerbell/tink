@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/controller"
 	"github.com/tinkerbell/tink/internal/grpcserver"
@@ -28,7 +28,7 @@ var (
 	ctx        context.Context
 	cancel     context.CancelFunc
 	serverAddr string
-	logger     log.Logger
+	logger     logr.Logger
 )
 
 func TestTests(t *testing.T) {
@@ -40,8 +40,7 @@ var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
 
 	var err error
-	logger, err = log.Init("github.com/tinkerbell/tink/tests")
-	Expect(err).NotTo(HaveOccurred())
+	logger = zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 
 	// Installs CRDs into cluster
 	By("bootstrapping test environment")
@@ -55,7 +54,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 	cfg.Timeout = time.Second * 5 // Graceful shutdown of testenv for only 5s
-	logger.With("host", cfg.Host).Info("started test environment")
+	logger.Info("started test environment", "host", cfg.Host)
 
 	// Add tink API to the client scheme
 	err = v1alpha1.AddToScheme(scheme.Scheme)
@@ -78,14 +77,11 @@ var _ = BeforeSuite(func() {
 		errCh,
 	)
 	Expect(err).NotTo(HaveOccurred())
-	logger.Info("HTTP server: ", fmt.Sprintf("%+v", serverAddr))
+	logger.Info(fmt.Sprintf("HTTP server: %v", serverAddr))
 
 	// Start the controller
-	zapLogger, err := zap.NewDevelopment()
-	Expect(err).To(Succeed())
-
 	options := ctrl.Options{
-		Logger: zapr.NewLogger(zapLogger),
+		Logger: logger,
 	}
 
 	manager, err := controller.NewManager(cfg, options)

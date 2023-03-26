@@ -99,7 +99,7 @@ var _ = Describe("Tink API", func() {
 				worker.WithDataDir("./worker"),
 				worker.WithMaxFileSize(1<<10),
 				worker.WithRetries(time.Millisecond*500, 3))
-			logger.With("workerID", workerID).Info("Created worker")
+			logger.Info("Created worker", "workerID", workerID)
 
 			errChan := make(chan error)
 			workerCtx, cancel := context.WithTimeout(ctx, time.Second*8)

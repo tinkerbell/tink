@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -15,11 +15,11 @@ import (
 var (
 	gitRev    = "unknown"
 	startTime = time.Now()
-	logger    log.Logger
+	logger    logr.Logger
 )
 
 // SetupHTTP setup and return an HTTP server.
-func SetupHTTP(ctx context.Context, logger log.Logger, authority string, errCh chan<- error) {
+func SetupHTTP(ctx context.Context, logger logr.Logger, authority string, errCh chan<- error) {
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/version", getGitRevJSONHandler())
 	http.HandleFunc("/healthz", healthCheckHandler)
@@ -38,7 +38,7 @@ func SetupHTTP(ctx context.Context, logger log.Logger, authority string, errCh c
 	go func() {
 		<-ctx.Done()
 		if err := srv.Shutdown(context.Background()); err != nil {
-			logger.Error(err)
+			logger.Error(err, "shutting down http server")
 		}
 	}()
 }
@@ -74,7 +74,7 @@ func getGitRevJSONHandler() http.HandlerFunc {
 	b, err := json.Marshal(&res)
 	if err != nil {
 		err = errors.Wrap(err, "could not marshal version json")
-		logger.Error(err)
+		logger.Error(err, "")
 		panic(err)
 	}
 

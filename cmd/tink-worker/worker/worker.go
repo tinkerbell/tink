@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/internal/proto"
 )
@@ -95,7 +95,7 @@ type Worker struct {
 	logCapturer      LogCapturer
 	containerManager ContainerManager
 	tinkClient       proto.WorkflowServiceClient
-	logger           log.Logger
+	logger           logr.Logger
 
 	dataDir string
 	maxSize int64
@@ -113,7 +113,7 @@ func NewWorker(
 	tinkClient proto.WorkflowServiceClient,
 	containerManager ContainerManager,
 	logCapturer LogCapturer,
-	logger log.Logger,
+	logger logr.Logger,
 	opts ...Option,
 ) *Worker {
 	w := &Worker{
@@ -137,19 +137,18 @@ func NewWorker(
 }
 
 // getLogger is a helper function to get logging out of a context, or use the default logger.
-func (w Worker) getLogger(ctx context.Context) *log.Logger {
+func (w Worker) getLogger(ctx context.Context) logr.Logger {
 	loggerIface := ctx.Value(loggingContextKey)
 	if loggerIface == nil {
-		return &w.logger
+		return w.logger
 	}
-	l, _ := loggerIface.(*log.Logger)
-
+	l, _ := loggerIface.(logr.Logger)
 	return l
 }
 
 // execute executes a workflow action, optionally capturing logs.
 func (w *Worker) execute(ctx context.Context, wfID string, action *proto.WorkflowAction) (proto.State, error) {
-	l := w.getLogger(ctx).With("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
+	l := w.getLogger(ctx).WithValues("workflowID", wfID, "workerID", action.GetWorkerId(), "actionName", action.GetName(), "actionImage", action.GetImage())
 
 	if err := w.containerManager.PullImage(ctx, action.GetImage()); err != nil {
 		return proto.State_STATE_RUNNING, errors.Wrap(err, "pull image")
@@ -160,7 +159,7 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *proto.Workflo
 		return proto.State_STATE_RUNNING, errors.Wrap(err, "create container")
 	}
 
-	l.With("containerID", id, "command", action.Command).Info("container created")
+	l.Info("container created", "containerID", id, "command", action.Command)
 
 	var timeCtx context.Context
 	var cancel context.CancelFunc
@@ -182,16 +181,16 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *proto.Workflo
 	}
 
 	st, err := w.containerManager.WaitForContainer(timeCtx, id)
-	l.With("status", st.String()).Info("wait container completed")
+	l.Info("wait container completed", "status", st.String())
 
 	// If we've made it this far, the container has successfully completed.
 	// Everything after this is just cleanup.
 
 	defer func() {
 		if err := w.containerManager.RemoveContainer(ctx, id); err != nil {
-			l.With("containerID", id).Error(err)
+			l.Error(err, "remove container", "containerID", id)
 		}
-		l.With("status", st.String()).Info("container removed")
+		l.Info("container removed", "status", st.String())
 	}()
 
 	if err != nil {
@@ -199,24 +198,24 @@ func (w *Worker) execute(ctx context.Context, wfID string, action *proto.Workflo
 	}
 
 	if st == proto.State_STATE_SUCCESS {
-		l.With("status", st).Info("action container exited with success")
+		l.Info("action container exited with success", "status", st)
 		return st, nil
 	}
 
 	if st == proto.State_STATE_TIMEOUT && action.OnTimeout != nil {
 		rst := w.executeReaction(ctx, st.String(), action.OnTimeout, wfID, action)
-		l.With("status", rst).Info("action timeout")
+		l.Info("action timeout", "status", rst)
 	} else if action.OnFailure != nil {
 		rst := w.executeReaction(ctx, st.String(), action.OnFailure, wfID, action)
-		l.With("status", rst).Info("action failed")
+		l.Info("action failed", "status", rst)
 	}
 
 	l.Info(infoWaitFinished)
 	if err != nil {
-		l.Error(errors.Wrap(err, errFailedToWait))
+		l.Error(err, errFailedToWait)
 	}
 
-	l.With("status", st).Info("action container exited")
+	l.Info("action container exited", "status", st)
 	return st, nil
 }
 
@@ -225,9 +224,9 @@ func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []str
 	l := w.getLogger(ctx)
 	id, err := w.containerManager.CreateContainer(ctx, cmd, wfID, action, w.captureLogs, w.createPrivileged)
 	if err != nil {
-		l.Error(errors.Wrap(err, errFailedToRunCmd))
+		l.Error(err, errFailedToRunCmd)
 	}
-	l.With("containerID", id, "actionStatus", reaction, "command", cmd).Info("container created")
+	l.Info("container created", "containerID", id, "actionStatus", reaction, "command", cmd)
 
 	if w.captureLogs {
 		go w.logCapturer.CaptureLogs(ctx, id)
@@ -238,7 +237,7 @@ func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []str
 	go w.containerManager.WaitForFailedContainer(ctx, id, st)
 	err = w.containerManager.StartContainer(ctx, id)
 	if err != nil {
-		l.Error(errors.Wrap(err, errFailedToRunCmd))
+		l.Error(err, errFailedToRunCmd)
 	}
 
 	return <-st
@@ -246,7 +245,7 @@ func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []str
 
 // ProcessWorkflowActions gets all Workflow contexts and processes their actions.
 func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
-	l := w.logger.With("workerID", w.workerID)
+	l := w.logger.WithValues("workerID", w.workerID)
 	l.Info("starting to process workflow actions")
 
 	for {
@@ -257,7 +256,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 		}
 		res, err := w.tinkClient.GetWorkflowContexts(ctx, &proto.WorkflowContextRequest{WorkerId: w.workerID})
 		if err != nil {
-			l.Error(errors.Wrap(err, errGetWfContext))
+			l.Error(err, errGetWfContext)
 			<-time.After(w.retryInterval)
 			continue
 		}
@@ -270,18 +269,18 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 			wfContext, err := res.Recv()
 			if err != nil || wfContext == nil {
 				if !errors.Is(err, io.EOF) {
-					l.Info(err)
+					l.Info(err.Error())
 				}
 				<-time.After(w.retryInterval)
 				break
 			}
 			wfID := wfContext.GetWorkflowId()
-			l = l.With("workflowID", wfID)
-			ctx := context.WithValue(ctx, loggingContextKey, &l)
+			l = l.WithValues("workflowID", wfID)
+			ctx := context.WithValue(ctx, loggingContextKey, l)
 
 			actions, err := w.tinkClient.GetWorkflowActions(ctx, &proto.WorkflowActionsRequest{WorkflowId: wfID})
 			if err != nil {
-				l.Error(errors.Wrap(err, errGetWfActions))
+				l.Error(err, errGetWfActions)
 				continue
 			}
 
@@ -317,11 +316,11 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 			for turn {
 				l.Info("starting action")
 				action := actions.GetActionList()[actionIndex]
-				l := l.With(
+				l := l.WithValues(
 					"actionName", action.GetName(),
 					"taskName", action.GetTaskName(),
 				)
-				ctx := context.WithValue(ctx, loggingContextKey, &l)
+				ctx := context.WithValue(ctx, loggingContextKey, l)
 				if wfContext.GetCurrentActionState() != proto.State_STATE_RUNNING {
 					actionStatus := &proto.WorkflowActionStatus{
 						WorkflowId:   wfID,
@@ -333,7 +332,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 						WorkerId:     action.GetWorkerId(),
 					}
 					w.reportActionStatus(ctx, l, actionStatus)
-					l.With("status", actionStatus.ActionStatus, "duration", strconv.FormatInt(actionStatus.Seconds, 10)).Info("sent action status")
+					l.Info("sent action status", "status", actionStatus.ActionStatus, "duration", strconv.FormatInt(actionStatus.Seconds, 10))
 				}
 
 				// start executing the action
@@ -355,8 +354,8 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 					} else {
 						actionStatus.ActionStatus = proto.State_STATE_FAILED
 					}
-					l = l.With("actionStatus", actionStatus.ActionStatus.String())
-					l.Error(err)
+					l = l.WithValues("actionStatus", actionStatus.ActionStatus.String())
+					l.Error(err, "execute workflow")
 					w.reportActionStatus(ctx, l, actionStatus)
 					break
 				}
@@ -374,7 +373,7 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 
 				nextAction := actions.GetActionList()[actionIndex+1]
 				if nextAction.GetWorkerId() != w.workerID {
-					l.Debug(fmt.Sprintf(msgTurn, nextAction.GetWorkerId()))
+					l.Info(fmt.Sprintf(msgTurn, nextAction.GetWorkerId()))
 					turn = false
 				} else {
 					actionIndex++
@@ -391,12 +390,12 @@ func isLastAction(wfContext *proto.WorkflowContext, actions *proto.WorkflowActio
 }
 
 // reportActionStatus reports the status of an action to the Tinkerbell server and retries forever on error.
-func (w *Worker) reportActionStatus(ctx context.Context, l log.Logger, actionStatus *proto.WorkflowActionStatus) {
+func (w *Worker) reportActionStatus(ctx context.Context, l logr.Logger, actionStatus *proto.WorkflowActionStatus) {
 	for {
 		l.Info("reporting Action Status")
 		_, err := w.tinkClient.ReportActionStatus(ctx, actionStatus)
 		if err != nil {
-			l.Error(errors.Wrap(err, errReportActionStatus))
+			l.Error(err, errReportActionStatus)
 			<-time.After(w.retryInterval)
 
 			continue

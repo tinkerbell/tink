@@ -8,29 +8,28 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 )
 
 // DockerLogCapturer is a LogCapturer that can stream docker container logs to an io.Writer.
 type DockerLogCapturer struct {
 	dockerClient client.ContainerAPIClient
-	logger       log.Logger
+	logger       logr.Logger
 	writer       io.Writer
 }
 
 // getLogger is a helper function to get logging out of a context, or use the default logger.
-func (l *DockerLogCapturer) getLogger(ctx context.Context) *log.Logger {
+func (l *DockerLogCapturer) getLogger(ctx context.Context) logr.Logger {
 	loggerIface := ctx.Value(loggingContextKey)
 	if loggerIface == nil {
-		return &l.logger
+		return l.logger
 	}
-	lg, _ := loggerIface.(*log.Logger)
-
+	lg, _ := loggerIface.(logr.Logger)
 	return lg
 }
 
 // NewDockerLogCapturer returns a LogCapturer that can stream container logs to a given writer.
-func NewDockerLogCapturer(cli client.ContainerAPIClient, logger log.Logger, writer io.Writer) *DockerLogCapturer {
+func NewDockerLogCapturer(cli client.ContainerAPIClient, logger logr.Logger, writer io.Writer) *DockerLogCapturer {
 	return &DockerLogCapturer{
 		dockerClient: cli,
 		logger:       logger,
@@ -47,7 +46,7 @@ func (l *DockerLogCapturer) CaptureLogs(ctx context.Context, id string) {
 		Timestamps: false,
 	})
 	if err != nil {
-		l.getLogger(ctx).Error(err, "failed to capture logs for container ", id)
+		l.getLogger(ctx).Error(err, "failed to capture logs for container ", "containerID", id)
 		return
 	}
 	defer reader.Close()

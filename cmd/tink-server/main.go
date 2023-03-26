@@ -9,23 +9,24 @@ import (
 	"syscall"
 
 	"github.com/equinix-labs/otel-init-go/otelinit"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/packethost/pkg/env"
-	"github.com/packethost/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/internal/grpcserver"
 	"github.com/tinkerbell/tink/internal/httpserver"
 	"github.com/tinkerbell/tink/internal/server"
+	"go.uber.org/zap"
 )
 
 // version is set at build time.
 var version = "devel"
 
-// DaemonConfig represents all the values you can configure as part of the tink-server.
+// Config represents all the values you can configure as part of the tink-server.
 // You can change the configuration via environment variable, or file, or command flags.
-type DaemonConfig struct {
-	Facility      string
+type Config struct {
 	GRPCAuthority string
 	HTTPAuthority string
 	Backend       string
@@ -41,8 +42,7 @@ func backends() []string {
 	return []string{backendKubernetes}
 }
 
-func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Facility, "facility", "deprecated", "This is temporary. It will be removed")
+func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.GRPCAuthority, "grpc-authority", ":42113", "The address used to expose the gRPC server")
 	fs.StringVar(&c.HTTPAuthority, "http-authority", ":42114", "The address used to expose the HTTP server")
 	fs.StringVar(&c.Backend, "backend", backendKubernetes, fmt.Sprintf("The backend datastore to use. Must be one of %s", strings.Join(backends(), ", ")))
@@ -51,33 +51,27 @@ func (c *DaemonConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KubeNamespace, "kube-namespace", "", "The Kubernetes namespace to target")
 }
 
-func (c *DaemonConfig) PopulateFromLegacyEnvVar() {
-	c.Facility = env.Get("FACILITY", c.Facility)
+func (c *Config) PopulateFromLegacyEnvVar() {
 	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
 	c.HTTPAuthority = env.Get("TINKERBELL_HTTP_AUTHORITY", c.HTTPAuthority)
 }
 
 func main() {
-	logger, err := log.Init("github.com/tinkerbell/tink")
+	if err := NewRootCommand().Execute(); err != nil {
+		fmt.Fprint(os.Stderr, err.Error())
+		os.Exit(1)
+	}
+}
+
+func NewRootCommand() *cobra.Command {
+	var config Config
+
+	zlog, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}
+	logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
 
-	ctx := context.Background()
-	ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "github.com/tinkerbell/tink")
-
-	config := &DaemonConfig{}
-
-	cmd := NewRootCommand(config, logger)
-	if err := cmd.ExecuteContext(ctx); err != nil {
-		os.Exit(1)
-	}
-
-	logger.Close()
-	otelShutdown(ctx)
-}
-
-func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "tink-server",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -95,11 +89,14 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			// the old way works as before.
 			config.PopulateFromLegacyEnvVar()
 
-			logger.Info("starting version " + version)
+			logger.Info("Starting version " + version)
+
+			ctx, oshutdown := otelinit.InitOpenTelemetry(cmd.Context(), "github.com/tinkerbell/tink")
+			defer oshutdown(context.Background())
 
 			sigs := make(chan os.Signal, 1)
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
-			ctx, closer := context.WithCancel(cmd.Context())
+			ctx, closer := context.WithCancel(ctx)
 			defer closer()
 			// TODO(gianarb): I think we can do better in terms of
 			// graceful shutdown and error management but I want to
@@ -133,15 +130,15 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logger.With("address", addr).Info("started listener")
+			logger.Info("started listener", "address", addr)
 
 			httpserver.SetupHTTP(ctx, logger, config.HTTPAuthority, errCh)
 
 			select {
 			case err := <-errCh:
-				logger.Error(err)
+				logger.Error(err, "")
 			case sig := <-sigs:
-				logger.With("signal", sig.String()).Info("signal received, stopping servers")
+				logger.Info("signal received, stopping servers", "signal", sig.String())
 				closer()
 			}
 
@@ -161,7 +158,7 @@ func NewRootCommand(config *DaemonConfig, logger log.Logger) *cobra.Command {
 	return cmd
 }
 
-func createViper(logger log.Logger) (*viper.Viper, error) {
+func createViper(log logr.Logger) (*viper.Viper, error) {
 	v := viper.New()
 	v.AutomaticEnv()
 	v.SetConfigName("tink-server")
@@ -172,12 +169,11 @@ func createViper(logger log.Logger) (*viper.Viper, error) {
 	// If a config file is found, read it in.
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			logger.With("configFile", v.ConfigFileUsed()).Error(err, "could not load config file")
-			return nil, err
+			return nil, fmt.Errorf("could not load config file: %w", err)
 		}
-		logger.Info("no config file found")
+		log.Info("No config file found")
 	} else {
-		logger.With("configFile", v.ConfigFileUsed()).Info("loaded config file")
+		log.Info("Loaded config file", "path", v.ConfigFileUsed())
 	}
 
 	return v, nil

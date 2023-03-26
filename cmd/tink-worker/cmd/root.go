@@ -6,7 +6,8 @@ import (
 	"time"
 
 	dockercli "github.com/docker/docker/client"
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -14,6 +15,7 @@ import (
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
 	"github.com/tinkerbell/tink/internal/client"
 	"github.com/tinkerbell/tink/internal/proto"
+	"go.uber.org/zap"
 )
 
 const (
@@ -24,7 +26,13 @@ const (
 )
 
 // NewRootCommand creates a new Tink Worker Cobra root command.
-func NewRootCommand(version string, logger log.Logger) *cobra.Command {
+func NewRootCommand(version string) *cobra.Command {
+	zlog, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
+
 	rootCmd := &cobra.Command{
 		Use:     "tink-worker",
 		Short:   "Tink Worker",
@@ -42,7 +50,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 			registry := viper.GetString("docker-registry")
 			captureActionLogs := viper.GetBool("capture-action-logs")
 
-			logger.With("version", version).Info("starting")
+			logger.Info("starting", "version", version)
 
 			conn, err := client.NewClientConn(
 				viper.GetString("tinkerbell-grpc-authority"),
@@ -99,7 +107,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 
 	must := func(err error) {
 		if err != nil {
-			logger.Fatal(err)
+			logger.Error(err, "")
 		}
 	}
 
@@ -117,7 +125,7 @@ func NewRootCommand(version string, logger log.Logger) *cobra.Command {
 // initViper initializes Viper  configured to read in configuration files
 // (from various paths with content type specific filename extensions) and loads
 // environment variables.
-func initViper(logger log.Logger, cmd *cobra.Command) error {
+func initViper(logger logr.Logger, cmd *cobra.Command) error {
 	viper.AutomaticEnv()
 	viper.SetConfigName("tink-worker")
 	viper.AddConfigPath("/etc/tinkerbell")
@@ -127,11 +135,11 @@ func initViper(logger log.Logger, cmd *cobra.Command) error {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			logger.With("configFile", viper.ConfigFileUsed()).Error(err, "could not load config file")
+			logger.Error(err, "could not load config file", "configFile", viper.ConfigFileUsed())
 			return err
 		}
 	} else {
-		logger.With("configFile", viper.ConfigFileUsed()).Info("loaded config file")
+		logger.Info("loaded config file", "configFile", viper.ConfigFileUsed())
 	}
 
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {

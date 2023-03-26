@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/controller"
 	"github.com/tinkerbell/tink/internal/proto"
@@ -24,7 +24,7 @@ import (
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch
 
 // NewKubeBackedServer returns a server that implements the Workflow server interface for a given kubeconfig.
-func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver, namespace string) (*KubernetesBackedServer, error) {
+func NewKubeBackedServer(logger logr.Logger, kubeconfig, apiserver, namespace string) (*KubernetesBackedServer, error) {
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
 		&clientcmd.ConfigOverrides{
@@ -56,7 +56,7 @@ func NewKubeBackedServer(logger log.Logger, kubeconfig, apiserver, namespace str
 
 // NewKubeBackedServerFromREST returns a server that implements the Workflow
 // server interface with the given Kubernetes rest client and namespace.
-func NewKubeBackedServerFromREST(logger log.Logger, config *rest.Config, namespace string) (*KubernetesBackedServer, error) {
+func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namespace string) (*KubernetesBackedServer, error) {
 	clstr, err := cluster.New(config, func(opts *cluster.Options) {
 		opts.Scheme = controller.DefaultScheme()
 		opts.Logger = zapr.NewLogger(zap.NewNop())
@@ -93,7 +93,7 @@ func NewKubeBackedServerFromREST(logger log.Logger, config *rest.Config, namespa
 
 // KubernetesBackedServer is a server that implements a workflow API.
 type KubernetesBackedServer struct {
-	logger     log.Logger
+	logger     logr.Logger
 	ClientFunc func() client.Client
 	namespace  string
 
