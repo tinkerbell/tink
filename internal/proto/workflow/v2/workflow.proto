@@ -18,7 +18,18 @@ message StreamWorkflowsRequest {
 }
 
 message StreamWorkflowsResponse {
-  Workflow workflow = 1;
+  oneof cmd {
+    StartWorkflow start_workflow = 1;
+    StopWorkflow stop_workflow = 2;
+  }
+
+  message StartWorkflow {
+    Workflow workflow = 1;
+  }
+
+  message StopWorkflow {
+    string workflow_id = 1;
+  }
 }
 
 message PublishEventRequest {
@@ -71,6 +82,7 @@ message Event {
     ActionStarted action_started = 2;
     ActionSucceeded action_succeeded = 3;
     ActionFailed action_failed = 4;
+    WorkflowRejected workflow_rejected = 5;
   }
 
   message ActionStarted {
@@ -95,6 +107,11 @@ message Event {
     // provided by the action itself.
     optional string failure_message = 3;
     
+  }
+
+  message WorkflowRejected {    
+    // A message describing why the workflow was rejected.
+    string message = 2;
   }
 }
 
