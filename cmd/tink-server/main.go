@@ -11,7 +11,6 @@ import (
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/packethost/pkg/env"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -52,8 +51,13 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *Config) PopulateFromLegacyEnvVar() {
-	c.GRPCAuthority = env.Get("TINKERBELL_GRPC_AUTHORITY", c.GRPCAuthority)
-	c.HTTPAuthority = env.Get("TINKERBELL_HTTP_AUTHORITY", c.HTTPAuthority)
+	if v, ok := os.LookupEnv("TINKERBELL_GRPC_AUTHORITY"); ok {
+		c.GRPCAuthority = v
+	}
+
+	if v, ok := os.LookupEnv("TINKERBELL_HTTP_AUTHORITY"); ok {
+		c.HTTPAuthority = v
+	}
 }
 
 func main() {
