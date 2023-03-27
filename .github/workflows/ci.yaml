@@ -28,7 +28,7 @@ jobs:
         with:
           go-version: "${{ env.GO_VERSION }}"
       - name: Install nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Install required nix packages
@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - run: nix-shell --run 'true'
@@ -107,7 +107,7 @@ jobs:
       - name: Fix permissions
         run: chmod +x bin/*
       - name: Build ${{ matrix.repository }} and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: cmd/${{ matrix.binary }}/Dockerfile
