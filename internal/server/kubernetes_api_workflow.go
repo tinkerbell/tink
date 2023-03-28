@@ -56,7 +56,7 @@ func (s *KubernetesBackedServer) getWorkflowByName(ctx context.Context, workflow
 	wflw := &v1alpha1.Workflow{}
 	err := s.ClientFunc().Get(ctx, types.NamespacedName{Name: workflowID, Namespace: namespace}, wflw)
 	if err != nil {
-		s.logger.With("workflow", workflowID).Error(err)
+		s.logger.Error(err, "get client", "workflow", workflowID)
 		return nil, err
 	}
 	return wflw, nil
@@ -184,11 +184,11 @@ func (s *KubernetesBackedServer) ReportActionStatus(ctx context.Context, req *pr
 		return nil, err
 	}
 	wfID := req.GetWorkflowId()
-	l := s.logger.With("actionName", req.GetActionName(), "status", req.GetActionStatus(), "workflowID", req.GetWorkflowId(), "taskName", req.GetTaskName(), "worker", req.WorkerId)
+	l := s.logger.WithValues("actionName", req.GetActionName(), "status", req.GetActionStatus(), "workflowID", req.GetWorkflowId(), "taskName", req.GetTaskName(), "worker", req.WorkerId)
 
 	wf, err := s.getWorkflowByName(ctx, wfID, s.namespace)
 	if err != nil {
-		l.Error(err)
+		l.Error(err, "get workflow")
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 	if req.GetTaskName() != wf.GetCurrentTask() {
@@ -201,13 +201,13 @@ func (s *KubernetesBackedServer) ReportActionStatus(ctx context.Context, req *pr
 	wfContext := getWorkflowContextForRequest(req, wf)
 	err = s.modifyWorkflowState(wf, wfContext)
 	if err != nil {
-		l.Error(err)
+		l.Error(err, "modify workflow state")
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 	l.Info("updating workflow in Kubernetes")
 	err = s.ClientFunc().Status().Update(ctx, wf)
 	if err != nil {
-		l.Error(err)
+		l.Error(err, "applying update to workflow")
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
 	return &proto.Empty{}, nil

@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/packethost/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -44,28 +42,20 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 }
 
 func main() {
-	// Init the packet logger as its used throughout the codebase.
-	logger, err := log.Init("github.com/tinkerbell/tink")
-	if err != nil {
-		panic(err)
-	}
-
 	cmd := NewRootCommand()
-	if err := cmd.ExecuteContext(context.Background()); err != nil {
-		logger.Close()
-		fmt.Fprint(os.Stderr, err.Error())
+	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
-	logger.Close()
 }
 
 func NewRootCommand() *cobra.Command {
-	config := &Config{}
-	zapLogger, err := zap.NewProduction()
+	var config Config
+
+	zlog, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}
-	logger := zapr.NewLogger(zapLogger)
+	logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
 
 	cmd := &cobra.Command{
 		Use: "tink-controller",

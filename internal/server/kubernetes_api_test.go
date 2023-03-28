@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/zapr"
 	"github.com/google/go-cmp/cmp"
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/proto"
 	"github.com/tinkerbell/tink/internal/testtime"
+	"go.uber.org/zap"
 )
 
 var TestTime = testtime.NewFrozenTimeUnix(1637361793)
@@ -418,7 +419,7 @@ func TestModifyWorkflowState(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			server := &KubernetesBackedServer{
-				logger:     log.Test(t, "TestModifyWorkflowState"),
+				logger:     zapr.NewLogger(zap.Must(zap.NewDevelopment())),
 				ClientFunc: nil,
 				namespace:  "default",
 				nowFunc:    TestTime.Now,

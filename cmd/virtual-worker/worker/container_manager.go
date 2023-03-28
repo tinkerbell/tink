@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/cmd/tink-worker/worker"
 	"github.com/tinkerbell/tink/internal/proto"
 )
@@ -26,7 +26,7 @@ type fakeManager struct {
 	sleepJitter time.Duration
 
 	r      *rand.Rand
-	logger log.Logger
+	logger logr.Logger
 }
 
 func (m *fakeManager) sleep() {
@@ -35,7 +35,7 @@ func (m *fakeManager) sleep() {
 }
 
 // NewFakeContainerManager returns a fake worker.ContainerManager that will sleep for Docker API calls.
-func NewFakeContainerManager(l log.Logger, sleepMinimum, sleepJitter time.Duration) worker.ContainerManager {
+func NewFakeContainerManager(l logr.Logger, sleepMinimum, sleepJitter time.Duration) worker.ContainerManager {
 	if sleepMinimum <= 0 {
 		sleepMinimum = 1
 	}
@@ -52,35 +52,35 @@ func NewFakeContainerManager(l log.Logger, sleepMinimum, sleepJitter time.Durati
 }
 
 func (m *fakeManager) CreateContainer(_ context.Context, cmd []string, _ string, _ *proto.WorkflowAction, _, _ bool) (string, error) {
-	m.logger.With("command", cmd).Info("creating container")
+	m.logger.Info("creating container", "command", cmd)
 	return getRandHexStr(m.r, 64), nil
 }
 
 func (m *fakeManager) StartContainer(_ context.Context, id string) error {
-	m.logger.With("containerID", id).Debug("starting container")
+	m.logger.Info("starting container", "containerID", id)
 	return nil
 }
 
 func (m *fakeManager) WaitForContainer(_ context.Context, id string) (proto.State, error) {
-	m.logger.With("containerID", id).Info("waiting for container")
+	m.logger.Info("waiting for container", "containerID", id)
 	m.sleep()
 
 	return proto.State_STATE_SUCCESS, nil
 }
 
 func (m *fakeManager) WaitForFailedContainer(_ context.Context, id string, failedActionStatus chan proto.State) {
-	m.logger.With("containerID", id).Info("waiting for container")
+	m.logger.Info("waiting for container", "containerID", id)
 	m.sleep()
 	failedActionStatus <- proto.State_STATE_SUCCESS
 }
 
 func (m *fakeManager) RemoveContainer(_ context.Context, id string) error {
-	m.logger.With("containerID", id).Info("removing container")
+	m.logger.Info("removing container", "containerID", id)
 	return nil
 }
 
 func (m *fakeManager) PullImage(_ context.Context, image string) error {
-	m.logger.With("image", image).Info("pulling image")
+	m.logger.Info("pulling image", "image", image)
 	m.sleep()
 
 	return nil

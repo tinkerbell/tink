@@ -10,8 +10,10 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/packethost/pkg/log"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zapr"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type fakeDockerLoggerClient struct {
@@ -57,7 +59,7 @@ func TestLogCapturer(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			ctx := context.Background()
 			clogger := NewDockerLogCapturer(
 				newFakeDockerLoggerClient(tc.content, tc.wanterr),
@@ -75,7 +77,7 @@ func TestLogCapturer(t *testing.T) {
 func TestLogCapturerContextLogger(t *testing.T) {
 	cases := []struct {
 		name   string
-		logger func() *log.Logger
+		logger func() logr.Logger
 		writer bytes.Buffer
 	}{
 		{
@@ -84,9 +86,8 @@ func TestLogCapturerContextLogger(t *testing.T) {
 		},
 		{
 			name: "with context logger",
-			logger: func() *log.Logger {
-				l := log.Test(t, "github.com/tinkerbell/tink/test")
-				return &l
+			logger: func() logr.Logger {
+				return zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			},
 			writer: *bytes.NewBufferString(""),
 		},
@@ -94,7 +95,7 @@ func TestLogCapturerContextLogger(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			ctx := context.Background()
 			if tc.logger != nil {
 				ctx = context.WithValue(ctx, loggingContextKey, tc.logger())

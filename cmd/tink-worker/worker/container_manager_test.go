@@ -10,9 +10,10 @@ import (
 	containertypes "github.com/docker/docker/api/types/container"
 	networktypes "github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/go-logr/zapr"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/packethost/pkg/log"
 	"github.com/tinkerbell/tink/internal/proto"
+	"go.uber.org/zap"
 )
 
 type fakeDockerClient struct {
@@ -131,7 +132,7 @@ func TestContainerManagerCreate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			mgr := NewContainerManager(logger, newFakeDockerClient(tc.containerID, "", 0, 0, tc.clientErr, nil), RegistryConnDetails{Registry: tc.registry})
 
 			ctx := context.Background()
@@ -177,7 +178,7 @@ func TestContainerManagerStart(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			mgr := NewContainerManager(logger, newFakeDockerClient(tc.containerID, "", 0, 0, tc.clientErr, nil), RegistryConnDetails{Registry: ""})
 
 			ctx := context.Background()
@@ -249,7 +250,7 @@ func TestContainerManagerWait(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			mgr := NewContainerManager(logger, newFakeDockerClient(tc.containerID, "", time.Millisecond*20, tc.dockerResponse, tc.clientErr, tc.waitErr), RegistryConnDetails{Registry: ""})
 			ctx, cancel := context.WithTimeout(context.Background(), tc.contextTimeout)
 			defer cancel()
@@ -320,7 +321,7 @@ func TestContainerManagerWaitFailed(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			mgr := NewContainerManager(logger, newFakeDockerClient(tc.containerID, "", tc.waitTime, tc.dockerResponse, nil, tc.clientErr), RegistryConnDetails{Registry: ""})
 			ctx, cancel := context.WithTimeout(context.Background(), tc.contextTimeout)
 			defer cancel()
@@ -359,7 +360,7 @@ func TestContainerManagerRemove(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.Test(t, "github.com/tinkerbell/tink")
+			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			mgr := NewContainerManager(logger, newFakeDockerClient(tc.containerID, "", 0, 0, tc.clientErr, nil), RegistryConnDetails{Registry: ""})
 
 			ctx := context.Background()

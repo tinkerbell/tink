@@ -49,7 +49,7 @@ func (m *containerManager) PullImage(ctx context.Context, image string) error {
 	}
 	defer func() {
 		if err := out.Close(); err != nil {
-			l.Error(err)
+			l.Error(err, "")
 		}
 	}()
 	fd := json.NewDecoder(out)
