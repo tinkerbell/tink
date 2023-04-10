@@ -30,11 +30,14 @@ type Action struct {
 	// Image is an OCI image.
 	Image string `json:"image"`
 
-	// Cmd defines the command to use when launching the image.
+	// Cmd defines the command to use when launching the image. It overrides the default command
+	// of the action. It must be a unix path to an executable program.
+	// +kubebuilder:validation:Pattern=`^(/[^/ ]*)+/?$`
 	// +optional
 	Cmd *string `json:"cmd,omitempty"`
 
-	// Args are a set of arguments to be passed to the container on launch.
+	// Args are a set of arguments to be passed to the command executed by the container on
+	// launch.
 	// +optional
 	Args []string `json:"args,omitempty"`
 
