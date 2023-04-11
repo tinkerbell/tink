@@ -367,7 +367,6 @@ func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
 
 				if len(actions.GetActionList()) == actionIndex+1 {
 					l.Info("reached to end of workflow")
-					turn = false
 					break
 				}
 
