@@ -23,7 +23,7 @@ CONTROLLER_GEN 	:= $(GO) run sigs.k8s.io/controller-tools/cmd/controller-gen@v0.
 GOFUMPT 		:= $(GO) run mvdan.cc/gofumpt@v0.4
 KUSTOMIZE 		:= $(GO) run sigs.k8s.io/kustomize/kustomize/v4@v4.5
 SETUP_ENVTEST   := $(GO) run sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.0.0-20220304125252-9ee63fc65a97
-GOLANGCI_LINT	:= $(GO) run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50
+GOLANGCI_LINT	:= $(GO) run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52
 YAMLFMT			:= $(GO) run github.com/google/yamlfmt/cmd/yamlfmt@v0.6
 
 # Installed tools
@@ -200,7 +200,7 @@ $(SHELLCHECK_BIN):
 shellcheck: $(SHELLCHECK_BIN)
 	$(SHELLCHECK_BIN) $(shell find . -name "*.sh")
 
-HADOLINT_VERSION ?= v2.8.0
+HADOLINT_VERSION ?= v2.12.1-beta
 HADOLINT_BIN := out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 $(HADOLINT_BIN):
 	mkdir -p out/linters

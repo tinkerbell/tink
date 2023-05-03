@@ -14,12 +14,12 @@ let
     # go 1.18.5
     owner = "NixOS";
     repo = "nixpkgs";
-    #branch@date: nixpkgs-unstable@2022-09-02
-    rev = "ee01de29d2f58d56b1be4ae24c24bd91c5380cea";
-    sha256 = "0829fqp43cp2ck56jympn5kk8ssjsyy993nsp0fjrnhi265hqps7";
+    # branch@date: nixpkgs-unstable@2023-03-30
+    rev = "8b3bc690e201c8d3cbd14633dbf3462a820e73f2";
+    sha256 = "sha256-+ckiCxbGFSs1/wHKCXAZnvb37Htf6k5nmQE3T0Y7hK8=";
   }) { };
 
-  go_1_18_5 = pkgs.go;
+  go_1_20_3 = pkgs.go;
 
 in mkShell {
   buildInputs = [
@@ -27,7 +27,7 @@ in mkShell {
     git
     gnumake
     gnused
-    go_1_18_5
+    go_1_20_3
     jq
     nixfmt
     nodePackages.prettier

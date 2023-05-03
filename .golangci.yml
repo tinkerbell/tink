@@ -92,7 +92,6 @@ linters:
     - asciicheck
     - bodyclose
     - cyclop
-    - deadcode
     - dogsled
     - dupl
     - durationcheck
@@ -114,7 +113,6 @@ linters:
     - goprintffuncname
     - gosimple
     - govet
-    - ifshort
     - importas
     - ineffassign
     - makezero
@@ -125,13 +123,10 @@ linters:
     - noctx
     - nolintlint
     - predeclared
-    # disabling for the initial iteration of the linting tool
-    # - promlinter
     - revive
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - structcheck
     - stylecheck
     - thelper
     - tparallel
@@ -139,26 +134,8 @@ linters:
     - unconvert
     - unparam
     - unused
-    - varcheck
     - wastedassign
     - whitespace
-    # Disabled linters, due to being misaligned with Go practices
-    # - exhaustivestruct
-    # - gochecknoglobals
-    # - gochecknoinits
-    # - goconst
-    # - godox
-    # - goerr113
-    # - gomnd
-    # - lll
-    # - nlreturn
-    # - testpackage
-    # - wsl
-    # Disabled linters, due to not being relevant to our code base:
-    # - maligned
-    # - prealloc "For most programs usage of prealloc will be a premature optimization."
-    # Disabled linters due to bad error messages or bugs
-    # - tagliatelle
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
@@ -187,6 +164,6 @@ issues:
     - linters:
         - tparallel
       text: "call t.Parallel on the top level as well as its subtests"
-  # Don't hide lint issues just because there are many of them
+    # Don't hide lint issues just because there are many of them
   max-same-issues: 0
   max-issues-per-linter: 0
