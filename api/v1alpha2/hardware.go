@@ -41,17 +41,29 @@ type NetworkInterfaces map[MAC]NetworkInterface
 
 // NetworkInterface is the desired configuration for a particular network interface.
 type NetworkInterface struct {
-	// DHCP is the basic network information for serving DHCP requests.
-	DHCP DHCP `json:"dhcp,omitempty"`
+	// DHCP is the basic network information for serving DHCP requests. Required when DisbaleDHCP
+	// is false.
+	// +optional
+	DHCP *DHCP `json:"dhcp,omitempty"`
 
 	// DisableDHCP disables DHCP for this interface. Implies DisableNetboot.
 	// +kubebuilder:default=false
 	DisableDHCP bool `json:"disableDhcp,omitempty"`
 
 	// DisableNetboot disables netbooting for this interface. The interface will still receive
-	// network information speified on by DHCP.
+	// network information specified by DHCP.
 	// +kubebuilder:default=false
 	DisableNetboot bool `json:"disableNetboot,omitempty"`
+}
+
+// IsDHCPEnabled checks if DHCP is enabled for ni.
+func (ni NetworkInterface) IsDHCPEnabled() bool {
+	return !ni.DisableDHCP
+}
+
+// IsNetbootEnabled checks if Netboot is enabled for ni.
+func (ni NetworkInterface) IsNetbootEnabled() bool {
+	return !ni.DisableNetboot
 }
 
 // DHCP describes basic network configuration to be served in DHCP OFFER responses. It can be
@@ -163,6 +175,26 @@ type Hardware struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec HardwareSpec `json:"spec,omitempty"`
+}
+
+// GetMACs retrieves all MACs associated with h.
+func (h *Hardware) GetMACs() []string {
+	var macs []string
+	for m := range h.Spec.NetworkInterfaces {
+		macs = append(macs, string(m))
+	}
+	return macs
+}
+
+// GetIPs retrieves all IP addresses. It does not consider the DisableDHCP flag.
+func (h *Hardware) GetIPs() []string {
+	var ips []string
+	for _, ni := range h.Spec.NetworkInterfaces {
+		if ni.DHCP != nil {
+			ips = append(ips, ni.DHCP.IP)
+		}
+	}
+	return ips
 }
 
 // +kubebuilder:object:root=true
