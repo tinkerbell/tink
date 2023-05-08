@@ -41,12 +41,12 @@ func newFakeDockerClient(containerID, imagePullContent string, delay time.Durati
 
 func (c *fakeDockerClient) ContainerCreate(
 	context.Context, *containertypes.Config, *containertypes.HostConfig, *networktypes.NetworkingConfig, *specs.Platform, string,
-) (containertypes.ContainerCreateCreatedBody, error) {
+) (containertypes.CreateResponse, error) {
 	if c.err != nil {
-		return containertypes.ContainerCreateCreatedBody{}, c.err
+		return containertypes.CreateResponse{}, c.err
 	}
 
-	return containertypes.ContainerCreateCreatedBody{
+	return containertypes.CreateResponse{
 		ID: c.containerID,
 	}, nil
 }
@@ -65,8 +65,8 @@ func (c *fakeDockerClient) ContainerInspect(context.Context, string) (types.Cont
 	return types.ContainerJSON{}, nil
 }
 
-func (c *fakeDockerClient) ContainerWait(context.Context, string, containertypes.WaitCondition) (<-chan containertypes.ContainerWaitOKBody, <-chan error) {
-	respChan := make(chan containertypes.ContainerWaitOKBody)
+func (c *fakeDockerClient) ContainerWait(context.Context, string, containertypes.WaitCondition) (<-chan containertypes.WaitResponse, <-chan error) {
+	respChan := make(chan containertypes.WaitResponse)
 	errChan := make(chan error)
 	go func(e error) {
 		time.Sleep(c.delay)
@@ -74,7 +74,7 @@ func (c *fakeDockerClient) ContainerWait(context.Context, string, containertypes
 			errChan <- e
 			return
 		}
-		respChan <- containertypes.ContainerWaitOKBody{
+		respChan <- containertypes.WaitResponse{
 			StatusCode: int64(c.statusCode),
 		}
 	}(c.waitErr)
