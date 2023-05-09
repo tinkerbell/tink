@@ -4,8 +4,7 @@ import (
 	"context"
 	"net"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -20,15 +19,21 @@ type Registrar interface {
 // SetupGRPC opens a listener and serves a given Registrar's APIs on a gRPC server and returns the listener's address or an error.
 func SetupGRPC(ctx context.Context, r Registrar, listenAddr string, errCh chan<- error) (string, error) {
 	params := []grpc.ServerOption{
-		grpc_middleware.WithUnaryServerChain(grpc_prometheus.UnaryServerInterceptor, otelgrpc.UnaryServerInterceptor()),
-		grpc_middleware.WithStreamServerChain(grpc_prometheus.StreamServerInterceptor, otelgrpc.StreamServerInterceptor()),
+		grpc.ChainUnaryInterceptor(
+			grpcprometheus.UnaryServerInterceptor,
+			otelgrpc.UnaryServerInterceptor(),
+		),
+		grpc.ChainStreamInterceptor(
+			grpcprometheus.StreamServerInterceptor,
+			otelgrpc.StreamServerInterceptor(),
+		),
 	}
 
 	// register servers
 	s := grpc.NewServer(params...)
 	r.Register(s)
 	reflection.Register(s)
-	grpc_prometheus.Register(s)
+	grpcprometheus.Register(s)
 
 	lis, err := net.Listen("tcp", listenAddr)
 	if err != nil {
