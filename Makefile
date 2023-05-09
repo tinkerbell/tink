@@ -1,6 +1,8 @@
 # Only use the recipes defined in these makefiles
 MAKEFLAGS += --no-builtin-rules
 
+PATH  := $(PATH):$(PWD)/bin
+
 # Use bash instead of plain sh and treat the shell as one shell script invocation.
 SHELL 		:= bash
 .SHELLFLAGS := -o pipefail -euc
@@ -57,13 +59,7 @@ build: $(BINARIES) ## Build all tink binaries. Cross build by setting GOOS and G
 # See https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html.
 .PHONY: $(BINARIES)
 $(BINARIES):
-	CGO_ENABLED=0 \
-	GOOS=$(GOOS) \
-	GOARCH=$(GOARCH) \
-	$(GO) build \
-		$(LDFLAGS) \
-		-o ./bin/$@-$(GOOS)-$(GOARCH) \
-		./cmd/$@
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build $(LDFLAGS) -o ./bin/$@-$(GOOS)-$(GOARCH) ./cmd/$@
 
 # IMAGE_ARGS is resolved when its used in the `%-image` targets. Consequently, the $* automatic 
 # variable isn't evaluated until the target is called.  
@@ -91,8 +87,12 @@ images: $(addsuffix -image,$(BINARIES)) ## Build all tink container images. All 
 
 .PHONY: test
 test: ## Run tests
+	$(GO) test -coverprofile=coverage.txt ./...
+
+.PHONY: e2e-test
+e2e-test: ## Run e2e tests
 	$(SETUP_ENVTEST) use
-	source <($(SETUP_ENVTEST) use -p env) && $(GO) test -coverprofile=coverage.txt ./...
+	source <($(SETUP_ENVTEST) use -p env) && $(GO) test -v ./internal/e2e/... -tags=e2e
 
 .PHONY: generate-proto
 generate-proto: buf.gen.yaml buf.lock $(shell git ls-files '**/*.proto') _protoc

@@ -27,13 +27,10 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: "${{ env.GO_VERSION }}"
-      - name: Install nix
-        uses: cachix/install-nix-action@v20
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-      - name: Install required nix packages
-        run: nix-shell --run 'true'
-      - run: make test
+      - name: Run unit tests
+        run: make test
+      - name: Run e2e tests
+        run: make e2e-test
       - name: Upload codecov
         run: bash <(curl -s https://codecov.io/bash)
   checks:
