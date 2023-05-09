@@ -2,28 +2,14 @@
 # See https://docs.github.com/en/rest/reference/repos#add-a-repository-collaborator for available options
 collaborators:
   # Maintainers, should also be added to the .github/CODEOWNERS file as owners of this settings.yml file.
-  - username: micahhausler
-    permission: maintain
-  - username: mmlb
-    permission: maintain
   - username: chrisdoherty4
+    permission: maintain
+  - username: jacobweinstock
     permission: maintain
   # Approvers
   - username: displague
     permission: push
-  - username: jacobweinstock
-    permission: push
-  - username: nshalman
-    permission: push
-  - username: tstromberg
-    permission: push
   # Reviewers
-  - username: detiber
-    permission: triage
-  - username: stephen-fox
-    permission: triage
-  - username: tobert
-    permission: triage
 
 # Note: `permission` is only valid on organization-owned repositories.
 # The permission to grant the collaborator. Can be one of:
