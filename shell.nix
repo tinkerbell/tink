@@ -11,6 +11,8 @@ with pkgs;
 
 mkShell {
   buildInputs = [
+    git
+    gnumake
     jq
     nixfmt
     nodePackages.prettier
