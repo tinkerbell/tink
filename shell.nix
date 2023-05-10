@@ -9,29 +9,11 @@ in { pkgs ? import (_pkgs.fetchFromGitHub {
 
 with pkgs;
 
-let
-  pkgs = import (_pkgs.fetchFromGitHub {
-    # go 1.18.5
-    owner = "NixOS";
-    repo = "nixpkgs";
-    # branch@date: nixpkgs-unstable@2023-03-30
-    rev = "8b3bc690e201c8d3cbd14633dbf3462a820e73f2";
-    sha256 = "sha256-+ckiCxbGFSs1/wHKCXAZnvb37Htf6k5nmQE3T0Y7hK8=";
-  }) { };
-
-  go_1_20_3 = pkgs.go;
-
-in mkShell {
+mkShell {
   buildInputs = [
-    docker-compose
-    git
-    gnumake
-    gnused
-    go_1_20_3
     jq
     nixfmt
     nodePackages.prettier
-    protobuf
     python3Packages.codespell
     python3Packages.pip
     python3Packages.setuptools
