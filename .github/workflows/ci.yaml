@@ -45,8 +45,8 @@ jobs:
         uses: cachix/install-nix-action@v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - run: nix-shell --run 'true'
-      - run: PATH=$PWD/bin/:$PATH ./ci-checks.sh
+      - name: Run ci-checks.sh
+        run: nix-shell --run 'make ci-checks'
   # We preemptively build the binaries for efficiency instead of waiting on unit tests to pass
   # hence this doesn't depend on anything.
   build:
