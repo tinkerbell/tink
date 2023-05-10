@@ -175,7 +175,7 @@ check-proto: generate-proto
 
 .PHONY: verify
 verify: lint check-generated ## Verify code style, is lint free, freshness ...
-	$(GOFUMPT) -s -d .
+	$(GOFUMPT) -d .
 
 .PHONY: lint
 lint: shellcheck hadolint golangci-lint yamllint ## Lint code
