@@ -177,6 +177,14 @@ check-proto: generate-proto
 verify: lint check-generated ## Verify code style, is lint free, freshness ...
 	$(GOFUMPT) -s -d .
 
+.PHONY: ci-checks
+ci-checks: ## Run ci-checks.sh script
+	@if type nix-shell 2>&1 > /dev/null; then \
+		./ci-checks.sh; \
+	else \
+		docker run -it --rm -v $${PWD}:/code -w /code nixos/nix nix-shell --run 'make ci-checks'; \
+	fi
+
 .PHONY: lint
 lint: shellcheck hadolint golangci-lint yamllint ## Lint code
 
