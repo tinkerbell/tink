@@ -5,40 +5,49 @@ shared:
   # Rules applicable to both queueing and merge requests.
   compulsory: &compulsory
 
-    # Ensure the minimal CI checks have passed.
-    - check-success=DCO
-    - check-success=Package (quay.io/tinkerbell/tink, tink-server)
-    - check-success=Package (quay.io/tinkerbell/tink-controller, tink-controller)
-    - check-success=Package (quay.io/tinkerbell/tink-worker, tink-worker)
+  # Ensure the minimal CI checks have passed.
+  - check-success=DCO
+  - check-success=Package (quay.io/tinkerbell/tink, tink-server)
+  - check-success=Package (quay.io/tinkerbell/tink-controller, tink-controller)
+  - check-success=Package (quay.io/tinkerbell/tink-worker, tink-worker)
 
-    # Ensure we're targetting the default branch.
-    - base=main
+  # Ensure we're targetting the default branch.
+  - base=main
 
-    # Ensure we have adequete reviews.
-    - "#approved-reviews-by>=1"
-    - "#changes-requested-reviews-by=0"
+  # Ensure we have adequete reviews.
+  - "#approved-reviews-by>=1"
+  - "#changes-requested-reviews-by=0"
 
-    # Ensure we aren't being explicitly blocked with a label.
-    - label!=do-not-merge
+  # Ensure we aren't being explicitly blocked with a label.
+  - label!=do-not-merge
 
 queue_rules:
-  - name: default
-    conditions:
-      - and: *compulsory
+- name: default
+  conditions:
+  - and: *compulsory
 
 pull_request_rules:
-  - name: Automatic merge
-    conditions:
-      - and: *compulsory
+- name: Automatic merge
+  conditions:
+  - and: *compulsory
 
-      # Ensure the review is opted in using labels.
-      - label=ready-to-merge
+  # Ensure the review is opted in using labels.
+  - label=ready-to-merge
 
-    actions:
-      queue:
-        name: default
-        method: merge
-        commit_message_template: |
-          {{ title }} (#{{ number }})
+  actions:
+    queue:
+      name: default
+      method: merge
+      commit_message_template: |
+        {{ title }} (#{{ number }})
 
-          {{ body }}
+        {{ body }}
+
+- name: Automatic dependabot approval
+  conditions:
+  - author=dependabot[bot]
+  actions:
+    review:
+      type: APPROVE
+      message: Automatically approving dependabot
+  priority: 3000
