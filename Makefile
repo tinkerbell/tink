@@ -240,5 +240,5 @@ yamllint: $(YAMLLINT_BIN)
 
 .PHONY: _protoc ## Install all required tools for use with this Makefile.
 _protoc:
-	$(GO) install $(PROTOC_GEN_GO)
-	$(GO) install $(PROTOC_GEN_GO_GRPC)
+	GOBIN=$${PWD}/bin $(GO) install $(PROTOC_GEN_GO)
+	GOBIN=$${PWD}/bin $(GO) install $(PROTOC_GEN_GO_GRPC)
