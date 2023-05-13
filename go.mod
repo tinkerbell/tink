@@ -7,7 +7,7 @@ require (
 	github.com/docker/docker v23.0.6+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.7
 	github.com/go-logr/logr v1.2.4
-	github.com/go-logr/zapr v1.2.3
+	github.com/go-logr/zapr v1.2.4
 	github.com/google/go-cmp v0.5.9
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/onsi/ginkgo/v2 v2.9.4
