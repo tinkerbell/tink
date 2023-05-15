@@ -19,16 +19,15 @@ type Fake struct {
 	Workflows []workflow.Workflow
 }
 
-func (f Fake) Start(ctx context.Context, _ string, runner workflow.Handler) error {
+func (f Fake) Start(ctx context.Context, _ string, handler WorkflowHandler) error {
 	f.Log.Info("Starting fake transport")
 	for _, w := range f.Workflows {
-		if err := runner.HandleWorkflow(ctx, w, f); err != nil {
-			f.Log.Error(err, "Running workflow", "workflow", w)
-		}
+		handler.HandleWorkflow(ctx, w, f)
 	}
 	return nil
 }
 
-func (f Fake) RecordEvent(_ context.Context, e event.Event) {
+func (f Fake) RecordEvent(_ context.Context, e event.Event) error {
 	f.Log.Info("Recording event", "event", e.GetName())
+	return nil
 }

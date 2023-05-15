@@ -27,6 +27,7 @@ KUSTOMIZE 		:= $(GO) run sigs.k8s.io/kustomize/kustomize/v4@v4.5
 SETUP_ENVTEST   := $(GO) run sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.0.0-20220304125252-9ee63fc65a97
 GOLANGCI_LINT	:= $(GO) run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52
 YAMLFMT			:= $(GO) run github.com/google/yamlfmt/cmd/yamlfmt@v0.6
+MOQ				:= $(GO) run github.com/matryer/moq@v0.3
 
 # Installed tools
 PROTOC_GEN_GO_GRPC 	:= google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
@@ -94,11 +95,18 @@ e2e-test: ## Run e2e tests
 	$(SETUP_ENVTEST) use
 	source <($(SETUP_ENVTEST) use -p env) && $(GO) test -v ./internal/e2e/... -tags=e2e
 
+mocks:
+	$(MOQ) -fmt goimpots -rm -out ./internal/proto/workflow/v2/mock.go ./internal/proto/workflow/v2 WorkflowServiceClient WorkflowService_GetWorkflowsClient
+	$(MOQ) -fmt goimports -rm -out ./internal/agent/transport/mock.go ./internal/agent/transport WorkflowHandler
+	$(MOQ) -fmt goimports -rm -out ./internal/agent/mock.go ./internal/agent Transport ContainerRuntime
+	$(MOQ) -fmt goimports -rm -out ./internal/agent/event/mock.go ./internal/agent/event Recorder
+
 .PHONY: generate-proto
 generate-proto: buf.gen.yaml buf.lock $(shell git ls-files '**/*.proto') _protoc
 	$(BUF) mod update
 	$(BUF) generate
 	$(GOFUMPT) -w internal/proto/*.pb.*
+	$(GOFUMPT) -w internal/proto/workflow/v2/*.pb.*
 
 .PHONY: generate
 generate: generate-proto generate-go generate-manifests ## Generate code, manifests etc.

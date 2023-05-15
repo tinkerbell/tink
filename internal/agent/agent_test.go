@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
@@ -20,12 +21,12 @@ import (
 func TestAgent_InvalidStart(t *testing.T) {
 	cases := []struct {
 		Name  string
-		Agent agent.Agent
+		Agent *agent.Agent
 		Error string
 	}{
 		{
 			Name: "MissingAgentID",
-			Agent: agent.Agent{
+			Agent: &agent.Agent{
 				Log:       logr.Discard(),
 				Transport: transport.Noop(),
 				Runtime:   runtime.Noop(),
@@ -34,7 +35,7 @@ func TestAgent_InvalidStart(t *testing.T) {
 		},
 		{
 			Name: "MissingRuntime",
-			Agent: agent.Agent{
+			Agent: &agent.Agent{
 				Log:       logr.Discard(),
 				ID:        "1234",
 				Transport: transport.Noop(),
@@ -43,7 +44,7 @@ func TestAgent_InvalidStart(t *testing.T) {
 		},
 		{
 			Name: "MissingTransport",
-			Agent: agent.Agent{
+			Agent: &agent.Agent{
 				Log:     logr.Discard(),
 				ID:      "1234",
 				Runtime: runtime.Noop(),
@@ -52,8 +53,16 @@ func TestAgent_InvalidStart(t *testing.T) {
 		},
 		{
 			Name: "InitializedCorrectly",
-			Agent: agent.Agent{
+			Agent: &agent.Agent{
 				Log:       logr.Discard(),
+				ID:        "1234",
+				Transport: transport.Noop(),
+				Runtime:   runtime.Noop(),
+			},
+		},
+		{
+			Name: "NoLogger",
+			Agent: &agent.Agent{
 				ID:        "1234",
 				Transport: transport.Noop(),
 				Runtime:   runtime.Noop(),
@@ -76,16 +85,13 @@ func TestAgent_InvalidStart(t *testing.T) {
 	}
 }
 
+// The goal of this test is to ensure the agent rejects concurrent workflows.
 func TestAgent_ConcurrentWorkflows(t *testing.T) {
-	// The goal of this test is to ensure the agent rejects concurrent workflows. We have to
-	// build a valid agent because it will also reject calls to HandleWorkflow without first
-	// starting the Agent.
-
 	logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
-
 	recorder := event.NoopRecorder()
+	trnport := transport.Noop()
 
-	wrkflow := workflow.Workflow{
+	wflw := workflow.Workflow{
 		ID: "1234",
 		Actions: []workflow.Action{
 			{
@@ -96,14 +102,8 @@ func TestAgent_ConcurrentWorkflows(t *testing.T) {
 		},
 	}
 
-	trnport := agent.TransportMock{
-		StartFunc: func(ctx context.Context, agentID string, handler workflow.Handler) error {
-			return handler.HandleWorkflow(ctx, wrkflow, recorder)
-		},
-	}
-
+	// Started is used to indicate the runtime has received the workflow.
 	started := make(chan struct{})
-
 	rntime := agent.ContainerRuntimeMock{
 		RunFunc: func(ctx context.Context, action workflow.Action) error {
 			started <- struct{}{}
@@ -119,26 +119,28 @@ func TestAgent_ConcurrentWorkflows(t *testing.T) {
 		ID:        "1234",
 	}
 
-	// Build a cancellable context so we can tear the goroutine down.
+	// HandleWorkflow will reject us if we haven't started the agent first.
+	if err := agnt.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
 
-	errs := make(chan error)
-	ctx, cancel := context.WithCancel(context.Background())
+	// Build a cancellable context so we can tear everything down. The timeout is guesswork but
+	// this test shouldn't take long.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	go func() { errs <- agnt.Start(ctx) }()
+	// Handle the first workflow and wait for it to start.
+	agnt.HandleWorkflow(ctx, wflw, recorder)
 
-	// Await either an error or the mock runtime to tell us its stated.
+	// Wait for the container runtime to start.
 	select {
-	case err := <-errs:
-		t.Fatalf("Unexpected error: %v", err)
 	case <-started:
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
 	}
 
-	// Attempt to fire off another workflow.
-	err := agnt.HandleWorkflow(context.Background(), wrkflow, recorder)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	// Attempt to fire off a second workflow.
+	agnt.HandleWorkflow(ctx, wflw, recorder)
 
 	// Ensure the latest event recorded is a event.WorkflowRejected.
 	calls := recorder.RecordEventCalls()
@@ -153,7 +155,7 @@ func TestAgent_ConcurrentWorkflows(t *testing.T) {
 	}
 
 	expectEvent := event.WorkflowRejected{
-		ID:      wrkflow.ID,
+		ID:      wflw.ID,
 		Message: "workflow already in progress",
 	}
 	if !cmp.Equal(expectEvent, ev) {
@@ -407,13 +409,7 @@ message`,
 
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			recorder := event.NoopRecorder()
-
-			trnport := agent.TransportMock{
-				StartFunc: func(ctx context.Context, agentID string, handler workflow.Handler) error {
-					return handler.HandleWorkflow(ctx, tc.Workflow, recorder)
-				},
-			}
+			trnport := transport.Noop()
 
 			rntime := agent.ContainerRuntimeMock{
 				RunFunc: func(ctx context.Context, action workflow.Action) error {
@@ -424,18 +420,44 @@ message`,
 				},
 			}
 
+			// The event recorder is what tells us the workflow has finished executing so we use it
+			// to check for the last expected action.
+			lastEventReceived := make(chan struct{})
+			recorder := event.RecorderMock{
+				RecordEventFunc: func(contextMoqParam context.Context, event event.Event) error {
+					if cmp.Equal(event, tc.Events[len(tc.Events)-1]) {
+						lastEventReceived <- struct{}{}
+					}
+					return nil
+				},
+			}
+
+			// Create and start the agent as start is a prereq to calling HandleWorkflow().
 			agnt := agent.Agent{
 				Log:       logger,
 				Transport: &trnport,
 				Runtime:   &rntime,
 				ID:        "1234",
 			}
-
-			err := agnt.Start(context.Background())
-			if err != nil {
+			if err := agnt.Start(context.Background()); err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
+			// Configure a timeout of 5 seconds, this test shouldn't take long.
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			// Handle the workflow
+			agnt.HandleWorkflow(ctx, tc.Workflow, &recorder)
+
+			// Wait for the last expected event or timeout.
+			select {
+			case <-lastEventReceived:
+			case <-ctx.Done():
+				t.Fatal(ctx.Err())
+			}
+
+			// Validate all events received are what we expected.
 			calls := recorder.RecordEventCalls()
 			if len(calls) != len(tc.Events) {
 				t.Fatalf("Expected %v events; Received %v\n%+v", len(tc.Events), len(calls), calls)

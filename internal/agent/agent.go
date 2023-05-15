@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/internal/agent/event"
@@ -27,7 +28,12 @@ type Agent struct {
 	// Runtime is the container runtime used to execute workflow actions.
 	Runtime ContainerRuntime
 
+	// sem ensure we handle a single workflow at a time.
 	sem chan struct{}
+
+	// executionContext tracks the currently executing workflow.
+	executionContext *executionContext
+	mtx              sync.RWMutex
 }
 
 // Start finalizes the Agent configuration and starts the configured Transport so it is ready
@@ -43,8 +49,12 @@ func (agent *Agent) Start(ctx context.Context) error {
 	}
 
 	if agent.Runtime == nil {
-		//nolint:stylecheck // Specifying field on data structure
+		//nolint:stylecheck // Runtime is a field of agent.
 		return errors.New("Runtime field must be set before calling Start()")
+	}
+
+	if agent.Log.GetSink() == nil {
+		agent.Log = logr.Discard()
 	}
 
 	agent.Log = agent.Log.WithValues("agent_id", agent.ID)
@@ -53,30 +63,80 @@ func (agent *Agent) Start(ctx context.Context) error {
 	agent.sem = make(chan struct{}, 1)
 	agent.sem <- struct{}{}
 
-	agent.Log.Info("Starting agent")
 	return agent.Transport.Start(ctx, agent.ID, agent)
 }
 
 // HandleWorkflow satisfies transport.
-func (agent *Agent) HandleWorkflow(ctx context.Context, wflw workflow.Workflow, events event.Recorder) error {
-	// sem isn't protected by a synchronization data structure so this is technically invoking
-	// undefined behavior - consider this a best effort to ensuring Start() has been called.
+func (agent *Agent) HandleWorkflow(ctx context.Context, wflw workflow.Workflow, events event.Recorder) {
 	if agent.sem == nil {
-		return errors.New("agent must have Start() called before calling HandleWorkflow()")
+		agent.Log.Info("Agent must have Start() called before calling HandleWorkflow()")
 	}
 
 	select {
 	case <-agent.sem:
-		// Replenish the semaphore on exit so we can pick up another workflow.
-		defer func() { agent.sem <- struct{}{} }()
-		return agent.run(ctx, wflw, events)
+		// Ensure we configure the current workflow and cancellation func before we launch the
+		// goroutine to avoid a race with CancelWorkflow.
+		agent.mtx.Lock()
+		defer agent.mtx.Unlock()
+
+		ctx, cancel := context.WithCancel(ctx)
+		agent.executionContext = &executionContext{
+			Workflow: wflw,
+			Cancel:   cancel,
+		}
+
+		go func() {
+			// Replenish the semaphore on exit so we can pick up another workflow.
+			defer func() { agent.sem <- struct{}{} }()
+
+			agent.run(ctx, wflw, events)
+
+			// Nilify the execution context after running so cancellation requests are ignored.
+			agent.mtx.Lock()
+			defer agent.mtx.Unlock()
+			agent.executionContext = nil
+		}()
 
 	default:
+		log := agent.Log.WithValues("workflow_id", wflw.ID)
+
 		reject := event.WorkflowRejected{
 			ID:      wflw.ID,
 			Message: "workflow already in progress",
 		}
-		events.RecordEvent(ctx, reject)
-		return nil
+
+		if err := events.RecordEvent(ctx, reject); err != nil {
+			log.Error(err, "Failed to record workflow rejection event")
+			return
+		}
+
+		log.Info("Workflow already executing; dropping request")
 	}
+}
+
+func (agent *Agent) CancelWorkflow(workflowID string) {
+	agent.mtx.RLock()
+	defer agent.mtx.RUnlock()
+
+	if agent.executionContext == nil {
+		agent.Log.Info("No workflow running; ignoring cancellation request", "workflow_id", workflowID)
+		return
+	}
+
+	if agent.executionContext.Workflow.ID != workflowID {
+		agent.Log.Info(
+			"Incorrect workflow ID in cancellation request; ignoring cancellation request",
+			"workflow_id", workflowID,
+			"running_workflow_id", agent.executionContext.Workflow.ID,
+		)
+		return
+	}
+
+	agent.Log.Info("Cancel workflow", "workflow_id", workflowID)
+	agent.executionContext.Cancel()
+}
+
+type executionContext struct {
+	Workflow workflow.Workflow
+	Cancel   context.CancelFunc
 }

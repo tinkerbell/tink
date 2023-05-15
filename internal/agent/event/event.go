@@ -18,5 +18,5 @@ type Event interface {
 
 // Recorder provides event recording methods.
 type Recorder interface {
-	RecordEvent(context.Context, Event)
+	RecordEvent(context.Context, Event) error
 }
