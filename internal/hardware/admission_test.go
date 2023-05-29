@@ -35,10 +35,7 @@ func TestAdmissionHandler(t *testing.T) {
 	_ = v1alpha2.AddToScheme(scheme)
 
 	// Configure the decoder for the Admission object.
-	decoder, err := admission.NewDecoder(scheme)
-	if err != nil {
-		t.Fatalf("create decoder: %v", err)
-	}
+	decoder := admission.NewDecoder(scheme)
 
 	// Build the fake client with indexes so the Admission object can perform its lookups.
 	// The indexes should be in sync with whatever indexes are registered via

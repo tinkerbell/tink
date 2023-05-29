@@ -60,7 +60,7 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 	clstr, err := cluster.New(config, func(opts *cluster.Options) {
 		opts.Scheme = controller.DefaultScheme()
 		opts.Logger = zapr.NewLogger(zap.NewNop())
-		opts.Namespace = namespace
+		opts.Cache.Namespaces = []string{namespace}
 	})
 	if err != nil {
 		return nil, fmt.Errorf("init client: %w", err)
