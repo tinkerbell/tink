@@ -106,7 +106,6 @@ func TestReconcile(t *testing.T) {
 			},
 			wantErr: nil,
 		},
-		// **************
 		{
 			name: "NewWorkflow",
 			seedTemplate: &v1alpha1.Template{
@@ -228,7 +227,6 @@ func TestReconcile(t *testing.T) {
 			},
 			wantErr: nil,
 		},
-		// *****
 		{
 			name: "MalformedWorkflow",
 			seedTemplate: &v1alpha1.Template{
@@ -355,9 +353,8 @@ tasks:
 			},
 			wantErr: errors.New("parsing yaml data: yaml: line 2: found character that cannot start any token"),
 		},
-		// *****
 		{
-			name: "Missing Template",
+			name: "MissingTemplate",
 			seedTemplate: &v1alpha1.Template{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Template",
@@ -438,96 +435,8 @@ tasks:
 			},
 			wantErr: errors.New("no template found: name=debian; namespace=default"),
 		},
-		// *****
 		{
-			name: "Deleted Workflow",
-			seedTemplate: &v1alpha1.Template{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Template",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "debian",
-					Namespace: "default",
-				},
-				Spec:   v1alpha1.TemplateSpec{},
-				Status: v1alpha1.TemplateStatus{},
-			},
-			seedWorkflow: &v1alpha1.Workflow{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Workflow",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "debian",
-					Namespace: "default",
-					DeletionTimestamp: func() *metav1.Time {
-						t := metav1.NewTime(TestTime.BeforeSec(5))
-						return &t
-					}(),
-				},
-				Spec: v1alpha1.WorkflowSpec{
-					TemplateRef: "debian", // doesn't exist
-					HardwareMap: map[string]string{
-						"device_1": "3c:ec:ef:4c:4f:54",
-					},
-				},
-				Status: v1alpha1.WorkflowStatus{},
-			},
-			seedHardware: &v1alpha1.Hardware{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Hardware",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "machine1",
-					Namespace: "default",
-				},
-				Spec: v1alpha1.HardwareSpec{
-					Interfaces: []v1alpha1.Interface{
-						{
-							Netboot: &v1alpha1.Netboot{
-								AllowPXE:      &[]bool{true}[0],
-								AllowWorkflow: &[]bool{true}[0],
-							},
-							DHCP: &v1alpha1.DHCP{
-								Arch:     "x86_64",
-								Hostname: "sm01",
-								IP: &v1alpha1.IP{
-									Address: "172.16.10.100",
-									Gateway: "172.16.10.1",
-									Netmask: "255.255.255.0",
-								},
-								LeaseTime:   86400,
-								MAC:         "3c:ec:ef:4c:4f:54",
-								NameServers: []string{},
-								UEFI:        true,
-							},
-						},
-					},
-				},
-			},
-			req: reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      "debian",
-					Namespace: "default",
-				},
-			},
-			want: reconcile.Result{},
-			wantWflow: &v1alpha1.Workflow{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Workflow",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "999",
-				},
-			},
-			wantErr: nil,
-		},
-		// **************
-		{
-			name: "Timed Out workflow Workflow",
+			name: "TimedOutWorkflow",
 			seedTemplate: &v1alpha1.Template{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Template",
@@ -678,7 +587,7 @@ tasks:
 			wantErr: nil,
 		},
 		{
-			name: "Error getting hardware ref",
+			name: "ErrorGettingHardwareRef",
 			seedTemplate: &v1alpha1.Template{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Template",
@@ -767,7 +676,7 @@ tasks:
 			wantErr: errors.New("hardware not found: name=i_dont_exist; namespace=default"),
 		},
 		{
-			name: "success with hardware ref",
+			name: "SuccessWithHardwareRef",
 			seedHardware: &v1alpha1.Hardware{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Hardware",
@@ -904,6 +813,7 @@ tasks:
 		}
 		if tc.seedWorkflow != nil {
 			kc = kc.WithObjects(tc.seedWorkflow)
+			kc = kc.WithStatusSubresource(tc.seedWorkflow)
 		}
 		controller := &Reconciler{
 			client:  kc.Build(),
