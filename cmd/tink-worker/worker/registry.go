@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/pkg/errors"
 )
 
@@ -32,7 +33,7 @@ type ImagePullStatus struct {
 // PullImage outputs to stdout the contents of the requested image (relative to the registry).
 func (m *containerManager) PullImage(ctx context.Context, image string) error {
 	l := m.getLogger(ctx)
-	authConfig := types.AuthConfig{
+	authConfig := registry.AuthConfig{
 		Username:      m.registryDetails.Username,
 		Password:      m.registryDetails.Password,
 		ServerAddress: m.registryDetails.Registry,
