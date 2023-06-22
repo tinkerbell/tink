@@ -5,8 +5,8 @@ package workflow
 // Workflow represents a runnable workflow for the Handler.
 type Workflow struct {
 	// Do we need a workflow name? Does that even come down in the proto definition?
-	ID      string
-	Actions []Action
+	ID      string   `yaml:"id"`
+	Actions []Action `yaml:"actions"`
 }
 
 func (w Workflow) String() string {
@@ -15,14 +15,14 @@ func (w Workflow) String() string {
 
 // Action represents an individually runnable action.
 type Action struct {
-	ID               string
-	Name             string
-	Image            string
-	Cmd              string
-	Args             []string
-	Env              map[string]string
-	Volumes          []string
-	NetworkNamespace string
+	ID               string            `yaml:"id"`
+	Name             string            `yaml:"name"`
+	Image            string            `yaml:"image"`
+	Cmd              string            `yaml:"cmd"`
+	Args             []string          `yaml:"args"`
+	Env              map[string]string `yaml:"env"`
+	Volumes          []string          `yaml:"volumes"`
+	NetworkNamespace string            `yaml:"networkNamespace"`
 }
 
 func (a Action) String() string {
