@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package internal.proto.workflow.v2;
+
+option go_package = "github.com/tinkerbell/tink/internal/proto/workflow/v2;workflow";
+
+// WorkflowService is responsible for retrieving workflows to be executed by the agent and
+// publishing events as a workflow executes.
+service WorkflowService {
+  // GetWorkflows creates a stream that will receive workflows intended for the agent identified
+  // by the GetWorkflowsRequest.agent_id.
+  rpc GetWorkflows(GetWorkflowsRequest) returns (stream GetWorkflowsResponse) {}
+
+  // PublishEvent publishes a workflow event.
+  rpc PublishEvent(PublishEventRequest) returns (PublishEventResponse) {}
+}
+
+message GetWorkflowsRequest {
+  string agent_id = 1;
+}
+
+message GetWorkflowsResponse {
+  oneof cmd {
+    StartWorkflow start_workflow = 1;
+    StopWorkflow stop_workflow = 2;
+  }
+
+  message StartWorkflow {
+    Workflow workflow = 1;
+  }
+
+  message StopWorkflow {
+    string workflow_id = 1;
+  }
+}
+
+message PublishEventRequest {
+  Event event = 1;
+}
+
+message PublishEventResponse {}
+
+message Workflow {
+  // A unique identifier for a workflow.
+  string workflow_id = 1;
+  
+  // The actions that make up the workflow.
+  repeated Action actions = 2;
+
+  message Action {
+    // A unique identifier for an action in the context of a workflow.
+    string id = 1;
+  
+    // The name of the action. This can be used to identify actions in logging.
+    string name = 2;
+  
+    // The image to run.
+    string image = 3;
+
+    // The command to execute when launching the image. When using Docker as the action runtime
+    // it is used as the entrypoint.
+    optional string cmd = 4;
+
+    // Arguments to pass to the container.
+    repeated string args = 5;
+
+    // Environment variables to configure when launching the container.
+    map<string, string> env = 6;
+
+    // Volumes to mount when launching the container.
+    repeated string volumes = 7;
+
+    // The network namespace to launch the container in.
+    optional string network_namespace = 8;
+  }
+}
+
+message Event {
+  // A unique identifier for a workflow.
+  string workflow_id = 1;
+
+  oneof event {
+    ActionStarted action_started = 2;
+    ActionSucceeded action_succeeded = 3;
+    ActionFailed action_failed = 4;
+    WorkflowRejected workflow_rejected = 5;
+  }
+
+  message ActionStarted {
+    // A unique identifier for an action in the context of a workflow.
+    string action_id = 1;
+  }
+
+  message ActionSucceeded {
+    // A unique identifier for an action in the context of a workflow.
+    string action_id = 1;
+  }
+
+  message ActionFailed {
+    // A unique identifier for an action in the context of a workflow.
+    string action_id = 1;
+
+    // A UpperCamelCase word or phrase concisly describing why an action failed. It is typically 
+    // provided by the action itself.
+    optional string failure_reason = 2;
+  
+    // A free-form human readable string elaborating on the reason for failure. It is typically
+    // provided by the action itself.
+    optional string failure_message = 3;
+    
+  }
+
+  message WorkflowRejected {    
+    // A message describing why the workflow was rejected.
+    string message = 2;
+  }
+}

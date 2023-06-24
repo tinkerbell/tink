@@ -5,8 +5,10 @@ package agent
 
 import (
 	"context"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
 	"sync"
+
+	"github.com/tinkerbell/tink/internal/agent/transport"
+	"github.com/tinkerbell/tink/internal/agent/workflow"
 )
 
 // Ensure, that TransportMock does implement Transport.
@@ -19,7 +21,7 @@ var _ Transport = &TransportMock{}
 //
 //		// make and configure a mocked Transport
 //		mockedTransport := &TransportMock{
-//			StartFunc: func(contextMoqParam context.Context, agentID string, handler workflow.Handler) error {
+//			StartFunc: func(contextMoqParam context.Context, agentID string, workflowHandler transport.WorkflowHandler) error {
 //				panic("mock out the Start method")
 //			},
 //		}
@@ -30,7 +32,7 @@ var _ Transport = &TransportMock{}
 //	}
 type TransportMock struct {
 	// StartFunc mocks the Start method.
-	StartFunc func(contextMoqParam context.Context, agentID string, handler workflow.Handler) error
+	StartFunc func(contextMoqParam context.Context, agentID string, workflowHandler transport.WorkflowHandler) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -40,31 +42,31 @@ type TransportMock struct {
 			ContextMoqParam context.Context
 			// AgentID is the agentID argument value.
 			AgentID string
-			// Handler is the handler argument value.
-			Handler workflow.Handler
+			// WorkflowHandler is the workflowHandler argument value.
+			WorkflowHandler transport.WorkflowHandler
 		}
 	}
 	lockStart sync.RWMutex
 }
 
 // Start calls StartFunc.
-func (mock *TransportMock) Start(contextMoqParam context.Context, agentID string, handler workflow.Handler) error {
+func (mock *TransportMock) Start(contextMoqParam context.Context, agentID string, workflowHandler transport.WorkflowHandler) error {
 	if mock.StartFunc == nil {
 		panic("TransportMock.StartFunc: method is nil but Transport.Start was just called")
 	}
 	callInfo := struct {
 		ContextMoqParam context.Context
 		AgentID         string
-		Handler         workflow.Handler
+		WorkflowHandler transport.WorkflowHandler
 	}{
 		ContextMoqParam: contextMoqParam,
 		AgentID:         agentID,
-		Handler:         handler,
+		WorkflowHandler: workflowHandler,
 	}
 	mock.lockStart.Lock()
 	mock.calls.Start = append(mock.calls.Start, callInfo)
 	mock.lockStart.Unlock()
-	return mock.StartFunc(contextMoqParam, agentID, handler)
+	return mock.StartFunc(contextMoqParam, agentID, workflowHandler)
 }
 
 // StartCalls gets all the calls that were made to Start.
@@ -74,12 +76,12 @@ func (mock *TransportMock) Start(contextMoqParam context.Context, agentID string
 func (mock *TransportMock) StartCalls() []struct {
 	ContextMoqParam context.Context
 	AgentID         string
-	Handler         workflow.Handler
+	WorkflowHandler transport.WorkflowHandler
 } {
 	var calls []struct {
 		ContextMoqParam context.Context
 		AgentID         string
-		Handler         workflow.Handler
+		WorkflowHandler transport.WorkflowHandler
 	}
 	mock.lockStart.RLock()
 	calls = mock.calls.Start

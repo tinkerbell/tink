@@ -18,74 +18,81 @@ const ReasonRuntimeError = "RuntimeError"
 // ReasonInvalid indicates a reason provided by the runtime was invalid.
 const ReasonInvalid = "InvalidReason"
 
-// Consistent logging keys.
-const (
-	logErrorKey  = "error"
-	logReasonKey = "reason"
-)
-
 // validReasonRegex defines the regex for a valid action failure reason.
 var validReasonRegex = regexp.MustCompile(`^[a-zA-Z]+$`)
 
-// run executes the workflow using the runtime configured on the Agent.
-func (agent *Agent) run(ctx context.Context, wflw workflow.Workflow, events event.Recorder) error {
-	logger := agent.Log.WithValues("workflow", wflw)
-	logger.Info("Starting workflow")
+// run executes the workflow using the runtime configured on agent.
+func (agent *Agent) run(ctx context.Context, wflw workflow.Workflow, events event.Recorder) {
+	log := agent.Log.WithValues("workflow_id", wflw.ID)
+
+	workflowStart := time.Now()
+	log.Info("Start workflow")
 
 	for _, action := range wflw.Actions {
-		logger := logger.WithValues("action_id", action.ID, "action_name", action.Name)
+		log := log.WithValues("action_id", action.ID, "action_name", action.Name)
 
-		start := time.Now()
-		logger.Info("Starting action")
+		actionStart := time.Now()
+		log.Info("Start action")
 
-		events.RecordEvent(ctx, event.ActionStarted{
+		started := event.ActionStarted{
 			ActionID:   action.ID,
 			WorkflowID: wflw.ID,
-		})
+		}
+		if err := events.RecordEvent(ctx, started); err != nil {
+			log.Error(err, "Record action start event")
+			return
+		}
 
 		if err := agent.Runtime.Run(ctx, action); err != nil {
-			reason := extractReason(logger, err)
+			reason := extractReason(log, err)
 
 			// We consider newlines in the failure message invalid because it upsets formatting.
 			// The failure message is vital to easy debugability so we force the string into
 			// something we're happy with and communicate that.
 			message := strings.ReplaceAll(err.Error(), "\n", `\n`)
 
-			logger.Info("Action failed - terminating workflow",
-				logErrorKey, err,
-				logReasonKey, reason,
-				"duration", time.Since(start).String(),
+			log.Info("Action failed; terminating workflow",
+				"error", err,
+				"reason", reason,
+				"duration", time.Since(actionStart).String(),
 			)
-			events.RecordEvent(ctx, event.ActionFailed{
+
+			failed := event.ActionFailed{
 				ActionID:   action.ID,
 				WorkflowID: wflw.ID,
 				Reason:     reason,
 				Message:    message,
-			})
-			return nil
+			}
+			if err := events.RecordEvent(ctx, failed); err != nil {
+				log.Error(err, "Record failed action event", "event", failed)
+			}
+
+			return
 		}
 
-		events.RecordEvent(ctx, event.ActionSucceeded{
+		succeed := event.ActionSucceeded{
 			ActionID:   action.ID,
 			WorkflowID: wflw.ID,
-		})
+		}
+		if err := events.RecordEvent(ctx, succeed); err != nil {
+			log.Error(err, "Record succeeded action event")
+			return
+		}
 
-		logger.Info("Finished action", "duration", time.Since(start).String())
+		log.Info("Finish action", "duration", time.Since(actionStart).String())
 	}
 
-	logger.Info("Finished workflow")
-
-	return nil
+	log.Info("Finish workflow", "duration", time.Since(workflowStart).String())
 }
 
-func extractReason(logger logr.Logger, err error) string {
+func extractReason(log logr.Logger, err error) string {
 	reason := ReasonRuntimeError
 	if r, ok := failure.Reason(err); ok {
 		reason = r
 		if !validReasonRegex.MatchString(reason) {
-			logger.Info(
-				"Received invalid reason for action failure; using InvalidReason instead",
-				logReasonKey, reason,
+			log.Info(
+				"Received invalid reason for action failure; using InvalidReason",
+				"invalid_reason", reason,
 			)
 			reason = ReasonInvalid
 		}

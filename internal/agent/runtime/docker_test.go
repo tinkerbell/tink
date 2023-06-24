@@ -22,11 +22,10 @@ import (
 )
 
 func TestDockerImageNotPresent(t *testing.T) {
-	clnt, err := client.NewClientWithOpts(client.FromEnv)
+	clnt, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		t.Fatalf("Received unexpected error: %v", err)
 	}
-	clnt.NegotiateAPIVersion(context.Background())
 
 	image := "alpine"
 

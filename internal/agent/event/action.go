@@ -49,5 +49,5 @@ func (ActionFailed) GetName() Name {
 }
 
 func (e ActionFailed) String() string {
-	return fmt.Sprintf("workflow=%v action=%v reason=%v", e.WorkflowID, e.ActionID, e.Reason)
+	return fmt.Sprintf("workflow='%v' action='%v' reason='%v'", e.WorkflowID, e.ActionID, e.Reason)
 }
