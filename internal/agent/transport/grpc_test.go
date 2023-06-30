@@ -12,8 +12,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tinkerbell/tink/internal/agent/event"
 	"github.com/tinkerbell/tink/internal/agent/transport"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
 	workflowproto "github.com/tinkerbell/tink/internal/proto/workflow/v2"
+	"github.com/tinkerbell/tink/internal/workflow"
 	"google.golang.org/grpc"
 )
 

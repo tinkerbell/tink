@@ -8,8 +8,8 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/internal/agent/event"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
 	workflowproto "github.com/tinkerbell/tink/internal/proto/workflow/v2"
+	"github.com/tinkerbell/tink/internal/workflow"
 )
 
 var _ event.Recorder = &GRPC{}

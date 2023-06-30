@@ -12,11 +12,12 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	"github.com/tinkerbell/tink/internal/agent"
 	"github.com/tinkerbell/tink/internal/agent/runtime/internal"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
 	"github.com/tinkerbell/tink/internal/ptr"
-	"k8s.io/apimachinery/pkg/util/rand"
+	"github.com/tinkerbell/tink/internal/workflow"
 )
 
 var _ agent.ContainerRuntime = &Docker{}
