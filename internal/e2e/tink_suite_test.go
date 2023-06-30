@@ -13,15 +13,16 @@ import (
 	"github.com/go-logr/zapr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/tinkerbell/tink/api/v1alpha1"
-	"github.com/tinkerbell/tink/internal/controller"
-	"github.com/tinkerbell/tink/internal/grpcserver"
-	"github.com/tinkerbell/tink/internal/server"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+
+	"github.com/tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/internal/controller"
+	"github.com/tinkerbell/tink/internal/grpcserver"
+	"github.com/tinkerbell/tink/internal/obsolete/server"
 )
 
 var (

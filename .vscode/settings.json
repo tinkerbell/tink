@@ -1,0 +1,9 @@
+{
+    "gopls": {
+        "build.buildFlags": [
+            "-tags=e2e,integration,all_providers,docker",
+        ],
+        "formatting.gofumpt": true,
+        "formatting.local": "github.com/tinkerbell"
+    },
+}
