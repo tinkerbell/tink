@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v24.0.2+incompatible
+	github.com/docker/docker v24.0.3+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.7
 	github.com/go-logr/logr v1.2.4
 	github.com/go-logr/zapr v1.2.4
