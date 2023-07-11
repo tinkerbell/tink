@@ -26,13 +26,13 @@ func (agent *Agent) run(ctx context.Context, wflw workflow.Workflow, events even
 	log := agent.Log.WithValues("workflow_id", wflw.ID)
 
 	workflowStart := time.Now()
-	log.Info("Start workflow")
+	log.Info("Starting workflow")
 
 	for _, action := range wflw.Actions {
 		log := log.WithValues("action_id", action.ID, "action_name", action.Name)
 
 		actionStart := time.Now()
-		log.Info("Start action")
+		log.Info("Starting action")
 
 		started := event.ActionStarted{
 			ActionID:   action.ID,
@@ -79,10 +79,10 @@ func (agent *Agent) run(ctx context.Context, wflw workflow.Workflow, events even
 			return
 		}
 
-		log.Info("Finish action", "duration", time.Since(actionStart).String())
+		log.Info("Finished action", "duration", time.Since(actionStart).String())
 	}
 
-	log.Info("Finish workflow", "duration", time.Since(workflowStart).String())
+	log.Info("Finished workflow", "duration", time.Since(workflowStart).String())
 }
 
 func extractReason(log logr.Logger, err error) string {

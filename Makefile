@@ -49,7 +49,7 @@ help: ## Print this help
 VERSION ?= $(shell git rev-parse --short HEAD)
 
 # Define all the binaries we build for this project that get packaged into containers.
-BINARIES := tink-server tink-worker tink-controller virtual-worker
+BINARIES := tink-server tink-agent tink-worker tink-controller virtual-worker
 
 .PHONY: build
 build: $(BINARIES) ## Build all tink binaries. Cross build by setting GOOS and GOARCH.
