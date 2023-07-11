@@ -14,10 +14,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+
 	"github.com/tinkerbell/tink/internal/grpcserver"
 	"github.com/tinkerbell/tink/internal/httpserver"
-	"github.com/tinkerbell/tink/internal/server"
-	"go.uber.org/zap"
+	"github.com/tinkerbell/tink/internal/obsolete/server"
 )
 
 // version is set at build time.

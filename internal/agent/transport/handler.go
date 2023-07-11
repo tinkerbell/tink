@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/tinkerbell/tink/internal/agent/event"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
+	"github.com/tinkerbell/tink/internal/workflow"
 )
 
 // WorkflowHandler is responsible for workflow execution.

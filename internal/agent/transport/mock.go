@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/tinkerbell/tink/internal/agent/event"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
+	"github.com/tinkerbell/tink/internal/workflow"
 )
 
 // Ensure, that WorkflowHandlerMock does implement WorkflowHandler.

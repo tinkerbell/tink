@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/tinkerbell/tink/internal/agent/failure"
 	"github.com/tinkerbell/tink/internal/agent/runtime"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
+	"github.com/tinkerbell/tink/internal/workflow"
 	"go.uber.org/multierr"
 
 	"github.com/docker/docker/api/types"

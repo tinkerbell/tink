@@ -5,7 +5,6 @@ cmd/tink-server/tink-server
 cmd/tink-worker/tink-worker
 doc/
 .idea
-.vscode
 coverage.txt
 
 # Terraform

@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+
 	"github.com/tinkerbell/tink/internal/agent"
-	"github.com/tinkerbell/tink/internal/agent/workflow"
+	"github.com/tinkerbell/tink/internal/workflow"
 )
 
 var _ agent.ContainerRuntime = Fake{}

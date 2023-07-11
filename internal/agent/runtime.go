@@ -3,7 +3,7 @@ package agent
 import (
 	"context"
 
-	"github.com/tinkerbell/tink/internal/agent/workflow"
+	"github.com/tinkerbell/tink/internal/workflow"
 )
 
 // ContainerRuntime is a runtime capable of executing workflow actions.
