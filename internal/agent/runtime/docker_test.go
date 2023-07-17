@@ -27,7 +27,7 @@ func TestDockerImageNotPresent(t *testing.T) {
 		t.Fatalf("Received unexpected error: %v", err)
 	}
 
-	image := "alpine"
+	image := "hello-world"
 
 	images, err := clnt.ImageList(context.Background(), types.ImageListOptions{
 		Filters: filters.NewArgs(filters.Arg("reference", image)),
