@@ -1,0 +1,22 @@
+id: "test-workflow-id"
+actions:
+  - id: "test-action-1"
+    name: "my test action"
+    image: "docker.io/hub/alpine"
+    cmd: "sh -c"
+    args: ["echo", "action 1"]
+    env:
+      foo: bar
+    volumes:
+      - mount:/foo/bar:ro
+    networkNamespace: "custom-namespace"
+  - id: "test-action-2"
+    name: "my test action"
+    image: "docker.io/hub/alpine"
+    cmd: "sh -c"
+    args: ["echo", "action 2"]
+    env:
+      foo: bar
+    volumes:
+      - mount:/foo/bar:ro
+    networkNamespace: "custom-namespace"

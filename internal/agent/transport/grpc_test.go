@@ -2,13 +2,11 @@ package transport_test
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"sync"
 	"testing"
 
 	"github.com/go-logr/zerologr"
-	"github.com/kr/pretty"
 	"github.com/rs/zerolog"
 	"github.com/tinkerbell/tink/internal/agent/event"
 	"github.com/tinkerbell/tink/internal/agent/transport"
@@ -58,7 +56,6 @@ func TestGRPC(t *testing.T) {
 	handler := &transport.WorkflowHandlerMock{
 		HandleWorkflowFunc: func(contextMoqParam context.Context, workflow workflow.Workflow, recorder event.Recorder) {
 			defer wg.Done()
-			fmt.Println("handling")
 			close(responses)
 		},
 	}
@@ -71,6 +68,4 @@ func TestGRPC(t *testing.T) {
 	}
 
 	wg.Wait()
-
-	pretty.Println(handler.HandleWorkflowCalls())
 }
