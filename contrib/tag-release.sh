@@ -8,8 +8,8 @@ if [ -z "${1-}" ]; then
 fi
 
 new_tag=${1-}
-[[ $new_tag =~ ^v[0-9]*\.[0-9]*\.[0-9]*$ ]] || (
-	echo "Tag must be in the form of vX.Y.Z"
+[[ $new_tag =~ ^v[0-9]*\.[0-9]*\.[0-9]?(-rc[1-9])*$ ]] || (
+	echo "Tag must be in the form of vX.Y.Z or vX.Y.Z-rc1"
 	exit 1
 )
 
