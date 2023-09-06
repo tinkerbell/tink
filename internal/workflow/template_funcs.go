@@ -25,7 +25,10 @@ func formatPartition(dev string, partition int) string {
 	switch {
 	case strings.HasPrefix(dev, "/dev/nvme"):
 		return fmt.Sprintf("%vp%v", dev, partition)
-	case strings.HasPrefix(dev, "/dev/sd"), strings.HasPrefix(dev, "/dev/vd"), strings.HasPrefix(dev, "/dev/hd"):
+	case strings.HasPrefix(dev, "/dev/sd"),
+		strings.HasPrefix(dev, "/dev/vd"),
+		strings.HasPrefix(dev, "/dev/xvd"),
+		strings.HasPrefix(dev, "/dev/hd"):
 		return fmt.Sprintf("%v%v", dev, partition)
 	}
 	return dev
