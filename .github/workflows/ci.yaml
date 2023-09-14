@@ -86,7 +86,7 @@ jobs:
         run: echo ::set-output name=tags::${{ matrix.repository }}:latest,${{ matrix.repository }}:sha-${GITHUB_SHA::8}
       - uses: actions/checkout@v4
       - name: Login to quay.io
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         if: ${{ startsWith(github.ref, 'refs/heads/main') }}
         with:
           registry: quay.io
