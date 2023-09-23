@@ -35,9 +35,9 @@ The Tinkerbell stack consists of several microservices, and a gRPC API:
 `tink-worker` and `tink-server` communicate over gRPC, and are responsible for processing workflows.
 The CLI is the user-interactive piece for creating workflows and their building blocks, templates and hardware data.
 
-### Boots
+### Smee
 
-[Boots][2] is Tinkerbell's DHCP server.
+[Smee][2] is Tinkerbell's DHCP server.
 It handles DHCP requests, hands out IPs, and serves up iPXE.
 It uses the Tinkerbell client to pull and push hardware data.
 It only responds to a predefined set of MAC addresses so it can be deployed in an existing network without interfering with existing DHCP infrastructure.
@@ -97,7 +97,7 @@ export OTEL_EXPORTER_OTLP_INSECURE=true
 For complete documentation, please visit the Tinkerbell project hosted at [tinkerbell.org](https://tinkerbell.org).
 
 [1]: https://github.com/tinkerbell/tink
-[2]: https://github.com/tinkerbell/boots
+[2]: https://github.com/tinkerbell/smee
 [3]: https://github.com/tinkerbell/hegel
 [4]: https://github.com/tinkerbell/osie
 [5]: https://github.com/tinkerbell/hook
