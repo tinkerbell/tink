@@ -2,10 +2,7 @@
 
 [![Build Status](https://github.com/tinkerbell/tink/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/tink/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
 [![codecov](https://codecov.io/gh/tinkerbell/tink/branch/main/graph/badge.svg)](https://codecov.io/gh/tinkerbell/tink)
-![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4512/badge)](https://bestpractices.coreinfrastructure.org/projects/4512)
-
-This repository is [Experimental](https://github.com/packethost/standards/blob/main/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style! This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
 ## License
 
