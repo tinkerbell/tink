@@ -134,12 +134,16 @@ type templateHardwareData struct {
 // It is different than v1alpha1.Interface so that we don't couple ourselves to the API,
 // especially when we already have a v1alpha2.
 type netInterface struct {
-	MAC         string
+	MAC    string
+	VLANID string
+	DHCP   DHCP
+}
+
+type DHCP struct {
 	IP          string
 	Netmask     string
 	Gateway     string
 	Hostname    string
-	VLANID      string
 	Nameservers []string
 	Timeservers []string
 }
@@ -161,17 +165,17 @@ func toNetworkInterface(h []v1alpha1.Interface) []netInterface {
 	ni := []netInterface{}
 	for _, i := range h {
 		if i.DHCP != nil {
-			v := netInterface{}
+			v := netInterface{DHCP: DHCP{}}
 			v.MAC = i.DHCP.MAC
 			if i.DHCP.IP != nil {
-				v.IP = i.DHCP.IP.Address
-				v.Netmask = i.DHCP.IP.Netmask
-				v.Gateway = i.DHCP.IP.Gateway
+				v.DHCP.IP = i.DHCP.IP.Address
+				v.DHCP.Netmask = i.DHCP.IP.Netmask
+				v.DHCP.Gateway = i.DHCP.IP.Gateway
 			}
-			v.Hostname = i.DHCP.Hostname
+			v.DHCP.Hostname = i.DHCP.Hostname
 			v.VLANID = i.DHCP.VLANID
-			v.Nameservers = i.DHCP.NameServers
-			v.Timeservers = i.DHCP.TimeServers
+			v.DHCP.Nameservers = i.DHCP.NameServers
+			v.DHCP.Timeservers = i.DHCP.TimeServers
 			ni = append(ni, v)
 		}
 	}
