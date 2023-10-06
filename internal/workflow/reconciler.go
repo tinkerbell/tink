@@ -136,10 +136,10 @@ type templateHardwareData struct {
 type netInterface struct {
 	MAC    string
 	VLANID string
-	DHCP   DHCP
+	DHCP   dhcp
 }
 
-type DHCP struct {
+type dhcp struct {
 	IP          string
 	Netmask     string
 	Gateway     string
@@ -165,7 +165,7 @@ func toNetworkInterface(h []v1alpha1.Interface) []netInterface {
 	ni := []netInterface{}
 	for _, i := range h {
 		if i.DHCP != nil {
-			v := netInterface{DHCP: DHCP{}}
+			v := netInterface{DHCP: dhcp{}}
 			v.MAC = i.DHCP.MAC
 			if i.DHCP.IP != nil {
 				v.DHCP.IP = i.DHCP.IP.Address
