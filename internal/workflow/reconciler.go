@@ -126,14 +126,14 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 // templateHardwareData defines the data exposed for a Hardware instance to a Template.
 type templateHardwareData struct {
-	Disks      []string
-	Interfaces []netInterface
+	Disks             []string
+	NetworkInterfaces []networkInterface
 }
 
-// netInterface defines a network interface for a Hardware instance.
+// networkInterface defines a network interface for a Hardware instance.
 // It is different than v1alpha1.Interface so that we don't couple ourselves to the API,
 // especially when we already have a v1alpha2.
-type netInterface struct {
+type networkInterface struct {
 	MAC    string
 	VLANID string
 	DHCP   dhcp
@@ -155,17 +155,17 @@ func toTemplateHardwareData(hardware v1alpha1.Hardware) templateHardwareData {
 	for _, disk := range hardware.Spec.Disks {
 		contract.Disks = append(contract.Disks, disk.Device)
 	}
-	contract.Interfaces = toNetworkInterface(hardware.Spec.Interfaces)
+	contract.NetworkInterfaces = toNetworkInterface(hardware.Spec.Interfaces)
 
 	return contract
 }
 
 // toNetworkInterface converts a v1alpha1.Interface to a NetworkInterface.
-func toNetworkInterface(h []v1alpha1.Interface) []netInterface {
-	ni := []netInterface{}
+func toNetworkInterface(h []v1alpha1.Interface) []networkInterface {
+	ni := []networkInterface{}
 	for _, i := range h {
 		if i.DHCP != nil {
-			v := netInterface{DHCP: dhcp{}}
+			v := networkInterface{DHCP: dhcp{}}
 			v.MAC = i.DHCP.MAC
 			if i.DHCP.IP != nil {
 				v.DHCP.IP = i.DHCP.IP.Address
