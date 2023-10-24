@@ -1,45 +1,49 @@
 version: 2
 updates:
-- package-ecosystem: "github-actions"
-  directory: "/"
-  schedule:
-    interval: "weekly"
-    day: "monday"
-    time: "04:39"
-    timezone: "America/New_York"
-  reviewers:
-  - chrisdoherty4
-  - jacobweinstock
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:39"
+      timezone: "America/New_York"
+    reviewers:
+      - chrisdoherty4
+      - jacobweinstock
+    open-pull-requests-limit: 10
 
-- package-ecosystem: "gomod"
-  directory: "/"
-  schedule:
-    interval: "weekly"
-    day: "monday"
-    time: "03:52"
-    timezone: "America/New_York"
-  reviewers:
-  - chrisdoherty4
-  - jacobweinstock
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:52"
+      timezone: "America/New_York"
+    reviewers:
+      - chrisdoherty4
+      - jacobweinstock
+    open-pull-requests-limit: 10
 
-- package-ecosystem: "gomod"
-  directory: "/"
-  schedule:
-    interval: "weekly"
-    day: "thursday"
-    time: "03:52"
-    timezone: "America/New_York"
-  reviewers:
-  - chrisdoherty4
-  - jacobweinstock
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "03:52"
+      timezone: "America/New_York"
+    reviewers:
+      - chrisdoherty4
+      - jacobweinstock
+    open-pull-requests-limit: 10
 
-- package-ecosystem: "docker"
-  directory: "/"
-  schedule:
-    interval: "weekly"
-    day: "monday"
-    time: "04:22"
-    timezone: "America/New_York"
-  reviewers:
-  - chrisdoherty4
-  - jacobweinstock
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:22"
+      timezone: "America/New_York"
+    reviewers:
+      - chrisdoherty4
+      - jacobweinstock
+    open-pull-requests-limit: 10
