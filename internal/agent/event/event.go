@@ -7,7 +7,18 @@ import "context"
 // Name is a unique name identifying an event.
 type Name string
 
-// Event is a recordable event.
+// Event is an event generated during execution of a Workflow. Each event in the event package
+// implements this interface. Consumers may type switch the Event to the appropriate type for
+// event handling.
+//
+// E.g.
+//
+//	switch ev.(type) {
+//	case event.ActionStarted:
+//		// Handle ActionStarted event.
+//	default:
+//		// Unsupported event.
+//	}
 type Event interface {
 	// GetName retrieves the event name.
 	GetName() Name
