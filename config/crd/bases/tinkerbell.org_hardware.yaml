@@ -2,8 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.11.4
   name: hardware.tinkerbell.org
 spec:
   group: tinkerbell.org
@@ -421,7 +420,7 @@ spec:
                     description: NetworkInterface is the desired configuration for a particular network interface.
                     properties:
                       dhcp:
-                        description: DHCP is the basic network information for serving DHCP requests. Requires when DisbaleDHCP is false.
+                        description: DHCP is the basic network information for serving DHCP requests. Required when DisbaleDHCP is false.
                         properties:
                           gateway:
                             description: Gateway is the default gateway address to serve.
