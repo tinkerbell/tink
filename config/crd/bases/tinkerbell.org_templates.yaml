@@ -93,7 +93,7 @@ spec:
                         description: Name is a name for the action.
                         type: string
                       namespaces:
-                        description: Namespaces defines the Linux namespaces this container should execute in.
+                        description: Namespace defines the Linux namespaces this container should execute in.
                         properties:
                           network:
                             description: Network defines the network namespace.

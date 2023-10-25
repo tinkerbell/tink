@@ -49,9 +49,9 @@ type Action struct {
 	// +optional
 	Volumes []Volume `json:"volumes,omitempty"`
 
-	// Namespaces defines the Linux namespaces this container should execute in.
+	// Namespace defines the Linux namespaces this container should execute in.
 	// +optional
-	Namespaces *Namespaces `json:"namespaces,omitempty"`
+	Namespace *Namespace `json:"namespaces,omitempty"`
 }
 
 // Volume is a specification for mounting a volume in an action. Volumes take the form
@@ -71,7 +71,7 @@ type Volume string
 
 // Namespace defines the Linux namespaces to use for the container.
 // See https://man7.org/linux/man-pages/man7/namespaces.7.html.
-type Namespaces struct {
+type Namespace struct {
 	// Network defines the network namespace.
 	// +optional
 	Network *string `json:"network,omitempty"`
