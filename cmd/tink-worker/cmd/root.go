@@ -27,7 +27,9 @@ const (
 
 // NewRootCommand creates a new Tink Worker Cobra root command.
 func NewRootCommand(version string) *cobra.Command {
-	zlog, err := zap.NewProduction()
+	config := zap.NewProductionConfig()
+	config.OutputPaths = []string{"stdout"}
+	zlog, err := config.Build()
 	if err != nil {
 		panic(err)
 	}
