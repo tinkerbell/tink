@@ -7,11 +7,9 @@ import (
 
 type WorkflowSpec struct {
 	// HardwareRef is a reference to a Hardware resource this workflow will execute on.
-	// If no namespace is specified the Workflow's namespace is assumed.
 	HardwareRef corev1.LocalObjectReference `json:"hardwareRef,omitempty"`
 
 	// TemplateRef is a reference to a Template resource used to render workflow actions.
-	// If no namespace is specified the Workflow's namespace is assumed.
 	TemplateRef corev1.LocalObjectReference `json:"templateRef,omitempty"`
 
 	// TemplateParams are a list of key-value pairs that are injected into templates at render
@@ -39,9 +37,7 @@ type WorkflowStatus struct {
 	// LastTransition is the observed time when State transitioned last.
 	LastTransition *metav1.Time `json:"lastTransitioned,omitempty"`
 
-	// State describes the current state of the workflow. For the workflow to enter the
-	// WorkflowStateSucceeded state all actions must be in ActionStateSucceeded. The Workflow will
-	// enter a WorkflowStateFailed if 1 or more Actions fails.
+	// State describes the current state of the Workflow.
 	State WorkflowState `json:"state,omitempty"`
 
 	// Conditions details a set of observations about the Workflow.
@@ -79,18 +75,28 @@ type ActionStatus struct {
 type WorkflowState string
 
 const (
-	// WorkflowStatePending indicates the workflow is in a pending state.
+	// WorkflowStatePending indicates the Workflow is awaiting dispatch to the agent.
 	WorkflowStatePending WorkflowState = "Pending"
 
-	// WorkflowStateRunning indicates the first Action has been requested and the Workflow is in
-	// progress.
+	// WorkflowStateScheduled indicates the Workflow has been dispatched to the agent but the agent
+	// is yet to report the Workflow has started.
+	WorkflowStateScheduled WorkflowState = "Scheduled"
+
+	// WorkflowStateRunning indicates the Workflow has begun executing.
 	WorkflowStateRunning WorkflowState = "Running"
 
-	// WorkflowStateSucceeded indicates all Workflow actions have successfully completed.
+	// WorkflowStateCancelling indicates the agent has been instructed to cancel the Workflow, but
+	// the cancellation is yet to be completed.
+	WorkflowStateCancelling WorkflowState = "Cancelling"
+
+	// WorkflowStateSucceeded indicates all Actions have successfully completed.
 	WorkflowStateSucceeded WorkflowState = "Succeeded"
 
-	// WorkflowStateFailed indicates an Action entered a failure state.
+	// WorkflowStateFailed indicates an Action failed.
 	WorkflowStateFailed WorkflowState = "Failed"
+
+	// WorkflowStateCanceled indicates the Workflow has been canceled.
+	WorkflowStateCanceled WorkflowState = "Canceled"
 )
 
 // ActionState describes a point in time state of an Action.
