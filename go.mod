@@ -30,7 +30,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
-	k8s.io/client-go v0.28.3
+	k8s.io/client-go v0.28.4
 	knative.dev/pkg v0.0.0-20211119170723-a99300deff34
 	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/yaml v1.4.0
