@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/distribution/reference v0.5.0
 	github.com/docker/docker v24.0.7+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.9
 	github.com/go-logr/logr v1.4.1
@@ -55,6 +55,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
@@ -129,6 +130,3 @@ require (
 // package. This is a known issue with buf and is fixed in the latest version of buf.
 // This fix was found in https://github.com/aws-observability/aws-otel-collector/issues/926#issuecomment-1263065587
 replace cloud.google.com/go => cloud.google.com/go v0.107.0
-
-// 2.8.0+incompatible has incorrect checksums in the public sumdb.
-exclude github.com/docker/distributions v2.8.0+incompatible

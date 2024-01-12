@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
