@@ -1,6 +1,8 @@
 module github.com/tinkerbell/tink
 
-go 1.18
+go 1.21
+
+toolchain go1.21.4
 
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
