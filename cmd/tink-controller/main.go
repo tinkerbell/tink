@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 // version is set at build time.
@@ -88,8 +89,10 @@ func NewRootCommand() *cobra.Command {
 				LeaderElection:          config.EnableLeaderElection,
 				LeaderElectionID:        "tink.tinkerbell.org",
 				LeaderElectionNamespace: namespace,
-				MetricsBindAddress:      config.MetricsAddr,
-				HealthProbeBindAddress:  config.ProbeAddr,
+				Metrics: server.Options{
+					BindAddress: config.MetricsAddr,
+				},
+				HealthProbeBindAddress: config.ProbeAddr,
 			}
 
 			mgr, err := controller.NewManager(cfg, options)

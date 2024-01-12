@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 )
@@ -60,7 +61,9 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 	clstr, err := cluster.New(config, func(opts *cluster.Options) {
 		opts.Scheme = controller.DefaultScheme()
 		opts.Logger = zapr.NewLogger(zap.NewNop())
-		opts.Cache.Namespaces = []string{namespace}
+		opts.Cache.DefaultNamespaces = map[string]cache.Config{
+			namespace: {},
+		}
 	})
 	if err != nil {
 		return nil, fmt.Errorf("init client: %w", err)
