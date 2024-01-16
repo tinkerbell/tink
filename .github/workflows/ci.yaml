@@ -5,7 +5,8 @@ on:
       - "*"
     tags-ignore:
       - "v*"
-  pull_request:
+  pull_request: {}
+  workflow_dispatch: {}
 env:
   CGO_ENABLED: "0"
   GO_VERSION: "1.21"
