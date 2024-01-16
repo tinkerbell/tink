@@ -61,7 +61,7 @@ jobs:
         run: make build -j$(nproc) GOOS=linux GOARCH=${{ matrix.platform }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-binaries
+          name: bin-${{ matrix.platform }}
           path: bin/*
   package:
     name: Package
@@ -97,7 +97,7 @@ jobs:
       - name: Download all binaries
         uses: actions/download-artifact@v4
         with:
-          name: *-binaries
+          name: bin-*
           path: ./bin
           merge-multiple: true
       # Artifact upload doesn't preserve permissions so we need to fix them before use in
@@ -108,7 +108,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: cmd/${{ matrix.binary }}/Dockerfile
+          file: cmd/${{ matrix.binary }}/Dockerfilegit status
           cache-from: type=registry,ref=${{ matrix.repository }}:latest
           push: ${{ startsWith(github.ref, 'refs/heads/main') }}
           tags: ${{ steps.docker-image-tag.outputs.tags }}
