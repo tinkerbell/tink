@@ -19,14 +19,9 @@ type Registrar interface {
 // SetupGRPC opens a listener and serves a given Registrar's APIs on a gRPC server and returns the listener's address or an error.
 func SetupGRPC(ctx context.Context, r Registrar, listenAddr string, errCh chan<- error) (string, error) {
 	params := []grpc.ServerOption{
-		grpc.ChainUnaryInterceptor(
-			grpcprometheus.UnaryServerInterceptor,
-			otelgrpc.UnaryServerInterceptor(),
-		),
-		grpc.ChainStreamInterceptor(
-			grpcprometheus.StreamServerInterceptor,
-			otelgrpc.StreamServerInterceptor(),
-		),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
+		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 	}
 
 	// register servers
