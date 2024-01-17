@@ -98,7 +98,6 @@ jobs:
       - name: Download all binaries
         uses: actions/download-artifact@v4
         with:
-          name: *-binaries
           path: ./bin
           merge-multiple: true
       # Artifact upload doesn't preserve permissions so we need to fix them before use in
