@@ -16,25 +16,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
       time: "03:52"
       timezone: "America/New_York"
     reviewers:
       - chrisdoherty4
       - jacobweinstock
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "gomod"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "thursday"
-      time: "03:52"
-      timezone: "America/New_York"
-    reviewers:
-      - chrisdoherty4
-      - jacobweinstock
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 20
 
   - package-ecosystem: "docker"
     directory: "/"
