@@ -96,10 +96,6 @@ func TestReconcile(t *testing.T) {
 			},
 			want: reconcile.Result{},
 			wantWflow: &v1alpha1.Workflow{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Workflow",
-					APIVersion: "tinkerbell.org/v1alpha1",
-				},
 				ObjectMeta: metav1.ObjectMeta{
 					ResourceVersion: "999",
 				},
