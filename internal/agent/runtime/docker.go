@@ -101,7 +101,7 @@ func (d *Docker) Run(ctx context.Context, a workflow.Action) error {
 	defer func() {
 		// Force remove containers in an attempt to preserve space in memory constraints environments.
 		// In rare cases this may create orphaned volumes that the Docker CLI won't clean up.
-		opts := types.ContainerRemoveOptions{Force: true}
+		opts := container.RemoveOptions{Force: true}
 
 		// We can't use the context passed to Run() as it may have been cancelled so we use Background()
 		// instead.
@@ -115,7 +115,7 @@ func (d *Docker) Run(ctx context.Context, a workflow.Action) error {
 	// ContainerStart().
 	waitBody, waitErr := d.client.ContainerWait(ctx, create.ID, container.WaitConditionNextExit)
 
-	if err := d.client.ContainerStart(ctx, create.ID, types.ContainerStartOptions{}); err != nil {
+	if err := d.client.ContainerStart(ctx, create.ID, container.StartOptions{}); err != nil {
 		return fmt.Errorf("docker: %w", err)
 	}
 
