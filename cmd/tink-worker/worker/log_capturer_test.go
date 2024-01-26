@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
@@ -22,7 +22,7 @@ type fakeDockerLoggerClient struct {
 	err     error
 }
 
-func (c *fakeDockerLoggerClient) ContainerLogs(context.Context, string, types.ContainerLogsOptions) (io.ReadCloser, error) {
+func (c *fakeDockerLoggerClient) ContainerLogs(context.Context, string, container.LogsOptions) (io.ReadCloser, error) {
 	if c.err != nil {
 		return nil, c.err
 	}

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/go-logr/logr"
 )
@@ -39,7 +39,7 @@ func NewDockerLogCapturer(cli client.ContainerAPIClient, logger logr.Logger, wri
 
 // CaptureLogs streams container logs to the capturer's writer.
 func (l *DockerLogCapturer) CaptureLogs(ctx context.Context, id string) {
-	reader, err := l.dockerClient.ContainerLogs(ctx, id, types.ContainerLogsOptions{
+	reader, err := l.dockerClient.ContainerLogs(ctx, id, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	containertypes "github.com/docker/docker/api/types/container"
-	networktypes "github.com/docker/docker/api/types/network"
+	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/go-logr/zapr"
 	specs "github.com/opencontainers/image-spec/specs-go/v1"
@@ -40,33 +40,33 @@ func newFakeDockerClient(containerID, imagePullContent string, delay time.Durati
 }
 
 func (c *fakeDockerClient) ContainerCreate(
-	context.Context, *containertypes.Config, *containertypes.HostConfig, *networktypes.NetworkingConfig, *specs.Platform, string,
-) (containertypes.CreateResponse, error) {
+	context.Context, *container.Config, *container.HostConfig, *network.NetworkingConfig, *specs.Platform, string,
+) (container.CreateResponse, error) {
 	if c.err != nil {
-		return containertypes.CreateResponse{}, c.err
+		return container.CreateResponse{}, c.err
 	}
 
-	return containertypes.CreateResponse{
+	return container.CreateResponse{
 		ID: c.containerID,
 	}, nil
 }
 
-func (c *fakeDockerClient) ContainerStart(context.Context, string, types.ContainerStartOptions) error {
+func (c *fakeDockerClient) ContainerStart(context.Context, string, container.StartOptions) error {
 	if c.err != nil {
 		return c.err
 	}
 	return nil
 }
 
-func (c *fakeDockerClient) ContainerInspect(context.Context, string) (types.ContainerJSON, error) {
+func (c *fakeDockerClient) ContainerInspect(context.Context, string) (dockertypes.ContainerJSON, error) {
 	if c.err != nil {
-		return types.ContainerJSON{}, c.err
+		return dockertypes.ContainerJSON{}, c.err
 	}
-	return types.ContainerJSON{}, nil
+	return dockertypes.ContainerJSON{}, nil
 }
 
-func (c *fakeDockerClient) ContainerWait(context.Context, string, containertypes.WaitCondition) (<-chan containertypes.WaitResponse, <-chan error) {
-	respChan := make(chan containertypes.WaitResponse)
+func (c *fakeDockerClient) ContainerWait(context.Context, string, container.WaitCondition) (<-chan container.WaitResponse, <-chan error) {
+	respChan := make(chan container.WaitResponse)
 	errChan := make(chan error)
 	go func(e error) {
 		time.Sleep(c.delay)
@@ -74,14 +74,14 @@ func (c *fakeDockerClient) ContainerWait(context.Context, string, containertypes
 			errChan <- e
 			return
 		}
-		respChan <- containertypes.WaitResponse{
+		respChan <- container.WaitResponse{
 			StatusCode: int64(c.statusCode),
 		}
 	}(c.waitErr)
 	return respChan, errChan
 }
 
-func (c *fakeDockerClient) ContainerRemove(context.Context, string, types.ContainerRemoveOptions) error {
+func (c *fakeDockerClient) ContainerRemove(context.Context, string, container.RemoveOptions) error {
 	if c.err != nil {
 		return c.err
 	}
