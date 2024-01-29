@@ -1,4 +1,3 @@
----
 extends: default
 
 rules:
@@ -14,6 +13,8 @@ rules:
     max: 160
     allow-non-breakable-inline-mappings: true
   truthy: disable
+  indentation:
+    indent-sequences: whatever
 
 ignore: |
   out

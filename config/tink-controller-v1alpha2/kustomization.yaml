@@ -1,0 +1,25 @@
+resources:
+- ../default
+
+patches:
+- target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: workflows.tinkerbell.org
+  path: crd_patch.json
+- target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: templates.tinkerbell.org
+  path: crd_patch.json
+- target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: hardware.tinkerbell.org
+  path: crd_patch.json
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

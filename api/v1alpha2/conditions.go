@@ -30,7 +30,7 @@ type Condition struct {
 	Status ConditionStatus `json:"status"`
 
 	// LastTransition is the last time the condition transitioned from one status to another.
-	LastTransition *metav1.Time `json:"lastTransitionTime"`
+	LastTransition metav1.Time `json:"lastTransitionTime"`
 
 	// Reason is a short CamelCase description for the conditions last transition.
 	// +optional

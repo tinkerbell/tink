@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/api/v1alpha1"
-	"github.com/tinkerbell/tink/internal/proto"
 	"github.com/tinkerbell/tink/internal/deprecated/workflow"
+	"github.com/tinkerbell/tink/internal/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

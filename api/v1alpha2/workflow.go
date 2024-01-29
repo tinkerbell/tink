@@ -32,15 +32,17 @@ type WorkflowStatus struct {
 
 	// StartedAt is the time the first action was requested. Nil indicates the Workflow has not
 	// started.
+	// +optional
 	StartedAt *metav1.Time `json:"startedAt,omitempty"`
 
 	// LastTransition is the observed time when State transitioned last.
-	LastTransition *metav1.Time `json:"lastTransitioned,omitempty"`
+	LastTransition metav1.Time `json:"lastTransitioned,omitempty"`
 
 	// State describes the current state of the Workflow.
 	State WorkflowState `json:"state,omitempty"`
 
 	// Conditions details a set of observations about the Workflow.
+	// +optional
 	Conditions Conditions `json:"conditions"`
 }
 
