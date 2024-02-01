@@ -105,16 +105,19 @@ func (s *KubernetesBackedServer) modifyWorkflowState(wf *v1alpha1.Workflow, wfCo
 		actionIndex = -1
 	)
 
+	seenActions := 0
 	for ti, task := range wf.Status.Tasks {
 		if wfContext.CurrentTask == task.Name {
 			taskIndex = ti
 			for ai, action := range task.Actions {
-				if action.Name == wfContext.CurrentAction && wfContext.CurrentActionIndex == int64(ai) {
+				if action.Name == wfContext.CurrentAction && (wfContext.CurrentActionIndex == int64(ai) || wfContext.CurrentActionIndex == int64(seenActions)) {
 					actionIndex = ai
 					goto cont
 				}
+				seenActions++
 			}
 		}
+		seenActions += len(task.Actions)
 	}
 cont:
 
