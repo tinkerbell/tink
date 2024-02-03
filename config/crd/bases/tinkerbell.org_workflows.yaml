@@ -157,7 +157,7 @@ spec:
             spec:
               properties:
                 hardwareRef:
-                  description: HardwareRef is a reference to a Hardware resource this workflow will execute on. If no namespace is specified the Workflow's namespace is assumed.
+                  description: HardwareRef is a reference to a Hardware resource this workflow will execute on.
                   properties:
                     name:
                       description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
@@ -170,7 +170,7 @@ spec:
                   description: "TemplateParams are a list of key-value pairs that are injected into templates at render time. TemplateParams are exposed to templates using a top level .Params key. \n For example, TemplateParams = {\"foo\": \"bar\"}, the foo key can be accessed via .Params.foo."
                   type: object
                 templateRef:
-                  description: TemplateRef is a reference to a Template resource used to render workflow actions. If no namespace is specified the Workflow's namespace is assumed.
+                  description: TemplateRef is a reference to a Template resource used to render workflow actions.
                   properties:
                     name:
                       description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
@@ -294,7 +294,7 @@ spec:
                   format: date-time
                   type: string
                 state:
-                  description: State describes the current state of the workflow. For the workflow to enter the WorkflowStateSucceeded state all actions must be in ActionStateSucceeded. The Workflow will enter a WorkflowStateFailed if 1 or more Actions fails.
+                  description: State describes the current state of the Workflow.
                   type: string
               required:
                 - actions
