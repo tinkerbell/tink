@@ -89,6 +89,7 @@ func NewRootCommand(version string) *cobra.Command {
 				worker.WithLogCapture(captureActionLogs),
 				worker.WithPrivileged(true))
 
+			logger.Info("starting to process workflow actions", "workerID", workerID)
 			err = w.ProcessWorkflowActions(cmd.Context())
 			if err != nil {
 				return errors.Wrap(err, "worker Finished with error")
