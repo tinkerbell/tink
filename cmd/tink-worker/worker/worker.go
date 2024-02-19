@@ -245,10 +245,8 @@ func (w *Worker) executeReaction(ctx context.Context, reaction string, cmd []str
 
 // ProcessWorkflowActions gets all Workflow contexts and processes their actions.
 func (w *Worker) ProcessWorkflowActions(ctx context.Context) error {
-	l := w.logger.WithValues("workerID", w.workerID)
-	l.Info("starting to process workflow actions")
-
 	for {
+		l := w.logger.WithValues("workerID", w.workerID)
 		select {
 		case <-ctx.Done():
 			return nil
