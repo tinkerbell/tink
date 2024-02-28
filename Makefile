@@ -36,7 +36,7 @@ help: ## Print this help
 VERSION ?= $(shell git rev-parse --short HEAD)
 
 # Define all the binaries we build for this project that get packaged into containers.
-BINARIES := tink-server tink-agent tink-worker tink-controller virtual-worker
+BINARIES := tink-server tink-agent tink-worker tink-controller tink-controller-v1alpha2 virtual-worker
 
 .PHONY: build
 build: $(BINARIES) ## Build all tink binaries. Cross build by setting GOOS and GOARCH.
@@ -97,7 +97,8 @@ generate-proto: buf.gen.yaml buf.lock $(shell git ls-files '**/*.proto') $(BUF) 
 	$(GOFUMPT) -w internal/proto/workflow/v2/*.pb.*
 
 .PHONY: generate
-generate: generate-proto generate-go generate-manifests ## Generate code, manifests etc.
+generate: ## Generate code, manifests etc.
+generate: generate-proto generate-go generate-manifests
 
 .PHONY: generate-go
 generate-go: $(CONTROLLER_GEN) $(GOFUMPT)
@@ -105,29 +106,32 @@ generate-go: $(CONTROLLER_GEN) $(GOFUMPT)
 	$(GOFUMPT) -w ./api
 
 .PHONY: generate-manifests
-generate-manifests: generate-crds generate-rbacs generate-server-rbacs ## Generate manifests e.g. CRD, RBAC etc.
+generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
+generate-manifests: generate-crds generate-rbac
 
 .PHONY: generate-crds
 generate-crds: $(CONTROLLER_GEN) $(YAMLFMT)
 	$(CONTROLLER_GEN) \
 		paths=./api/... \
 		crd:crdVersions=v1 \
-		rbac:roleName=manager-role \
 		output:crd:dir=./config/crd/bases \
 		output:webhook:dir=./config/webhook \
 		webhook
 	$(YAMLFMT) ./config/crd/bases/* ./config/webhook/*
 
-.PHONY: generate-rbacs
-generate-rbacs: $(CONTROLLER_GEN) $(YAMLFMT)
+.PHONY: generate-rbac
+generate-rbac: $(CONTROLLER_GEN) $(YAMLFMT)
+
+.PHONY: generate-controller-rbac
+generate-manager-rbac:
 	$(CONTROLLER_GEN) \
-		paths=./internal/controller/... \
-		output:rbac:dir=./config/rbac/ \
+		paths=./internal/workflow/... \
+		output:rbac:dir=./config/manager-rbac/ \
 		rbac:roleName=manager-role
 	$(YAMLFMT) ./config/rbac/*
 
-.PHONY: generate-server-rbacs
-generate-server-rbacs: $(CONTROLLER_GEN) $(YAMLFMT)
+.PHONY: generate-server-rbac
+generate-server-rbac: $(CONTROLLER_GEN) $(YAMLFMT)
 	$(CONTROLLER_GEN) \
 		paths=./internal/server/... \
 		output:rbac:dir=./config/server-rbac \

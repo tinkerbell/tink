@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.4
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: hardware.tinkerbell.org
 spec:
   group: tinkerbell.org
@@ -27,10 +27,19 @@ spec:
           description: Hardware is the Schema for the Hardware API.
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             metadata:
               type: object
@@ -38,10 +47,16 @@ spec:
               description: HardwareSpec defines the desired state of Hardware.
               properties:
                 bmcRef:
-                  description: BMCRef contains a relation to a BMC state management type in the same namespace as the Hardware. This may be used for BMC management by orchestrators.
+                  description: |-
+                    BMCRef contains a relation to a BMC state management type in the same
+                    namespace as the Hardware. This may be used for BMC management by
+                    orchestrators.
                   properties:
                     apiGroup:
-                      description: APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.
+                      description: |-
+                        APIGroup is the group for the resource being referenced.
+                        If APIGroup is not specified, the specified Kind must be in the core API group.
+                        For any other third-party types, APIGroup is required.
                       type: string
                     kind:
                       description: Kind is the type of resource being referenced
@@ -338,16 +353,22 @@ spec:
                       - type: string
                     pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                     x-kubernetes-int-or-string: true
-                  description: Resources represents known resources that are available on a machine. Resources may be used for scheduling by orchestrators.
+                  description: |-
+                    Resources represents known resources that are available on a machine.
+                    Resources may be used for scheduling by orchestrators.
                   type: object
                 tinkVersion:
                   format: int64
                   type: integer
                 userData:
-                  description: UserData is the user data to configure in the hardware's metadata
+                  description: |-
+                    UserData is the user data to configure in the hardware's
+                    metadata
                   type: string
                 vendorData:
-                  description: VendorData is the vendor data to configure in the hardware's metadata
+                  description: |-
+                    VendorData is the vendor data to configure in the hardware's
+                    metadata
                   type: string
               type: object
             status:
@@ -373,10 +394,19 @@ spec:
           description: Hardware is a logical representation of a machine that can execute Workflows.
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             metadata:
               type: object
@@ -386,7 +416,10 @@ spec:
                   description: BMCRef references a Rufio Machine object.
                   properties:
                     name:
-                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                      description: |-
+                        Name of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        TODO: Add other useful fields. apiVersion, kind, uid?
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -401,7 +434,9 @@ spec:
                       type: string
                   type: object
                 ipxe:
-                  description: IPXE provides iPXE script override fields. This is useful for debugging or netboot customization.
+                  description: |-
+                    IPXE provides iPXE script override fields. This is useful for debugging or netboot
+                    customization.
                   properties:
                     inline:
                       description: Content is an inline iPXE script.
@@ -411,7 +446,9 @@ spec:
                       type: string
                   type: object
                 kernelParams:
-                  description: KernelParams passed to the kernel when launching the OSIE. Parameters are joined with a space.
+                  description: |-
+                    KernelParams passed to the kernel when launching the OSIE. Parameters are joined with a
+                    space.
                   items:
                     type: string
                   type: array
@@ -420,7 +457,9 @@ spec:
                     description: NetworkInterface is the desired configuration for a particular network interface.
                     properties:
                       dhcp:
-                        description: DHCP is the basic network information for serving DHCP requests. Required when DisbaleDHCP is false.
+                        description: |-
+                          DHCP is the basic network information for serving DHCP requests. Required when DisbaleDHCP
+                          is false.
                         properties:
                           gateway:
                             description: Gateway is the default gateway address to serve.
@@ -435,7 +474,9 @@ spec:
                             type: string
                           leaseTimeSeconds:
                             default: 86400
-                            description: LeaseTimeSeconds to serve. 24h default. Maximum equates to max uint32 as defined by RFC 2132 § 9.2 (https://www.rfc-editor.org/rfc/rfc2132.html#section-9.2).
+                            description: |-
+                              LeaseTimeSeconds to serve. 24h default. Maximum equates to max uint32 as defined by RFC 2132
+                              § 9.2 (https://www.rfc-editor.org/rfc/rfc2132.html#section-9.2).
                             format: int64
                             maximum: 4294967295
                             minimum: 0
@@ -468,7 +509,9 @@ spec:
                         type: boolean
                       disableNetboot:
                         default: false
-                        description: DisableNetboot disables netbooting for this interface. The interface will still receive network information specified by DHCP.
+                        description: |-
+                          DisableNetboot disables netbooting for this interface. The interface will still receive
+                          network information specified by DHCP.
                         type: boolean
                     type: object
                   description: NetworkInterfaces defines the desired DHCP and netboot configuration for a network interface.
@@ -477,14 +520,17 @@ spec:
                   description: OSIE describes the Operating System Installation Environment to be netbooted.
                   properties:
                     name:
-                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
+                      description: |-
+                        Name of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        TODO: Add other useful fields. apiVersion, kind, uid?
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
                 storageDevices:
                   description: StorageDevices is a list of storage devices that will be available in the OSIE.
                   items:
-                    description: "StorageDevice describes a storage device path that will be present in the OSIE. StorageDevices must be valid Linux paths. They should not contain partitions. \n Good \n /dev/sda /dev/nvme0n1 \n Bad (contains partitions) \n /dev/sda1 /dev/nvme0n1p1 \n Bad (invalid Linux path) \n \\dev\\sda"
+                    description: "StorageDevice describes a storage device path that will be present in the OSIE.\nStorageDevices must be valid Linux paths. They should not contain partitions.\n\n\nGood\n\n\n\t/dev/sda\n\t/dev/nvme0n1\n\n\nBad (contains partitions)\n\n\n\t/dev/sda1\n\t/dev/nvme0n1p1\n\n\nBad (invalid Linux path)\n\n\n\t\\dev\\sda"
                     pattern: ^(/[^/ ]*)+/?$
                     type: string
                   type: array

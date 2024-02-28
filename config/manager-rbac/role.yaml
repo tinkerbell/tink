@@ -1,0 +1,46 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - tinkerbell.org
+  resources:
+  - hardware
+  - hardware/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tinkerbell.org
+  resources:
+  - templates
+  - templates/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tinkerbell.org
+  resources:
+  - workflows
+  - workflows/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - tinkerbell.org
+  resources:
+  - workflows
+  - workflows/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch

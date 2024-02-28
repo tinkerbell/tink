@@ -10,16 +10,29 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tinkerbell/tink/internal/deprecated/controller"
+	tinkv1 "github.com/tinkerbell/tink/api/v1alpha2"
+	"github.com/tinkerbell/tink/internal/workflow"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/runtime"
+	amruntimeutil "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 // version is set at build time.
 var version = "devel"
+
+// scheme is passed to the manager.
+var scheme = runtime.NewScheme()
+
+func init() {
+	amruntimeutil.Must(tinkv1.AddToScheme(scheme))
+
+	//+kubebuilder:scaffold:scheme
+}
 
 type Config struct {
 	K8sAPI               string
@@ -84,7 +97,7 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			options := ctrl.Options{
+			opts := ctrl.Options{
 				Logger:                  logger,
 				LeaderElection:          config.EnableLeaderElection,
 				LeaderElectionID:        "tink.tinkerbell.org",
@@ -93,11 +106,24 @@ func NewRootCommand() *cobra.Command {
 					BindAddress: config.MetricsAddr,
 				},
 				HealthProbeBindAddress: config.ProbeAddr,
+				Scheme:                 scheme,
 			}
 
-			mgr, err := controller.NewManager(cfg, options)
+			mgr, err := ctrl.NewManager(cfg, opts)
 			if err != nil {
-				return fmt.Errorf("controller manager: %w", err)
+				return err
+			}
+
+			if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+				return err
+			}
+
+			if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+				return err
+			}
+
+			if err := workflow.NewReconciler(mgr.GetClient()).SetupWithManager(mgr); err != nil {
+				return err
 			}
 
 			return mgr.Start(cmd.Context())

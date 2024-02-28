@@ -1,0 +1,22 @@
+[
+  {
+    "op": "replace",
+    "path": "/spec/versions/0/served",
+    "value": false
+  },
+  {
+    "op": "replace",
+    "path": "/spec/versions/0/storage",
+    "value": false
+  },
+  {
+    "op": "replace",
+    "path": "/spec/versions/1/served",
+    "value": true
+  },
+  {
+    "op": "replace",
+    "path": "/spec/versions/1/storage",
+    "value": true
+  }
+]

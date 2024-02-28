@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/tinkerbell/tink/api/v1alpha1"
-	"github.com/tinkerbell/tink/internal/controller"
+	"github.com/tinkerbell/tink/internal/deprecated/controller"
 	"github.com/tinkerbell/tink/internal/grpcserver"
 	"github.com/tinkerbell/tink/internal/server"
 	"go.uber.org/zap"
