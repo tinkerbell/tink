@@ -1,6 +1,6 @@
 # Tinkerbell
 
-[![Build Status](https://github.com/tinkerbell/tink/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/tink/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amain)
+[![Build Status](https://github.com/tinkerbell/tink/actions/workflows/ci.yaml/badge.svg)](https://github.com/tinkerbell/tink/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/tinkerbell/tink/branch/main/graph/badge.svg)](https://codecov.io/gh/tinkerbell/tink)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4512/badge)](https://bestpractices.coreinfrastructure.org/projects/4512)
 
@@ -10,7 +10,8 @@ Tinkerbell is licensed under the Apache License, Version 2.0. See [LICENSE](./LI
 
 Tinkerbell is part of the CNCF Projects.
 
-[![CNCF](https://github.com/cncf/artwork/blob/master/other/cncf/horizontal/color/cncf-color.png)](https://landscape.cncf.io/?selected=tinkerbell)
+[![CNCF Landscape](https://img.shields.io/badge/CNCF%20Landscape-5699C6)](https://landscape.cncf.io/?item=provisioning--automation-configuration--tinkerbell)
+
 
 ## Community
 
