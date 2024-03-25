@@ -7,8 +7,8 @@ import (
 	"regexp"
 
 	retry "github.com/avast/retry-go"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/go-logr/logr"
@@ -31,15 +31,15 @@ type Docker struct {
 func (d *Docker) Run(ctx context.Context, a workflow.Action) error {
 	pullImage := func() error {
 		// We need the image to be available before we can create a container.
-		image, err := d.client.ImagePull(ctx, a.Image, types.ImagePullOptions{})
+		img, err := d.client.ImagePull(ctx, a.Image, image.PullOptions{})
 		if err != nil {
 			return fmt.Errorf("docker: %w", err)
 		}
-		defer image.Close()
+		defer img.Close()
 
 		// Docker requires everything to be read from the images ReadCloser for the image to actually
 		// be pulled. We may want to log image pulls in a circular buffer somewhere for debugability.
-		if _, err = io.Copy(io.Discard, image); err != nil {
+		if _, err = io.Copy(io.Discard, img); err != nil {
 			return fmt.Errorf("docker: %w", err)
 		}
 
