@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
 )
 
-func (c *fakeDockerClient) ImagePull(context.Context, string, types.ImagePullOptions) (io.ReadCloser, error) {
+func (c *fakeDockerClient) ImagePull(context.Context, string, image.PullOptions) (io.ReadCloser, error) {
 	if c.err != nil {
 		return nil, c.err
 	}

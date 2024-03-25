@@ -7,7 +7,7 @@ import (
 	"io"
 	"path"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/pkg/errors"
 )
@@ -31,7 +31,7 @@ type ImagePullStatus struct {
 }
 
 // PullImage outputs to stdout the contents of the requested image (relative to the registry).
-func (m *containerManager) PullImage(ctx context.Context, image string) error {
+func (m *containerManager) PullImage(ctx context.Context, img string) error {
 	l := m.getLogger(ctx)
 	authConfig := registry.AuthConfig{
 		Username:      m.registryDetails.Username,
@@ -44,7 +44,7 @@ func (m *containerManager) PullImage(ctx context.Context, image string) error {
 	}
 	authStr := base64.URLEncoding.EncodeToString(encodedJSON)
 
-	out, err := m.cli.ImagePull(ctx, path.Join(m.registryDetails.Registry, image), types.ImagePullOptions{RegistryAuth: authStr})
+	out, err := m.cli.ImagePull(ctx, path.Join(m.registryDetails.Registry, img), image.PullOptions{RegistryAuth: authStr})
 	if err != nil {
 		return errors.Wrap(err, "DOCKER PULL")
 	}
