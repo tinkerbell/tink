@@ -16,8 +16,8 @@ import (
 	"github.com/tinkerbell/tink/internal/agent/workflow"
 	"go.uber.org/multierr"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
 
@@ -27,20 +27,20 @@ func TestDockerImageNotPresent(t *testing.T) {
 		t.Fatalf("Received unexpected error: %v", err)
 	}
 
-	image := "hello-world"
+	img := "hello-world"
 
-	images, err := clnt.ImageList(context.Background(), types.ImageListOptions{
-		Filters: filters.NewArgs(filters.Arg("reference", image)),
+	images, err := clnt.ImageList(context.Background(), image.ListOptions{
+		Filters: filters.NewArgs(filters.Arg("reference", img)),
 	})
 	if err != nil {
 		t.Fatalf("Unexpected error listing images: %v", err)
 	}
 
 	var errSum error
-	for _, image := range images {
-		_, err := clnt.ImageRemove(context.Background(), image.ID, types.ImageRemoveOptions{})
+	for _, img := range images {
+		_, err := clnt.ImageRemove(context.Background(), img.ID, image.RemoveOptions{})
 		if err != nil {
-			errSum = multierr.Append(errSum, fmt.Errorf("deleting image (%v): %v", image.ID, err))
+			errSum = multierr.Append(errSum, fmt.Errorf("deleting image (%v): %v", img.ID, err))
 		}
 	}
 	if errSum != nil {
@@ -55,7 +55,7 @@ func TestDockerImageNotPresent(t *testing.T) {
 
 	action := workflow.Action{
 		ID:    "foobar",
-		Image: image,
+		Image: img,
 	}
 
 	err = rt.Run(context.Background(), action)
