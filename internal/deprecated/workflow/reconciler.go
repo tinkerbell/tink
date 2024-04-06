@@ -126,7 +126,11 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 // templateHardwareData defines the data exposed for a Hardware instance to a Template.
 type templateHardwareData struct {
-	Disks []string
+	Disks      []string
+	Interfaces []v1alpha1.Interface
+	UserData   string
+	Metadata   v1alpha1.HardwareMetadata
+	VendorData string
 }
 
 // toTemplateHardwareData converts a Hardware instance of templateHardwareData for use in template
@@ -136,6 +140,10 @@ func toTemplateHardwareData(hardware v1alpha1.Hardware) templateHardwareData {
 	for _, disk := range hardware.Spec.Disks {
 		contract.Disks = append(contract.Disks, disk.Device)
 	}
+	contract.Interfaces = hardware.Spec.Interfaces
+	contract.UserData = ptr.StringValue(hardware.Spec.UserData)
+	contract.Metadata = *hardware.Spec.Metadata
+	contract.VendorData = ptr.StringValue(hardware.Spec.VendorData)
 	return contract
 }
 

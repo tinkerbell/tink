@@ -25,3 +25,5 @@ hack/tools
 
 # test worker files
 tests/worker
+tmp/
+_tmp/

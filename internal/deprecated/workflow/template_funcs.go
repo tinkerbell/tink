@@ -7,9 +7,6 @@ import (
 
 // templateFuncs defines the custom functions available to workflow templates.
 var templateFuncs = map[string]interface{}{
-	"contains":        strings.Contains,
-	"hasPrefix":       strings.HasPrefix,
-	"hasSuffix":       strings.HasSuffix,
 	"formatPartition": formatPartition,
 }
 
