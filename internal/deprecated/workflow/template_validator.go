@@ -19,7 +19,8 @@ const (
 // parse parses the template yaml content into a Workflow.
 func parse(yamlContent []byte) (*Workflow, error) {
 	var workflow Workflow
-	if err := yaml.UnmarshalStrict(yamlContent, &workflow); err != nil {
+	if err := yaml.Unmarshal(yamlContent, &workflow); err != nil {
+		// The yamlContent is normally quite large but is invaluable in debugging.
 		return &Workflow{}, errors.Wrapf(err, "parsing yaml data, content: %s", yamlContent)
 	}
 
