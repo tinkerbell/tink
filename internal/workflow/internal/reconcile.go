@@ -9,7 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	tinkv1 "github.com/tinkerbell/tink/api/v1alpha2"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
