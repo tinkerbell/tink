@@ -140,10 +140,18 @@ func toTemplateHardwareData(hardware v1alpha1.Hardware) templateHardwareData {
 	for _, disk := range hardware.Spec.Disks {
 		contract.Disks = append(contract.Disks, disk.Device)
 	}
-	contract.Interfaces = hardware.Spec.Interfaces
-	contract.UserData = ptr.StringValue(hardware.Spec.UserData)
-	contract.Metadata = *hardware.Spec.Metadata
-	contract.VendorData = ptr.StringValue(hardware.Spec.VendorData)
+	if len(hardware.Spec.Interfaces) > 0 {
+		contract.Interfaces = hardware.Spec.Interfaces
+	}
+	if hardware.Spec.UserData != nil {
+		contract.UserData = ptr.StringValue(hardware.Spec.UserData)
+	}
+	if hardware.Spec.Metadata != nil {
+		contract.Metadata = *hardware.Spec.Metadata
+	}
+	if hardware.Spec.VendorData != nil {
+		contract.VendorData = ptr.StringValue(hardware.Spec.VendorData)
+	}
 	return contract
 }
 

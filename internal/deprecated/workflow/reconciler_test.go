@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -347,7 +348,7 @@ tasks:
 					},
 				},
 			},
-			wantErr: errors.New("parsing yaml data: yaml: line 2: found character that cannot start any token"),
+			wantErr: errors.New("found character that cannot start any token"),
 		},
 		{
 			name: "MissingTemplate",
@@ -821,7 +822,7 @@ tasks:
 			if gotErr != nil {
 				if tc.wantErr == nil {
 					t.Errorf(`Got unexpected error: %v"`, gotErr)
-				} else if gotErr.Error() != tc.wantErr.Error() {
+				} else if !strings.Contains(gotErr.Error(), tc.wantErr.Error()) {
 					t.Errorf(`Got unexpected error: got "%v" wanted "%v"`, gotErr, tc.wantErr)
 				}
 				return

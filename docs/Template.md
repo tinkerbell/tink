@@ -66,7 +66,7 @@ There are a number of built in functions that Go provides and that can be used i
 
 | Function Name     | Description | Use     | Examples |
 | -------------     | ----------- | ------- | -------- |
-| `contains`        | Contains returns a bool for whether `substr` is within `s`. | `{{ contains "HELLO" "H" }}` | `contains <s> <substr>` |
+| `contains`        | contains returns a bool for whether `substr` is within `s`. | `{{ contains "HELLO" "H" }}` | `contains <s> <substr>` |
 | `hasPrefix`       | hasPrefix returns a bool for whether the string s begins with prefix. | `{{ hasPrefix "HELLO" "HE" }}` | `hasPrefix <s> <prefix>` |
 | `hasSuffix`       | hasSuffix returns a bool for whether the string s ends with suffix. | `{{ hasPrefix "HELLO" "HE" }}` | `hasSuffix <s> <suffix>` |
 | `formatPartition` | formatPartition formats a device path with partition for the specific device type. Supported devices: `/dev/nvme`, `/dev/sd`, `/dev/vd`, `/dev/xvd`, `/dev/hd`. | `{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}` | `formatPartition("/dev/nvme0n1", 0) -> /dev/nvme0n1p1`, `formatPartition("/dev/sda", 1) -> /dev/sda1` |
