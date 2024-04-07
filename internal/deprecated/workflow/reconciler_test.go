@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/internal/ptr"
 	"github.com/tinkerbell/tink/internal/testtime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -74,7 +75,14 @@ tasks:
           DEST_DISK: {{ index .Hardware.Disks 0 }}
           # Hegel IP
           IMG_URL: "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz"
-          COMPRESSED: true`
+          COMPRESSED: true
+      - name: "action to test templating"
+        image: alpine
+        timeout: 600
+        environment:
+          USER_DATA: {{ .Hardware.UserData }}
+          VENDOR_DATA: {{ .Hardware.VendorData }}
+          METADATA: {{ .Hardware.Metadata.State }}`
 
 func TestReconcile(t *testing.T) {
 	cases := []struct {
@@ -708,6 +716,9 @@ tasks:
 							},
 						},
 					},
+					UserData:   ptr.String("user-data"),
+					Metadata:   &v1alpha1.HardwareMetadata{State: "active"},
+					VendorData: ptr.String("vendor-data"),
 				},
 			},
 			seedTemplate: &v1alpha1.Template{
@@ -788,6 +799,17 @@ tasks:
 										"COMPRESSED": "true",
 										"DEST_DISK":  "/dev/nvme0n1",
 										"IMG_URL":    "http://10.1.1.11:8080/debian-10-openstack-amd64.raw.gz",
+									},
+									Status: v1alpha1.WorkflowStatePending,
+								},
+								{
+									Name:    "action to test templating",
+									Image:   "alpine",
+									Timeout: 600,
+									Environment: map[string]string{
+										"USER_DATA":   "user-data",
+										"VENDOR_DATA": "vendor-data",
+										"METADATA":    "active",
 									},
 									Status: v1alpha1.WorkflowStatePending,
 								},
