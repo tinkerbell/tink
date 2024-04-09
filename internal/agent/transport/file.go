@@ -8,7 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/internal/agent/event"
 	"github.com/tinkerbell/tink/internal/agent/workflow"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // File is a transport implementation that executes a single workflow stored as a file.

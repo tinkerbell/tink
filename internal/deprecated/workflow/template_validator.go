@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/distribution/reference"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -18,9 +19,9 @@ const (
 // parse parses the template yaml content into a Workflow.
 func parse(yamlContent []byte) (*Workflow, error) {
 	var workflow Workflow
-
-	if err := yaml.UnmarshalStrict(yamlContent, &workflow); err != nil {
-		return &Workflow{}, errors.Wrap(err, "parsing yaml data")
+	if err := yaml.Unmarshal(yamlContent, &workflow); err != nil {
+		// The yamlContent is normally quite large but is invaluable in debugging.
+		return &Workflow{}, errors.Wrapf(err, "parsing yaml data, content: %s", yamlContent)
 	}
 
 	if err := validate(&workflow); err != nil {
@@ -34,6 +35,7 @@ func parse(yamlContent []byte) (*Workflow, error) {
 func renderTemplateHardware(templateID, templateData string, hardware map[string]interface{}) (*Workflow, error) {
 	t := template.New("workflow-template").
 		Option("missingkey=error").
+		Funcs(sprig.FuncMap()).
 		Funcs(templateFuncs)
 
 	_, err := t.Parse(templateData)
