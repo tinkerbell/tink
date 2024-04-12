@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/distribution/reference v0.5.0
-	github.com/docker/docker v26.0.0+incompatible
+	github.com/docker/docker v26.0.1+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.9
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0
