@@ -22,7 +22,7 @@ const admissionWebhookEndpoint = "/validate-tinkerbell-org-v1alpha2-hardware"
 // Admission handles complex validation for admitting a Hardware object to the cluster.
 type Admission struct {
 	client  ctrlclient.Client
-	decoder *admission.Decoder
+	decoder admission.Decoder
 }
 
 // Handle satisfies controller-runtime/pkg/webhook/admission#Handler. It is responsible for deciding
@@ -62,7 +62,7 @@ func (a *Admission) Handle(ctx context.Context, req admission.Request) admission
 
 // InjectDecoder satisfies controller-runtime/pkg/webhook/admission#DecoderInjector. It is used
 // when registering the webhook to inject the decoder used by the controller manager.
-func (a *Admission) InjectDecoder(d *admission.Decoder) error {
+func (a *Admission) InjectDecoder(d admission.Decoder) error {
 	a.decoder = d
 	return nil
 }
