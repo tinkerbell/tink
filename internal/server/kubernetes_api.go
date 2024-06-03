@@ -126,6 +126,6 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 }
 
 // Register registers the service on the gRPC server.
-func (s *KubernetesBackedServer) Register(server *grpc.Server) {
-	proto.RegisterWorkflowServiceServer(server, s)
+func (k *KubernetesBackedServer) Register(server *grpc.Server) {
+	proto.RegisterWorkflowServiceServer(server, k)
 }
