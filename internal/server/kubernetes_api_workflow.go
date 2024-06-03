@@ -74,6 +74,29 @@ func (s *KubernetesBackedServer) GetWorkflowContexts(req *proto.WorkflowContextR
 	if err != nil {
 		return err
 	}
+
+	ctx := context.TODO()
+	id := req.WorkerId
+	if s.AutoCapMode != AutoCapModeDisabled && len(wflows) == 0 && (s.AutoCapMode == AutoCapModeDiscovery || s.AutoCapMode == AutoCapModeEnrollment) && !s.hardwareObjectExists(ctx, id) {
+		// In the future, the worker could be signaled to send hardware device information to be used in creation of the Hardware object.
+		// or the proto.WorkflowContextRequest could be extended to include Hardware information.
+		if err := s.createHardwareObject(ctx, id); err != nil {
+			s.logger.Error(err, "failed to create hardware object")
+			return err
+		}
+
+		if s.AutoCapMode == AutoCapModeEnrollment {
+			if err := s.createWorkflowObject(ctx, id); err != nil {
+				s.logger.Error(err, "failed to create workflow object")
+				return err
+			}
+			wflows, err = s.getCurrentAssignedNonTerminalWorkflowsForWorker(stream.Context(), req.WorkerId)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	for _, wf := range wflows {
 		if err := stream.Send(getWorkflowContext(wf)); err != nil {
 			return err

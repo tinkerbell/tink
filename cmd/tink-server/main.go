@@ -33,6 +33,9 @@ type Config struct {
 	KubeconfigPath string
 	KubeAPI        string
 	KubeNamespace  string
+
+	AutoEnrollmentTemplate string
+	AutoCapMode            string
 }
 
 const backendKubernetes = "kubernetes"
@@ -48,6 +51,8 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KubeconfigPath, "kubeconfig", "", "The path to the Kubeconfig. Only takes effect if `--backend=kubernetes`")
 	fs.StringVar(&c.KubeAPI, "kubernetes", "", "The Kubernetes API URL, used for in-cluster client construction. Only takes effect if `--backend=kubernetes`")
 	fs.StringVar(&c.KubeNamespace, "kube-namespace", "", "The Kubernetes namespace to target")
+	fs.StringVar(&c.AutoEnrollmentTemplate, "auto-enrollment-template", "", "The Template to use for auto enrollment Workflows (only used when `--auto-mode=enrollment`). The Template must exist and is a user defined Template, there is no default.")
+	fs.Var(newAutoCapModeValue(AutoCapMode(string(server.AutoCapModeDisabled)), (*AutoCapMode)(&c.AutoCapMode)), "auto-cap-mode", "The mode to use for automatic capabilities. Must be one of 'discovery', 'enrollment' or 'disabled'. discovery: creates a Hardware object for each unknown worker, enrollment: creates Hardware and Workflow objects for each unknown worker, disabled: auto capabilities are disabled")
 }
 
 func (c *Config) PopulateFromLegacyEnvVar() {
@@ -62,7 +67,7 @@ func (c *Config) PopulateFromLegacyEnvVar() {
 
 func main() {
 	if err := NewRootCommand().Execute(); err != nil {
-		fmt.Fprint(os.Stderr, err.Error())
+		fmt.Fprint(os.Stderr, err.Error(), "\n")
 		os.Exit(1)
 	}
 }
@@ -88,7 +93,7 @@ func NewRootCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// I am not sure if it is right for this to be here,
 			// but as last step I want to keep compatibility with
-			// what we have for a little bit and I thinik that's
+			// what we have for a little bit and I think that's
 			// the most aggressive way we have to guarantee that
 			// the old way works as before.
 			config.PopulateFromLegacyEnvVar()
@@ -108,6 +113,10 @@ func NewRootCommand() *cobra.Command {
 			errCh := make(chan error, 2)
 			var registrar grpcserver.Registrar
 
+			if server.AutoCapMode(config.AutoCapMode) == server.AutoCapModeEnrollment && config.AutoEnrollmentTemplate == "" {
+				return fmt.Errorf("auto-enrollment-template is required when auto-cap-mode is set to enrollment")
+			}
+
 			switch config.Backend {
 			case backendKubernetes:
 				var err error
@@ -116,6 +125,8 @@ func NewRootCommand() *cobra.Command {
 					config.KubeconfigPath,
 					config.KubeAPI,
 					config.KubeNamespace,
+					server.WithAutoCapMode(server.AutoCapMode(config.AutoCapMode)),
+					server.WithAutoEnrollmentTemplate(config.AutoEnrollmentTemplate),
 				)
 				if err != nil {
 					return err
@@ -205,4 +216,33 @@ func applyViper(v *viper.Viper, cmd *cobra.Command) error {
 	}
 
 	return nil
+}
+
+type AutoCapMode server.AutoCapMode
+
+func (a *AutoCapMode) String() string {
+	return string(*a)
+}
+
+func (a *AutoCapMode) Set(value string) error {
+	v := server.AutoCapMode(value)
+	if v == "" {
+		v = server.AutoCapModeDisabled
+	}
+	switch v {
+	case server.AutoCapModeDiscovery, server.AutoCapModeEnrollment, server.AutoCapModeDisabled:
+		*a = AutoCapMode(v)
+		return nil
+	}
+
+	return fmt.Errorf("invalid value %q, must be one of %q, %q, or %q", value, server.AutoCapModeDiscovery, server.AutoCapModeEnrollment, server.AutoCapModeDisabled)
+}
+
+func (a *AutoCapMode) Type() string {
+	return "auto capabilities mode"
+}
+
+func newAutoCapModeValue(val AutoCapMode, p *AutoCapMode) *AutoCapMode {
+	*p = val
+	return p
 }

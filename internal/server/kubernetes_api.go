@@ -20,12 +20,38 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 )
 
+// Option for setting optional KubernetesBackedServer fields.
+type Option func(*KubernetesBackedServer)
+
+// KubernetesBackedServer is a server that implements a workflow API.
+type KubernetesBackedServer struct {
+	logger                 logr.Logger
+	ClientFunc             func() client.Client
+	namespace              string
+	AutoCapMode            AutoCapMode
+	AutoEnrollmentTemplate string
+
+	nowFunc func() time.Time
+}
+
+func WithAutoCapMode(mode AutoCapMode) Option {
+	return func(k *KubernetesBackedServer) {
+		k.AutoCapMode = mode
+	}
+}
+
+func WithAutoEnrollmentTemplate(name string) Option {
+	return func(k *KubernetesBackedServer) {
+		k.AutoEnrollmentTemplate = name
+	}
+}
+
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=templates;templates/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch
 
 // NewKubeBackedServer returns a server that implements the Workflow server interface for a given kubeconfig.
-func NewKubeBackedServer(logger logr.Logger, kubeconfig, apiserver, namespace string) (*KubernetesBackedServer, error) {
+func NewKubeBackedServer(logger logr.Logger, kubeconfig, apiserver, namespace string, opts ...Option) (*KubernetesBackedServer, error) {
 	ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
 		&clientcmd.ConfigOverrides{
@@ -43,12 +69,12 @@ func NewKubeBackedServer(logger logr.Logger, kubeconfig, apiserver, namespace st
 		return nil, err
 	}
 
-	return NewKubeBackedServerFromREST(logger, cfg, namespace)
+	return NewKubeBackedServerFromREST(logger, cfg, namespace, opts...)
 }
 
 // NewKubeBackedServerFromREST returns a server that implements the Workflow
 // server interface with the given Kubernetes rest client and namespace.
-func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namespace string) (*KubernetesBackedServer, error) {
+func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namespace string, opts ...Option) (*KubernetesBackedServer, error) {
 	clstr, err := cluster.New(config, func(opts *cluster.Options) {
 		opts.Scheme = controller.DefaultScheme()
 		opts.Logger = zapr.NewLogger(zap.NewNop())
@@ -79,19 +105,16 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 		}
 	}()
 
-	return &KubernetesBackedServer{
+	k := &KubernetesBackedServer{
 		logger:     logger,
 		ClientFunc: clstr.GetClient,
 		nowFunc:    time.Now,
-	}, nil
-}
+	}
+	for _, opt := range opts {
+		opt(k)
+	}
 
-// KubernetesBackedServer is a server that implements a workflow API.
-type KubernetesBackedServer struct {
-	logger     logr.Logger
-	ClientFunc func() client.Client
-
-	nowFunc func() time.Time
+	return k, nil
 }
 
 // Register registers the service on the gRPC server.
