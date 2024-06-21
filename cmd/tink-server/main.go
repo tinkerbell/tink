@@ -239,7 +239,7 @@ func (a *AutoCapMode) Set(value string) error {
 }
 
 func (a *AutoCapMode) Type() string {
-	return "auto capabilities mode"
+	return "string"
 }
 
 func newAutoCapModeValue(val AutoCapMode, p *AutoCapMode) *AutoCapMode {
