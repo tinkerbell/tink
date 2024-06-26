@@ -23,7 +23,7 @@ PROTOC_GEN_GO_GRPC     := $(TOOLS_DIR)/protoc-gen-go-grpc
 PROTOC_GEN_GO_VER := v1.28
 PROTOC_GEN_GO     := $(TOOLS_DIR)/protoc-gen-go
 
-CONTROLLER_GEN_VER := v0.14
+CONTROLLER_GEN_VER := v0.15
 CONTROLLER_GEN     := $(TOOLS_DIR)/controller-gen-$(CONTROLLER_GEN_VER)
 
 KUSTOMIZE_VER := v4.5
