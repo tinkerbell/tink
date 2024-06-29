@@ -125,7 +125,7 @@ jobs:
         run: chmod +x bin/*
       - name: Build ${{ matrix.repository }} and push
 
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: cmd/${{ matrix.binary }}/Dockerfile
