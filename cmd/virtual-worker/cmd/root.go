@@ -51,6 +51,7 @@ func NewRootCommand(version string) *cobra.Command {
 			conn, err := client.NewClientConn(
 				viper.GetString("tinkerbell-grpc-authority"),
 				viper.GetBool("tinkerbell-tls"),
+				viper.GetBool("tinkerbell-insecure-tls"),
 			)
 			if err != nil {
 				return err
