@@ -85,7 +85,7 @@ var _ = Describe("Tink API", func() {
 			}, timeout, interval).Should(Equal("STATE_PENDING"))
 
 			By("Running a virtual worker")
-			conn, err := client.NewClientConn(serverAddr, false)
+			conn, err := client.NewClientConn(serverAddr, false, false)
 			Expect(err).NotTo(HaveOccurred())
 			rClient := proto.NewWorkflowServiceClient(conn)
 
@@ -155,7 +155,7 @@ var _ = Describe("Tink API", func() {
 			}, timeout, interval).Should(Equal("STATE_PENDING"))
 
 			By("Getting Workflow Contexts")
-			conn, err := client.NewClientConn(serverAddr, false)
+			conn, err := client.NewClientConn(serverAddr, false, false)
 			Expect(err).NotTo(HaveOccurred())
 			rClient := proto.NewWorkflowServiceClient(conn)
 			workerID := hardware.Spec.Interfaces[0].DHCP.MAC

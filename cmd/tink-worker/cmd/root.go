@@ -57,6 +57,7 @@ func NewRootCommand(version string) *cobra.Command {
 			conn, err := client.NewClientConn(
 				viper.GetString("tinkerbell-grpc-authority"),
 				viper.GetBool("tinkerbell-tls"),
+				viper.GetBool("tinkerbell-insecure-tls"),
 			)
 			if err != nil {
 				return err
@@ -104,6 +105,7 @@ func NewRootCommand(version string) *cobra.Command {
 	rootCmd.Flags().Int64("max-file-size", defaultMaxFileSize, "Maximum file size in bytes (MAX_FILE_SIZE)")
 	rootCmd.Flags().Bool("capture-action-logs", true, "Capture action container output as part of worker logs")
 	rootCmd.Flags().Bool("tinkerbell-tls", true, "Connect to server via TLS or not (TINKERBELL_TLS)")
+	rootCmd.Flags().Bool("tinkerbell-insecure-tls", false, "When connecting via TLS, enable insecure TLS via InsecureSkipVerify (TINKERBELL_INSECURE_TLS)")
 	rootCmd.Flags().StringP("docker-registry", "r", "", "Sets the Docker registry (DOCKER_REGISTRY)")
 	rootCmd.Flags().StringP("registry-username", "u", "", "Sets the registry username (REGISTRY_USERNAME)")
 	rootCmd.Flags().StringP("registry-password", "p", "", "Sets the registry-password (REGISTRY_PASSWORD)")
