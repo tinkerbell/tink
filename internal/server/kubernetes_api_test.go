@@ -421,7 +421,6 @@ func TestModifyWorkflowState(t *testing.T) {
 			server := &KubernetesBackedServer{
 				logger:     zapr.NewLogger(zap.Must(zap.NewDevelopment())),
 				ClientFunc: nil,
-				namespace:  "default",
 				nowFunc:    TestTime.Now,
 			}
 			gotErr := server.modifyWorkflowState(tc.inputWf, tc.inputWfContext)
