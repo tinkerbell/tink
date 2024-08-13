@@ -43,15 +43,6 @@ func NewKubeBackedServer(logger logr.Logger, kubeconfig, apiserver, namespace st
 		return nil, err
 	}
 
-	namespace, _, err = ccfg.Namespace()
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
 	return NewKubeBackedServerFromREST(logger, cfg, namespace)
 }
 
@@ -61,8 +52,10 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 	clstr, err := cluster.New(config, func(opts *cluster.Options) {
 		opts.Scheme = controller.DefaultScheme()
 		opts.Logger = zapr.NewLogger(zap.NewNop())
-		opts.Cache.DefaultNamespaces = map[string]cache.Config{
-			namespace: {},
+		if namespace != "" {
+			opts.Cache.DefaultNamespaces = map[string]cache.Config{
+				namespace: {},
+			}
 		}
 	})
 	if err != nil {
@@ -89,7 +82,6 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 	return &KubernetesBackedServer{
 		logger:     logger,
 		ClientFunc: clstr.GetClient,
-		namespace:  namespace,
 		nowFunc:    time.Now,
 	}, nil
 }
@@ -98,7 +90,6 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 type KubernetesBackedServer struct {
 	logger     logr.Logger
 	ClientFunc func() client.Client
-	namespace  string
 
 	nowFunc func() time.Time
 }

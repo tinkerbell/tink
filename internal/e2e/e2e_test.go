@@ -164,8 +164,8 @@ var _ = Describe("Tink API", func() {
 
 			// expected workflow name to context mapping
 			expectedWorkflows := map[string]*proto.WorkflowContext{
-				"wf1": {
-					WorkflowId:           "wf1",
+				"default/wf1": {
+					WorkflowId:           "default/wf1",
 					CurrentWorker:        "3c:ec:ef:4c:4f:54",
 					CurrentTask:          "os-installation",
 					CurrentAction:        "stream-image",
@@ -173,8 +173,8 @@ var _ = Describe("Tink API", func() {
 					CurrentActionState:   proto.State_STATE_PENDING,
 					TotalNumberOfActions: 3,
 				},
-				"wf3": {
-					WorkflowId:           "wf3",
+				"default/wf3": {
+					WorkflowId:           "default/wf3",
 					CurrentWorker:        "3c:ec:ef:4c:4f:54",
 					CurrentTask:          "task-1",
 					CurrentAction:        "task-1-action-1",
@@ -193,7 +193,7 @@ var _ = Describe("Tink API", func() {
 				if !googleproto.Equal(want, got) {
 					fmt.Printf("Expected:\n\t%#v\nGot:\n\t%#v", want, got)
 				}
-				Expect(googleproto.Equal(want, got)).To(Equal(true), fmt.Sprintf("Didn't find expected context for %s", got.WorkflowId))
+				Expect(googleproto.Equal(want, got)).To(Equal(true), fmt.Sprintf("Not equal context as expected for %s", got.WorkflowId))
 
 				// Remove the key from the map
 				delete(expectedWorkflows, got.WorkflowId)

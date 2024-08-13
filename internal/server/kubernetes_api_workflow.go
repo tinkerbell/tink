@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/tink/api/v1alpha1"
@@ -24,7 +25,7 @@ const (
 
 func getWorkflowContext(wf v1alpha1.Workflow) *proto.WorkflowContext {
 	return &proto.WorkflowContext{
-		WorkflowId:           wf.Name,
+		WorkflowId:           wf.Namespace + "/" + wf.Name,
 		CurrentWorker:        wf.GetCurrentWorker(),
 		CurrentTask:          wf.GetCurrentTask(),
 		CurrentAction:        wf.GetCurrentAction(),
@@ -52,9 +53,10 @@ func (s *KubernetesBackedServer) getCurrentAssignedNonTerminalWorkflowsForWorker
 	return wfs, nil
 }
 
-func (s *KubernetesBackedServer) getWorkflowByName(ctx context.Context, workflowID, namespace string) (*v1alpha1.Workflow, error) {
+func (s *KubernetesBackedServer) getWorkflowByName(ctx context.Context, workflowID string) (*v1alpha1.Workflow, error) {
+	workflowNamespace, workflowName, _ := strings.Cut(workflowID, "/")
 	wflw := &v1alpha1.Workflow{}
-	err := s.ClientFunc().Get(ctx, types.NamespacedName{Name: workflowID, Namespace: namespace}, wflw)
+	err := s.ClientFunc().Get(ctx, types.NamespacedName{Name: workflowName, Namespace: workflowNamespace}, wflw)
 	if err != nil {
 		s.logger.Error(err, "get client", "workflow", workflowID)
 		return nil, err
@@ -85,7 +87,7 @@ func (s *KubernetesBackedServer) GetWorkflowActions(ctx context.Context, req *pr
 	if wfID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
-	wf, err := s.getWorkflowByName(ctx, wfID, s.namespace)
+	wf, err := s.getWorkflowByName(ctx, wfID)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +191,7 @@ func (s *KubernetesBackedServer) ReportActionStatus(ctx context.Context, req *pr
 	wfID := req.GetWorkflowId()
 	l := s.logger.WithValues("actionName", req.GetActionName(), "status", req.GetActionStatus(), "workflowID", req.GetWorkflowId(), "taskName", req.GetTaskName(), "worker", req.WorkerId)
 
-	wf, err := s.getWorkflowByName(ctx, wfID, s.namespace)
+	wf, err := s.getWorkflowByName(ctx, wfID)
 	if err != nil {
 		l.Error(err, "get workflow")
 		return nil, status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
