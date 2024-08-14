@@ -109,6 +109,7 @@ func NewKubeBackedServerFromREST(logger logr.Logger, config *rest.Config, namesp
 		logger:     logger,
 		ClientFunc: clstr.GetClient,
 		nowFunc:    time.Now,
+		namespace:  namespace,
 	}
 	for _, opt := range opts {
 		opt(k)
