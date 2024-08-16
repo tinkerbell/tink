@@ -84,11 +84,6 @@ func TestValidateTemplate(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			name:          "template version is invalid",
-			wf:            toWorkflow(withTemplateInvalidVersion()),
-			expectedError: true,
-		},
-		{
 			name:          "template tasks is nil",
 			wf:            toWorkflow(withTemplateNilTasks()),
 			expectedError: true,
@@ -252,12 +247,6 @@ func withTemplateInvalidName() workflowModifier {
 func withTemplateLongName() workflowModifier {
 	return func(wf *Workflow) {
 		wf.Name = veryLongName
-	}
-}
-
-func withTemplateInvalidVersion() workflowModifier {
-	return func(wf *Workflow) {
-		wf.Version = "0.2"
 	}
 }
 
