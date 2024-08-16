@@ -70,10 +70,6 @@ func validate(wf *Workflow) error {
 		return errors.Errorf(errInvalidLength, wf.Name)
 	}
 
-	if wf.Version != "0.1" {
-		return errors.Errorf("invalid template version (%s)", wf.Version)
-	}
-
 	if len(wf.Tasks) == 0 {
 		return errors.New("template must have at least one task defined")
 	}
