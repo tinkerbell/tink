@@ -26,10 +26,19 @@ type fakeDockerClient struct {
 	statusCode       int
 	err              error
 	waitErr          error
+	imageInspectErr  error
 }
 
-func newFakeDockerClient(containerID, imagePullContent string, delay time.Duration, statusCode int, err, waitErr error) *fakeDockerClient {
-	return &fakeDockerClient{
+type dockerClientOpt func(*fakeDockerClient)
+
+func withImageInspectErr(err error) dockerClientOpt {
+	return func(c *fakeDockerClient) {
+		c.imageInspectErr = err
+	}
+}
+
+func newFakeDockerClient(containerID, imagePullContent string, delay time.Duration, statusCode int, err, waitErr error, opts ...dockerClientOpt) *fakeDockerClient {
+	f := &fakeDockerClient{
 		containerID:      containerID,
 		imagePullContent: imagePullContent,
 		delay:            delay,
@@ -37,6 +46,12 @@ func newFakeDockerClient(containerID, imagePullContent string, delay time.Durati
 		err:              err,
 		waitErr:          waitErr,
 	}
+
+	for _, opt := range opts {
+		opt(f)
+	}
+
+	return f
 }
 
 func (c *fakeDockerClient) ContainerCreate(
