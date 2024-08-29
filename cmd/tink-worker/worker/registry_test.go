@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/image"
 	"github.com/go-logr/zapr"
 	"go.uber.org/zap"
@@ -19,6 +20,10 @@ func (c *fakeDockerClient) ImagePull(context.Context, string, image.PullOptions)
 	return io.NopCloser(strings.NewReader(c.imagePullContent)), nil
 }
 
+func (c *fakeDockerClient) ImageInspectWithRaw(context.Context, string) (types.ImageInspect, []byte, error) {
+	return types.ImageInspect{}, nil, c.imageInspectErr
+}
+
 func TestContainerManagerPullImage(t *testing.T) {
 	cases := []struct {
 		name            string
@@ -27,6 +32,7 @@ func TestContainerManagerPullImage(t *testing.T) {
 		registry        RegistryConnDetails
 		clientErr       error
 		wantErr         error
+		imageInspectErr error
 	}{
 		{
 			name:            "Happy Path",
@@ -39,19 +45,27 @@ func TestContainerManagerPullImage(t *testing.T) {
 			responseContent: "{",
 			clientErr:       errors.New("You missed the shot"),
 			wantErr:         errors.New("DOCKER PULL: You missed the shot"),
+			imageInspectErr: errors.New("Image not in local cache"),
 		},
 		{
 			name:            "pull error",
 			image:           "yav.in/4/deathstar:nomedalforchewie",
 			responseContent: `{"error": "You missed the shot"}`,
 			wantErr:         errors.New("DOCKER PULL: You missed the shot"),
+			imageInspectErr: errors.New("Image not in local cache"),
+		},
+		{
+			name:      "image already exists, no error",
+			image:     "yav.in/4/deathstar:nomedalforchewie",
+			clientErr: errors.New("You missed the shot"),
+			wantErr:   nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
-			mgr := NewContainerManager(logger, newFakeDockerClient("", tc.responseContent, 0, 0, tc.clientErr, nil), tc.registry)
+			mgr := NewContainerManager(logger, newFakeDockerClient("", tc.responseContent, 0, 0, tc.clientErr, nil, withImageInspectErr(tc.imageInspectErr)), tc.registry)
 
 			ctx := context.Background()
 			gotErr := mgr.PullImage(ctx, tc.image)
