@@ -31,6 +31,7 @@ type ImagePullStatus struct {
 }
 
 // PullImage outputs to stdout the contents of the requested image (relative to the registry).
+// If a pull fails but the image already exists then we will return a nil error.
 func (m *containerManager) PullImage(ctx context.Context, img string) error {
 	l := m.getLogger(ctx)
 	authConfig := registry.AuthConfig{
@@ -46,6 +47,9 @@ func (m *containerManager) PullImage(ctx context.Context, img string) error {
 
 	out, err := m.cli.ImagePull(ctx, path.Join(m.registryDetails.Registry, img), image.PullOptions{RegistryAuth: authStr})
 	if err != nil {
+		if _, _, err := m.cli.ImageInspectWithRaw(ctx, path.Join(m.registryDetails.Registry, img)); err == nil {
+			return nil
+		}
 		return errors.Wrap(err, "DOCKER PULL")
 	}
 	defer func() {
