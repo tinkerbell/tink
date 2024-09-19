@@ -93,13 +93,6 @@ spec:
                         message:
                           description: A human-readable description of the status of this operation.
                           type: string
-                        reason:
-                          description: |-
-                            A machine-readable description of why this operation is in the
-                            "Failure" status. If this value is empty there
-                            is no information available. A Reason clarifies an HTTP status
-                            code but does not override it.
-                          type: string
                         status:
                           description: |-
                             Status of the operation.
@@ -112,13 +105,6 @@ spec:
                       properties:
                         message:
                           description: A human-readable description of the status of this operation.
-                          type: string
-                        reason:
-                          description: |-
-                            A machine-readable description of why this operation is in the
-                            "Failure" status. If this value is empty there
-                            is no information available. A Reason clarifies an HTTP status
-                            code but does not override it.
                           type: string
                         status:
                           description: |-
@@ -198,13 +184,6 @@ spec:
                   properties:
                     message:
                       description: A human-readable description of the status of this operation.
-                      type: string
-                    reason:
-                      description: |-
-                        A machine-readable description of why this operation is in the
-                        "Failure" status. If this value is empty there
-                        is no information available. A Reason clarifies an HTTP status
-                        code but does not override it.
                       type: string
                     status:
                       description: |-

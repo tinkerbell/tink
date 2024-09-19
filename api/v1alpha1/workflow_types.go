@@ -28,13 +28,6 @@ type WorkflowSpec struct {
 	// A mapping of template devices to hadware mac addresses
 	HardwareMap map[string]string `json:"hardwareMap,omitempty"`
 
-	// ToggleNetworkBoot uses the HardwareRef and changes the all network interfaces to boot from network
-	// before running the workflow and sets all network interfaces to not boot from the network after a successful workflow.
-	// ToggleNetworkBoot bool `json:"toggleNetworkBoot,omitempty"`
-
-	// NetbootBeforeWorkflow uses the HardwareRef and the bmcRef in the hardware to boot the machine from the network before running the workflow.
-	// NetbootBeforeWorkflow bool `json:"netbootBeforeWorkflow,omitempty"`
-
 	// BootOpts is a set of options to be used when netbooting the hardware.
 	BootOpts BootOpts `json:"bootOpts,omitempty"`
 }
@@ -84,19 +77,6 @@ type Status struct {
 	// A human-readable description of the status of this operation.
 	// +optional
 	Message string `json:"message,omitempty" protobuf:"bytes,3,opt,name=message"`
-	// A machine-readable description of why this operation is in the
-	// "Failure" status. If this value is empty there
-	// is no information available. A Reason clarifies an HTTP status
-	// code but does not override it.
-	// +optional
-	Reason metav1.StatusReason `json:"reason,omitempty" protobuf:"bytes,4,opt,name=reason"`
-	// Extended data associated with the reason.  Each reason may define its
-	// own extended details. This field is optional and the data returned
-	// is not guaranteed to conform to any schema except that defined by
-	// the reason type.
-	// +optional
-	// +listType=atomic
-	// Details *metav1.StatusDetails `json:"details,omitempty" protobuf:"bytes,5,opt,name=details"`
 }
 
 func (s *Status) IsSuccess() bool {
