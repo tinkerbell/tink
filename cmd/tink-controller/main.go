@@ -60,14 +60,14 @@ func NewRootCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use: "tink-controller",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
 			viper, err := createViper(logger)
 			if err != nil {
 				return fmt.Errorf("config init: %w", err)
 			}
 			return applyViper(viper, cmd)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			logger.Info("Starting controller version " + version)
 
 			ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -146,7 +146,7 @@ func applyViper(v *viper.Viper, cmd *cobra.Command) error {
 		for _, err := range errors {
 			errs = append(errs, err.Error())
 		}
-		return fmt.Errorf(strings.Join(errs, ", "))
+		return fmt.Errorf("%s", strings.Join(errs, ", "))
 	}
 
 	return nil

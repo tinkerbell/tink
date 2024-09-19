@@ -89,7 +89,7 @@ type Status struct {
 	// is no information available. A Reason clarifies an HTTP status
 	// code but does not override it.
 	// +optional
-	Reason metav1.StatusReason `json:"reason,omitempty" protobuf:"bytes,4,opt,name=reason,casttype=StatusReason"`
+	Reason metav1.StatusReason `json:"reason,omitempty" protobuf:"bytes,4,opt,name=reason"`
 	// Extended data associated with the reason.  Each reason may define its
 	// own extended details. This field is optional and the data returned
 	// is not guaranteed to conform to any schema except that defined by

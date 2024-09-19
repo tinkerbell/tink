@@ -10,7 +10,6 @@ import (
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -111,7 +110,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 }
 
 func (r *Reconciler) handleHardwareAllowPXE(ctx context.Context, stored *v1alpha1.Workflow, hardware *v1alpha1.Hardware) error {
-
 	// We need to set allowPXE to true before a workflow runs.
 	// We need to set allowPXE to false after a workflow completes successfully.
 
@@ -206,7 +204,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	}
 
 	// netboot the hardware if requested
-	if stored.Spec.BootOpts.OneTimeNetboot {
+	if stored.Spec.BootOpts.OneTimeNetboot { //nolint:nestif // Will work on this complexity.
 		// check if the hardware has a bmcRef
 		if hardware.Spec.BMCRef == nil {
 			return reconcile.Result{}, fmt.Errorf("hardware %s does not have a BMC, cannot perform one time netboot", hardware.Name)
@@ -227,12 +225,10 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 				stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "previous existing one time netboot job deleted"}
 
 				return reconcile.Result{Requeue: true}, nil
+			} else if errors.IsNotFound(err) {
+				stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "no existing one time netboot job found"}
 			} else {
-				if apierrors.IsNotFound(err) {
-					stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "no existing one time netboot job found"}
-				} else {
-					return reconcile.Result{Requeue: true}, err
-				}
+				return reconcile.Result{Requeue: true}, err
 			}
 		}
 
@@ -329,7 +325,7 @@ func toTemplateHardwareData(hardware v1alpha1.Hardware) templateHardwareData {
 	return contract
 }
 
-func (r *Reconciler) processRunningWorkflow(_ context.Context, stored *v1alpha1.Workflow) reconcile.Result {
+func (r *Reconciler) processRunningWorkflow(_ context.Context, stored *v1alpha1.Workflow) reconcile.Result { //nolint:unparam // This is the way controller runtime works.
 	// Check for global timeout expiration
 	if r.nowFunc().After(stored.GetStartTime().Add(time.Duration(stored.Status.GlobalTimeout) * time.Second)) {
 		stored.Status.State = v1alpha1.WorkflowStateTimeout

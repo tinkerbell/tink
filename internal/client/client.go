@@ -18,7 +18,7 @@ func NewClientConn(authority string, tlsEnabled bool, tlsInsecure bool) (*grpc.C
 		creds = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	conn, err := grpc.Dial(authority, creds, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
+	conn, err := grpc.NewClient(authority, creds, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	if err != nil {
 		return nil, errors.Wrap(err, "dial tinkerbell server")
 	}

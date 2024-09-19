@@ -94,7 +94,7 @@ func TestLogCapturerContextLogger(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(_ *testing.T) {
 			logger := zapr.NewLogger(zap.Must(zap.NewDevelopment()))
 			ctx := context.Background()
 			if tc.logger != nil {

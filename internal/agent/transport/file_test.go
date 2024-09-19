@@ -46,7 +46,7 @@ func TestFile(t *testing.T) {
 	defer cancel()
 
 	handler := &transport.WorkflowHandlerMock{
-		HandleWorkflowFunc: func(contextMoqParam context.Context, workflow workflow.Workflow, recorder event.Recorder) {
+		HandleWorkflowFunc: func(_ context.Context, workflow workflow.Workflow, _ event.Recorder) {
 			if !cmp.Equal(expect, workflow) {
 				t.Fatalf("Workflow diff:\n%v", cmp.Diff(expect, workflow))
 			}
