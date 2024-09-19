@@ -7,11 +7,12 @@ import (
 type WorkflowState string
 
 const (
-	WorkflowStatePending = WorkflowState("STATE_PENDING")
-	WorkflowStateRunning = WorkflowState("STATE_RUNNING")
-	WorkflowStateFailed  = WorkflowState("STATE_FAILED")
-	WorkflowStateTimeout = WorkflowState("STATE_TIMEOUT")
-	WorkflowStateSuccess = WorkflowState("STATE_SUCCESS")
+	WorkflowStatePending   = WorkflowState("STATE_PENDING")
+	WorkflowStateRunning   = WorkflowState("STATE_RUNNING")
+	WorkflowStateFailed    = WorkflowState("STATE_FAILED")
+	WorkflowStateTimeout   = WorkflowState("STATE_TIMEOUT")
+	WorkflowStateSuccess   = WorkflowState("STATE_SUCCESS")
+	WorkflowStatePreparing = WorkflowState("STATE_PREPARING")
 )
 
 // WorkflowSpec defines the desired state of Workflow.
@@ -24,6 +25,27 @@ type WorkflowSpec struct {
 
 	// A mapping of template devices to hadware mac addresses
 	HardwareMap map[string]string `json:"hardwareMap,omitempty"`
+
+	// ToggleNetworkBoot uses the HardwareRef and changes the all network interfaces to boot from network
+	// before running the workflow and sets all network interfaces to not boot from the network after a successful workflow.
+	// ToggleNetworkBoot bool `json:"toggleNetworkBoot,omitempty"`
+
+	// NetbootBeforeWorkflow uses the HardwareRef and the bmcRef in the hardware to boot the machine from the network before running the workflow.
+	// NetbootBeforeWorkflow bool `json:"netbootBeforeWorkflow,omitempty"`
+
+	// BootOpts is a set of options to be used when netbooting the hardware.
+	BootOpts BootOpts `json:"bootOpts,omitempty"`
+}
+
+type BootOpts struct {
+	// ToggleHardware indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
+	// This will be enabled before a Workflow is executed and disabled after the Workflow has completed successfully.
+	// A HardwareRef must be provided.
+	ToggleHardware bool `json:"toggleHardware,omitempty"`
+	// OneTimeNetboot indicates whether the controller should create a job.bmc.tinkerbell.org object for getting the associated hardware
+	// into a netbooting state.
+	// A HardwareRef that contains a spec.BmcRef must be provided.
+	OneTimeNetboot bool `json:"oneTimeNetboot,omitempty"`
 }
 
 // WorkflowStatus defines the observed state of Workflow.
@@ -36,6 +58,38 @@ type WorkflowStatus struct {
 
 	// Tasks are the tasks to be completed
 	Tasks []Task `json:"tasks,omitempty"`
+
+	// ToggleHardware indicates whether the controller has successfully toggled the network boot setting
+	// in the associated hardware.
+	ToggleHardware *Status `json:"toggleHardware,omitempty"`
+
+	// OneTimeNetboot indicates whether the controller has successfully netbooted the associated hardware.
+	OneTimeNetboot *Status `json:"oneTimeNetboot,omitempty"`
+}
+
+// Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".
+type Status struct {
+	// Status of the operation.
+	// One of: "Success" or "Failure".
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+	// +optional
+	Status string `json:"status,omitempty" protobuf:"bytes,2,opt,name=status"`
+	// A human-readable description of the status of this operation.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,3,opt,name=message"`
+	// A machine-readable description of why this operation is in the
+	// "Failure" status. If this value is empty there
+	// is no information available. A Reason clarifies an HTTP status
+	// code but does not override it.
+	// +optional
+	Reason metav1.StatusReason `json:"reason,omitempty" protobuf:"bytes,4,opt,name=reason,casttype=StatusReason"`
+	// Extended data associated with the reason.  Each reason may define its
+	// own extended details. This field is optional and the data returned
+	// is not guaranteed to conform to any schema except that defined by
+	// the reason type.
+	// +optional
+	// +listType=atomic
+	// Details *metav1.StatusDetails `json:"details,omitempty" protobuf:"bytes,5,opt,name=details"`
 }
 
 // Task represents a series of actions to be completed by a worker.

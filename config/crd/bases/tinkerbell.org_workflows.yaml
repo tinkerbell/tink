@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   name: workflows.tinkerbell.org
 spec:
   group: tinkerbell.org
@@ -49,6 +49,22 @@ spec:
             spec:
               description: WorkflowSpec defines the desired state of Workflow.
               properties:
+                bootOpts:
+                  description: BootOpts is a set of options to be used when netbooting the hardware.
+                  properties:
+                    oneTimeNetboot:
+                      description: |-
+                        OneTimeNetboot indicates whether the controller should create a job.bmc.tinkerbell.org object for getting the associated hardware
+                        into a netbooting state.
+                        A HardwareRef that contains a spec.BmcRef must be provided.
+                      type: boolean
+                    toggleHardware:
+                      description: |-
+                        ToggleHardware indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
+                        This will be enabled before a Workflow is executed and disabled after the Workflow has completed successfully.
+                        A HardwareRef must be provided.
+                      type: boolean
+                  type: object
                 hardwareMap:
                   additionalProperties:
                     type: string
@@ -68,6 +84,26 @@ spec:
                   description: GlobalTimeout represents the max execution time
                   format: int64
                   type: integer
+                oneTimeNetboot:
+                  description: OneTimeNetboot indicates whether the controller has successfully netbooted the associated hardware.
+                  properties:
+                    message:
+                      description: A human-readable description of the status of this operation.
+                      type: string
+                    reason:
+                      description: |-
+                        A machine-readable description of why this operation is in the
+                        "Failure" status. If this value is empty there
+                        is no information available. A Reason clarifies an HTTP status
+                        code but does not override it.
+                      type: string
+                    status:
+                      description: |-
+                        Status of the operation.
+                        One of: "Success" or "Failure".
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+                      type: string
+                  type: object
                 state:
                   description: State is the state of the workflow in Tinkerbell.
                   type: string
@@ -131,6 +167,28 @@ spec:
                       - worker
                     type: object
                   type: array
+                toggleHardware:
+                  description: |-
+                    ToggleHardware indicates whether the controller has successfully toggled the network boot setting
+                    in the associated hardware.
+                  properties:
+                    message:
+                      description: A human-readable description of the status of this operation.
+                      type: string
+                    reason:
+                      description: |-
+                        A machine-readable description of why this operation is in the
+                        "Failure" status. If this value is empty there
+                        is no information available. A Reason clarifies an HTTP status
+                        code but does not override it.
+                      type: string
+                    status:
+                      description: |-
+                        Status of the operation.
+                        One of: "Success" or "Failure".
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+                      type: string
+                  type: object
               type: object
           type: object
       served: true
@@ -186,9 +244,7 @@ spec:
                         This field is effectively required, but due to backwards compatibility is
                         allowed to be empty. Instances of this type with an empty value here are
                         almost certainly wrong.
-                        TODO: Add other useful fields. apiVersion, kind, uid?
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -198,7 +254,6 @@ spec:
                   description: |-
                     TemplateParams are a list of key-value pairs that are injected into templates at render
                     time. TemplateParams are exposed to templates using a top level .Params key.
-
 
                     For example, TemplateParams = {"foo": "bar"}, the foo key can be accessed via .Params.foo.
                   type: object
@@ -212,9 +267,7 @@ spec:
                         This field is effectively required, but due to backwards compatibility is
                         allowed to be empty. Instances of this type with an empty value here are
                         almost certainly wrong.
-                        TODO: Add other useful fields. apiVersion, kind, uid?
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -291,7 +344,7 @@ spec:
                           volumes:
                             description: Volumes defines the volumes to mount into the container.
                             items:
-                              description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\n\nRead-only bind mount bound to /data\n\n\n\t/etc/data:/data:ro\n\n\nWritable volume name bound to /data\n\n\n\tshared_volume:/data\n\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
+                              description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\nRead-only bind mount bound to /data\n\n\t/etc/data:/data:ro\n\nWritable volume name bound to /data\n\n\tshared_volume:/data\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
                               type: string
                             type: array
                         required:

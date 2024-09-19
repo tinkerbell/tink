@@ -67,6 +67,8 @@ func (s *KubernetesBackedServer) getWorkflowByName(ctx context.Context, workflow
 // The following APIs are used by the worker.
 
 func (s *KubernetesBackedServer) GetWorkflowContexts(req *proto.WorkflowContextRequest, stream proto.WorkflowService_GetWorkflowContextsServer) error {
+	// if spec.Netboot is true, and allowPXE: false in the hardware then don't serve a workflow context
+	// if spec.ToggleHardwareNetworkBooting is true, and any associated bmc jobs dont exists or have not completed successfully then don't serve a workflow context
 	if req.GetWorkerId() == "" {
 		return status.Errorf(codes.InvalidArgument, errInvalidWorkflowID)
 	}
@@ -75,6 +77,12 @@ func (s *KubernetesBackedServer) GetWorkflowContexts(req *proto.WorkflowContextR
 		return err
 	}
 	for _, wf := range wflows {
+		if wf.Spec.BootOpts.ToggleHardware && wf.Status.ToggleHardware != nil && wf.Status.ToggleHardware.Status == "" && wf.Status.State == v1alpha1.WorkflowStatePreparing {
+			continue
+		}
+		if wf.Spec.BootOpts.OneTimeNetboot && wf.Status.ToggleHardware != nil && wf.Status.OneTimeNetboot.Status == "" && wf.Status.State == v1alpha1.WorkflowStatePreparing {
+			continue
+		}
 		if err := stream.Send(getWorkflowContext(wf)); err != nil {
 			return err
 		}
