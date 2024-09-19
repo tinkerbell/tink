@@ -10,12 +10,17 @@ import (
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+const (
+	bmcJobName = "tink-controller-%s-one-time-netboot"
 )
 
 // Reconciler is a type for managing Workflows.
@@ -62,18 +67,21 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	case v1alpha1.WorkflowStateRunning:
 		resp = r.processRunningWorkflow(ctx, wflow)
 	case v1alpha1.WorkflowStatePreparing:
-		logger.Info("debugging 1")
+		if wflow.Status.OneTimeNetboot.CreationStatus == nil {
+			return reconcile.Result{Requeue: true}, nil
+		}
+		if !wflow.Status.OneTimeNetboot.CreationStatus.IsSuccess() {
+			return reconcile.Result{Requeue: true}, nil
+		}
 		existingJob := &rufio.Job{}
-		jobName := fmt.Sprintf("tink-controller-%s-one-time-netboot", wflow.Spec.HardwareRef)
+		jobName := fmt.Sprintf(bmcJobName, wflow.Spec.HardwareRef)
 		if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: jobName, Namespace: wflow.Namespace}, existingJob); err != nil {
 			return reconcile.Result{}, fmt.Errorf("error getting one time netboot job: %w", err)
 		}
-		logger.Info("debugging 2", "job conditions", existingJob.Status.Conditions)
 		if existingJob.HasCondition(rufio.JobFailed, rufio.ConditionTrue) {
 			return reconcile.Result{}, fmt.Errorf("one time netboot job failed")
 		}
 		if existingJob.HasCondition(rufio.JobCompleted, rufio.ConditionTrue) {
-			logger.Info("debugging 3")
 			wflow.Status.State = v1alpha1.WorkflowStatePending
 		} else {
 			return reconcile.Result{Requeue: true}, nil
@@ -109,12 +117,12 @@ func (r *Reconciler) handleHardwareAllowPXE(ctx context.Context, stored *v1alpha
 
 	// before workflow case
 	if stored.Status.ToggleHardware == nil || (stored.Status.ToggleHardware != nil && stored.Status.ToggleHardware.Status == "" && stored.Status.State == "" || stored.Status.State == v1alpha1.WorkflowStatePending) {
-		status := &v1alpha1.Status{Status: "success", Message: "allowPXE set to true"}
+		status := &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "allowPXE set to true"}
 		for _, iface := range hardware.Spec.Interfaces {
 			iface.Netboot.AllowPXE = ptr.Bool(true)
 		}
 		if err := r.client.Update(ctx, hardware); err != nil {
-			status.Status = "failed"
+			status.Status = v1alpha1.StatusFailure
 			stored.Status.ToggleHardware = status
 			return err
 		}
@@ -123,12 +131,12 @@ func (r *Reconciler) handleHardwareAllowPXE(ctx context.Context, stored *v1alpha
 
 	// after workflow case
 	if stored.Status.State == v1alpha1.WorkflowStateSuccess {
-		status := &v1alpha1.Status{Status: "success", Message: "allowPXE set to false"}
+		status := &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "allowPXE set to false"}
 		for _, iface := range hardware.Spec.Interfaces {
 			iface.Netboot.AllowPXE = ptr.Bool(false)
 		}
 		if err := r.client.Update(ctx, hardware); err != nil {
-			status.Status = "failed"
+			status.Status = v1alpha1.StatusFailure
 			stored.Status.ToggleHardware = status
 			return err
 		}
@@ -205,117 +213,85 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		}
 
 		// check if an existing job.bmc.tinkerbell.org object exists, if so delete it.
-		existingJob := &rufio.Job{}
-		jobName := fmt.Sprintf("tink-controller-%s-one-time-netboot", hardware.Name)
-		if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: jobName, Namespace: hardware.Namespace}, existingJob); err == nil {
-			logger.Info("debugging in delete", "stored.status", stored.Status, "job conditions", existingJob.Status.Conditions)
-			if existingJob.HasCondition(rufio.JobCompleted, rufio.ConditionFalse) || len(existingJob.Status.Conditions) != 2 {
-				logger.Info("one time netboot job is still running", "job", jobName, "stored.status", stored.Status, "conditions", existingJob.Status.Conditions)
+		if !stored.Status.OneTimeNetboot.DeletionStatus.IsSuccess() && !stored.Status.OneTimeNetboot.CreationStatus.IsSuccess() {
+			existingJob := &rufio.Job{}
+			jobName := fmt.Sprintf(bmcJobName, hardware.Name)
+			if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: jobName, Namespace: hardware.Namespace}, existingJob); err == nil {
+				opts := []ctrlclient.DeleteOption{
+					ctrlclient.GracePeriodSeconds(0),
+					ctrlclient.PropagationPolicy(metav1.DeletePropagationForeground),
+				}
+				if err := r.client.Delete(ctx, existingJob, opts...); err != nil {
+					return reconcile.Result{}, fmt.Errorf("error deleting existing job.bmc.tinkerbell.org object for netbooting machine: %w", err)
+				}
+				stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "previous existing one time netboot job deleted"}
+
 				return reconcile.Result{Requeue: true}, nil
-			}
-			opts := []ctrlclient.DeleteOption{
-				ctrlclient.GracePeriodSeconds(0),
-				ctrlclient.PropagationPolicy(metav1.DeletePropagationForeground),
-			}
-			logger.Info("deleting existing one time netboot job", "job", jobName, "conditions", existingJob.Status.Conditions)
-			if err := r.client.Delete(ctx, existingJob, opts...); err != nil {
-				return reconcile.Result{}, fmt.Errorf("error deleting existing job.bmc.tinkerbell.org object for netbooting machine: %w", err)
-			}
-
-			return reconcile.Result{Requeue: true}, nil
-		}
-
-		// create a job.bmc.tinkerbell.org object to netboot the hardware
-		name := fmt.Sprintf("tink-controller-%s-one-time-netboot", hardware.Name)
-		ns := hardware.Namespace
-		efiBoot := func() bool {
-			for _, iface := range hardware.Spec.Interfaces {
-				if iface.DHCP != nil && iface.DHCP.UEFI {
-					return true
+			} else {
+				if apierrors.IsNotFound(err) {
+					stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "no existing one time netboot job found"}
+				} else {
+					return reconcile.Result{Requeue: true}, err
 				}
 			}
-			return false
-		}()
-		job := &rufio.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: ns,
-				Annotations: map[string]string{
-					"tink-controller-auto-created": "true",
-				},
-				Labels: map[string]string{
-					"tink-controller-auto-created": "true",
-				},
-			},
-			Spec: rufio.JobSpec{
-				MachineRef: rufio.MachineRef{
-					Name:      hardware.Spec.BMCRef.Name,
-					Namespace: ns,
-				},
-				Tasks: []rufio.Action{
-					{
-						PowerAction: rufio.PowerHardOff.Ptr(),
-					},
-					{
-						OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
-							Devices: []rufio.BootDevice{
-								rufio.PXE,
-							},
-							EFIBoot: efiBoot,
-						},
-					},
-					{
-						PowerAction: rufio.PowerOn.Ptr(),
-					},
-				},
-			},
 		}
-		logger.Info("creating one time netboot job", "job", job.Name)
-		if err := r.client.Create(ctx, job); err != nil {
-			return reconcile.Result{}, fmt.Errorf("error creating job.bmc.tinkerbell.org object for netbooting machine: %w", err)
-		}
-		stored.Status.OneTimeNetboot = &v1alpha1.Status{Status: "success", Message: "one time netboot job created"}
-		// block until the job completes. This is needed as there can be a race condition if the Hardware is already running
-		// a Tink Worker.
-		stored.Status.State = v1alpha1.WorkflowStatePreparing
-		return reconcile.Result{Requeue: true}, nil
-		/*
-			logger.Info("debugging 2")
-			waitJob := &rufio.Job{}
-			if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: job.Name, Namespace: job.Namespace}, waitJob); err != nil {
-				return reconcile.Result{}, fmt.Errorf("error getting one time netboot job: %w", err)
-			}
-			if waitJob.HasCondition(rufio.JobFailed, rufio.ConditionTrue) {
-				return reconcile.Result{}, fmt.Errorf("one time netboot job failed")
-			}
-			if waitJob.HasCondition(rufio.JobCompleted, rufio.ConditionTrue) {
-				stored.Status.State = v1alpha1.WorkflowStatePending
-				return reconcile.Result{}, nil
-			}
-		*/
-		/*
-				timeout, cancel := context.WithTimeout(ctx, time.Duration(5*float64(time.Minute)))
-				defer cancel()
-				for {
-					select {
-					case <-timeout.Done():
-						return reconcile.Result{}, fmt.Errorf("timeout waiting for one time netboot job to complete")
-					default:
-						time.Sleep(2 * time.Second)
-						waitJob := &rufio.Job{}
-						if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: job.Name, Namespace: job.Namespace}, waitJob); err != nil {
-							continue
-						}
-						if waitJob.HasCondition(rufio.JobCompleted, rufio.ConditionTrue) {
-							goto DONE
-						}
-						if waitJob.HasCondition(rufio.JobFailed, rufio.ConditionTrue) {
-							return reconcile.Result{}, fmt.Errorf("one time netboot job failed")
-						}
+
+		if !stored.Status.OneTimeNetboot.CreationStatus.IsSuccess() && stored.Status.OneTimeNetboot.DeletionStatus.IsSuccess() {
+			// create a job.bmc.tinkerbell.org object to netboot the hardware
+			name := fmt.Sprintf(bmcJobName, hardware.Name)
+			ns := hardware.Namespace
+			efiBoot := func() bool {
+				for _, iface := range hardware.Spec.Interfaces {
+					if iface.DHCP != nil && iface.DHCP.UEFI {
+						return true
 					}
 				}
-			DONE:
-		*/
+				return false
+			}()
+			job := &rufio.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: ns,
+					Annotations: map[string]string{
+						"tink-controller-auto-created": "true",
+					},
+					Labels: map[string]string{
+						"tink-controller-auto-created": "true",
+					},
+				},
+				Spec: rufio.JobSpec{
+					MachineRef: rufio.MachineRef{
+						Name:      hardware.Spec.BMCRef.Name,
+						Namespace: ns,
+					},
+					Tasks: []rufio.Action{
+						{
+							PowerAction: rufio.PowerHardOff.Ptr(),
+						},
+						{
+							OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
+								Devices: []rufio.BootDevice{
+									rufio.PXE,
+								},
+								EFIBoot: efiBoot,
+							},
+						},
+						{
+							PowerAction: rufio.PowerOn.Ptr(),
+						},
+					},
+				},
+			}
+			if err := r.client.Create(ctx, job); err != nil {
+				return reconcile.Result{}, fmt.Errorf("error creating job.bmc.tinkerbell.org object for netbooting machine: %w", err)
+			}
+			stored.Status.OneTimeNetboot.CreationStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "one time netboot job created"}
+			// block until the job completes. This is needed as there can be a race condition if the Hardware is already running
+			// a Tink Worker.
+			stored.Status.State = v1alpha1.WorkflowStatePreparing
+			return reconcile.Result{Requeue: true}, nil
+		}
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	stored.Status.State = v1alpha1.WorkflowStatePending

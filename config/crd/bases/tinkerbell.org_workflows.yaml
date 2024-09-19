@@ -87,22 +87,46 @@ spec:
                 oneTimeNetboot:
                   description: OneTimeNetboot indicates whether the controller has successfully netbooted the associated hardware.
                   properties:
-                    message:
-                      description: A human-readable description of the status of this operation.
-                      type: string
-                    reason:
-                      description: |-
-                        A machine-readable description of why this operation is in the
-                        "Failure" status. If this value is empty there
-                        is no information available. A Reason clarifies an HTTP status
-                        code but does not override it.
-                      type: string
-                    status:
-                      description: |-
-                        Status of the operation.
-                        One of: "Success" or "Failure".
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-                      type: string
+                    creationStatus:
+                      description: Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".
+                      properties:
+                        message:
+                          description: A human-readable description of the status of this operation.
+                          type: string
+                        reason:
+                          description: |-
+                            A machine-readable description of why this operation is in the
+                            "Failure" status. If this value is empty there
+                            is no information available. A Reason clarifies an HTTP status
+                            code but does not override it.
+                          type: string
+                        status:
+                          description: |-
+                            Status of the operation.
+                            One of: "Success" or "Failure".
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+                          type: string
+                      type: object
+                    deletionStatus:
+                      description: Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".
+                      properties:
+                        message:
+                          description: A human-readable description of the status of this operation.
+                          type: string
+                        reason:
+                          description: |-
+                            A machine-readable description of why this operation is in the
+                            "Failure" status. If this value is empty there
+                            is no information available. A Reason clarifies an HTTP status
+                            code but does not override it.
+                          type: string
+                        status:
+                          description: |-
+                            Status of the operation.
+                            One of: "Success" or "Failure".
+                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+                          type: string
+                      type: object
                   type: object
                 state:
                   description: State is the state of the workflow in Tinkerbell.

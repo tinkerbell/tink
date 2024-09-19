@@ -13,6 +13,8 @@ const (
 	WorkflowStateTimeout   = WorkflowState("STATE_TIMEOUT")
 	WorkflowStateSuccess   = WorkflowState("STATE_SUCCESS")
 	WorkflowStatePreparing = WorkflowState("STATE_PREPARING")
+	StatusSuccess          = "success"
+	StatusFailure          = "failure"
 )
 
 // WorkflowSpec defines the desired state of Workflow.
@@ -64,7 +66,12 @@ type WorkflowStatus struct {
 	ToggleHardware *Status `json:"toggleHardware,omitempty"`
 
 	// OneTimeNetboot indicates whether the controller has successfully netbooted the associated hardware.
-	OneTimeNetboot *Status `json:"oneTimeNetboot,omitempty"`
+	OneTimeNetboot OneTimeNetbootStatus `json:"oneTimeNetboot,omitempty"`
+}
+
+type OneTimeNetbootStatus struct {
+	CreationStatus *Status `json:"creationStatus,omitempty"`
+	DeletionStatus *Status `json:"deletionStatus,omitempty"`
 }
 
 // Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".
@@ -90,6 +97,13 @@ type Status struct {
 	// +optional
 	// +listType=atomic
 	// Details *metav1.StatusDetails `json:"details,omitempty" protobuf:"bytes,5,opt,name=details"`
+}
+
+func (s *Status) IsSuccess() bool {
+	if s == nil {
+		return false
+	}
+	return s.Status == StatusSuccess
 }
 
 // Task represents a series of actions to be completed by a worker.

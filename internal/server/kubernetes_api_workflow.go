@@ -80,7 +80,7 @@ func (s *KubernetesBackedServer) GetWorkflowContexts(req *proto.WorkflowContextR
 		if wf.Spec.BootOpts.ToggleHardware && wf.Status.ToggleHardware != nil && wf.Status.ToggleHardware.Status == "" && wf.Status.State == v1alpha1.WorkflowStatePreparing {
 			continue
 		}
-		if wf.Spec.BootOpts.OneTimeNetboot && wf.Status.ToggleHardware != nil && wf.Status.OneTimeNetboot.Status == "" && wf.Status.State == v1alpha1.WorkflowStatePreparing {
+		if wf.Spec.BootOpts.OneTimeNetboot && wf.Status.State == v1alpha1.WorkflowStatePreparing {
 			continue
 		}
 		if err := stream.Send(getWorkflowContext(wf)); err != nil {
