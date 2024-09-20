@@ -84,10 +84,6 @@ linters-settings:
       - name: struct-tag
         arguments:
           - "json,inline"
-  staticcheck:
-    go: "1.18"
-  unused:
-    go: "1.18"
 output:
   sort-results: true
 linters:
@@ -103,7 +99,7 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - forcetypeassert
     - gocognit
     - goconst
