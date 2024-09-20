@@ -94,6 +94,7 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 		OriginalWorkflow *v1alpha1.Workflow
 		WantWorkflow     *v1alpha1.Workflow
 		WantError        error
+		AllowPXE         bool
 	}{
 		"before workflow": {
 			OriginalHardware: &v1alpha1.Hardware{
@@ -141,6 +142,7 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 					Message: "allowPXE set to true",
 				},
 			}},
+			AllowPXE: true,
 		},
 		"after workflow": {
 			OriginalHardware: &v1alpha1.Hardware{
@@ -166,7 +168,7 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "machine1",
 					Namespace:       "default",
-					ResourceVersion: "1002",
+					ResourceVersion: "1001",
 				},
 				Spec: v1alpha1.HardwareSpec{
 					Interfaces: []v1alpha1.Interface{
@@ -199,7 +201,7 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			fakeClient := GetFakeClientBuilder().WithRuntimeObjects(tt.OriginalHardware).Build()
-			err := handleHardwareAllowPXE(context.Background(), fakeClient, tt.OriginalWorkflow, tt.OriginalHardware)
+			err := handleHardwareAllowPXE(context.Background(), fakeClient, tt.OriginalWorkflow, tt.OriginalHardware, tt.AllowPXE)
 
 			if diff := cmp.Diff(tt.WantError, err, cmp.Comparer(func(a, b error) bool {
 				return a.Error() == b.Error()

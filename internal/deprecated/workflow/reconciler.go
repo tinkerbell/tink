@@ -94,15 +94,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			return reconcile.Result{Requeue: true}, nil
 		}
 	case v1alpha1.WorkflowStateSuccess:
-		// handle updating hardware allowPXE to false
-		var hw v1alpha1.Hardware
-		err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: wflow.Spec.HardwareRef, Namespace: wflow.Namespace}, &hw)
-		if err != nil && !errors.IsNotFound(err) {
-			logger.Error(err, "error getting Hardware object for WorkflowStateSuccess processing")
-			return reconcile.Result{}, err
-		}
-		if err := handleHardwareAllowPXE(ctx, r.client, wflow, &hw); err != nil {
-			return resp, err
+		if wflow.Spec.BootOpts.ToggleAllowNetboot {
+			// handle updating hardware allowPXE to false
+			if err := handleHardwareAllowPXE(ctx, r.client, wflow, nil, false); err != nil {
+				return reconcile.Result{}, err
+			}
 		}
 	default:
 		return resp, nil
@@ -117,39 +113,31 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	return resp, err
 }
 
-func handleHardwareAllowPXE(ctx context.Context, client ctrlclient.Client, stored *v1alpha1.Workflow, hardware *v1alpha1.Hardware) error {
-	// We need to set allowPXE to true before a workflow runs.
-	// We need to set allowPXE to false after a workflow completes successfully.
-
-	// before workflow case
-	if stored.Status.ToggleAllowNetboot == nil || (stored.Status.ToggleAllowNetboot != nil && stored.Status.ToggleAllowNetboot.Status == "" && stored.Status.State == "" || stored.Status.State == v1alpha1.WorkflowStatePending) {
-		status := &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "allowPXE set to true"}
-		for _, iface := range hardware.Spec.Interfaces {
-			iface.Netboot.AllowPXE = ptr.Bool(true)
-		}
-		if err := client.Update(ctx, hardware); err != nil {
-			status.Status = v1alpha1.StatusFailure
-			status.Message = fmt.Sprintf("error setting allowPXE: %v", err)
-			stored.Status.ToggleAllowNetboot = status
-			return err
-		}
-		stored.Status.ToggleAllowNetboot = status
+// handleHardwareAllowPXE sets the allowPXE field on the hardware interfaces to true before a workflow runs and false after a workflow completes successfully.
+// If hardware is nil then it will be retrieved using the client.
+func handleHardwareAllowPXE(ctx context.Context, client ctrlclient.Client, stored *v1alpha1.Workflow, hardware *v1alpha1.Hardware, allowPXE bool) error {
+	if stored == nil {
+		return fmt.Errorf("cannot handle hardware allowPXE without a workflow")
 	}
 
-	// after workflow case
-	if stored.Status.State == v1alpha1.WorkflowStateSuccess {
-		status := &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "allowPXE set to false"}
-		for _, iface := range hardware.Spec.Interfaces {
-			iface.Netboot.AllowPXE = ptr.Bool(false)
+	if hardware == nil {
+		hardware = &v1alpha1.Hardware{}
+		if err := client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, hardware); err != nil {
+			stored.Status.ToggleAllowNetboot = &v1alpha1.Status{Status: v1alpha1.StatusFailure, Message: fmt.Sprintf("error getting hardware: %v", err)}
+			return fmt.Errorf("hardware not found: name=%v; namespace=%v, error: %w", stored.Spec.HardwareRef, stored.Namespace, err)
 		}
-		if err := client.Update(ctx, hardware); err != nil {
-			status.Status = v1alpha1.StatusFailure
-			status.Message = fmt.Sprintf("error setting allowPXE: %v", err)
-			stored.Status.ToggleAllowNetboot = status
-			return err
-		}
-		stored.Status.ToggleAllowNetboot = status
 	}
+
+	for _, iface := range hardware.Spec.Interfaces {
+		iface.Netboot.AllowPXE = ptr.Bool(allowPXE)
+	}
+
+	if err := client.Update(ctx, hardware); err != nil {
+		stored.Status.ToggleAllowNetboot = &v1alpha1.Status{Status: v1alpha1.StatusFailure, Message: fmt.Sprintf("error setting allowPXE: %v", err)}
+		return err
+	}
+
+	stored.Status.ToggleAllowNetboot = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: fmt.Sprintf("allowPXE set to %v", allowPXE)}
 
 	return nil
 }
@@ -288,8 +276,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	// set hardware allowPXE if requested.
 	if stored.Spec.BootOpts.ToggleAllowNetboot {
-		if err := handleHardwareAllowPXE(ctx, r.client, stored, &hardware); err != nil {
-			stored.Status.ToggleAllowNetboot = &v1alpha1.Status{Status: v1alpha1.StatusFailure, Message: fmt.Sprintf("error setting allowPXE: %v", err)}
+		if err := handleHardwareAllowPXE(ctx, r.client, stored, &hardware, true); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
