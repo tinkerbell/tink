@@ -976,8 +976,8 @@ func (in *WorkflowStatus) DeepCopyInto(out *WorkflowStatus) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.ToggleHardware != nil {
-		in, out := &in.ToggleHardware, &out.ToggleHardware
+	if in.ToggleAllowNetboot != nil {
+		in, out := &in.ToggleAllowNetboot, &out.ToggleAllowNetboot
 		*out = new(Status)
 		**out = **in
 	}

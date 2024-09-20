@@ -136,7 +136,7 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 			},
 			OriginalWorkflow: &v1alpha1.Workflow{},
 			WantWorkflow: &v1alpha1.Workflow{Status: v1alpha1.WorkflowStatus{
-				ToggleHardware: &v1alpha1.Status{
+				ToggleAllowNetboot: &v1alpha1.Status{
 					Status:  v1alpha1.StatusSuccess,
 					Message: "allowPXE set to true",
 				},
@@ -188,7 +188,7 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 			},
 			WantWorkflow: &v1alpha1.Workflow{Status: v1alpha1.WorkflowStatus{
 				State: v1alpha1.WorkflowStateSuccess,
-				ToggleHardware: &v1alpha1.Status{
+				ToggleAllowNetboot: &v1alpha1.Status{
 					Status:  v1alpha1.StatusSuccess,
 					Message: "allowPXE set to false",
 				},

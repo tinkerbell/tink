@@ -58,9 +58,9 @@ spec:
                         into a netbooting state.
                         A HardwareRef that contains a spec.BmcRef must be provided.
                       type: boolean
-                    toggleHardware:
+                    toggleAllowNetboot:
                       description: |-
-                        ToggleHardware indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
+                        ToggleAllowNetboot indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
                         This will be enabled before a Workflow is executed and disabled after the Workflow has completed successfully.
                         A HardwareRef must be provided.
                       type: boolean
@@ -177,9 +177,9 @@ spec:
                       - worker
                     type: object
                   type: array
-                toggleHardware:
+                toggleAllowNetboot:
                   description: |-
-                    ToggleHardware indicates whether the controller has successfully toggled the network boot setting
+                    ToggleAllowNetboot indicates whether the controller has successfully toggled the network boot setting
                     in the associated hardware.
                   properties:
                     message:

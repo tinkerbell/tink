@@ -33,10 +33,10 @@ type WorkflowSpec struct {
 }
 
 type BootOpts struct {
-	// ToggleHardware indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
+	// ToggleAllowNetboot indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
 	// This will be enabled before a Workflow is executed and disabled after the Workflow has completed successfully.
 	// A HardwareRef must be provided.
-	ToggleHardware bool `json:"toggleHardware,omitempty"`
+	ToggleAllowNetboot bool `json:"toggleAllowNetboot,omitempty"`
 	// OneTimeNetboot indicates whether the controller should create a job.bmc.tinkerbell.org object for getting the associated hardware
 	// into a netbooting state.
 	// A HardwareRef that contains a spec.BmcRef must be provided.
@@ -54,9 +54,9 @@ type WorkflowStatus struct {
 	// Tasks are the tasks to be completed
 	Tasks []Task `json:"tasks,omitempty"`
 
-	// ToggleHardware indicates whether the controller has successfully toggled the network boot setting
+	// ToggleAllowNetboot indicates whether the controller has successfully toggled the network boot setting
 	// in the associated hardware.
-	ToggleHardware *Status `json:"toggleHardware,omitempty"`
+	ToggleAllowNetboot *Status `json:"toggleAllowNetboot,omitempty"`
 
 	// OneTimeNetboot indicates whether the controller has successfully netbooted the associated hardware.
 	OneTimeNetboot OneTimeNetbootStatus `json:"oneTimeNetboot,omitempty"`
