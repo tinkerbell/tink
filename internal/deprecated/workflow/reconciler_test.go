@@ -3,13 +3,16 @@ package workflow
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/ptr"
 	"github.com/tinkerbell/tink/internal/testtime"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -83,6 +86,270 @@ tasks:
           USER_DATA: {{ .Hardware.UserData }}
           VENDOR_DATA: {{ .Hardware.VendorData }}
           METADATA: {{ .Hardware.Metadata.State }}`
+
+func TestHandleHardwareAllowPXE(t *testing.T) {
+	tests := map[string]struct {
+		OriginalHardware *v1alpha1.Hardware
+		WantHardware     *v1alpha1.Hardware
+		OriginalWorkflow *v1alpha1.Workflow
+		WantWorkflow     *v1alpha1.Workflow
+		WantError        error
+	}{
+		"before workflow": {
+			OriginalHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1000",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(false),
+							},
+						},
+					},
+				},
+			},
+			WantHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1001",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(true),
+							},
+						},
+					},
+				},
+			},
+			OriginalWorkflow: &v1alpha1.Workflow{},
+			WantWorkflow: &v1alpha1.Workflow{Status: v1alpha1.WorkflowStatus{
+				ToggleHardware: &v1alpha1.Status{
+					Status:  v1alpha1.StatusSuccess,
+					Message: "allowPXE set to true",
+				},
+			}},
+		},
+		"after workflow": {
+			OriginalHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1000",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(true),
+							},
+						},
+					},
+				},
+			},
+			WantHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1002",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(false),
+							},
+						},
+					},
+				},
+			},
+			OriginalWorkflow: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					State: v1alpha1.WorkflowStateSuccess,
+				},
+			},
+			WantWorkflow: &v1alpha1.Workflow{Status: v1alpha1.WorkflowStatus{
+				State: v1alpha1.WorkflowStateSuccess,
+				ToggleHardware: &v1alpha1.Status{
+					Status:  v1alpha1.StatusSuccess,
+					Message: "allowPXE set to false",
+				},
+			}},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			fakeClient := GetFakeClientBuilder().WithRuntimeObjects(tt.OriginalHardware).Build()
+			err := handleHardwareAllowPXE(context.Background(), fakeClient, tt.OriginalWorkflow, tt.OriginalHardware)
+
+			if diff := cmp.Diff(tt.WantError, err, cmp.Comparer(func(a, b error) bool {
+				return a.Error() == b.Error()
+			})); diff != "" {
+				t.Fatalf("unexpected error diff: %s", diff)
+			}
+
+			if diff := cmp.Diff(tt.WantHardware, tt.OriginalHardware); diff != "" {
+				t.Fatalf("unexpected hardware diff: %s", diff)
+			}
+			if diff := cmp.Diff(tt.WantWorkflow, tt.OriginalWorkflow); diff != "" {
+				t.Fatalf("unexpected workflow diff: %s", diff)
+			}
+		})
+	}
+}
+
+func TestHandleOneTimeNetboot(t *testing.T) {
+	tests := map[string]struct {
+		OriginalHardware *v1alpha1.Hardware
+		OriginalWorkflow *v1alpha1.Workflow
+		OriginalJob      *rufio.Job
+		WantWorkflow     *v1alpha1.Workflow
+		WantResult       reconcile.Result
+		WantError        error
+	}{
+		"no bmc reference": {
+			OriginalHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "machine1",
+				},
+			},
+			WantResult: reconcile.Result{},
+			WantError:  fmt.Errorf("hardware %s does not have a BMC, cannot perform one time netboot", "machine1"),
+		},
+		"delete existing bmc job": {
+			OriginalHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "machine1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					BMCRef: &v1.TypedLocalObjectReference{
+						Name: "bmc1",
+						Kind: "machine.bmc.tinkerbell.org",
+					},
+				},
+			},
+			OriginalWorkflow: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+						DeletionStatus: &v1alpha1.Status{},
+						CreationStatus: &v1alpha1.Status{},
+					},
+				},
+			},
+			OriginalJob: &rufio.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf(bmcJobName, "machine1"),
+					Namespace: "default",
+				},
+				Spec:   rufio.JobSpec{},
+				Status: rufio.JobStatus{},
+			},
+			WantWorkflow: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+						DeletionStatus: &v1alpha1.Status{
+							Status:  v1alpha1.StatusSuccess,
+							Message: "existing one time netboot job deleted",
+						},
+						CreationStatus: &v1alpha1.Status{},
+					},
+				},
+			},
+			WantResult: reconcile.Result{Requeue: true},
+		},
+		"create bmc job": {
+			OriginalHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "machine2",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					BMCRef: &v1.TypedLocalObjectReference{
+						Name: "bmc2",
+						Kind: "machine.bmc.tinkerbell.org",
+					},
+				},
+			},
+			OriginalWorkflow: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+						DeletionStatus: &v1alpha1.Status{
+							Status:  v1alpha1.StatusSuccess,
+							Message: "no existing one time netboot job to be deleted",
+						},
+						CreationStatus: &v1alpha1.Status{},
+					},
+				},
+			},
+			WantWorkflow: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					State: v1alpha1.WorkflowStatePreparing,
+					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+						DeletionStatus: &v1alpha1.Status{
+							Status:  v1alpha1.StatusSuccess,
+							Message: "no existing one time netboot job to be deleted",
+						},
+						CreationStatus: &v1alpha1.Status{
+							Status:  v1alpha1.StatusSuccess,
+							Message: "one time netboot job created",
+						},
+					},
+				},
+			},
+			WantResult: reconcile.Result{Requeue: true},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := GetFakeClientBuilder().Build()
+			if tt.OriginalHardware.Spec.BMCRef != nil {
+				runtimescheme := runtime.NewScheme()
+				rufio.AddToScheme(runtimescheme)
+				v1alpha1.AddToScheme(runtimescheme)
+				clientBulider := GetFakeClientBuilder().WithScheme(runtimescheme)
+				if tt.OriginalJob != nil {
+					clientBulider.WithRuntimeObjects(tt.OriginalJob)
+				}
+				client = clientBulider.Build()
+			}
+			r, err := handleOneTimeNetboot(context.Background(), client, tt.OriginalHardware, tt.OriginalWorkflow)
+
+			if diff := cmp.Diff(tt.WantError, err, cmp.Comparer(func(a, b error) bool {
+				return a.Error() == b.Error()
+			})); diff != "" {
+				t.Fatalf("unexpected error diff: %s", diff)
+			}
+
+			if diff := cmp.Diff(tt.WantResult, r); diff != "" {
+				t.Fatalf("unexpected result diff: %s", diff)
+			}
+			if diff := cmp.Diff(tt.WantWorkflow, tt.OriginalWorkflow); diff != "" {
+				t.Fatalf("unexpected workflow diff: %s", diff)
+			}
+		})
+	}
+}
 
 func TestReconcile(t *testing.T) {
 	cases := []struct {

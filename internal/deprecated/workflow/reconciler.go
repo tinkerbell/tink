@@ -35,6 +35,13 @@ func NewReconciler(client ctrlclient.Client) *Reconciler {
 	}
 }
 
+func (r *Reconciler) SetupWithManager(mgr manager.Manager) error {
+	return ctrl.
+		NewControllerManagedBy(mgr).
+		For(&v1alpha1.Workflow{}).
+		Complete(r)
+}
+
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=templates;templates/status,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch;delete
@@ -93,7 +100,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			logger.Error(err, "error getting Hardware object for WorkflowStateSuccess processing")
 			return reconcile.Result{}, err
 		}
-		if err := r.handleHardwareAllowPXE(ctx, wflow, &hw); err != nil {
+		if err := handleHardwareAllowPXE(ctx, r.client, wflow, &hw); err != nil {
 			return resp, err
 		}
 	default:
@@ -109,7 +116,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	return resp, err
 }
 
-func (r *Reconciler) handleHardwareAllowPXE(ctx context.Context, stored *v1alpha1.Workflow, hardware *v1alpha1.Hardware) error {
+func handleHardwareAllowPXE(ctx context.Context, client ctrlclient.Client, stored *v1alpha1.Workflow, hardware *v1alpha1.Hardware) error {
 	// We need to set allowPXE to true before a workflow runs.
 	// We need to set allowPXE to false after a workflow completes successfully.
 
@@ -119,8 +126,9 @@ func (r *Reconciler) handleHardwareAllowPXE(ctx context.Context, stored *v1alpha
 		for _, iface := range hardware.Spec.Interfaces {
 			iface.Netboot.AllowPXE = ptr.Bool(true)
 		}
-		if err := r.client.Update(ctx, hardware); err != nil {
+		if err := client.Update(ctx, hardware); err != nil {
 			status.Status = v1alpha1.StatusFailure
+			status.Message = fmt.Sprintf("error setting allowPXE: %v", err)
 			stored.Status.ToggleHardware = status
 			return err
 		}
@@ -133,8 +141,9 @@ func (r *Reconciler) handleHardwareAllowPXE(ctx context.Context, stored *v1alpha
 		for _, iface := range hardware.Spec.Interfaces {
 			iface.Netboot.AllowPXE = ptr.Bool(false)
 		}
-		if err := r.client.Update(ctx, hardware); err != nil {
+		if err := client.Update(ctx, hardware); err != nil {
 			status.Status = v1alpha1.StatusFailure
+			status.Message = fmt.Sprintf("error setting allowPXE: %v", err)
 			stored.Status.ToggleHardware = status
 			return err
 		}
@@ -142,6 +151,89 @@ func (r *Reconciler) handleHardwareAllowPXE(ctx context.Context, stored *v1alpha
 	}
 
 	return nil
+}
+
+func handleOneTimeNetboot(ctx context.Context, client ctrlclient.Client, hw *v1alpha1.Hardware, stored *v1alpha1.Workflow) (reconcile.Result, error) {
+	if hw.Spec.BMCRef == nil {
+		return reconcile.Result{}, fmt.Errorf("hardware %s does not have a BMC, cannot perform one time netboot", hw.Name)
+	}
+
+	if !stored.Status.OneTimeNetboot.DeletionStatus.IsSuccess() && !stored.Status.OneTimeNetboot.CreationStatus.IsSuccess() {
+		existingJob := &rufio.Job{}
+		jobName := fmt.Sprintf(bmcJobName, hw.Name)
+		if err := client.Get(ctx, ctrlclient.ObjectKey{Name: jobName, Namespace: hw.Namespace}, existingJob); err == nil {
+			opts := []ctrlclient.DeleteOption{
+				ctrlclient.GracePeriodSeconds(0),
+				ctrlclient.PropagationPolicy(metav1.DeletePropagationForeground),
+			}
+			if err := client.Delete(ctx, existingJob, opts...); err != nil {
+				stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusFailure, Message: fmt.Sprintf("error deleting existing one time netboot job: %v", err)}
+				return reconcile.Result{}, fmt.Errorf("error deleting existing job.bmc.tinkerbell.org object for netbooting machine: %w", err)
+			}
+			stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "existing one time netboot job deleted"}
+
+			return reconcile.Result{Requeue: true}, nil
+		} else if errors.IsNotFound(err) {
+			stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "no existing one time netboot job to be deleted"}
+		} else {
+			return reconcile.Result{Requeue: true}, err
+		}
+	}
+
+	if !stored.Status.OneTimeNetboot.CreationStatus.IsSuccess() && stored.Status.OneTimeNetboot.DeletionStatus.IsSuccess() {
+		name := fmt.Sprintf(bmcJobName, hw.Name)
+		ns := hw.Namespace
+		efiBoot := func() bool {
+			for _, iface := range hw.Spec.Interfaces {
+				if iface.DHCP != nil && iface.DHCP.UEFI {
+					return true
+				}
+			}
+			return false
+		}()
+		job := &rufio.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: ns,
+				Annotations: map[string]string{
+					"tink-controller-auto-created": "true",
+				},
+				Labels: map[string]string{
+					"tink-controller-auto-created": "true",
+				},
+			},
+			Spec: rufio.JobSpec{
+				MachineRef: rufio.MachineRef{
+					Name:      hw.Spec.BMCRef.Name,
+					Namespace: ns,
+				},
+				Tasks: []rufio.Action{
+					{
+						PowerAction: rufio.PowerHardOff.Ptr(),
+					},
+					{
+						OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
+							Devices: []rufio.BootDevice{
+								rufio.PXE,
+							},
+							EFIBoot: efiBoot,
+						},
+					},
+					{
+						PowerAction: rufio.PowerOn.Ptr(),
+					},
+				},
+			},
+		}
+		if err := client.Create(ctx, job); err != nil {
+			stored.Status.OneTimeNetboot.CreationStatus = &v1alpha1.Status{Status: v1alpha1.StatusFailure, Message: fmt.Sprintf("error creating one time netboot job: %v", err)}
+			return reconcile.Result{}, fmt.Errorf("error creating job.bmc.tinkerbell.org object for netbooting machine: %w", err)
+		}
+		stored.Status.OneTimeNetboot.CreationStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "one time netboot job created"}
+		stored.Status.State = v1alpha1.WorkflowStatePreparing
+		return reconcile.Result{Requeue: true}, nil
+	}
+	return reconcile.Result{Requeue: true}, nil
 }
 
 func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger, stored *v1alpha1.Workflow) (reconcile.Result, error) {
@@ -195,99 +287,15 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	// set hardware allowPXE if requested.
 	if stored.Spec.BootOpts.ToggleHardware {
-		// We need to set allowPXE to true before a workflow runs.
-		// We need to set allowPXE to false after a workflow completes successfully.
-
-		if err := r.handleHardwareAllowPXE(ctx, stored, &hardware); err != nil {
+		if err := handleHardwareAllowPXE(ctx, r.client, stored, &hardware); err != nil {
+			stored.Status.ToggleHardware = &v1alpha1.Status{Status: v1alpha1.StatusFailure, Message: fmt.Sprintf("error setting allowPXE: %v", err)}
 			return reconcile.Result{}, err
 		}
 	}
 
 	// netboot the hardware if requested
-	if stored.Spec.BootOpts.OneTimeNetboot { //nolint:nestif // Will work on this complexity.
-		// check if the hardware has a bmcRef
-		if hardware.Spec.BMCRef == nil {
-			return reconcile.Result{}, fmt.Errorf("hardware %s does not have a BMC, cannot perform one time netboot", hardware.Name)
-		}
-
-		// check if an existing job.bmc.tinkerbell.org object exists, if so delete it.
-		if !stored.Status.OneTimeNetboot.DeletionStatus.IsSuccess() && !stored.Status.OneTimeNetboot.CreationStatus.IsSuccess() {
-			existingJob := &rufio.Job{}
-			jobName := fmt.Sprintf(bmcJobName, hardware.Name)
-			if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: jobName, Namespace: hardware.Namespace}, existingJob); err == nil {
-				opts := []ctrlclient.DeleteOption{
-					ctrlclient.GracePeriodSeconds(0),
-					ctrlclient.PropagationPolicy(metav1.DeletePropagationForeground),
-				}
-				if err := r.client.Delete(ctx, existingJob, opts...); err != nil {
-					return reconcile.Result{}, fmt.Errorf("error deleting existing job.bmc.tinkerbell.org object for netbooting machine: %w", err)
-				}
-				stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "previous existing one time netboot job deleted"}
-
-				return reconcile.Result{Requeue: true}, nil
-			} else if errors.IsNotFound(err) {
-				stored.Status.OneTimeNetboot.DeletionStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "no existing one time netboot job found"}
-			} else {
-				return reconcile.Result{Requeue: true}, err
-			}
-		}
-
-		if !stored.Status.OneTimeNetboot.CreationStatus.IsSuccess() && stored.Status.OneTimeNetboot.DeletionStatus.IsSuccess() {
-			// create a job.bmc.tinkerbell.org object to netboot the hardware
-			name := fmt.Sprintf(bmcJobName, hardware.Name)
-			ns := hardware.Namespace
-			efiBoot := func() bool {
-				for _, iface := range hardware.Spec.Interfaces {
-					if iface.DHCP != nil && iface.DHCP.UEFI {
-						return true
-					}
-				}
-				return false
-			}()
-			job := &rufio.Job{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: ns,
-					Annotations: map[string]string{
-						"tink-controller-auto-created": "true",
-					},
-					Labels: map[string]string{
-						"tink-controller-auto-created": "true",
-					},
-				},
-				Spec: rufio.JobSpec{
-					MachineRef: rufio.MachineRef{
-						Name:      hardware.Spec.BMCRef.Name,
-						Namespace: ns,
-					},
-					Tasks: []rufio.Action{
-						{
-							PowerAction: rufio.PowerHardOff.Ptr(),
-						},
-						{
-							OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
-								Devices: []rufio.BootDevice{
-									rufio.PXE,
-								},
-								EFIBoot: efiBoot,
-							},
-						},
-						{
-							PowerAction: rufio.PowerOn.Ptr(),
-						},
-					},
-				},
-			}
-			if err := r.client.Create(ctx, job); err != nil {
-				return reconcile.Result{}, fmt.Errorf("error creating job.bmc.tinkerbell.org object for netbooting machine: %w", err)
-			}
-			stored.Status.OneTimeNetboot.CreationStatus = &v1alpha1.Status{Status: v1alpha1.StatusSuccess, Message: "one time netboot job created"}
-			// block until the job completes. This is needed as there can be a race condition if the Hardware is already running
-			// a Tink Worker.
-			stored.Status.State = v1alpha1.WorkflowStatePreparing
-			return reconcile.Result{Requeue: true}, nil
-		}
-		return reconcile.Result{Requeue: true}, nil
+	if stored.Spec.BootOpts.OneTimeNetboot {
+		return handleOneTimeNetboot(ctx, r.client, &hardware, stored)
 	}
 
 	stored.Status.State = v1alpha1.WorkflowStatePending
@@ -348,11 +356,4 @@ func (r *Reconciler) processRunningWorkflow(_ context.Context, stored *v1alpha1.
 	}
 
 	return reconcile.Result{}
-}
-
-func (r *Reconciler) SetupWithManager(mgr manager.Manager) error {
-	return ctrl.
-		NewControllerManagedBy(mgr).
-		For(&v1alpha1.Workflow{}).
-		Complete(r)
 }
