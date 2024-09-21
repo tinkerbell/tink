@@ -54,17 +54,113 @@ type WorkflowStatus struct {
 	// Tasks are the tasks to be completed
 	Tasks []Task `json:"tasks,omitempty"`
 
-	// ToggleAllowNetboot indicates whether the controller has successfully toggled the network boot setting
-	// in the associated hardware.
-	ToggleAllowNetboot *Status `json:"toggleAllowNetboot,omitempty"`
+	// The latest available observations of an object's current state. When a Job
+	// fails, one of the conditions will have type "Failed" and status true. When
+	// a Job is suspended, one of the conditions will have type "Suspended" and
+	// status true; when the Job is resumed, the status of this condition will
+	// become false. When a Job is completed, one of the conditions will have
+	// type "Complete" and status true.
+	//
+	// A job is considered finished when it is in a terminal condition, either
+	// "Complete" or "Failed". A Job cannot have both the "Complete" and "Failed" conditions.
+	// Additionally, it cannot be in the "Complete" and "FailureTarget" conditions.
+	// The "Complete", "Failed" and "FailureTarget" conditions cannot be disabled.
+	//
+	// More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
+	// +optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=atomic
+	Conditions []WorkflowCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 
-	// OneTimeNetboot indicates whether the controller has successfully netbooted the associated hardware.
-	OneTimeNetboot OneTimeNetbootStatus `json:"oneTimeNetboot,omitempty"`
+	// Represents time when the job controller started processing a job. When a
+	// Job is created in the suspended state, this field is not set until the
+	// first time it is resumed. This field is reset every time a Job is resumed
+	// from suspension. It is represented in RFC3339 form and is in UTC.
+	//
+	// Once set, the field can only be removed when the job is suspended.
+	// The field cannot be modified while the job is unsuspended or finished.
+	//
+	// +optional
+	TimeStarted *metav1.Time `json:"timeStarted,omitempty" protobuf:"bytes,2,opt,name=startTime"`
+
+	// Represents time when the job was completed. It is not guaranteed to
+	// be set in happens-before order across separate operations.
+	// It is represented in RFC3339 form and is in UTC.
+	// The completion time is set when the job finishes successfully, and only then.
+	// The value cannot be updated or removed. The value indicates the same or
+	// later point in time as the startTime field.
+	// +optional
+	TimeCompleted *metav1.Time `json:"timeCompleted,omitempty" protobuf:"bytes,3,opt,name=completionTime"`
 }
+
+// JobCondition describes current state of a job.
+type WorkflowCondition struct {
+	// Type of job condition, Complete or Failed.
+	Type WorkflowConditionType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=JobConditionType"`
+	// Status of the condition, one of True, False, Unknown.
+	Status metav1.ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status,casttype=k8s.io/api/core/v1.ConditionStatus"`
+	// (brief) reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,5,opt,name=reason"`
+	// Human readable message indicating details about last transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
+	// Time when the condition was created.
+	// +optional
+	Time *metav1.Time `json:"Time,omitempty" protobuf:"bytes,7,opt,name=lastTransitionTime"`
+}
+
+type WorkflowConditionType string
+
+const (
+	NetbootJobFailed   WorkflowConditionType = "Netboot Job Failed"
+	NetbootJobComplete WorkflowConditionType = "Netboot Job Complete"
+	NetbootJobRunning  WorkflowConditionType = "Netboot Job Running"
+
+	NetbootJobSetupFailed   WorkflowConditionType = "Netboot Job Setup Failed"
+	NetbootJobSetupComplete WorkflowConditionType = "Netboot Job Setup Complete"
+	NetbootJobSetupRunning  WorkflowConditionType = "Netboot Job Setup Running"
+
+	ToggleAllowNetbootFailed   WorkflowConditionType = "Toggle Allow Netboot Failed"
+	ToggleAllowNetbootComplete WorkflowConditionType = "Toggle Allow Netboot Complete"
+	ToggleAllowNetbootRunning  WorkflowConditionType = "Toggle Allow Netboot Running"
+)
 
 type OneTimeNetbootStatus struct {
 	CreationStatus *Status `json:"creationStatus,omitempty"`
 	DeletionStatus *Status `json:"deletionStatus,omitempty"`
+}
+
+// HasCondition checks if the cType condition is present with status cStatus on a bmj.
+func (w WorkflowStatus) HasCondition(cType WorkflowConditionType, cStatus metav1.ConditionStatus) bool {
+	for _, c := range w.Conditions {
+		if c.Type == cType {
+			return c.Status == cStatus
+		}
+	}
+
+	return false
+}
+
+// SetCondition updates an existing condition, if it exists, or appends a new one.
+// If ignoreFound is true, it will update the condition if it already exists.
+func (w *WorkflowStatus) SetCondition(wc WorkflowCondition, ignoreFound bool) {
+	index := -1
+	for i, c := range w.Conditions {
+		if c.Type == wc.Type {
+			index = i
+			break
+		}
+	}
+	if index != -1 {
+		if !ignoreFound {
+			w.Conditions[index] = wc
+		}
+		return
+	}
+
+	w.Conditions = append(w.Conditions, wc)
 }
 
 // Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".

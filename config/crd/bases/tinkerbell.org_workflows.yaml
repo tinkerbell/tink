@@ -80,40 +80,50 @@ spec:
             status:
               description: WorkflowStatus defines the observed state of Workflow.
               properties:
+                conditions:
+                  description: |-
+                    The latest available observations of an object's current state. When a Job
+                    fails, one of the conditions will have type "Failed" and status true. When
+                    a Job is suspended, one of the conditions will have type "Suspended" and
+                    status true; when the Job is resumed, the status of this condition will
+                    become false. When a Job is completed, one of the conditions will have
+                    type "Complete" and status true.
+
+                    A job is considered finished when it is in a terminal condition, either
+                    "Complete" or "Failed". A Job cannot have both the "Complete" and "Failed" conditions.
+                    Additionally, it cannot be in the "Complete" and "FailureTarget" conditions.
+                    The "Complete", "Failed" and "FailureTarget" conditions cannot be disabled.
+
+                    More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
+                  items:
+                    description: JobCondition describes current state of a job.
+                    properties:
+                      Time:
+                        description: Time when the condition was created.
+                        format: date-time
+                        type: string
+                      message:
+                        description: Human readable message indicating details about last transition.
+                        type: string
+                      reason:
+                        description: (brief) reason for the condition's last transition.
+                        type: string
+                      status:
+                        description: Status of the condition, one of True, False, Unknown.
+                        type: string
+                      type:
+                        description: Type of job condition, Complete or Failed.
+                        type: string
+                    required:
+                      - status
+                      - type
+                    type: object
+                  type: array
+                  x-kubernetes-list-type: atomic
                 globalTimeout:
                   description: GlobalTimeout represents the max execution time
                   format: int64
                   type: integer
-                oneTimeNetboot:
-                  description: OneTimeNetboot indicates whether the controller has successfully netbooted the associated hardware.
-                  properties:
-                    creationStatus:
-                      description: Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".
-                      properties:
-                        message:
-                          description: A human-readable description of the status of this operation.
-                          type: string
-                        status:
-                          description: |-
-                            Status of the operation.
-                            One of: "Success" or "Failure".
-                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-                          type: string
-                      type: object
-                    deletionStatus:
-                      description: Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".
-                      properties:
-                        message:
-                          description: A human-readable description of the status of this operation.
-                          type: string
-                        status:
-                          description: |-
-                            Status of the operation.
-                            One of: "Success" or "Failure".
-                            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-                          type: string
-                      type: object
-                  type: object
                 state:
                   description: State is the state of the workflow in Tinkerbell.
                   type: string
@@ -177,21 +187,27 @@ spec:
                       - worker
                     type: object
                   type: array
-                toggleAllowNetboot:
+                timeCompleted:
                   description: |-
-                    ToggleAllowNetboot indicates whether the controller has successfully toggled the network boot setting
-                    in the associated hardware.
-                  properties:
-                    message:
-                      description: A human-readable description of the status of this operation.
-                      type: string
-                    status:
-                      description: |-
-                        Status of the operation.
-                        One of: "Success" or "Failure".
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-                      type: string
-                  type: object
+                    Represents time when the job was completed. It is not guaranteed to
+                    be set in happens-before order across separate operations.
+                    It is represented in RFC3339 form and is in UTC.
+                    The completion time is set when the job finishes successfully, and only then.
+                    The value cannot be updated or removed. The value indicates the same or
+                    later point in time as the startTime field.
+                  format: date-time
+                  type: string
+                timeStarted:
+                  description: |-
+                    Represents time when the job controller started processing a job. When a
+                    Job is created in the suspended state, this field is not set until the
+                    first time it is resumed. This field is reset every time a Job is resumed
+                    from suspension. It is represented in RFC3339 form and is in UTC.
+
+                    Once set, the field can only be removed when the job is suspended.
+                    The field cannot be modified while the job is unsuspended or finished.
+                  format: date-time
+                  type: string
               type: object
           type: object
       served: true

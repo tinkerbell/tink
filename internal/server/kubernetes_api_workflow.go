@@ -77,11 +77,12 @@ func (s *KubernetesBackedServer) GetWorkflowContexts(req *proto.WorkflowContextR
 		return err
 	}
 	for _, wf := range wflows {
-		if wf.Spec.BootOpts.ToggleAllowNetboot && wf.Status.ToggleAllowNetboot != nil && wf.Status.ToggleAllowNetboot.Status == "" && wf.Status.State == v1alpha1.WorkflowStatePreparing {
-			continue
-		}
-		if wf.Spec.BootOpts.OneTimeNetboot && wf.Status.State == v1alpha1.WorkflowStatePreparing {
-			continue
+		// Don't serve Actions when in a v1alpha1.WorkflowStatePreparing state.
+		// This is to prevent the worker from starting Actions before Workflow boot options are performed.
+		if wf.Spec.BootOpts.ToggleAllowNetboot || wf.Spec.BootOpts.OneTimeNetboot {
+			if wf.Status.State == v1alpha1.WorkflowStatePreparing {
+				continue
+			}
 		}
 		if err := stream.Send(getWorkflowContext(wf)); err != nil {
 			return err
