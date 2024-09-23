@@ -114,17 +114,16 @@ type WorkflowCondition struct {
 type WorkflowConditionType string
 
 const (
-	NetbootJobFailed   WorkflowConditionType = "Netboot Job Failed"
-	NetbootJobComplete WorkflowConditionType = "Netboot Job Complete"
-	NetbootJobRunning  WorkflowConditionType = "Netboot Job Running"
+	NetbootJobFailed   WorkflowConditionType = "NetbootJobFailed"
+	NetbootJobComplete WorkflowConditionType = "NetbootJobComplete"
+	NetbootJobRunning  WorkflowConditionType = "NetbootJobRunning"
 
-	NetbootJobSetupFailed   WorkflowConditionType = "Netboot Job Setup Failed"
-	NetbootJobSetupComplete WorkflowConditionType = "Netboot Job Setup Complete"
-	NetbootJobSetupRunning  WorkflowConditionType = "Netboot Job Setup Running"
+	NetbootJobSetupFailed   WorkflowConditionType = "NetbootJobSetupFailed"
+	NetbootJobSetupComplete WorkflowConditionType = "NetbootJobSetupComplete"
+	NetbootJobSetupRunning  WorkflowConditionType = "NetbootJobSetupRunning"
 
-	ToggleAllowNetbootFailed   WorkflowConditionType = "Toggle Allow Netboot Failed"
-	ToggleAllowNetbootComplete WorkflowConditionType = "Toggle Allow Netboot Complete"
-	ToggleAllowNetbootRunning  WorkflowConditionType = "Toggle Allow Netboot Running"
+	ToggleAllowNetbootTrue  WorkflowConditionType = "AllowNetbootTrue"
+	ToggleAllowNetbootFalse WorkflowConditionType = "AllowNetbootFalse"
 )
 
 type OneTimeNetbootStatus struct {

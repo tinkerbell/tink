@@ -118,10 +118,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			}
 		}
 	case v1alpha1.WorkflowStateSuccess:
-		if wflow.Spec.BootOpts.ToggleAllowNetboot && !wflow.Status.HasCondition(v1alpha1.ToggleAllowNetbootComplete, metav1.ConditionTrue) {
+		if wflow.Spec.BootOpts.ToggleAllowNetboot && !wflow.Status.HasCondition(v1alpha1.ToggleAllowNetbootFalse, metav1.ConditionTrue) {
 			// handle updating hardware allowPXE to false
 			wflow.Status.SetCondition(v1alpha1.WorkflowCondition{
-				Type:    v1alpha1.ToggleAllowNetbootComplete,
+				Type:    v1alpha1.ToggleAllowNetbootFalse,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Complete",
 				Message: "setting allowPXE to false",
@@ -129,6 +129,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			}, false)
 			if err := handleHardwareAllowPXE(ctx, r.client, wflow, nil, false); err != nil {
 				println("102")
+				stored.Status.SetCondition(v1alpha1.WorkflowCondition{
+					Type:    v1alpha1.ToggleAllowNetbootFalse,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Error",
+					Message: fmt.Sprintf("error setting Allow PXE: %v", err),
+					Time:    &metav1.Time{Time: metav1.Now().UTC()},
+				}, false)
 				return reconcile.Result{}, err
 			}
 		}
@@ -151,22 +158,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 // handleHardwareAllowPXE sets the allowPXE field on the hardware interfaces to true before a workflow runs and false after a workflow completes successfully.
 // If hardware is nil then it will be retrieved using the client.
 func handleHardwareAllowPXE(ctx context.Context, client ctrlclient.Client, stored *v1alpha1.Workflow, hardware *v1alpha1.Hardware, allowPXE bool) error {
-	if stored == nil {
-		return fmt.Errorf("cannot handle hardware allowPXE without a workflow")
-	}
-
-	if hardware == nil {
+	if hardware == nil && stored != nil {
 		hardware = &v1alpha1.Hardware{}
 		if err := client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, hardware); err != nil {
-			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-				Type:    v1alpha1.ToggleAllowNetbootFailed,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Error",
-				Message: fmt.Sprintf("error getting hardware: %v", err),
-				Time:    &metav1.Time{Time: metav1.Now().UTC()},
-			}, false)
 			return fmt.Errorf("hardware not found: name=%v; namespace=%v, error: %w", stored.Spec.HardwareRef, stored.Namespace, err)
 		}
+	} else if stored == nil {
+		return fmt.Errorf("workflow and hardware cannot both be nil")
 	}
 
 	for _, iface := range hardware.Spec.Interfaces {
@@ -174,13 +172,6 @@ func handleHardwareAllowPXE(ctx context.Context, client ctrlclient.Client, store
 	}
 
 	if err := client.Update(ctx, hardware); err != nil {
-		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-			Type:    v1alpha1.ToggleAllowNetbootFailed,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Error",
-			Message: fmt.Sprintf("error setting allowPXE: %v", err),
-			Time:    &metav1.Time{Time: metav1.Now().UTC()},
-		}, false)
 		return err
 	}
 
@@ -251,6 +242,9 @@ func handleOneTimeNetboot(ctx context.Context, client ctrlclient.Client, hw *v1a
 				},
 				Labels: map[string]string{
 					"tink-controller-auto-created": "true",
+				},
+				OwnerReferences: []metav1.OwnerReference{
+					{Name: "tink-controller"},
 				},
 			},
 			Spec: rufio.JobSpec{
@@ -354,13 +348,20 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	// set hardware allowPXE if requested.
 	if stored.Spec.BootOpts.ToggleAllowNetboot {
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-			Type:    v1alpha1.ToggleAllowNetbootRunning,
+			Type:    v1alpha1.ToggleAllowNetbootTrue,
 			Status:  metav1.ConditionTrue,
 			Reason:  "Started",
 			Message: "setting allowPXE to true",
 			Time:    &metav1.Time{Time: metav1.Now().UTC()},
 		}, false)
 		if err := handleHardwareAllowPXE(ctx, r.client, stored, &hardware, true); err != nil {
+			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
+				Type:    v1alpha1.ToggleAllowNetbootTrue,
+				Status:  metav1.ConditionFalse,
+				Reason:  "Error",
+				Message: fmt.Sprintf("error setting allowPXE to true: %v", err),
+				Time:    &metav1.Time{Time: metav1.Now().UTC()},
+			}, false)
 			return reconcile.Result{}, err
 		}
 	}

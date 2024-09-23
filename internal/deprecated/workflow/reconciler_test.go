@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/ptr"
@@ -91,8 +92,6 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 	tests := map[string]struct {
 		OriginalHardware *v1alpha1.Hardware
 		WantHardware     *v1alpha1.Hardware
-		OriginalWorkflow *v1alpha1.Workflow
-		WantWorkflow     *v1alpha1.Workflow
 		WantError        error
 		AllowPXE         bool
 	}{
@@ -135,13 +134,6 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 					},
 				},
 			},
-			OriginalWorkflow: &v1alpha1.Workflow{},
-			WantWorkflow: &v1alpha1.Workflow{Status: v1alpha1.WorkflowStatus{
-				ToggleAllowNetboot: &v1alpha1.Status{
-					Status:  v1alpha1.StatusSuccess,
-					Message: "allowPXE set to true",
-				},
-			}},
 			AllowPXE: true,
 		},
 		"after workflow": {
@@ -183,37 +175,36 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 					},
 				},
 			},
-			OriginalWorkflow: &v1alpha1.Workflow{
-				Status: v1alpha1.WorkflowStatus{
-					State: v1alpha1.WorkflowStateSuccess,
-				},
-			},
-			WantWorkflow: &v1alpha1.Workflow{Status: v1alpha1.WorkflowStatus{
-				State: v1alpha1.WorkflowStateSuccess,
-				ToggleAllowNetboot: &v1alpha1.Status{
-					Status:  v1alpha1.StatusSuccess,
-					Message: "allowPXE set to false",
-				},
-			}},
 		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			fakeClient := GetFakeClientBuilder().WithRuntimeObjects(tt.OriginalHardware).Build()
-			err := handleHardwareAllowPXE(context.Background(), fakeClient, tt.OriginalWorkflow, tt.OriginalHardware, tt.AllowPXE)
+			wf := &v1alpha1.Workflow{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "workflow1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{
+					HardwareRef: "machine1",
+				},
+			}
+			err := handleHardwareAllowPXE(context.Background(), fakeClient, wf, nil, tt.AllowPXE)
 
+			got := &v1alpha1.Hardware{}
+			if err := fakeClient.Get(context.Background(), client.ObjectKeyFromObject(tt.OriginalHardware), got); err != nil {
+				t.Fatalf("failed to get hardware after update: %v", err)
+			}
 			if diff := cmp.Diff(tt.WantError, err, cmp.Comparer(func(a, b error) bool {
 				return a.Error() == b.Error()
 			})); diff != "" {
+				t.Errorf("error type: %T", err)
 				t.Fatalf("unexpected error diff: %s", diff)
 			}
 
-			if diff := cmp.Diff(tt.WantHardware, tt.OriginalHardware); diff != "" {
+			if diff := cmp.Diff(tt.WantHardware, got); diff != "" {
 				t.Fatalf("unexpected hardware diff: %s", diff)
-			}
-			if diff := cmp.Diff(tt.WantWorkflow, tt.OriginalWorkflow); diff != "" {
-				t.Fatalf("unexpected workflow diff: %s", diff)
 			}
 		})
 	}
@@ -252,10 +243,7 @@ func TestHandleOneTimeNetboot(t *testing.T) {
 			},
 			OriginalWorkflow: &v1alpha1.Workflow{
 				Status: v1alpha1.WorkflowStatus{
-					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
-						DeletionStatus: &v1alpha1.Status{},
-						CreationStatus: &v1alpha1.Status{},
-					},
+					State: v1alpha1.WorkflowStatePreparing,
 				},
 			},
 			OriginalJob: &rufio.Job{
@@ -268,16 +256,18 @@ func TestHandleOneTimeNetboot(t *testing.T) {
 			},
 			WantWorkflow: &v1alpha1.Workflow{
 				Status: v1alpha1.WorkflowStatus{
-					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
-						DeletionStatus: &v1alpha1.Status{
-							Status:  v1alpha1.StatusSuccess,
-							Message: "existing one time netboot job deleted",
+					State: v1alpha1.WorkflowStatePreparing,
+					Conditions: []v1alpha1.WorkflowCondition{
+						{
+							Type:    v1alpha1.NetbootJobSetupComplete,
+							Status:  metav1.ConditionTrue,
+							Reason:  "Deleted",
+							Message: "existing job deleted",
 						},
-						CreationStatus: &v1alpha1.Status{},
 					},
 				},
 			},
-			WantResult: reconcile.Result{Requeue: true},
+			WantResult: reconcile.Result{},
 		},
 		"create bmc job": {
 			OriginalHardware: &v1alpha1.Hardware{
@@ -290,35 +280,34 @@ func TestHandleOneTimeNetboot(t *testing.T) {
 						Name: "bmc2",
 						Kind: "machine.bmc.tinkerbell.org",
 					},
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								UEFI: true,
+							},
+						},
+					},
 				},
 			},
 			OriginalWorkflow: &v1alpha1.Workflow{
 				Status: v1alpha1.WorkflowStatus{
-					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
-						DeletionStatus: &v1alpha1.Status{
-							Status:  v1alpha1.StatusSuccess,
-							Message: "no existing one time netboot job to be deleted",
-						},
-						CreationStatus: &v1alpha1.Status{},
-					},
+					State: v1alpha1.WorkflowStatePreparing,
 				},
 			},
 			WantWorkflow: &v1alpha1.Workflow{
 				Status: v1alpha1.WorkflowStatus{
 					State: v1alpha1.WorkflowStatePreparing,
-					OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
-						DeletionStatus: &v1alpha1.Status{
-							Status:  v1alpha1.StatusSuccess,
-							Message: "no existing one time netboot job to be deleted",
-						},
-						CreationStatus: &v1alpha1.Status{
-							Status:  v1alpha1.StatusSuccess,
-							Message: "one time netboot job created",
+					Conditions: []v1alpha1.WorkflowCondition{
+						{
+							Type:    v1alpha1.NetbootJobSetupComplete,
+							Status:  metav1.ConditionTrue,
+							Reason:  "Created",
+							Message: "job created",
 						},
 					},
 				},
 			},
-			WantResult: reconcile.Result{Requeue: true},
+			WantResult: reconcile.Result{},
 		},
 	}
 
@@ -346,7 +335,7 @@ func TestHandleOneTimeNetboot(t *testing.T) {
 			if diff := cmp.Diff(tt.WantResult, r); diff != "" {
 				t.Fatalf("unexpected result diff: %s", diff)
 			}
-			if diff := cmp.Diff(tt.WantWorkflow, tt.OriginalWorkflow); diff != "" {
+			if diff := cmp.Diff(tt.WantWorkflow, tt.OriginalWorkflow, cmpopts.IgnoreFields(v1alpha1.WorkflowCondition{}, "Time")); diff != "" {
 				t.Fatalf("unexpected workflow diff: %s", diff)
 			}
 		})
@@ -1136,7 +1125,7 @@ tasks:
 				return
 			}
 
-			if diff := cmp.Diff(tc.wantWflow, wflow); diff != "" {
+			if diff := cmp.Diff(tc.wantWflow, wflow, cmpopts.IgnoreFields(v1alpha1.WorkflowStatus{}, "TimeStarted")); diff != "" {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}
 		})
