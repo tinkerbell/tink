@@ -98,10 +98,6 @@ spec:
                   items:
                     description: JobCondition describes current state of a job.
                     properties:
-                      Time:
-                        description: Time when the condition was created.
-                        format: date-time
-                        type: string
                       message:
                         description: Human readable message indicating details about last transition.
                         type: string
@@ -110,6 +106,10 @@ spec:
                         type: string
                       status:
                         description: Status of the condition, one of True, False, Unknown.
+                        type: string
+                      time:
+                        description: Time when the condition was created.
+                        format: date-time
                         type: string
                       type:
                         description: Type of job condition, Complete or Failed.

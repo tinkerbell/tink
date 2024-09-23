@@ -97,7 +97,7 @@ type WorkflowStatus struct {
 // JobCondition describes current state of a job.
 type WorkflowCondition struct {
 	// Type of job condition, Complete or Failed.
-	Type WorkflowConditionType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=JobConditionType"`
+	Type WorkflowConditionType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=WorkflowConditionType"`
 	// Status of the condition, one of True, False, Unknown.
 	Status metav1.ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status,casttype=k8s.io/api/core/v1.ConditionStatus"`
 	// (brief) reason for the condition's last transition.
@@ -108,7 +108,7 @@ type WorkflowCondition struct {
 	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
 	// Time when the condition was created.
 	// +optional
-	Time *metav1.Time `json:"Time,omitempty" protobuf:"bytes,7,opt,name=lastTransitionTime"`
+	Time *metav1.Time `json:"time,omitempty" protobuf:"bytes,7,opt,name=time"`
 }
 
 type WorkflowConditionType string

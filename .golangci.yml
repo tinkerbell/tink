@@ -84,6 +84,7 @@ linters-settings:
       - name: struct-tag
         arguments:
           - "json,inline"
+          - "protobuf,casttype"
 output:
   sort-results: true
 linters:

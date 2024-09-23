@@ -172,7 +172,7 @@ func handleHardwareAllowPXE(ctx context.Context, client ctrlclient.Client, store
 	}
 
 	if err := client.Update(ctx, hardware); err != nil {
-		return err
+		return fmt.Errorf("error updating allow pxe: %w", err)
 	}
 
 	return nil
