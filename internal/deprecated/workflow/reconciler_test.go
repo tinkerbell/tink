@@ -458,8 +458,12 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         v1alpha1.WorkflowStatePending,
-					GlobalTimeout: 1800,
+					State:             v1alpha1.WorkflowStatePending,
+					GlobalTimeout:     1800,
+					TemplateRendering: "successful",
+					Conditions: []v1alpha1.WorkflowCondition{
+						{Type: v1alpha1.TemplateRenderedSuccess, Status: metav1.ConditionTrue, Reason: "Complete", Message: "template rendered successfully"},
+					},
 					Tasks: []v1alpha1.Task{
 						{
 							Name: "os-installation",
@@ -1035,8 +1039,12 @@ tasks:
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         v1alpha1.WorkflowStatePending,
-					GlobalTimeout: 1800,
+					State:             v1alpha1.WorkflowStatePending,
+					GlobalTimeout:     1800,
+					TemplateRendering: "successful",
+					Conditions: []v1alpha1.WorkflowCondition{
+						{Type: v1alpha1.TemplateRenderedSuccess, Status: metav1.ConditionTrue, Reason: "Complete", Message: "template rendered successfully"},
+					},
 					Tasks: []v1alpha1.Task{
 						{
 							Name: "os-installation",
@@ -1124,7 +1132,7 @@ tasks:
 				return
 			}
 
-			if diff := cmp.Diff(tc.wantWflow, wflow, cmpopts.IgnoreFields(v1alpha1.WorkflowStatus{}, "TimeStarted")); diff != "" {
+			if diff := cmp.Diff(tc.wantWflow, wflow, cmpopts.IgnoreFields(v1alpha1.WorkflowCondition{}, "Time")); diff != "" {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}
 		})
