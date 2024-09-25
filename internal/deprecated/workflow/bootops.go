@@ -43,8 +43,6 @@ func handleExistingJob(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 
 func handleJobCreation(ctx context.Context, cc client.Client, wf *v1alpha1.Workflow) (reconcile.Result, error) {
 	if wf.Status.Job.UID == "" && wf.Status.Job.ExistingJobDeleted {
-		// assumption is that at this point, if the job exists its because we created it already.
-		// requeue until the jobuid shows up.
 		existingJob := &rufio.Job{}
 		if err := cc.Get(ctx, client.ObjectKey{Name: fmt.Sprintf(bmcJobName, wf.Spec.HardwareRef), Namespace: wf.Namespace}, existingJob); err == nil {
 			wf.Status.Job.UID = existingJob.GetUID()
@@ -65,7 +63,7 @@ func handleJobCreation(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 				Message: fmt.Sprintf("error creating job: %v", err),
 				Time:    &metav1.Time{Time: metav1.Now().UTC()},
 			})
-			return reconcile.Result{}, fmt.Errorf("error creating job.bmc.tinkerbell.org object for netbooting machine: %w", err)
+			return reconcile.Result{}, fmt.Errorf("error creating job.bmc.tinkerbell.org object: %w", err)
 		}
 		wf.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.NetbootJobSetupComplete,
@@ -85,8 +83,8 @@ func handleJobComplete(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 	if !wf.Status.Job.Complete && wf.Status.Job.UID != "" && wf.Status.Job.ExistingJobDeleted {
 		existingJob := &rufio.Job{}
 		jobName := fmt.Sprintf(bmcJobName, wf.Spec.HardwareRef)
-		if gerr := cc.Get(ctx, client.ObjectKey{Name: jobName, Namespace: wf.Namespace}, existingJob); gerr != nil {
-			return reconcile.Result{}, fmt.Errorf("error getting one time netboot job: %w", gerr)
+		if err := cc.Get(ctx, client.ObjectKey{Name: jobName, Namespace: wf.Namespace}, existingJob); err != nil {
+			return reconcile.Result{}, fmt.Errorf("error getting one time netboot job: %w", err)
 		}
 		if existingJob.HasCondition(rufio.JobFailed, rufio.ConditionTrue) {
 			wf.Status.SetCondition(v1alpha1.WorkflowCondition{
