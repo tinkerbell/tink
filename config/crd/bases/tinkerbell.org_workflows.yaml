@@ -24,6 +24,12 @@ spec:
         - jsonPath: .status.state
           name: State
           type: string
+        - jsonPath: .status.currentAction
+          name: Current-Action
+          type: string
+        - jsonPath: .status.templateRending
+          name: Template-Rendering
+          type: string
       name: v1alpha1
       schema:
         openAPIV3Schema:
@@ -120,10 +126,32 @@ spec:
                     type: object
                   type: array
                   x-kubernetes-list-type: atomic
+                currentAction:
+                  description: CurrentAction is the action that is currently in the running state.
+                  type: string
                 globalTimeout:
                   description: GlobalTimeout represents the max execution time
                   format: int64
                   type: integer
+                jobStatus:
+                  properties:
+                    complete:
+                      description: Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
+                      type: boolean
+                    existingJobDeleted:
+                      description: |-
+                        ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
+                        The name of each job.bmc.tinkerbell.org object is the same, so only one can exist at a time.
+                        Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per hardware.
+                        This makes clean up easier and we dont just orphan jobs every time.
+                      type: boolean
+                    uid:
+                      description: |-
+                        UID is the UID of the BMCJob associated with this workflow.
+                        This is used to identify the unique job.bmc.tinkerbell.org object, as
+                        all objects are created with the same name.
+                      type: string
+                  type: object
                 state:
                   description: State is the state of the workflow in Tinkerbell.
                   type: string
@@ -187,26 +215,10 @@ spec:
                       - worker
                     type: object
                   type: array
-                timeCompleted:
+                templateRending:
                   description: |-
-                    Represents time when the job was completed. It is not guaranteed to
-                    be set in happens-before order across separate operations.
-                    It is represented in RFC3339 form and is in UTC.
-                    The completion time is set when the job finishes successfully, and only then.
-                    The value cannot be updated or removed. The value indicates the same or
-                    later point in time as the startTime field.
-                  format: date-time
-                  type: string
-                timeStarted:
-                  description: |-
-                    Represents time when the job controller started processing a job. When a
-                    Job is created in the suspended state, this field is not set until the
-                    first time it is resumed. This field is reset every time a Job is resumed
-                    from suspension. It is represented in RFC3339 form and is in UTC.
-
-                    Once set, the field can only be removed when the job is suspended.
-                    The field cannot be modified while the job is unsuspended or finished.
-                  format: date-time
+                    TemplateRendering indicates whether the template was rendered successfully.
+                    Possible values are "successful" or "failed".
                   type: string
               type: object
           type: object

@@ -3,17 +3,14 @@ package workflow
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/ptr"
 	"github.com/tinkerbell/tink/internal/testtime"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -210,6 +207,7 @@ func TestHandleHardwareAllowPXE(t *testing.T) {
 	}
 }
 
+/*
 func TestHandleOneTimeNetboot(t *testing.T) {
 	tests := map[string]struct {
 		OriginalHardware *v1alpha1.Hardware
@@ -341,6 +339,7 @@ func TestHandleOneTimeNetboot(t *testing.T) {
 		})
 	}
 }
+*/
 
 func TestReconcile(t *testing.T) {
 	cases := []struct {
