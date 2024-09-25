@@ -17,6 +17,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const (
+	failed = "failed"
+)
+
 // Reconciler is a type for managing Workflows.
 type Reconciler struct {
 	client  ctrlclient.Client
@@ -161,7 +165,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		if errors.IsNotFound(err) {
 			// Throw an error to raise awareness and take advantage of immediate requeue.
 			logger.Error(err, "error getting Template object in processNewWorkflow function")
-			stored.Status.TemplateRendering = "failed"
+			stored.Status.TemplateRendering = failed
 			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.TemplateRenderedSuccess,
 				Status:  metav1.ConditionFalse,
@@ -175,7 +179,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 				stored.Namespace,
 			)
 		}
-		stored.Status.TemplateRendering = "failed"
+		stored.Status.TemplateRendering = failed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
@@ -195,7 +199,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
 	if err != nil && !errors.IsNotFound(err) {
 		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
-		stored.Status.TemplateRendering = "failed"
+		stored.Status.TemplateRendering = failed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
@@ -208,7 +212,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	if stored.Spec.HardwareRef != "" && errors.IsNotFound(err) {
 		logger.Error(err, "hardware not found in processNewWorkflow function")
-		stored.Status.TemplateRendering = "failed"
+		stored.Status.TemplateRendering = failed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
@@ -230,7 +234,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	tinkWf, err := renderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
 	if err != nil {
-		stored.Status.TemplateRendering = "failed"
+		stored.Status.TemplateRendering = failed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
