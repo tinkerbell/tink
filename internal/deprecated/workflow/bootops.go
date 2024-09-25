@@ -32,7 +32,7 @@ func handleExistingJob(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 			client.PropagationPolicy(metav1.DeletePropagationForeground),
 		}
 		if err := cc.Delete(ctx, existingJob, opts...); err != nil {
-			return reconcile.Result{}, fmt.Errorf("error deleting job.bmc.tinkerbell.org object for netbooting machine: %w", err)
+			return reconcile.Result{}, fmt.Errorf("error deleting job.bmc.tinkerbell.org object: %w", err)
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
