@@ -68,13 +68,14 @@ type WorkflowSpec struct {
 	// +optional
 	HardwareRef string `json:"hardwareRef,omitempty"`
 
-	// A mapping of template devices to hadware mac addresses
+	// A mapping of template devices to hadware mac addresses.
 	HardwareMap map[string]string `json:"hardwareMap,omitempty"`
 
-	// BootOpts is a set of options to be used when netbooting the hardware.
+	// BootOpts are options that control the booting of Hardware.
 	BootOpts BootOpts `json:"bootOpts,omitempty"`
 }
 
+// BootOpts are options that control the booting of Hardware.
 type BootOpts struct {
 	// ToggleAllowNetboot indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
 	// This will be enabled before a Workflow is executed and disabled after the Workflow has completed successfully.
@@ -88,47 +89,30 @@ type BootOpts struct {
 	OneTimeNetboot bool `json:"oneTimeNetboot,omitempty"`
 }
 
-// WorkflowStatus defines the observed state of Workflow.
+// WorkflowStatus defines the observed state of a Workflow.
 type WorkflowStatus struct {
-	// State is the state of the workflow in Tinkerbell.
+	// State is the current overall state of the Workflow.
 	State WorkflowState `json:"state,omitempty"`
 
 	// CurrentAction is the action that is currently in the running state.
 	CurrentAction string `json:"currentAction,omitempty"`
 
-	// JobUID is the UID of the BMCJob associated with this workflow.
-	// This is used to identify the unique job.bmc.tinkerbell.org object, as
-	// all objects are created with the same name.
-	// JobUID types.UID `json:"jobUid,omitempty"`
-
-	// JobComplete        bool `json:"jobComplete,omitempty"`
-	// ExistingJobDeleted bool `json:"existingJobDeleted,omitempty"`
-
+	// Job holds the state of a specific job.bmc.tinkerbell.org object created.
+	// Only used when BootOpts.OneTimeNetboot is true.
 	Job JobStatus `json:"jobStatus,omitempty"`
 
 	// TemplateRendering indicates whether the template was rendered successfully.
-	// Possible values are "successful" or "failed".
+	// Possible values are "successful" or "failed" or "unknown".
 	TemplateRendering string `json:"templateRending,omitempty"`
 
-	// GlobalTimeout represents the max execution time
+	// GlobalTimeout represents the max execution time.
 	GlobalTimeout int64 `json:"globalTimeout,omitempty"`
 
-	// Tasks are the tasks to be completed
+	// Tasks are the tasks to be run by the worker(s).
 	Tasks []Task `json:"tasks,omitempty"`
 
-	// The latest available observations of an object's current state. When a Job
-	// fails, one of the conditions will have type "Failed" and status true. When
-	// a Job is suspended, one of the conditions will have type "Suspended" and
-	// status true; when the Job is resumed, the status of this condition will
-	// become false. When a Job is completed, one of the conditions will have
-	// type "Complete" and status true.
+	// Conditions are the latest available observations of an object's current state.
 	//
-	// A job is considered finished when it is in a terminal condition, either
-	// "Complete" or "Failed". A Job cannot have both the "Complete" and "Failed" conditions.
-	// Additionally, it cannot be in the "Complete" and "FailureTarget" conditions.
-	// The "Complete", "Failed" and "FailureTarget" conditions cannot be disabled.
-	//
-	// More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
@@ -137,17 +121,17 @@ type WorkflowStatus struct {
 }
 
 type JobStatus struct {
-	// UID is the UID of the BMCJob associated with this workflow.
-	// This is used to identify the unique job.bmc.tinkerbell.org object, as
-	// all objects are created with the same name.
+	// UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
+	// This is used to uniquely identify the job.bmc.tinkerbell.org object, as
+	// all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.
 	UID types.UID `json:"uid,omitempty"`
 
 	// Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
 	Complete bool `json:"complete,omitempty"`
 
 	// ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
-	// The name of each job.bmc.tinkerbell.org object is the same, so only one can exist at a time.
-	// Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per hardware.
+	// The name of each job.bmc.tinkerbell.org object created by the controller is the same, so only one can exist at a time.
+	// Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per Hardware/Machine.bmc.tinkerbell.org.
 	// This makes clean up easier and we dont just orphan jobs every time.
 	ExistingJobDeleted bool `json:"existingJobDeleted,omitempty"`
 }
@@ -158,27 +142,15 @@ type WorkflowCondition struct {
 	Type WorkflowConditionType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=WorkflowConditionType"`
 	// Status of the condition, one of True, False, Unknown.
 	Status metav1.ConditionStatus `json:"status" protobuf:"bytes,2,opt,name=status,casttype=k8s.io/api/core/v1.ConditionStatus"`
-	// (brief) reason for the condition's last transition.
+	// Reason is a (brief) reason for the condition's last transition.
 	// +optional
 	Reason string `json:"reason,omitempty" protobuf:"bytes,5,opt,name=reason"`
-	// Human readable message indicating details about last transition.
+	// Message is a human readable message indicating details about last transition.
 	// +optional
 	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
 	// Time when the condition was created.
 	// +optional
 	Time *metav1.Time `json:"time,omitempty" protobuf:"bytes,7,opt,name=time"`
-}
-
-// Wanted to use metav1.Status but kubebuilder errors with, "must apply listType to an array, found".
-type Status struct {
-	// Status of the operation.
-	// One of: "Success" or "Failure".
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-	// +optional
-	Status string `json:"status,omitempty" protobuf:"bytes,2,opt,name=status"`
-	// A human-readable description of the status of this operation.
-	// +optional
-	Message string `json:"message,omitempty" protobuf:"bytes,3,opt,name=message"`
 }
 
 // Task represents a series of actions to be completed by a worker.

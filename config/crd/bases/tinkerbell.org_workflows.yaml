@@ -56,7 +56,7 @@ spec:
               description: WorkflowSpec defines the desired state of Workflow.
               properties:
                 bootOpts:
-                  description: BootOpts is a set of options to be used when netbooting the hardware.
+                  description: BootOpts are options that control the booting of Hardware.
                   properties:
                     oneTimeNetboot:
                       description: |-
@@ -74,7 +74,7 @@ spec:
                 hardwareMap:
                   additionalProperties:
                     type: string
-                  description: A mapping of template devices to hadware mac addresses
+                  description: A mapping of template devices to hadware mac addresses.
                   type: object
                 hardwareRef:
                   description: Name of the Hardware associated with this workflow.
@@ -84,31 +84,18 @@ spec:
                   type: string
               type: object
             status:
-              description: WorkflowStatus defines the observed state of Workflow.
+              description: WorkflowStatus defines the observed state of a Workflow.
               properties:
                 conditions:
-                  description: |-
-                    The latest available observations of an object's current state. When a Job
-                    fails, one of the conditions will have type "Failed" and status true. When
-                    a Job is suspended, one of the conditions will have type "Suspended" and
-                    status true; when the Job is resumed, the status of this condition will
-                    become false. When a Job is completed, one of the conditions will have
-                    type "Complete" and status true.
-
-                    A job is considered finished when it is in a terminal condition, either
-                    "Complete" or "Failed". A Job cannot have both the "Complete" and "Failed" conditions.
-                    Additionally, it cannot be in the "Complete" and "FailureTarget" conditions.
-                    The "Complete", "Failed" and "FailureTarget" conditions cannot be disabled.
-
-                    More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
+                  description: Conditions are the latest available observations of an object's current state.
                   items:
                     description: JobCondition describes current state of a job.
                     properties:
                       message:
-                        description: Human readable message indicating details about last transition.
+                        description: Message is a human readable message indicating details about last transition.
                         type: string
                       reason:
-                        description: (brief) reason for the condition's last transition.
+                        description: Reason is a (brief) reason for the condition's last transition.
                         type: string
                       status:
                         description: Status of the condition, one of True, False, Unknown.
@@ -130,10 +117,13 @@ spec:
                   description: CurrentAction is the action that is currently in the running state.
                   type: string
                 globalTimeout:
-                  description: GlobalTimeout represents the max execution time
+                  description: GlobalTimeout represents the max execution time.
                   format: int64
                   type: integer
                 jobStatus:
+                  description: |-
+                    Job holds the state of a specific job.bmc.tinkerbell.org object created.
+                    Only used when BootOpts.OneTimeNetboot is true.
                   properties:
                     complete:
                       description: Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
@@ -141,22 +131,22 @@ spec:
                     existingJobDeleted:
                       description: |-
                         ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
-                        The name of each job.bmc.tinkerbell.org object is the same, so only one can exist at a time.
-                        Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per hardware.
+                        The name of each job.bmc.tinkerbell.org object created by the controller is the same, so only one can exist at a time.
+                        Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per Hardware/Machine.bmc.tinkerbell.org.
                         This makes clean up easier and we dont just orphan jobs every time.
                       type: boolean
                     uid:
                       description: |-
-                        UID is the UID of the BMCJob associated with this workflow.
-                        This is used to identify the unique job.bmc.tinkerbell.org object, as
-                        all objects are created with the same name.
+                        UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
+                        This is used to uniquely identify the job.bmc.tinkerbell.org object, as
+                        all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.
                       type: string
                   type: object
                 state:
-                  description: State is the state of the workflow in Tinkerbell.
+                  description: State is the current overall state of the Workflow.
                   type: string
                 tasks:
-                  description: Tasks are the tasks to be completed
+                  description: Tasks are the tasks to be run by the worker(s).
                   items:
                     description: Task represents a series of actions to be completed by a worker.
                     properties:
@@ -218,7 +208,7 @@ spec:
                 templateRending:
                   description: |-
                     TemplateRendering indicates whether the template was rendered successfully.
-                    Possible values are "successful" or "failed".
+                    Possible values are "successful" or "failed" or "unknown".
                   type: string
               type: object
           type: object
