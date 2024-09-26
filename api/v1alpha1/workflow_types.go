@@ -12,15 +12,16 @@ func init() {
 type (
 	WorkflowState         string
 	WorkflowConditionType string
+	TemplateRendering     string
 )
 
 const (
-	WorkflowStatePending   = WorkflowState("STATE_PENDING")
-	WorkflowStateRunning   = WorkflowState("STATE_RUNNING")
-	WorkflowStateFailed    = WorkflowState("STATE_FAILED")
-	WorkflowStateTimeout   = WorkflowState("STATE_TIMEOUT")
-	WorkflowStateSuccess   = WorkflowState("STATE_SUCCESS")
-	WorkflowStatePreparing = WorkflowState("STATE_PREPARING")
+	WorkflowStateWaiting = WorkflowState("STATE_WAITING")
+	WorkflowStatePending = WorkflowState("STATE_PENDING")
+	WorkflowStateRunning = WorkflowState("STATE_RUNNING")
+	WorkflowStateSuccess = WorkflowState("STATE_SUCCESS")
+	WorkflowStateFailed  = WorkflowState("STATE_FAILED")
+	WorkflowStateTimeout = WorkflowState("STATE_TIMEOUT")
 
 	NetbootJobFailed        WorkflowConditionType = "NetbootJobFailed"
 	NetbootJobComplete      WorkflowConditionType = "NetbootJobComplete"
@@ -30,6 +31,9 @@ const (
 	ToggleAllowNetbootTrue  WorkflowConditionType = "AllowNetbootTrue"
 	ToggleAllowNetbootFalse WorkflowConditionType = "AllowNetbootFalse"
 	TemplateRenderedSuccess WorkflowConditionType = "TemplateRenderedSuccess"
+
+	TemplateRenderingSuccessful TemplateRendering = "successful"
+	TemplateRenderingFailed     TemplateRendering = "failed"
 )
 
 // +kubebuilder:subresource:status
@@ -71,12 +75,12 @@ type WorkflowSpec struct {
 	// A mapping of template devices to hadware mac addresses.
 	HardwareMap map[string]string `json:"hardwareMap,omitempty"`
 
-	// BootOpts are options that control the booting of Hardware.
-	BootOpts BootOpts `json:"bootOpts,omitempty"`
+	// BootOptions are options that control the booting of Hardware.
+	BootOptions BootOptions `json:"bootOptions,omitempty"`
 }
 
-// BootOpts are options that control the booting of Hardware.
-type BootOpts struct {
+// BootOptions are options that control the booting of Hardware.
+type BootOptions struct {
 	// ToggleAllowNetboot indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
 	// This will be enabled before a Workflow is executed and disabled after the Workflow has completed successfully.
 	// A HardwareRef must be provided.
@@ -89,6 +93,13 @@ type BootOpts struct {
 	OneTimeNetboot bool `json:"oneTimeNetboot,omitempty"`
 }
 
+// BootOptionsStatus holds the state of any boot options.
+type BootOptionsStatus struct {
+	// OneTimeNetboot holds the state of a specific job.bmc.tinkerbell.org object created.
+	// Only used when BootOptions.OneTimeNetboot is true.
+	OneTimeNetboot OneTimeNetbootStatus `json:"netbootJob,omitempty"`
+}
+
 // WorkflowStatus defines the observed state of a Workflow.
 type WorkflowStatus struct {
 	// State is the current overall state of the Workflow.
@@ -97,13 +108,12 @@ type WorkflowStatus struct {
 	// CurrentAction is the action that is currently in the running state.
 	CurrentAction string `json:"currentAction,omitempty"`
 
-	// Job holds the state of a specific job.bmc.tinkerbell.org object created.
-	// Only used when BootOpts.OneTimeNetboot is true.
-	Job JobStatus `json:"jobStatus,omitempty"`
+	// BootOptions holds the state of any boot options.
+	BootOptions BootOptionsStatus `json:"bootOptions,omitempty"`
 
 	// TemplateRendering indicates whether the template was rendered successfully.
 	// Possible values are "successful" or "failed" or "unknown".
-	TemplateRendering string `json:"templateRending,omitempty"`
+	TemplateRendering TemplateRendering `json:"templateRending,omitempty"`
 
 	// GlobalTimeout represents the max execution time.
 	GlobalTimeout int64 `json:"globalTimeout,omitempty"`
@@ -120,7 +130,8 @@ type WorkflowStatus struct {
 	Conditions []WorkflowCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
-type JobStatus struct {
+// OneTimeNetbootStatus holds the state of a specific job.bmc.tinkerbell.org object created.
+type OneTimeNetbootStatus struct {
 	// UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
 	// This is used to uniquely identify the job.bmc.tinkerbell.org object, as
 	// all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.

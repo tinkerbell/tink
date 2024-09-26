@@ -55,8 +55,8 @@ spec:
             spec:
               description: WorkflowSpec defines the desired state of Workflow.
               properties:
-                bootOpts:
-                  description: BootOpts are options that control the booting of Hardware.
+                bootOptions:
+                  description: BootOptions are options that control the booting of Hardware.
                   properties:
                     oneTimeNetboot:
                       description: |-
@@ -86,6 +86,32 @@ spec:
             status:
               description: WorkflowStatus defines the observed state of a Workflow.
               properties:
+                bootOptions:
+                  description: BootOptions holds the state of any boot options.
+                  properties:
+                    netbootJob:
+                      description: |-
+                        OneTimeNetboot holds the state of a specific job.bmc.tinkerbell.org object created.
+                        Only used when BootOptions.OneTimeNetboot is true.
+                      properties:
+                        complete:
+                          description: Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
+                          type: boolean
+                        existingJobDeleted:
+                          description: |-
+                            ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
+                            The name of each job.bmc.tinkerbell.org object created by the controller is the same, so only one can exist at a time.
+                            Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per Hardware/Machine.bmc.tinkerbell.org.
+                            This makes clean up easier and we dont just orphan jobs every time.
+                          type: boolean
+                        uid:
+                          description: |-
+                            UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
+                            This is used to uniquely identify the job.bmc.tinkerbell.org object, as
+                            all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.
+                          type: string
+                      type: object
+                  type: object
                 conditions:
                   description: Conditions are the latest available observations of an object's current state.
                   items:
@@ -120,28 +146,6 @@ spec:
                   description: GlobalTimeout represents the max execution time.
                   format: int64
                   type: integer
-                jobStatus:
-                  description: |-
-                    Job holds the state of a specific job.bmc.tinkerbell.org object created.
-                    Only used when BootOpts.OneTimeNetboot is true.
-                  properties:
-                    complete:
-                      description: Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
-                      type: boolean
-                    existingJobDeleted:
-                      description: |-
-                        ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
-                        The name of each job.bmc.tinkerbell.org object created by the controller is the same, so only one can exist at a time.
-                        Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per Hardware/Machine.bmc.tinkerbell.org.
-                        This makes clean up easier and we dont just orphan jobs every time.
-                      type: boolean
-                    uid:
-                      description: |-
-                        UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
-                        This is used to uniquely identify the job.bmc.tinkerbell.org object, as
-                        all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.
-                      type: string
-                  type: object
                 state:
                   description: State is the current overall state of the Workflow.
                   type: string

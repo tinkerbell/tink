@@ -35,8 +35,10 @@ func TestHandleExistingJob(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						ExistingJobDeleted: false,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: false,
+						},
 					},
 				},
 			},
@@ -49,8 +51,10 @@ func TestHandleExistingJob(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						ExistingJobDeleted: false,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: false,
+						},
 					},
 				},
 			},
@@ -72,7 +76,9 @@ func TestHandleExistingJob(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{},
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{},
+					},
 				},
 			},
 			wantWorkflow: &v1alpha1.Workflow{
@@ -84,8 +90,10 @@ func TestHandleExistingJob(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: true,
+						},
 					},
 				},
 			},
@@ -101,8 +109,10 @@ func TestHandleExistingJob(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: true,
+						},
 					},
 				},
 			},
@@ -115,8 +125,10 @@ func TestHandleExistingJob(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: true,
+						},
 					},
 				},
 			},
@@ -164,9 +176,11 @@ func TestHandleJobCreation(t *testing.T) {
 					Namespace: "default",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: true,
+							UID:                uid,
+						},
 					},
 				},
 			},
@@ -176,9 +190,11 @@ func TestHandleJobCreation(t *testing.T) {
 					Namespace: "default",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: true,
+							UID:                uid,
+						},
 					},
 				},
 			},
@@ -194,8 +210,10 @@ func TestHandleJobCreation(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: true,
+						},
 					},
 				},
 			},
@@ -208,8 +226,10 @@ func TestHandleJobCreation(t *testing.T) {
 					HardwareRef: "machine1",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							ExistingJobDeleted: true,
+						},
 					},
 					Conditions: []v1alpha1.WorkflowCondition{
 						{Type: v1alpha1.NetbootJobSetupComplete, Status: v1.ConditionTrue, Reason: "Created", Message: "job created"},
@@ -301,8 +321,10 @@ func TestHandleJobComplete(t *testing.T) {
 					Namespace: "default",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						Complete: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete: true,
+						},
 					},
 				},
 			},
@@ -312,8 +334,10 @@ func TestHandleJobComplete(t *testing.T) {
 					Namespace: "default",
 				},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						Complete: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete: true,
+						},
 					},
 				},
 			},
@@ -327,10 +351,12 @@ func TestHandleJobComplete(t *testing.T) {
 				},
 				Spec: v1alpha1.WorkflowSpec{HardwareRef: "machine1"},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						Complete:           false,
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete:           false,
+							UID:                uid,
+							ExistingJobDeleted: true,
+						},
 					},
 				},
 			},
@@ -341,10 +367,12 @@ func TestHandleJobComplete(t *testing.T) {
 				},
 				Spec: v1alpha1.WorkflowSpec{HardwareRef: "machine1"},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						Complete:           false,
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete:           false,
+							UID:                uid,
+							ExistingJobDeleted: true,
+						},
 					},
 					Conditions: []v1alpha1.WorkflowCondition{
 						{Type: v1alpha1.NetbootJobRunning, Status: v1.ConditionTrue, Reason: "Running", Message: "one time netboot job running"},
@@ -372,10 +400,12 @@ func TestHandleJobComplete(t *testing.T) {
 				},
 				Spec: v1alpha1.WorkflowSpec{HardwareRef: "machine1"},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						Complete:           false,
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete:           false,
+							UID:                uid,
+							ExistingJobDeleted: true,
+						},
 					},
 				},
 			},
@@ -386,10 +416,12 @@ func TestHandleJobComplete(t *testing.T) {
 				},
 				Spec: v1alpha1.WorkflowSpec{HardwareRef: "machine1"},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						Complete:           false,
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete:           false,
+							UID:                uid,
+							ExistingJobDeleted: true,
+						},
 					},
 					Conditions: []v1alpha1.WorkflowCondition{
 						{Type: v1alpha1.NetbootJobFailed, Status: v1.ConditionTrue, Reason: "Error", Message: "one time netboot job failed"},
@@ -418,10 +450,12 @@ func TestHandleJobComplete(t *testing.T) {
 				},
 				Spec: v1alpha1.WorkflowSpec{HardwareRef: "machine1"},
 				Status: v1alpha1.WorkflowStatus{
-					Job: v1alpha1.JobStatus{
-						Complete:           false,
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete:           false,
+							UID:                uid,
+							ExistingJobDeleted: true,
+						},
 					},
 				},
 			},
@@ -433,10 +467,12 @@ func TestHandleJobComplete(t *testing.T) {
 				Spec: v1alpha1.WorkflowSpec{HardwareRef: "machine1"},
 				Status: v1alpha1.WorkflowStatus{
 					State: v1alpha1.WorkflowStatePending,
-					Job: v1alpha1.JobStatus{
-						Complete:           true,
-						UID:                uid,
-						ExistingJobDeleted: true,
+					BootOptions: v1alpha1.BootOptionsStatus{
+						OneTimeNetboot: v1alpha1.OneTimeNetbootStatus{
+							Complete:           true,
+							UID:                uid,
+							ExistingJobDeleted: true,
+						},
 					},
 					Conditions: []v1alpha1.WorkflowCondition{
 						{Type: v1alpha1.NetbootJobComplete, Status: v1.ConditionTrue, Reason: "Complete", Message: "one time netboot job completed"},

@@ -17,10 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const (
-	failed = "failed"
-)
-
 // Reconciler is a type for managing Workflows.
 type Reconciler struct {
 	client  ctrlclient.Client
@@ -77,9 +73,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		if ca != "" && wflow.Status.CurrentAction != ca {
 			wflow.Status.CurrentAction = ca
 		}
-	case v1alpha1.WorkflowStatePreparing:
+	case v1alpha1.WorkflowStateWaiting:
 		// make sure any existing job is deleted
-		if !wflow.Status.Job.ExistingJobDeleted {
+		if !wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 			rc, err := handleExistingJob(ctx, r.client, wflow)
 			// Patch any changes, regardless of errors
 			if !equality.Semantic.DeepEqual(wflow, stored) {
@@ -91,7 +87,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		}
 
 		// create a new job
-		if wflow.Status.Job.UID == "" && wflow.Status.Job.ExistingJobDeleted {
+		if wflow.Status.BootOptions.OneTimeNetboot.UID == "" && wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 			rc, err := handleJobCreation(ctx, r.client, wflow)
 			// Patch any changes, regardless of errors
 			if !equality.Semantic.DeepEqual(wflow, stored) {
@@ -103,7 +99,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		}
 
 		// check if the job is complete
-		if !wflow.Status.Job.Complete && wflow.Status.Job.UID != "" && wflow.Status.Job.ExistingJobDeleted {
+		if !wflow.Status.BootOptions.OneTimeNetboot.Complete && wflow.Status.BootOptions.OneTimeNetboot.UID != "" && wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 			rc, err := handleJobComplete(ctx, r.client, wflow)
 			// Patch any changes, regardless of errors
 			if !equality.Semantic.DeepEqual(wflow, stored) {
@@ -114,7 +110,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			return rc, err
 		}
 	case v1alpha1.WorkflowStateSuccess:
-		if wflow.Spec.BootOpts.ToggleAllowNetboot && !wflow.Status.HasCondition(v1alpha1.ToggleAllowNetbootFalse, metav1.ConditionTrue) {
+		if wflow.Spec.BootOptions.ToggleAllowNetboot && !wflow.Status.HasCondition(v1alpha1.ToggleAllowNetbootFalse, metav1.ConditionTrue) {
 			// handle updating hardware allowPXE to false
 			wflow.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.ToggleAllowNetbootFalse,
@@ -144,6 +140,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			err = fmt.Errorf("error patching workflow %s, %w", wflow.Name, perr)
 		}
 	}
+
 	return resp, err
 }
 
@@ -165,7 +162,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		if errors.IsNotFound(err) {
 			// Throw an error to raise awareness and take advantage of immediate requeue.
 			logger.Error(err, "error getting Template object in processNewWorkflow function")
-			stored.Status.TemplateRendering = failed
+			stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.TemplateRenderedSuccess,
 				Status:  metav1.ConditionFalse,
@@ -179,7 +176,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 				stored.Namespace,
 			)
 		}
-		stored.Status.TemplateRendering = failed
+		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
@@ -199,7 +196,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
 	if err != nil && !errors.IsNotFound(err) {
 		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
-		stored.Status.TemplateRendering = failed
+		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
@@ -212,7 +209,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	if stored.Spec.HardwareRef != "" && errors.IsNotFound(err) {
 		logger.Error(err, "hardware not found in processNewWorkflow function")
-		stored.Status.TemplateRendering = failed
+		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
@@ -234,7 +231,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	tinkWf, err := renderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
 	if err != nil {
-		stored.Status.TemplateRendering = failed
+		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
 			Status:  metav1.ConditionFalse,
@@ -247,7 +244,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	// populate Task and Action data
 	stored.Status = *YAMLToStatus(tinkWf)
-	stored.Status.TemplateRendering = "successful"
+	stored.Status.TemplateRendering = v1alpha1.TemplateRenderingSuccessful
 	stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 		Type:    v1alpha1.TemplateRenderedSuccess,
 		Status:  metav1.ConditionTrue,
@@ -257,7 +254,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	})
 
 	// set hardware allowPXE if requested.
-	if stored.Spec.BootOpts.ToggleAllowNetboot {
+	if stored.Spec.BootOptions.ToggleAllowNetboot {
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.ToggleAllowNetbootTrue,
 			Status:  metav1.ConditionTrue,
@@ -278,8 +275,8 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	}
 
 	// netboot the hardware if requested
-	if stored.Spec.BootOpts.OneTimeNetboot {
-		stored.Status.State = v1alpha1.WorkflowStatePreparing
+	if stored.Spec.BootOptions.OneTimeNetboot {
+		stored.Status.State = v1alpha1.WorkflowStateWaiting
 		return reconcile.Result{Requeue: true}, err
 	}
 

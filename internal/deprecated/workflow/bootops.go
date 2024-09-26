@@ -20,7 +20,7 @@ const (
 
 // handleExistingJob ensures that an existing job.bmc.tinkerbell.org is removed.
 func handleExistingJob(ctx context.Context, cc client.Client, wf *v1alpha1.Workflow) (reconcile.Result, error) {
-	if wf.Status.Job.ExistingJobDeleted {
+	if wf.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 		return reconcile.Result{}, nil
 	}
 	name := fmt.Sprintf(bmcJobName, wf.Spec.HardwareRef)
@@ -36,16 +36,16 @@ func handleExistingJob(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 		}
 		return reconcile.Result{Requeue: true}, nil
 	}
-	wf.Status.Job.ExistingJobDeleted = true
+	wf.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted = true
 
 	return reconcile.Result{Requeue: true}, nil
 }
 
 func handleJobCreation(ctx context.Context, cc client.Client, wf *v1alpha1.Workflow) (reconcile.Result, error) {
-	if wf.Status.Job.UID == "" && wf.Status.Job.ExistingJobDeleted {
+	if wf.Status.BootOptions.OneTimeNetboot.UID == "" && wf.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 		existingJob := &rufio.Job{}
 		if err := cc.Get(ctx, client.ObjectKey{Name: fmt.Sprintf(bmcJobName, wf.Spec.HardwareRef), Namespace: wf.Namespace}, existingJob); err == nil {
-			wf.Status.Job.UID = existingJob.GetUID()
+			wf.Status.BootOptions.OneTimeNetboot.UID = existingJob.GetUID()
 			return reconcile.Result{Requeue: true}, nil
 		}
 		hw := &v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{Name: wf.Spec.HardwareRef, Namespace: wf.Namespace}}
@@ -80,7 +80,7 @@ func handleJobCreation(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 }
 
 func handleJobComplete(ctx context.Context, cc client.Client, wf *v1alpha1.Workflow) (reconcile.Result, error) {
-	if !wf.Status.Job.Complete && wf.Status.Job.UID != "" && wf.Status.Job.ExistingJobDeleted {
+	if !wf.Status.BootOptions.OneTimeNetboot.Complete && wf.Status.BootOptions.OneTimeNetboot.UID != "" && wf.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 		existingJob := &rufio.Job{}
 		jobName := fmt.Sprintf(bmcJobName, wf.Spec.HardwareRef)
 		if err := cc.Get(ctx, client.ObjectKey{Name: jobName, Namespace: wf.Namespace}, existingJob); err != nil {
@@ -105,7 +105,7 @@ func handleJobComplete(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 				Time:    &metav1.Time{Time: metav1.Now().UTC()},
 			})
 			wf.Status.State = v1alpha1.WorkflowStatePending
-			wf.Status.Job.Complete = true
+			wf.Status.BootOptions.OneTimeNetboot.Complete = true
 			return reconcile.Result{Requeue: true}, nil
 		}
 		if !wf.Status.HasCondition(v1alpha1.NetbootJobRunning, metav1.ConditionTrue) {
