@@ -120,7 +120,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 				Type:    v1alpha1.ToggleAllowNetbootFalse,
 				Status:  metav1.ConditionTrue,
 				Reason:  "Complete",
-				Message: "setting allowPXE to false",
+				Message: "set allowPXE to false",
 				Time:    &metav1.Time{Time: metav1.Now().UTC()},
 			})
 			if gerr := handleHardwareAllowPXE(ctx, r.client, wflow, nil, false); gerr != nil {
@@ -262,7 +262,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 			Type:    v1alpha1.ToggleAllowNetbootTrue,
 			Status:  metav1.ConditionTrue,
 			Reason:  "Complete",
-			Message: "setting allowPXE to true",
+			Message: "set allowPXE to true",
 			Time:    &metav1.Time{Time: metav1.Now().UTC()},
 		})
 		if err := handleHardwareAllowPXE(ctx, r.client, stored, &hardware, true); err != nil {
