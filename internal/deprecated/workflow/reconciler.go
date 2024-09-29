@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	serrors "errors"
 	"fmt"
 	"time"
 
@@ -57,61 +58,59 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	if !stored.DeletionTimestamp.IsZero() {
 		return reconcile.Result{}, nil
 	}
+
 	wflow := stored.DeepCopy()
 
-	var (
-		resp reconcile.Result
-		err  error
-	)
 	switch wflow.Status.State {
 	case "":
-		resp, err = r.processNewWorkflow(ctx, logger, wflow)
-	case v1alpha1.WorkflowStateRunning:
-		resp = r.processRunningWorkflow(ctx, wflow)
-		// set the current action in the status
-		ca := runningAction(wflow)
-		if ca != "" && wflow.Status.CurrentAction != ca {
-			wflow.Status.CurrentAction = ca
-		}
+		resp, err := r.processNewWorkflow(ctx, logger, wflow)
+
+		return resp, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStateWaiting:
 		// make sure any existing job is deleted
 		if !wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 			rc, err := handleExistingJob(ctx, r.client, wflow)
-			// Patch any changes, regardless of errors
-			if !equality.Semantic.DeepEqual(wflow, stored) {
-				if perr := r.client.Status().Patch(ctx, wflow, ctrlclient.MergeFrom(stored)); perr != nil {
-					err = fmt.Errorf("error patching workflow %s, %w", wflow.Name, perr)
-				}
-			}
-			return rc, err
+
+			return rc, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
 		}
 
 		// create a new job
 		if wflow.Status.BootOptions.OneTimeNetboot.UID == "" && wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 			rc, err := handleJobCreation(ctx, r.client, wflow)
-			// Patch any changes, regardless of errors
-			if !equality.Semantic.DeepEqual(wflow, stored) {
-				if perr := r.client.Status().Patch(ctx, wflow, ctrlclient.MergeFrom(stored)); perr != nil {
-					err = fmt.Errorf("error patching workflow %s, %w", wflow.Name, perr)
-				}
-			}
-			return rc, err
+
+			return rc, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
 		}
 
 		// check if the job is complete
 		if !wflow.Status.BootOptions.OneTimeNetboot.Complete && wflow.Status.BootOptions.OneTimeNetboot.UID != "" && wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
 			rc, err := handleJobComplete(ctx, r.client, wflow)
-			// Patch any changes, regardless of errors
-			if !equality.Semantic.DeepEqual(wflow, stored) {
-				if perr := r.client.Status().Patch(ctx, wflow, ctrlclient.MergeFrom(stored)); perr != nil {
-					err = fmt.Errorf("error patching workflow %s, %w", wflow.Name, perr)
-				}
-			}
-			return rc, err
+
+			return rc, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
 		}
+	case v1alpha1.WorkflowStateRunning:
+		r.processRunningWorkflow(wflow)
+		// set the current action in the status
+		ca := runningAction(wflow)
+		if ca != "" && wflow.Status.CurrentAction != ca {
+			wflow.Status.CurrentAction = ca
+		}
+
+		return reconcile.Result{}, mergePatchsStatus(ctx, r.client, stored, wflow)
+	case v1alpha1.WorkflowStatePending, v1alpha1.WorkflowStateTimeout, v1alpha1.WorkflowStateFailed:
+		return reconcile.Result{}, nil
 	case v1alpha1.WorkflowStateSuccess:
 		if wflow.Spec.BootOptions.ToggleAllowNetboot && !wflow.Status.HasCondition(v1alpha1.ToggleAllowNetbootFalse, metav1.ConditionTrue) {
 			// handle updating hardware allowPXE to false
+			if err := handleHardwareAllowPXE(ctx, r.client, wflow, nil, false); err != nil {
+				stored.Status.SetCondition(v1alpha1.WorkflowCondition{
+					Type:    v1alpha1.ToggleAllowNetbootFalse,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Error",
+					Message: fmt.Sprintf("error setting Allow PXE: %v", err),
+					Time:    &metav1.Time{Time: metav1.Now().UTC()},
+				})
+				return reconcile.Result{}, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
+			}
 			wflow.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.ToggleAllowNetbootFalse,
 				Status:  metav1.ConditionTrue,
@@ -119,29 +118,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 				Message: "set allowPXE to false",
 				Time:    &metav1.Time{Time: metav1.Now().UTC()},
 			})
-			if gerr := handleHardwareAllowPXE(ctx, r.client, wflow, nil, false); gerr != nil {
-				stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-					Type:    v1alpha1.ToggleAllowNetbootFalse,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Error",
-					Message: fmt.Sprintf("error setting Allow PXE: %v", gerr),
-					Time:    &metav1.Time{Time: metav1.Now().UTC()},
-				})
-				err = gerr
-			}
+
+			return reconcile.Result{}, mergePatchsStatus(ctx, r.client, stored, wflow)
 		}
-	default:
-		return resp, nil
 	}
 
+	return reconcile.Result{}, nil
+}
+
+// mergePatchsStatus merges an updated Workflow with an original Workflow and patches the Status object via the client (cc).
+func mergePatchsStatus(ctx context.Context, cc ctrlclient.Client, original, updated *v1alpha1.Workflow) error {
 	// Patch any changes, regardless of errors
-	if !equality.Semantic.DeepEqual(wflow, stored) {
-		if perr := r.client.Status().Patch(ctx, wflow, ctrlclient.MergeFrom(stored)); perr != nil {
-			err = fmt.Errorf("error patching workflow %s, %w", wflow.Name, perr)
+	if !equality.Semantic.DeepEqual(updated, original) {
+		if err := cc.Status().Patch(ctx, updated, ctrlclient.MergeFrom(original)); err != nil {
+			return fmt.Errorf("error patching status of workflow: %s, error: %w", updated.Name, err)
 		}
 	}
-
-	return resp, err
+	return nil
 }
 
 func runningAction(wf *v1alpha1.Workflow) string {
@@ -187,14 +180,9 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		return reconcile.Result{}, err
 	}
 
-	data := make(map[string]interface{})
-	for key, val := range stored.Spec.HardwareMap {
-		data[key] = val
-	}
-
 	var hardware v1alpha1.Hardware
 	err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
-	if err != nil && !errors.IsNotFound(err) {
+	if ctrlclient.IgnoreNotFound(err) != nil {
 		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
 		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
@@ -224,10 +212,12 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		)
 	}
 
-	if err == nil {
-		contract := toTemplateHardwareData(hardware)
-		data["Hardware"] = contract
+	data := make(map[string]interface{})
+	for key, val := range stored.Spec.HardwareMap {
+		data[key] = val
 	}
+	contract := toTemplateHardwareData(hardware)
+	data["Hardware"] = contract
 
 	tinkWf, err := renderTemplateHardware(stored.Name, ptr.StringValue(tpl.Spec.Data), data)
 	if err != nil {
@@ -255,13 +245,6 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	// set hardware allowPXE if requested.
 	if stored.Spec.BootOptions.ToggleAllowNetboot {
-		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-			Type:    v1alpha1.ToggleAllowNetbootTrue,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Complete",
-			Message: "set allowPXE to true",
-			Time:    &metav1.Time{Time: metav1.Now().UTC()},
-		})
 		if err := handleHardwareAllowPXE(ctx, r.client, stored, &hardware, true); err != nil {
 			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.ToggleAllowNetbootTrue,
@@ -272,6 +255,13 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 			})
 			return reconcile.Result{}, err
 		}
+		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
+			Type:    v1alpha1.ToggleAllowNetbootTrue,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Complete",
+			Message: "set allowPXE to true",
+			Time:    &metav1.Time{Time: metav1.Now().UTC()},
+		})
 	}
 
 	// netboot the hardware if requested
@@ -315,7 +305,7 @@ func toTemplateHardwareData(hardware v1alpha1.Hardware) templateHardwareData {
 	return contract
 }
 
-func (r *Reconciler) processRunningWorkflow(_ context.Context, stored *v1alpha1.Workflow) reconcile.Result { //nolint:unparam // This is the way controller runtime works.
+func (r *Reconciler) processRunningWorkflow(stored *v1alpha1.Workflow) {
 	// Check for global timeout expiration
 	if r.nowFunc().After(stored.GetStartTime().Add(time.Duration(stored.Status.GlobalTimeout) * time.Second)) {
 		stored.Status.State = v1alpha1.WorkflowStateTimeout
@@ -336,6 +326,4 @@ func (r *Reconciler) processRunningWorkflow(_ context.Context, stored *v1alpha1.
 			}
 		}
 	}
-
-	return reconcile.Result{}
 }

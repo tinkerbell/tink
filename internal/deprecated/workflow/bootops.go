@@ -7,7 +7,6 @@ import (
 
 	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
 	"github.com/tinkerbell/tink/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,13 +24,13 @@ func handleExistingJob(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 	}
 	name := fmt.Sprintf(bmcJobName, wf.Spec.HardwareRef)
 	namespace := wf.Namespace
-	if err := cc.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, &rufio.Job{}); (err != nil && !errors.IsNotFound(err)) || err == nil {
+	if err := cc.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, &rufio.Job{}); client.IgnoreNotFound(err) != nil || err == nil {
 		existingJob := &rufio.Job{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
 		opts := []client.DeleteOption{
 			client.GracePeriodSeconds(0),
 			client.PropagationPolicy(metav1.DeletePropagationForeground),
 		}
-		if err := cc.Delete(ctx, existingJob, opts...); err != nil {
+		if err := cc.Delete(ctx, existingJob, opts...); client.IgnoreNotFound(err) != nil {
 			return reconcile.Result{}, fmt.Errorf("error deleting job.bmc.tinkerbell.org object: %w", err)
 		}
 		return reconcile.Result{Requeue: true}, nil
@@ -49,8 +48,8 @@ func handleJobCreation(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 			return reconcile.Result{Requeue: true}, nil
 		}
 		hw := &v1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{Name: wf.Spec.HardwareRef, Namespace: wf.Namespace}}
-		if gerr := cc.Get(ctx, client.ObjectKey{Name: wf.Spec.HardwareRef, Namespace: wf.Namespace}, hw); gerr != nil {
-			return reconcile.Result{}, fmt.Errorf("error getting hardware %s: %w", wf.Spec.HardwareRef, gerr)
+		if err := cc.Get(ctx, client.ObjectKey{Name: wf.Spec.HardwareRef, Namespace: wf.Namespace}, hw); err != nil {
+			return reconcile.Result{}, fmt.Errorf("error getting hardware %s: %w", wf.Spec.HardwareRef, err)
 		}
 		if hw.Spec.BMCRef == nil {
 			return reconcile.Result{}, fmt.Errorf("hardware %s does not have a BMC, cannot perform one time netboot", hw.Name)
@@ -72,7 +71,6 @@ func handleJobCreation(ctx context.Context, cc client.Client, wf *v1alpha1.Workf
 			Message: "job created",
 			Time:    &metav1.Time{Time: metav1.Now().UTC()},
 		})
-
 		return reconcile.Result{Requeue: true}, nil
 	}
 
