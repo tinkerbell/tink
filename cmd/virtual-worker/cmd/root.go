@@ -34,10 +34,10 @@ func NewRootCommand(version string) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "virtual-worker",
 		Short: "Virtual Tink Worker",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
 			return createViper(logger, cmd)
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			retryInterval := viper.GetDuration("retry-interval")
 			retries := viper.GetInt("max-retry")
 			workerID := viper.GetString("id")

@@ -60,7 +60,7 @@ func (w *Workflow) getTaskActionInfo() taskInfo {
 	INNER:
 		for ai, action := range task.Actions {
 			// Find the first non-successful action
-			switch action.Status {
+			switch action.Status { //nolint:exhaustive // WorkflowStateWaiting is only used in Workflows not Actions.
 			case WorkflowStateSuccess:
 				actionIndex++
 				continue

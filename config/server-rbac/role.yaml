@@ -8,13 +8,6 @@ rules:
     resources:
       - hardware
       - hardware/status
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - tinkerbell.org
-    resources:
       - templates
       - templates/status
     verbs:

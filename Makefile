@@ -120,12 +120,12 @@ generate-crds: $(CONTROLLER_GEN) $(YAMLFMT)
 	$(YAMLFMT) ./config/crd/bases/* ./config/webhook/*
 
 .PHONY: generate-rbac
-generate-rbac: $(CONTROLLER_GEN) $(YAMLFMT)
+generate-rbac: generate-controller-rbac generate-server-rbac $(CONTROLLER_GEN) $(YAMLFMT)
 
 .PHONY: generate-controller-rbac
-generate-manager-rbac:
+generate-controller-rbac:
 	$(CONTROLLER_GEN) \
-		paths=./internal/workflow/... \
+		paths=./internal/deprecated/workflow/... \
 		output:rbac:dir=./config/manager-rbac/ \
 		rbac:roleName=manager-role
 	$(YAMLFMT) ./config/rbac/*
@@ -151,14 +151,14 @@ out/release/default/kustomization.yaml: config/default/kustomization.yaml
 	mkdir -p out/
 	cp -a config/ out/release/
 
-out/release/tink.yaml: generate-manifests out/release/default/kustomization.yaml $(KUSTOMIZE)
+out/release/tink.yaml: generate-manifests out/release/default/kustomization.yaml $(KUSTOMIZE) $(YAMLFMT)
 	(
 		cd out/release/default && \
 		$(KUSTOMIZE) edit set image server=$(TINK_SERVER_IMAGE):$(TINK_CONTROLLER_TAG) controller=$(TINK_CONTROLLER_IMAGE):$(TINK_CONTROLLER_TAG) && \
 		$(KUSTOMIZE) edit set namespace $(NAMESPACE) \
 	)
 	$(KUSTOMIZE) build out/release/default -o $@
-	prettier --write $@
+	$(YAMLFMT) $@
 
 .PHONY: release-manifests
 release-manifests: ## Builds the manifests to publish with a release.

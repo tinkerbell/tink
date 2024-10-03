@@ -30,7 +30,7 @@ type fakeManager struct {
 }
 
 func (m *fakeManager) sleep() {
-	jitter := time.Duration(m.r.Int31n(int32(m.sleepJitter.Milliseconds()))) * time.Millisecond
+	jitter := time.Duration(m.r.Int63n(m.sleepJitter.Milliseconds())) * time.Millisecond
 	time.Sleep(jitter + m.sleepMinimum)
 }
 
