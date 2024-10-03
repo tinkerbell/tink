@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   name: workflows.tinkerbell.org
 spec:
   group: tinkerbell.org
@@ -23,6 +23,12 @@ spec:
           type: string
         - jsonPath: .status.state
           name: State
+          type: string
+        - jsonPath: .status.currentAction
+          name: Current-Action
+          type: string
+        - jsonPath: .status.templateRending
+          name: Template-Rendering
           type: string
       name: v1alpha1
       schema:
@@ -49,10 +55,26 @@ spec:
             spec:
               description: WorkflowSpec defines the desired state of Workflow.
               properties:
+                bootOptions:
+                  description: BootOptions are options that control the booting of Hardware.
+                  properties:
+                    oneTimeNetboot:
+                      description: |-
+                        OneTimeNetboot indicates whether the controller should create a job.bmc.tinkerbell.org object for getting the associated hardware
+                        into a netbooting state.
+                        A HardwareRef that contains a spec.BmcRef must be provided.
+                      type: boolean
+                    toggleAllowNetboot:
+                      description: |-
+                        ToggleAllowNetboot indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
+                        This will be enabled before a Workflow is executed and disabled after the Workflow has completed successfully.
+                        A HardwareRef must be provided.
+                      type: boolean
+                  type: object
                 hardwareMap:
                   additionalProperties:
                     type: string
-                  description: A mapping of template devices to hadware mac addresses
+                  description: A mapping of template devices to hadware mac addresses.
                   type: object
                 hardwareRef:
                   description: Name of the Hardware associated with this workflow.
@@ -62,17 +84,73 @@ spec:
                   type: string
               type: object
             status:
-              description: WorkflowStatus defines the observed state of Workflow.
+              description: WorkflowStatus defines the observed state of a Workflow.
               properties:
+                bootOptions:
+                  description: BootOptions holds the state of any boot options.
+                  properties:
+                    netbootJob:
+                      description: |-
+                        OneTimeNetboot holds the state of a specific job.bmc.tinkerbell.org object created.
+                        Only used when BootOptions.OneTimeNetboot is true.
+                      properties:
+                        complete:
+                          description: Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
+                          type: boolean
+                        existingJobDeleted:
+                          description: |-
+                            ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
+                            The name of each job.bmc.tinkerbell.org object created by the controller is the same, so only one can exist at a time.
+                            Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per Hardware/Machine.bmc.tinkerbell.org.
+                            This makes clean up easier and we dont just orphan jobs every time.
+                          type: boolean
+                        uid:
+                          description: |-
+                            UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
+                            This is used to uniquely identify the job.bmc.tinkerbell.org object, as
+                            all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.
+                          type: string
+                      type: object
+                  type: object
+                conditions:
+                  description: Conditions are the latest available observations of an object's current state.
+                  items:
+                    description: JobCondition describes current state of a job.
+                    properties:
+                      message:
+                        description: Message is a human readable message indicating details about last transition.
+                        type: string
+                      reason:
+                        description: Reason is a (brief) reason for the condition's last transition.
+                        type: string
+                      status:
+                        description: Status of the condition, one of True, False, Unknown.
+                        type: string
+                      time:
+                        description: Time when the condition was created.
+                        format: date-time
+                        type: string
+                      type:
+                        description: Type of job condition, Complete or Failed.
+                        type: string
+                    required:
+                      - status
+                      - type
+                    type: object
+                  type: array
+                  x-kubernetes-list-type: atomic
+                currentAction:
+                  description: CurrentAction is the action that is currently in the running state.
+                  type: string
                 globalTimeout:
-                  description: GlobalTimeout represents the max execution time
+                  description: GlobalTimeout represents the max execution time.
                   format: int64
                   type: integer
                 state:
-                  description: State is the state of the workflow in Tinkerbell.
+                  description: State is the current overall state of the Workflow.
                   type: string
                 tasks:
-                  description: Tasks are the tasks to be completed
+                  description: Tasks are the tasks to be run by the worker(s).
                   items:
                     description: Task represents a series of actions to be completed by a worker.
                     properties:
@@ -131,6 +209,11 @@ spec:
                       - worker
                     type: object
                   type: array
+                templateRending:
+                  description: |-
+                    TemplateRendering indicates whether the template was rendered successfully.
+                    Possible values are "successful" or "failed" or "unknown".
+                  type: string
               type: object
           type: object
       served: true
@@ -186,9 +269,7 @@ spec:
                         This field is effectively required, but due to backwards compatibility is
                         allowed to be empty. Instances of this type with an empty value here are
                         almost certainly wrong.
-                        TODO: Add other useful fields. apiVersion, kind, uid?
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -198,7 +279,6 @@ spec:
                   description: |-
                     TemplateParams are a list of key-value pairs that are injected into templates at render
                     time. TemplateParams are exposed to templates using a top level .Params key.
-
 
                     For example, TemplateParams = {"foo": "bar"}, the foo key can be accessed via .Params.foo.
                   type: object
@@ -212,9 +292,7 @@ spec:
                         This field is effectively required, but due to backwards compatibility is
                         allowed to be empty. Instances of this type with an empty value here are
                         almost certainly wrong.
-                        TODO: Add other useful fields. apiVersion, kind, uid?
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -291,7 +369,7 @@ spec:
                           volumes:
                             description: Volumes defines the volumes to mount into the container.
                             items:
-                              description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\n\nRead-only bind mount bound to /data\n\n\n\t/etc/data:/data:ro\n\n\nWritable volume name bound to /data\n\n\n\tshared_volume:/data\n\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
+                              description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\nRead-only bind mount bound to /data\n\n\t/etc/data:/data:ro\n\nWritable volume name bound to /data\n\n\tshared_volume:/data\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
                               type: string
                             type: array
                         required:

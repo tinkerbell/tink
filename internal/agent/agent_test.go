@@ -105,7 +105,7 @@ func TestAgent_ConcurrentWorkflows(t *testing.T) {
 	// Started is used to indicate the runtime has received the workflow.
 	started := make(chan struct{})
 	rntime := agent.ContainerRuntimeMock{
-		RunFunc: func(ctx context.Context, action workflow.Action) error {
+		RunFunc: func(ctx context.Context, _ workflow.Action) error {
 			started <- struct{}{}
 			<-ctx.Done()
 			return nil
@@ -412,7 +412,7 @@ message`,
 			trnport := transport.Noop()
 
 			rntime := agent.ContainerRuntimeMock{
-				RunFunc: func(ctx context.Context, action workflow.Action) error {
+				RunFunc: func(_ context.Context, action workflow.Action) error {
 					if res, ok := tc.Errors[action.ID]; ok {
 						return failure.NewReason(res.Message, res.Reason)
 					}
@@ -424,7 +424,7 @@ message`,
 			// to check for the last expected action.
 			lastEventReceived := make(chan struct{})
 			recorder := event.RecorderMock{
-				RecordEventFunc: func(contextMoqParam context.Context, event event.Event) error {
+				RecordEventFunc: func(_ context.Context, event event.Event) error {
 					if cmp.Equal(event, tc.Events[len(tc.Events)-1]) {
 						lastEventReceived <- struct{}{}
 					}

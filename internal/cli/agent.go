@@ -23,7 +23,7 @@ func NewAgent() *cobra.Command {
 	// TODO(chrisdoherty4) Handle signals
 	cmd := cobra.Command{
 		Use: "tink-agent",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			zl, err := zap.NewProduction()
 			if err != nil {
 				return fmt.Errorf("init logger: %w", err)
@@ -35,7 +35,7 @@ func NewAgent() *cobra.Command {
 				return fmt.Errorf("create runtime: %w", err)
 			}
 
-			conn, err := grpc.DialContext(cmd.Context(), opts.TinkServerAddr)
+			conn, err := grpc.NewClient(opts.TinkServerAddr)
 			if err != nil {
 				return fmt.Errorf("dial tink server: %w", err)
 			}

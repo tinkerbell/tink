@@ -80,10 +80,11 @@ linters-settings:
       - name: var-naming
       - name: unconditional-recursion
       - name: waitgroup-by-value
-  staticcheck:
-    go: "1.18"
-  unused:
-    go: "1.18"
+      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#struct-tag
+      - name: struct-tag
+        arguments:
+          - "json,inline"
+          - "protobuf,casttype"
 output:
   sort-results: true
 linters:
@@ -99,7 +100,7 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - forcetypeassert
     - gocognit
     - goconst

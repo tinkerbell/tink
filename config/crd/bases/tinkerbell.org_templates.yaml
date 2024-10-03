@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   name: templates.tinkerbell.org
 spec:
   group: tinkerbell.org
@@ -134,7 +134,7 @@ spec:
                       volumes:
                         description: Volumes defines the volumes to mount into the container.
                         items:
-                          description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\n\nRead-only bind mount bound to /data\n\n\n\t/etc/data:/data:ro\n\n\nWritable volume name bound to /data\n\n\n\tshared_volume:/data\n\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
+                          description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\nRead-only bind mount bound to /data\n\n\t/etc/data:/data:ro\n\nWritable volume name bound to /data\n\n\tshared_volume:/data\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
                           type: string
                         type: array
                     required:
@@ -155,7 +155,7 @@ spec:
                     Volumes to be mounted on all actions. If an action specifies the same volume it will take
                     precedence.
                   items:
-                    description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\n\nRead-only bind mount bound to /data\n\n\n\t/etc/data:/data:ro\n\n\nWritable volume name bound to /data\n\n\n\tshared_volume:/data\n\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
+                    description: "Volume is a specification for mounting a volume in an action. Volumes take the form\n{SRC-VOLUME-NAME | SRC-HOST-DIR}:TGT-CONTAINER-DIR:OPTIONS. When specifying a VOLUME-NAME that\ndoes not exist it will be created for you. Examples:\n\nRead-only bind mount bound to /data\n\n\t/etc/data:/data:ro\n\nWritable volume name bound to /data\n\n\tshared_volume:/data\n\nSee https://docs.docker.com/storage/volumes/ for additional details."
                     type: string
                   type: array
               type: object

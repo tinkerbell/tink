@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   name: hardware.tinkerbell.org
 spec:
   group: tinkerbell.org
@@ -421,9 +421,7 @@ spec:
                         This field is effectively required, but due to backwards compatibility is
                         allowed to be empty. Instances of this type with an empty value here are
                         almost certainly wrong.
-                        TODO: Add other useful fields. apiVersion, kind, uid?
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -530,16 +528,14 @@ spec:
                         This field is effectively required, but due to backwards compatibility is
                         allowed to be empty. Instances of this type with an empty value here are
                         almost certainly wrong.
-                        TODO: Add other useful fields. apiVersion, kind, uid?
                         More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                        TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
                 storageDevices:
                   description: StorageDevices is a list of storage devices that will be available in the OSIE.
                   items:
-                    description: "StorageDevice describes a storage device path that will be present in the OSIE.\nStorageDevices must be valid Linux paths. They should not contain partitions.\n\n\nGood\n\n\n\t/dev/sda\n\t/dev/nvme0n1\n\n\nBad (contains partitions)\n\n\n\t/dev/sda1\n\t/dev/nvme0n1p1\n\n\nBad (invalid Linux path)\n\n\n\t\\dev\\sda"
+                    description: "StorageDevice describes a storage device path that will be present in the OSIE.\nStorageDevices must be valid Linux paths. They should not contain partitions.\n\nGood\n\n\t/dev/sda\n\t/dev/nvme0n1\n\nBad (contains partitions)\n\n\t/dev/sda1\n\t/dev/nvme0n1p1\n\nBad (invalid Linux path)\n\n\t\\dev\\sda"
                     pattern: ^(/[^/ ]*)+/?$
                     type: string
                   type: array

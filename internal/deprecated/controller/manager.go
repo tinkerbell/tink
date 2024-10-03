@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 
+	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/deprecated/workflow"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,6 +16,7 @@ import (
 var schemeBuilder = runtime.NewSchemeBuilder(
 	clientgoscheme.AddToScheme,
 	v1alpha1.AddToScheme,
+	rufio.AddToScheme,
 )
 
 // DefaultScheme returns a scheme with all the types necessary for the tink controller.

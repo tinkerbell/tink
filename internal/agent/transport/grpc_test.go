@@ -46,7 +46,7 @@ func TestGRPC(t *testing.T) {
 		ContextFunc: context.Background,
 	}
 	client := &workflowproto.WorkflowServiceClientMock{
-		GetWorkflowsFunc: func(ctx context.Context, in *workflowproto.GetWorkflowsRequest, opts ...grpc.CallOption) (workflowproto.WorkflowService_GetWorkflowsClient, error) {
+		GetWorkflowsFunc: func(_ context.Context, _ *workflowproto.GetWorkflowsRequest, _ ...grpc.CallOption) (workflowproto.WorkflowService_GetWorkflowsClient, error) {
 			return stream, nil
 		},
 	}
@@ -54,7 +54,7 @@ func TestGRPC(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	handler := &transport.WorkflowHandlerMock{
-		HandleWorkflowFunc: func(contextMoqParam context.Context, workflow workflow.Workflow, recorder event.Recorder) {
+		HandleWorkflowFunc: func(_ context.Context, _ workflow.Workflow, _ event.Recorder) {
 			defer wg.Done()
 			close(responses)
 		},

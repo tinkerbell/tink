@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	tinkv1 "github.com/tinkerbell/tink/api/v1alpha2"
 	"github.com/tinkerbell/tink/internal/ptr"
-	. "github.com/tinkerbell/tink/internal/workflow/internal"
+	. "github.com/tinkerbell/tink/internal/workflow/internal" //nolint:revive // Dot imports should not be used. Problem for another time though.
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

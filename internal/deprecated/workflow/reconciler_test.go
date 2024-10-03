@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/ptr"
 	"github.com/tinkerbell/tink/internal/testtime"
@@ -83,6 +84,128 @@ tasks:
           USER_DATA: {{ .Hardware.UserData }}
           VENDOR_DATA: {{ .Hardware.VendorData }}
           METADATA: {{ .Hardware.Metadata.State }}`
+
+func TestHandleHardwareAllowPXE(t *testing.T) {
+	tests := map[string]struct {
+		OriginalHardware *v1alpha1.Hardware
+		WantHardware     *v1alpha1.Hardware
+		WantError        error
+		AllowPXE         bool
+	}{
+		"before workflow": {
+			OriginalHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1000",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(false),
+							},
+						},
+					},
+				},
+			},
+			WantHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1001",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(true),
+							},
+						},
+					},
+				},
+			},
+			AllowPXE: true,
+		},
+		"after workflow": {
+			OriginalHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1000",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(true),
+							},
+						},
+					},
+				},
+			},
+			WantHardware: &v1alpha1.Hardware{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "machine1",
+					Namespace:       "default",
+					ResourceVersion: "1001",
+				},
+				Spec: v1alpha1.HardwareSpec{
+					Interfaces: []v1alpha1.Interface{
+						{
+							DHCP: &v1alpha1.DHCP{
+								MAC: "3c:ec:ef:4c:4f:54",
+							},
+							Netboot: &v1alpha1.Netboot{
+								AllowPXE: ptr.Bool(false),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			fakeClient := GetFakeClientBuilder().WithRuntimeObjects(tt.OriginalHardware).Build()
+			wf := &v1alpha1.Workflow{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "workflow1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{
+					HardwareRef: "machine1",
+				},
+			}
+			err := handleHardwareAllowPXE(context.Background(), fakeClient, wf, nil, tt.AllowPXE)
+
+			got := &v1alpha1.Hardware{}
+			if err := fakeClient.Get(context.Background(), client.ObjectKeyFromObject(tt.OriginalHardware), got); err != nil {
+				t.Fatalf("failed to get hardware after update: %v", err)
+			}
+			if diff := cmp.Diff(tt.WantError, err, cmp.Comparer(func(a, b error) bool {
+				return a.Error() == b.Error()
+			})); diff != "" {
+				t.Errorf("error type: %T", err)
+				t.Fatalf("unexpected error diff: %s", diff)
+			}
+
+			if diff := cmp.Diff(tt.WantHardware, got); diff != "" {
+				t.Fatalf("unexpected hardware diff: %s", diff)
+			}
+		})
+	}
+}
 
 func TestReconcile(t *testing.T) {
 	cases := []struct {
@@ -201,8 +324,12 @@ func TestReconcile(t *testing.T) {
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         v1alpha1.WorkflowStatePending,
-					GlobalTimeout: 1800,
+					State:             v1alpha1.WorkflowStatePending,
+					GlobalTimeout:     1800,
+					TemplateRendering: "successful",
+					Conditions: []v1alpha1.WorkflowCondition{
+						{Type: v1alpha1.TemplateRenderedSuccess, Status: metav1.ConditionTrue, Reason: "Complete", Message: "template rendered successfully"},
+					},
 					Tasks: []v1alpha1.Task{
 						{
 							Name: "os-installation",
@@ -778,8 +905,12 @@ tasks:
 					},
 				},
 				Status: v1alpha1.WorkflowStatus{
-					State:         v1alpha1.WorkflowStatePending,
-					GlobalTimeout: 1800,
+					State:             v1alpha1.WorkflowStatePending,
+					GlobalTimeout:     1800,
+					TemplateRendering: "successful",
+					Conditions: []v1alpha1.WorkflowCondition{
+						{Type: v1alpha1.TemplateRenderedSuccess, Status: metav1.ConditionTrue, Reason: "Complete", Message: "template rendered successfully"},
+					},
 					Tasks: []v1alpha1.Task{
 						{
 							Name: "os-installation",
@@ -867,7 +998,7 @@ tasks:
 				return
 			}
 
-			if diff := cmp.Diff(tc.wantWflow, wflow); diff != "" {
+			if diff := cmp.Diff(tc.wantWflow, wflow, cmpopts.IgnoreFields(v1alpha1.WorkflowCondition{}, "Time")); diff != "" {
 				t.Errorf("unexpected difference:\n%v", diff)
 			}
 		})
