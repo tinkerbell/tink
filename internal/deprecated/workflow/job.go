@@ -24,11 +24,12 @@ func (j jobName) String() string {
 	return string(j)
 }
 
+// this function will update the Workflow status.
 func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobName) (reconcile.Result, error) {
 	// there are 3 phases. 1. Clean up existing 2. Create new 3. Track status
 	// 1. clean up existing job if it wasn't already deleted
 	if j := s.workflow.Status.BootOptions.Jobs[name.String()]; !j.ExistingJobDeleted {
-		result, err := s.deleteExisting(ctx, name.String())
+		result, err := s.deleteExisting(ctx, name)
 		if err != nil {
 			return result, err
 		}
@@ -64,7 +65,7 @@ func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobN
 	// 3. track status
 	if !s.workflow.Status.BootOptions.Jobs[name.String()].Complete {
 		// track status
-		r, err := s.trackRunningJob(ctx, name)
+		r, tState, err := s.trackRunningJob(ctx, name)
 		if err != nil {
 			s.workflow.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.NetbootJobFailed,
@@ -75,7 +76,7 @@ func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobN
 			})
 			return r, err
 		}
-		if r.RequeueAfter == 0 {
+		if tState == trackedStateComplete {
 			s.workflow.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.NetbootJobComplete,
 				Status:  metav1.ConditionTrue,
@@ -90,24 +91,20 @@ func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobN
 	return reconcile.Result{Requeue: true}, nil
 }
 
-func (s *state) deleteExisting(ctx context.Context, jobName string) (reconcile.Result, error) {
-	name := jobName
-	namespace := s.workflow.Namespace
-	if err := s.client.Get(ctx, client.ObjectKey{Name: name, Namespace: namespace}, &rufio.Job{}); client.IgnoreNotFound(err) != nil {
-		existingJob := &rufio.Job{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
-		opts := []client.DeleteOption{
-			client.GracePeriodSeconds(0),
-			client.PropagationPolicy(metav1.DeletePropagationForeground),
-		}
-		if err := s.client.Delete(ctx, existingJob, opts...); client.IgnoreNotFound(err) != nil {
-			return reconcile.Result{}, fmt.Errorf("error deleting job.bmc.tinkerbell.org object: %w", err)
-		}
-		return reconcile.Result{Requeue: true}, nil
+func (s *state) deleteExisting(ctx context.Context, name jobName) (reconcile.Result, error) {
+	existingJob := &rufio.Job{ObjectMeta: metav1.ObjectMeta{Name: name.String(), Namespace: s.workflow.Namespace}}
+	opts := []client.DeleteOption{
+		client.GracePeriodSeconds(0),
+		client.PropagationPolicy(metav1.DeletePropagationForeground),
+	}
+	if err := s.client.Delete(ctx, existingJob, opts...); client.IgnoreNotFound(err) != nil {
+		return reconcile.Result{}, fmt.Errorf("error deleting job.bmc.tinkerbell.org object: %w", err)
 	}
 
 	return reconcile.Result{Requeue: true}, nil
 }
 
+// This function will update the Workflow status.
 func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobName) (reconcile.Result, error) {
 	// create a new job
 	// The assumption is that the UID is not set. UID checking is not handled here.
@@ -144,16 +141,26 @@ func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobN
 	return reconcile.Result{Requeue: true}, nil
 }
 
-func (s *state) trackRunningJob(ctx context.Context, name jobName) (reconcile.Result, error) {
+type trackedState string
+
+var (
+	trackedStateComplete trackedState = "complete"
+	trackedStateRunning  trackedState = "running"
+	trackedStateError    trackedState = "error"
+	trackedStateFailed   trackedState = "failed"
+)
+
+// This function will update the Workflow status.
+func (s *state) trackRunningJob(ctx context.Context, name jobName) (reconcile.Result, trackedState, error) {
 	// track status
 	// get the job
 	rj := &rufio.Job{}
 	if err := s.client.Get(ctx, client.ObjectKey{Name: name.String(), Namespace: s.workflow.Namespace}, rj); err != nil {
-		return reconcile.Result{}, fmt.Errorf("error getting job: %w", err)
+		return reconcile.Result{}, trackedStateError, fmt.Errorf("error getting job: %w", err)
 	}
 	if rj.HasCondition(rufio.JobFailed, rufio.ConditionTrue) {
 		// job failed
-		return reconcile.Result{}, fmt.Errorf("job failed")
+		return reconcile.Result{}, trackedStateFailed, fmt.Errorf("job failed")
 	}
 	if rj.HasCondition(rufio.JobCompleted, rufio.ConditionTrue) {
 		// job completed
@@ -161,11 +168,11 @@ func (s *state) trackRunningJob(ctx context.Context, name jobName) (reconcile.Re
 		jStatus.Complete = true
 		s.workflow.Status.BootOptions.Jobs[name.String()] = jStatus
 
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, trackedStateComplete, nil
 	}
 	// still running
-
-	return reconcile.Result{RequeueAfter: 5 * time.Second}, nil
+	time.Sleep(s.backoff.NextBackOff())
+	return reconcile.Result{Requeue: true}, trackedStateRunning, nil
 }
 
 func create(ctx context.Context, cc client.Client, name string, hw *v1alpha1.Hardware, ns string, tasks []rufio.Action) error {

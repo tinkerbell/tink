@@ -686,6 +686,7 @@ tasks:
 				},
 				Status: v1alpha1.WorkflowStatus{
 					State:         v1alpha1.WorkflowStateTimeout,
+					CurrentAction: "stream-debian-image",
 					GlobalTimeout: 600,
 					Tasks: []v1alpha1.Task{
 						{

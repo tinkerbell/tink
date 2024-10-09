@@ -17,13 +17,13 @@ type (
 )
 
 const (
-	WorkflowStateWaiting        = WorkflowState("STATE_WAITING")
-	WorkflowStatePending        = WorkflowState("STATE_PENDING")
-	WorkflowStateRunning        = WorkflowState("STATE_RUNNING")
-	WorkflowStateActionsSuccess = WorkflowState("STATE_ACTIONS_SUCCESS")
-	WorkflowStateSuccess        = WorkflowState("STATE_SUCCESS")
-	WorkflowStateFailed         = WorkflowState("STATE_FAILED")
-	WorkflowStateTimeout        = WorkflowState("STATE_TIMEOUT")
+	WorkflowStatePreparing = WorkflowState("STATE_PREPARING")
+	WorkflowStatePending   = WorkflowState("STATE_PENDING")
+	WorkflowStateRunning   = WorkflowState("STATE_RUNNING")
+	WorkflowStatePost      = WorkflowState("STATE_POST")
+	WorkflowStateSuccess   = WorkflowState("STATE_SUCCESS")
+	WorkflowStateFailed    = WorkflowState("STATE_FAILED")
+	WorkflowStateTimeout   = WorkflowState("STATE_TIMEOUT")
 
 	NetbootJobFailed        WorkflowConditionType = "NetbootJobFailed"
 	NetbootJobComplete      WorkflowConditionType = "NetbootJobComplete"
