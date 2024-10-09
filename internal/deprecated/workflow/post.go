@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -12,9 +13,7 @@ import (
 func (s *state) postActions(ctx context.Context) (reconcile.Result, error) {
 	// 1. Handle toggling allowPXE in a hardware object if toggleAllowNetboot is true.
 	if s.workflow.Spec.BootOptions.ToggleAllowNetboot {
-		wc, err := s.toggleHardware(ctx, false)
-		s.workflow.Status.SetCondition(wc)
-		if err != nil {
+		if err := s.toggleHardware(ctx, false); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
@@ -28,7 +27,7 @@ func (s *state) postActions(ctx context.Context) (reconcile.Result, error) {
 		if s.workflow.Spec.BootOptions.ISOURL == "" {
 			return reconcile.Result{}, errors.New("iso url must be a valid url")
 		}
-		name := jobNameISOEject
+		name := jobName(fmt.Sprintf("%s-%s", jobNameISOEject, s.hardware.Name))
 		actions := []rufio.Action{
 			{
 				VirtualMediaAction: &rufio.VirtualMediaAction{
@@ -45,5 +44,6 @@ func (s *state) postActions(ctx context.Context) (reconcile.Result, error) {
 		return r, err
 	}
 
+	s.workflow.Status.State = v1alpha1.WorkflowStateSuccess
 	return reconcile.Result{}, nil
 }

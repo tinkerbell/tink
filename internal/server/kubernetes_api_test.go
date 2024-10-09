@@ -386,7 +386,7 @@ func TestModifyWorkflowState(t *testing.T) {
 			},
 			want: &v1alpha1.Workflow{
 				Status: v1alpha1.WorkflowStatus{
-					State:         "STATE_SUCCESS",
+					State:         "STATE_POST",
 					GlobalTimeout: 600,
 					Tasks: []v1alpha1.Task{
 						{

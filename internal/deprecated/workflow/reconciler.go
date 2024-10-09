@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -22,12 +23,18 @@ import (
 type Reconciler struct {
 	client  ctrlclient.Client
 	nowFunc func() time.Time
+	backoff *backoff.ExponentialBackOff
 }
 
+// TODO(jacobweinstock): add functional arguments to the signature.
+// TODO(jacobweinstock): write functional argument for customizing the backoff.
 func NewReconciler(client ctrlclient.Client) *Reconciler {
 	return &Reconciler{
 		client:  client,
 		nowFunc: time.Now,
+		backoff: backoff.NewExponentialBackOff([]backoff.ExponentialBackOffOpts{
+			backoff.WithMaxInterval(5 * time.Second), // this should keep all NextBackOff's under 10 seconds
+		}...),
 	}
 }
 
@@ -42,6 +49,7 @@ type state struct {
 	client   ctrlclient.Client
 	workflow *v1alpha1.Workflow
 	hardware *v1alpha1.Hardware
+	backoff  *backoff.ExponentialBackOff
 }
 
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
@@ -75,12 +83,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		resp, err := r.processNewWorkflow(ctx, logger, wflow)
 
 		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
-	case v1alpha1.WorkflowStateWaiting:
+	case v1alpha1.WorkflowStatePreparing:
 		hw, _ := hardwareFrom(ctx, r.client, wflow)
 		s := &state{
 			client:   r.client,
 			workflow: wflow,
 			hardware: hw,
+			backoff:  r.backoff,
 		}
 		resp, err := s.prepareWorkflow(ctx)
 
@@ -89,12 +98,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		r.processRunningWorkflow(wflow)
 
 		return reconcile.Result{}, mergePatchStatus(ctx, r.client, stored, wflow)
-	case v1alpha1.WorkflowStateActionsSuccess:
+	case v1alpha1.WorkflowStatePost:
 		hw, _ := hardwareFrom(ctx, r.client, wflow)
 		s := &state{
 			client:   r.client,
 			workflow: wflow,
 			hardware: hw,
+			backoff:  r.backoff,
 		}
 		rc, err := s.postActions(ctx)
 
@@ -109,7 +119,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 // mergePatchStatus merges an updated Workflow with an original Workflow and patches the Status object via the client (cc).
 func mergePatchStatus(ctx context.Context, cc ctrlclient.Client, original, updated *v1alpha1.Workflow) error {
 	// Patch any changes, regardless of errors
-	if !equality.Semantic.DeepEqual(updated, original) {
+	if !equality.Semantic.DeepEqual(updated.Status, original.Status) {
 		if err := cc.Status().Patch(ctx, updated, ctrlclient.MergeFrom(original)); err != nil {
 			return fmt.Errorf("error patching status of workflow: %s, error: %w", updated.Name, err)
 		}
@@ -213,7 +223,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 
 	// set hardware allowPXE if requested.
 	if stored.Spec.BootOptions.ToggleAllowNetboot || stored.Spec.BootOptions.BootMode != "" {
-		stored.Status.State = v1alpha1.WorkflowStateWaiting
+		stored.Status.State = v1alpha1.WorkflowStatePreparing
 		return reconcile.Result{Requeue: true}, nil
 	}
 

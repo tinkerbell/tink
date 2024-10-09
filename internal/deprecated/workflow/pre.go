@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -16,9 +17,7 @@ func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 	// handle bootoptions
 	// 1. Handle toggling allowPXE in a hardware object if toggleAllowNetboot is true.
 	if s.workflow.Spec.BootOptions.ToggleAllowNetboot {
-		wc, err := s.toggleHardware(ctx, true)
-		s.workflow.Status.SetCondition(wc)
-		if err != nil {
+		if err := s.toggleHardware(ctx, true); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
@@ -29,7 +28,7 @@ func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 		if s.hardware == nil {
 			return reconcile.Result{}, errors.New("hardware is nil")
 		}
-		name := jobNameNetboot
+		name := jobName(fmt.Sprintf("%s-%s", jobNameNetboot, s.hardware.Name))
 		efiBoot := func() bool {
 			for _, iface := range s.hardware.Spec.Interfaces {
 				if iface.DHCP != nil && iface.DHCP.UEFI {
@@ -56,7 +55,7 @@ func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 		}
 
 		r, err := s.handleJob(ctx, actions, name)
-		if s.workflow.Status.BootOptions.Jobs[name.String()].Complete {
+		if s.workflow.Status.BootOptions.Jobs[name.String()].Complete && s.workflow.Status.State == v1alpha1.WorkflowStatePreparing {
 			s.workflow.Status.State = v1alpha1.WorkflowStatePending
 		}
 		return r, err
@@ -67,7 +66,7 @@ func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 		if s.workflow.Spec.BootOptions.ISOURL == "" {
 			return reconcile.Result{}, errors.New("iso url must be a valid url")
 		}
-		name := jobNameISOMount
+		name := jobName(fmt.Sprintf("%s-%s", jobNameISOMount, s.hardware.Name))
 		efiBoot := func() bool {
 			for _, iface := range s.hardware.Spec.Interfaces {
 				if iface.DHCP != nil && iface.DHCP.UEFI {
@@ -106,7 +105,7 @@ func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 		}
 
 		r, err := s.handleJob(ctx, actions, name)
-		if s.workflow.Status.BootOptions.Jobs[name.String()].Complete {
+		if s.workflow.Status.BootOptions.Jobs[name.String()].Complete && s.workflow.Status.State == v1alpha1.WorkflowStatePreparing {
 			s.workflow.Status.State = v1alpha1.WorkflowStatePending
 		}
 		return r, err
