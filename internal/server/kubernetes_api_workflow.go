@@ -79,10 +79,11 @@ func (s *KubernetesBackedServer) GetWorkflowContexts(req *proto.WorkflowContextR
 	for _, wf := range wflows {
 		// Don't serve Actions when in a v1alpha1.WorkflowStateWaiting state.
 		// This is to prevent the worker from starting Actions before Workflow boot options are performed.
-		if wf.Spec.BootOptions.ToggleAllowNetboot || wf.Spec.BootOptions.OneTimeNetboot {
-			if wf.Status.State == v1alpha1.WorkflowStateWaiting {
-				continue
-			}
+		if wf.Spec.BootOptions.BootMode != "" && wf.Status.State == v1alpha1.WorkflowStateWaiting {
+			//if wf.Spec.BootOptions.ToggleAllowNetboot || wf.Spec.BootOptions.OneTimeNetboot {
+			//if wf.Status.State == v1alpha1.WorkflowStateWaiting {
+			continue
+			//}
 		}
 		if err := stream.Send(getWorkflowContext(wf)); err != nil {
 			return err
@@ -161,7 +162,8 @@ cont:
 		}
 		// Mark success on last action success
 		if wfContext.CurrentActionIndex+1 == wfContext.TotalNumberOfActions {
-			wf.Status.State = v1alpha1.WorkflowState(proto.State_name[int32(wfContext.CurrentActionState)])
+			// wf.Status.State = v1alpha1.WorkflowState(proto.State_name[int32(wfContext.CurrentActionState)])
+			wf.Status.State = v1alpha1.WorkflowStateActionsSuccess
 		}
 	case proto.State_STATE_PENDING:
 		// This is probably a client bug?
