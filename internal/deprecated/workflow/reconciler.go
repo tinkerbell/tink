@@ -38,6 +38,12 @@ func (r *Reconciler) SetupWithManager(mgr manager.Manager) error {
 		Complete(r)
 }
 
+type state struct {
+	client   ctrlclient.Client
+	workflow *v1alpha1.Workflow
+	hardware *v1alpha1.Hardware
+}
+
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=templates;templates/status,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=workflows;workflows/status,verbs=get;list;watch;update;patch;delete
@@ -58,6 +64,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	if !stored.DeletionTimestamp.IsZero() {
 		return reconcile.Result{}, nil
 	}
+	if stored.Status.BootOptions.Jobs == nil {
+		stored.Status.BootOptions.Jobs = make(map[string]v1alpha1.JobStatus)
+	}
 
 	wflow := stored.DeepCopy()
 
@@ -65,69 +74,40 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 	case "":
 		resp, err := r.processNewWorkflow(ctx, logger, wflow)
 
-		return resp, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
+		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStateWaiting:
-		// make sure any existing job is deleted
-		if !wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
-			rc, err := handleExistingJob(ctx, r.client, wflow)
-
-			return rc, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
+		hw, _ := hardwareFrom(ctx, r.client, wflow)
+		s := &state{
+			client:   r.client,
+			workflow: wflow,
+			hardware: hw,
 		}
+		resp, err := s.prepareWorkflow(ctx)
 
-		// create a new job
-		if wflow.Status.BootOptions.OneTimeNetboot.UID == "" && wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
-			rc, err := handleJobCreation(ctx, r.client, wflow)
-
-			return rc, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
-		}
-
-		// check if the job is complete
-		if !wflow.Status.BootOptions.OneTimeNetboot.Complete && wflow.Status.BootOptions.OneTimeNetboot.UID != "" && wflow.Status.BootOptions.OneTimeNetboot.ExistingJobDeleted {
-			rc, err := handleJobComplete(ctx, r.client, wflow)
-
-			return rc, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
-		}
+		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, s.workflow))
 	case v1alpha1.WorkflowStateRunning:
 		r.processRunningWorkflow(wflow)
-		// set the current action in the status
-		ca := runningAction(wflow)
-		if ca != "" && wflow.Status.CurrentAction != ca {
-			wflow.Status.CurrentAction = ca
-		}
 
-		return reconcile.Result{}, mergePatchsStatus(ctx, r.client, stored, wflow)
-	case v1alpha1.WorkflowStatePending, v1alpha1.WorkflowStateTimeout, v1alpha1.WorkflowStateFailed:
+		return reconcile.Result{}, mergePatchStatus(ctx, r.client, stored, wflow)
+	case v1alpha1.WorkflowStateActionsSuccess:
+		hw, _ := hardwareFrom(ctx, r.client, wflow)
+		s := &state{
+			client:   r.client,
+			workflow: wflow,
+			hardware: hw,
+		}
+		rc, err := s.postActions(ctx)
+
+		return rc, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
+	case v1alpha1.WorkflowStatePending, v1alpha1.WorkflowStateTimeout, v1alpha1.WorkflowStateFailed, v1alpha1.WorkflowStateSuccess:
 		return reconcile.Result{}, nil
-	case v1alpha1.WorkflowStateSuccess:
-		if wflow.Spec.BootOptions.ToggleAllowNetboot && !wflow.Status.HasCondition(v1alpha1.ToggleAllowNetbootFalse, metav1.ConditionTrue) {
-			// handle updating hardware allowPXE to false
-			if err := handleHardwareAllowPXE(ctx, r.client, wflow, nil, false); err != nil {
-				stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-					Type:    v1alpha1.ToggleAllowNetbootFalse,
-					Status:  metav1.ConditionTrue,
-					Reason:  "Error",
-					Message: fmt.Sprintf("error setting Allow PXE: %v", err),
-					Time:    &metav1.Time{Time: metav1.Now().UTC()},
-				})
-				return reconcile.Result{}, serrors.Join(err, mergePatchsStatus(ctx, r.client, stored, wflow))
-			}
-			wflow.Status.SetCondition(v1alpha1.WorkflowCondition{
-				Type:    v1alpha1.ToggleAllowNetbootFalse,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Complete",
-				Message: "set allowPXE to false",
-				Time:    &metav1.Time{Time: metav1.Now().UTC()},
-			})
-
-			return reconcile.Result{}, mergePatchsStatus(ctx, r.client, stored, wflow)
-		}
 	}
 
 	return reconcile.Result{}, nil
 }
 
-// mergePatchsStatus merges an updated Workflow with an original Workflow and patches the Status object via the client (cc).
-func mergePatchsStatus(ctx context.Context, cc ctrlclient.Client, original, updated *v1alpha1.Workflow) error {
+// mergePatchStatus merges an updated Workflow with an original Workflow and patches the Status object via the client (cc).
+func mergePatchStatus(ctx context.Context, cc ctrlclient.Client, original, updated *v1alpha1.Workflow) error {
 	// Patch any changes, regardless of errors
 	if !equality.Semantic.DeepEqual(updated, original) {
 		if err := cc.Status().Patch(ctx, updated, ctrlclient.MergeFrom(original)); err != nil {
@@ -135,18 +115,6 @@ func mergePatchsStatus(ctx context.Context, cc ctrlclient.Client, original, upda
 		}
 	}
 	return nil
-}
-
-func runningAction(wf *v1alpha1.Workflow) string {
-	for _, task := range wf.Status.Tasks {
-		for _, action := range task.Actions {
-			if action.Status == v1alpha1.WorkflowStateRunning {
-				return action.Name
-			}
-		}
-	}
-
-	return ""
 }
 
 func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger, stored *v1alpha1.Workflow) (reconcile.Result, error) {
@@ -244,31 +212,26 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	})
 
 	// set hardware allowPXE if requested.
-	if stored.Spec.BootOptions.ToggleAllowNetboot {
-		if err := handleHardwareAllowPXE(ctx, r.client, stored, &hardware, true); err != nil {
-			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-				Type:    v1alpha1.ToggleAllowNetbootTrue,
-				Status:  metav1.ConditionFalse,
-				Reason:  "Error",
-				Message: fmt.Sprintf("error setting allowPXE to true: %v", err),
-				Time:    &metav1.Time{Time: metav1.Now().UTC()},
-			})
-			return reconcile.Result{}, err
-		}
-		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
-			Type:    v1alpha1.ToggleAllowNetbootTrue,
-			Status:  metav1.ConditionTrue,
-			Reason:  "Complete",
-			Message: "set allowPXE to true",
-			Time:    &metav1.Time{Time: metav1.Now().UTC()},
-		})
+	if stored.Spec.BootOptions.ToggleAllowNetboot || stored.Spec.BootOptions.BootMode != "" {
+		stored.Status.State = v1alpha1.WorkflowStateWaiting
+		return reconcile.Result{Requeue: true}, nil
 	}
 
-	// netboot the hardware if requested
-	if stored.Spec.BootOptions.OneTimeNetboot {
-		stored.Status.State = v1alpha1.WorkflowStateWaiting
-		return reconcile.Result{Requeue: true}, err
-	}
+	/*
+		// handle boot target if requested
+		switch stored.Spec.BootOptions.BootTarget {
+		case v1alpha1.BootTargetNetwork:
+			// netboot the hardware if requested
+			if stored.Spec.BootOptions.OneTimeNetboot {
+				stored.Status.State = v1alpha1.WorkflowStateWaiting
+				return reconcile.Result{Requeue: true}, err
+			}
+		case v1alpha1.BootTargetCDROM:
+			// TODO(jacobweinstock): add status if isoURL is not set
+			stored.Status.State = v1alpha1.WorkflowStateWaiting
+			return reconcile.Result{Requeue: true}, err
+		}
+	*/
 
 	stored.Status.State = v1alpha1.WorkflowStatePending
 	return reconcile.Result{}, nil
@@ -323,6 +286,10 @@ func (r *Reconciler) processRunningWorkflow(stored *v1alpha1.Workflow) {
 				stored.Status.Tasks[ti].Actions[ai].Seconds = int64(r.nowFunc().Sub(action.StartedAt.Time).Seconds())
 				// Mark the workflow as timed out
 				stored.Status.State = v1alpha1.WorkflowStateTimeout
+			}
+			// Update the current action in the status
+			if action.Status == v1alpha1.WorkflowStateRunning && stored.Status.CurrentAction != action.Name {
+				stored.Status.CurrentAction = action.Name
 			}
 		}
 	}
