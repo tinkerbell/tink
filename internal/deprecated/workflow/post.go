@@ -19,8 +19,7 @@ func (s *state) postActions(ctx context.Context) (reconcile.Result, error) {
 	}
 
 	// 2. Handle ISO eject scenario.
-	switch s.workflow.Spec.BootOptions.BootMode {
-	case v1alpha1.BootModeISO:
+	if s.workflow.Spec.BootOptions.BootMode == v1alpha1.BootModeISO {
 		if s.hardware == nil {
 			return reconcile.Result{}, errors.New("hardware is nil")
 		}

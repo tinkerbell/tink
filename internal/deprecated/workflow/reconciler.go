@@ -227,22 +227,6 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	/*
-		// handle boot target if requested
-		switch stored.Spec.BootOptions.BootTarget {
-		case v1alpha1.BootTargetNetwork:
-			// netboot the hardware if requested
-			if stored.Spec.BootOptions.OneTimeNetboot {
-				stored.Status.State = v1alpha1.WorkflowStateWaiting
-				return reconcile.Result{Requeue: true}, err
-			}
-		case v1alpha1.BootTargetCDROM:
-			// TODO(jacobweinstock): add status if isoURL is not set
-			stored.Status.State = v1alpha1.WorkflowStateWaiting
-			return reconcile.Result{Requeue: true}, err
-		}
-	*/
-
 	stored.Status.State = v1alpha1.WorkflowStatePending
 	return reconcile.Result{}, nil
 }
