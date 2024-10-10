@@ -33,9 +33,7 @@ func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobN
 		if err != nil {
 			return result, err
 		}
-		jStatus := s.workflow.Status.BootOptions.Jobs[name.String()]
-		jStatus.ExistingJobDeleted = true
-		s.workflow.Status.BootOptions.Jobs[name.String()] = jStatus
+
 		return result, nil
 	}
 
@@ -101,6 +99,13 @@ func (s *state) deleteExisting(ctx context.Context, name jobName) (reconcile.Res
 		return reconcile.Result{}, fmt.Errorf("error deleting job.bmc.tinkerbell.org object: %w", err)
 	}
 
+	jStatus := s.workflow.Status.BootOptions.Jobs[name.String()]
+	jStatus.ExistingJobDeleted = true
+	// if we delete an existing job, we need to remove any uid that was set.
+	jStatus.UID = ""
+	jStatus.Complete = false
+	s.workflow.Status.BootOptions.Jobs[name.String()] = jStatus
+
 	return reconcile.Result{Requeue: true}, nil
 }
 
@@ -132,11 +137,6 @@ func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobN
 	if err := create(ctx, s.client, name.String(), s.hardware, s.workflow.Namespace, actions); err != nil {
 		return reconcile.Result{}, fmt.Errorf("error creating job: %w", err)
 	}
-
-	// update the status with the UID
-	jStatus := s.workflow.Status.BootOptions.Jobs[name.String()]
-	jStatus.UID = rj.GetUID()
-	s.workflow.Status.BootOptions.Jobs[name.String()] = jStatus
 
 	return reconcile.Result{Requeue: true}, nil
 }

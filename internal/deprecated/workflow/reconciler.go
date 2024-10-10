@@ -84,7 +84,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 
 		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStatePreparing:
-		hw, _ := hardwareFrom(ctx, r.client, wflow)
+		hw, err := hardwareFrom(ctx, r.client, wflow)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 		s := &state{
 			client:   r.client,
 			workflow: wflow,
@@ -99,7 +102,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 
 		return reconcile.Result{}, mergePatchStatus(ctx, r.client, stored, wflow)
 	case v1alpha1.WorkflowStatePost:
-		hw, _ := hardwareFrom(ctx, r.client, wflow)
+		hw, err := hardwareFrom(ctx, r.client, wflow)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 		s := &state{
 			client:   r.client,
 			workflow: wflow,
