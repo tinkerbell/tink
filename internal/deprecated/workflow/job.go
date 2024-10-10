@@ -126,7 +126,7 @@ func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobN
 		return reconcile.Result{}, fmt.Errorf("hardware is nil")
 	}
 	if s.hardware.Spec.BMCRef == nil {
-		return reconcile.Result{}, fmt.Errorf("hardware %s does not have a BMC", s.hardware.Name)
+		return reconcile.Result{}, fmt.Errorf("hardware %q does not have a BMC", s.hardware.Name)
 	}
 
 	if err := create(ctx, s.client, name.String(), s.hardware, s.workflow.Namespace, actions); err != nil {
