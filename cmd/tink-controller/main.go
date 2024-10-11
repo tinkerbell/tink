@@ -112,7 +112,7 @@ func NewRootCommand() *cobra.Command {
 
 			ctrl.SetLogger(logger)
 
-			mgr, err := controller.NewManager(cfg, options, logger)
+			mgr, err := controller.NewManager(cfg, options)
 			if err != nil {
 				return fmt.Errorf("controller manager: %w", err)
 			}

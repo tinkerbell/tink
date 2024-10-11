@@ -10,8 +10,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/deprecated/workflow/journal"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/propagation"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,21 +25,17 @@ type Reconciler struct {
 	client  ctrlclient.Client
 	nowFunc func() time.Time
 	backoff *backoff.ExponentialBackOff
-	Logger  logr.Logger
-	props   propagation.TextMapPropagator
 }
 
 // TODO(jacobweinstock): add functional arguments to the signature.
 // TODO(jacobweinstock): write functional argument for customizing the backoff.
-func NewReconciler(client ctrlclient.Client, logger logr.Logger) *Reconciler {
+func NewReconciler(client ctrlclient.Client) *Reconciler {
 	return &Reconciler{
 		client:  client,
 		nowFunc: time.Now,
 		backoff: backoff.NewExponentialBackOff([]backoff.ExponentialBackOffOpts{
 			backoff.WithMaxInterval(5 * time.Second), // this should keep all NextBackOff's under 10 seconds
 		}...),
-		Logger: logger,
-		props:  otel.GetTextMapPropagator(),
 	}
 }
 
