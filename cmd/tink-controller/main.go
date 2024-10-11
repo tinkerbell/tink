@@ -11,11 +11,8 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/internal/deprecated/controller"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
-	"go.opentelemetry.io/otel/sdk/log"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,6 +28,7 @@ type Config struct {
 	MetricsAddr          string
 	ProbeAddr            string
 	EnableLeaderElection bool
+	LogLevel             int
 }
 
 func (c *Config) AddFlags(fs *pflag.FlagSet) {
@@ -44,6 +42,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	fs.IntVar(&c.LogLevel, "log-level", 0, "Log level (0: info, 1: debug)")
 }
 
 func main() {
@@ -56,57 +55,35 @@ func main() {
 func NewRootCommand() *cobra.Command {
 	var config Config
 
-	zlog, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
-	logger2 := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
-
 	cmd := &cobra.Command{
 		Use: "tink-controller",
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
-			viper, err := createViper(logger2)
+			zlog, err := zap.NewProduction()
+			if err != nil {
+				panic(err)
+			}
+			logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
+			viper, err := createViper(logger)
 			if err != nil {
 				return fmt.Errorf("config init: %w", err)
 			}
 			return applyViper(viper, cmd)
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			os.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.2.50:4318")
-			os.Setenv("OTEL_EXPORTER_OTLP_INSECURE", "true")
-			os.Setenv("OTEL_SERVICE_NAME", "tink-controller")
-			ctx := cmd.Context()
-
-			oCfg := OConfig{
-				Servicename: "tink-controller",
-				Endpoint:    "192.168.2.50:4317",
-				Insecure:    true,
+			zc := zap.NewProductionConfig()
+			switch config.LogLevel {
+			case 1:
+				zc.Level = zap.NewAtomicLevelAt(zapcore.Level(-1))
+			default:
+				zc.Level = zap.NewAtomicLevelAt(zapcore.Level(0))
 			}
-			ctx, _, _ = Init(ctx, oCfg)
-			// Create the OTLP log exporter that sends logs to configured destination
-			logExporter, err := otlploghttp.New(ctx)
+			zlog, err := zc.Build()
 			if err != nil {
-				panic("failed to initialize exporter")
+				panic(err)
 			}
 
-			// Create the logger provider
-			lp := log.NewLoggerProvider(
-				log.WithProcessor(
-					log.NewBatchProcessor(logExporter),
-				),
-			)
-
-			// Ensure the logger is shutdown before exiting so all pending logs are exported
-			defer lp.Shutdown(ctx)
-			handler := NewHandler("github.com/tinkerbell/tink", WithLoggerProvider(lp))
-
-			logger := logr.FromSlogHandler(handler)
-			tracer := otel.Tracer("my-tracer")
-			var span trace.Span
-			ctx, span = tracer.Start(ctx, "start up")
-			defer span.End()
-			// new stuff above
-			logger.Info("Starting controller version "+version, "TraceID", trace.SpanContextFromContext(ctx).TraceID())
+			logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
+			logger.Info("Starting controller version " + version)
 
 			ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 				&clientcmd.ClientConfigLoadingRules{ExplicitPath: config.Kubeconfig},
@@ -123,7 +100,7 @@ func NewRootCommand() *cobra.Command {
 			}
 
 			options := ctrl.Options{
-				Logger:                  logger2,
+				Logger:                  logger,
 				LeaderElection:          config.EnableLeaderElection,
 				LeaderElectionID:        "tink.tinkerbell.org",
 				LeaderElectionNamespace: namespace,
@@ -133,14 +110,14 @@ func NewRootCommand() *cobra.Command {
 				HealthProbeBindAddress: config.ProbeAddr,
 			}
 
-			ctrl.SetLogger(logger2)
+			ctrl.SetLogger(logger)
 
 			mgr, err := controller.NewManager(cfg, options, logger)
 			if err != nil {
 				return fmt.Errorf("controller manager: %w", err)
 			}
 
-			return mgr.Start(ctx)
+			return mgr.Start(cmd.Context())
 		},
 	}
 	config.AddFlags(cmd.Flags())

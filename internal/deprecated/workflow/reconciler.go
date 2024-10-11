@@ -4,15 +4,14 @@ import (
 	"context"
 	serrors "errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/internal/deprecated/workflow/journal"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,7 +57,6 @@ type state struct {
 	workflow *v1alpha1.Workflow
 	hardware *v1alpha1.Hardware
 	backoff  *backoff.ExponentialBackOff
-	logger   *slog.Logger
 }
 
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
@@ -68,15 +66,13 @@ type state struct {
 
 // Reconcile handles Workflow objects. This includes Template rendering, optional Hardware allowPXE toggling, and optional Hardware one-time netbooting.
 func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	tracer := otel.Tracer("my-tracer")
-	var span trace.Span
-	ctx, span = tracer.Start(ctx, "reconcile", trace.WithNewRoot())
-	defer span.End()
-
-	logger := slog.New(logr.ToSlogHandler(r.Logger))
-	//logger = logger.With("TraceID", trace.SpanContextFromContext(ctx).TraceID())
-	//logger := ctrl.LoggerFrom(ctx).WithValues("TraceID", trace.SpanContextFromContext(ctx).TraceID())
-	logger.InfoContext(ctx, "In reconcile func")
+	ctx = journal.New(ctx)
+	logger := ctrl.LoggerFrom(ctx)
+	defer func() {
+		logger.V(1).Info("Reconcile code flow journal", "journal", journal.Journal(ctx))
+	}()
+	logger.Info("Reconcile")
+	journal.Log(ctx, "starting reconcile")
 
 	stored := &v1alpha1.Workflow{}
 	if err := r.client.Get(ctx, req.NamespacedName, stored); err != nil {
@@ -94,16 +90,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 
 	wflow := stored.DeepCopy()
 
-	
-
 	switch wflow.Status.State {
 	case "":
-		logger.InfoContext(ctx, "new workflow")
+		journal.Log(ctx, "new workflow")
 		resp, err := r.processNewWorkflow(ctx, logger, wflow)
 
 		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStatePreparing:
-		logger.InfoContext(ctx, "preparing workflow")
+		journal.Log(ctx, "preparing workflow")
 		hw, err := hardwareFrom(ctx, r.client, wflow)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -113,18 +107,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			workflow: wflow,
 			hardware: hw,
 			backoff:  r.backoff,
-			logger:   logger,
 		}
 		resp, err := s.prepareWorkflow(ctx)
 
 		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, s.workflow))
 	case v1alpha1.WorkflowStateRunning:
-		logger.InfoContext(ctx, "process running workflow")
+		journal.Log(ctx, "process running workflow")
 		r.processRunningWorkflow(wflow)
 
 		return reconcile.Result{}, mergePatchStatus(ctx, r.client, stored, wflow)
 	case v1alpha1.WorkflowStatePost:
-		logger.InfoContext(ctx, "post actions")
+		journal.Log(ctx, "post actions")
 		hw, err := hardwareFrom(ctx, r.client, wflow)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -134,12 +127,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			workflow: wflow,
 			hardware: hw,
 			backoff:  r.backoff,
-			logger:   logger,
 		}
 		rc, err := s.postActions(ctx)
 
 		return rc, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStatePending, v1alpha1.WorkflowStateTimeout, v1alpha1.WorkflowStateFailed, v1alpha1.WorkflowStateSuccess:
+		journal.Log(ctx, "workflow state will not trigger another reconcile", "state", wflow.Status.State)
 		return reconcile.Result{}, nil
 	}
 
@@ -157,16 +150,13 @@ func mergePatchStatus(ctx context.Context, cc ctrlclient.Client, original, updat
 	return nil
 }
 
-func (r *Reconciler) processNewWorkflow(ctx context.Context, logger *slog.Logger, stored *v1alpha1.Workflow) (reconcile.Result, error) {
-	tracer := otel.Tracer("processNewWorkflow")
-	var span trace.Span
-	ctx, span = tracer.Start(ctx, "processNewWorkflow")
-	defer span.End()
+func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger, stored *v1alpha1.Workflow) (reconcile.Result, error) {
 	tpl := &v1alpha1.Template{}
 	if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.TemplateRef, Namespace: stored.Namespace}, tpl); err != nil {
 		if errors.IsNotFound(err) {
 			// Throw an error to raise awareness and take advantage of immediate requeue.
-			logger.ErrorContext(ctx, "error getting Template object in processNewWorkflow function", "error", err)
+			logger.Error(err, "error getting Template object in processNewWorkflow function")
+			journal.Log(ctx, "template not found")
 			stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.TemplateRenderedSuccess,
@@ -195,7 +185,8 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger *slog.Logger
 	var hardware v1alpha1.Hardware
 	err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
 	if ctrlclient.IgnoreNotFound(err) != nil {
-		logger.ErrorContext(ctx, "error getting Hardware object in processNewWorkflow function", "error", err)
+		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
+		journal.Log(ctx, "hardware not found")
 		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
@@ -208,7 +199,8 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger *slog.Logger
 	}
 
 	if stored.Spec.HardwareRef != "" && errors.IsNotFound(err) {
-		logger.ErrorContext(ctx, "hardware not found in processNewWorkflow function", "error", err)
+		logger.Error(err, "hardware not found in processNewWorkflow function")
+		journal.Log(ctx, "hardware not found")
 		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
