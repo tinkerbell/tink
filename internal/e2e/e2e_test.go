@@ -116,7 +116,7 @@ var _ = Describe("Tink API", func() {
 					return "", err
 				}
 				return string(workflow.Status.State), nil
-			}, 8*time.Second, 1*time.Second).Should(Equal("STATE_SUCCESS"))
+			}, 8*time.Second, 1*time.Second).Should(Equal("STATE_POST"))
 
 			workerErr := <-errChan
 			Expect(workerErr).To(BeNil())

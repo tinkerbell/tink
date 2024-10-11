@@ -59,11 +59,24 @@ func (s *state) toggleHardware(ctx context.Context, allowPXE bool) error {
 	// 2. if not, set the allowPXE field to the desired value
 	// 3. return a WorkflowCondition with the result of the operation
 
+	hw, err := hardwareFrom(ctx, s.client, s.workflow)
+	if err != nil {
+		s.workflow.Status.SetCondition(v1alpha1.WorkflowCondition{
+			Type:    v1alpha1.ToggleAllowNetbootTrue,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Error",
+			Message: fmt.Sprintf("error getting hardware: %v", err),
+			Time:    &metav1.Time{Time: metav1.Now().UTC()},
+		})
+
+		return err
+	}
+
 	if allowPXE {
 		if s.workflow.Status.BootOptions.AllowNetboot.ToggledTrue {
 			return nil
 		}
-		if err := setAllowPXE(ctx, s.client, s.workflow, s.hardware, allowPXE); err != nil {
+		if err := setAllowPXE(ctx, s.client, s.workflow, hw, allowPXE); err != nil {
 			s.workflow.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.ToggleAllowNetbootTrue,
 				Status:  metav1.ConditionFalse,
@@ -87,7 +100,7 @@ func (s *state) toggleHardware(ctx context.Context, allowPXE bool) error {
 	if s.workflow.Status.BootOptions.AllowNetboot.ToggledFalse {
 		return nil
 	}
-	if err := setAllowPXE(ctx, s.client, s.workflow, s.hardware, allowPXE); err != nil {
+	if err := setAllowPXE(ctx, s.client, s.workflow, hw, allowPXE); err != nil {
 		s.workflow.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.ToggleAllowNetbootFalse,
 			Status:  metav1.ConditionFalse,

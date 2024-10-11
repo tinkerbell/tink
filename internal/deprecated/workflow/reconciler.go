@@ -49,7 +49,6 @@ func (r *Reconciler) SetupWithManager(mgr manager.Manager) error {
 type state struct {
 	client   ctrlclient.Client
 	workflow *v1alpha1.Workflow
-	hardware *v1alpha1.Hardware
 	backoff  *backoff.ExponentialBackOff
 }
 
@@ -92,14 +91,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStatePreparing:
 		journal.Log(ctx, "preparing workflow")
-		hw, err := hardwareFrom(ctx, r.client, wflow)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
 		s := &state{
 			client:   r.client,
 			workflow: wflow,
-			hardware: hw,
 			backoff:  r.backoff,
 		}
 		resp, err := s.prepareWorkflow(ctx)
@@ -112,14 +106,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 		return reconcile.Result{}, mergePatchStatus(ctx, r.client, stored, wflow)
 	case v1alpha1.WorkflowStatePost:
 		journal.Log(ctx, "post actions")
-		hw, err := hardwareFrom(ctx, r.client, wflow)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
 		s := &state{
 			client:   r.client,
 			workflow: wflow,
-			hardware: hw,
 			backoff:  r.backoff,
 		}
 		rc, err := s.postActions(ctx)
@@ -137,6 +126,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 func mergePatchStatus(ctx context.Context, cc ctrlclient.Client, original, updated *v1alpha1.Workflow) error {
 	// Patch any changes, regardless of errors
 	if !equality.Semantic.DeepEqual(updated.Status, original.Status) {
+		journal.Log(ctx, "patching status")
 		if err := cc.Status().Patch(ctx, updated, ctrlclient.MergeFrom(original)); err != nil {
 			return fmt.Errorf("error patching status of workflow: %s, error: %w", updated.Name, err)
 		}

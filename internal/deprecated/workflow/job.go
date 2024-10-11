@@ -137,14 +137,15 @@ func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobN
 	}
 
 	// create a new job
-	if s.hardware == nil {
-		return reconcile.Result{}, fmt.Errorf("hardware is nil")
+	hw , err := hardwareFrom(ctx, s.client, s.workflow)
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("error getting hardware: %w", err)
 	}
-	if s.hardware.Spec.BMCRef == nil {
-		return reconcile.Result{}, fmt.Errorf("hardware %q does not have a BMC", s.hardware.Name)
+	if hw.Spec.BMCRef == nil {
+		return reconcile.Result{}, fmt.Errorf("hardware %q does not have a BMC", hw.Name)
 	}
 
-	if err := create(ctx, s.client, name.String(), s.hardware, s.workflow.Namespace, actions); err != nil {
+	if err := create(ctx, s.client, name.String(), hw, s.workflow.Namespace, actions); err != nil {
 		return reconcile.Result{}, fmt.Errorf("error creating job: %w", err)
 	}
 	journal.Log(ctx, "job created", "name", name)

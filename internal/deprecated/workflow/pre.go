@@ -14,10 +14,11 @@ import (
 // prepareWorkflow prepares the workflow for execution.
 // The workflow (s.workflow) can be updated even if an error occurs.
 // Any patching of the workflow object in a cluster is left up to the caller.
+// At the moment prepareWorkflow requires the workflow have a hardwareRef and the object exists.
 func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 	// handle bootoptions
 	// 1. Handle toggling allowPXE in a hardware object if toggleAllowNetboot is true.
-	if s.workflow.Spec.BootOptions.ToggleAllowNetboot {
+	if s.workflow.Spec.BootOptions.ToggleAllowNetboot && !s.workflow.Status.BootOptions.AllowNetboot.ToggledTrue {
 		journal.Log(ctx, "toggling allowPXE true")
 		if err := s.toggleHardware(ctx, true); err != nil {
 			return reconcile.Result{}, err
@@ -27,92 +28,98 @@ func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 	// 2. Handle booting scenarios.
 	switch s.workflow.Spec.BootOptions.BootMode {
 	case v1alpha1.BootModeNetboot:
-		journal.Log(ctx, "boot mode netboot")
-		if s.hardware == nil {
-			return reconcile.Result{}, errors.New("hardware is nil")
-		}
-		name := jobName(fmt.Sprintf("%s-%s", jobNameNetboot, s.hardware.Name))
-		efiBoot := func() bool {
-			for _, iface := range s.hardware.Spec.Interfaces {
-				if iface.DHCP != nil && iface.DHCP.UEFI {
-					return true
-				}
+		name := jobName(fmt.Sprintf("%s-%s", jobNameNetboot, s.workflow.GetName()))
+		if j := s.workflow.Status.BootOptions.Jobs[name.String()]; !j.ExistingJobDeleted || j.UID == "" || !j.Complete {
+			journal.Log(ctx, "boot mode netboot")
+			hw, err := hardwareFrom(ctx, s.client, s.workflow)
+			if err != nil {
+				return reconcile.Result{}, errors.Wrap(err, "failed to get hardware")
 			}
-			return false
-		}()
-		actions := []rufio.Action{
-			{
-				PowerAction: rufio.PowerHardOff.Ptr(),
-			},
-			{
-				OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
-					Devices: []rufio.BootDevice{
-						rufio.PXE,
-					},
-					EFIBoot: efiBoot,
+			efiBoot := func() bool {
+				for _, iface := range hw.Spec.Interfaces {
+					if iface.DHCP != nil && iface.DHCP.UEFI {
+						return true
+					}
+				}
+				return false
+			}()
+			actions := []rufio.Action{
+				{
+					PowerAction: rufio.PowerHardOff.Ptr(),
 				},
-			},
-			{
-				PowerAction: rufio.PowerOn.Ptr(),
-			},
-		}
+				{
+					OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
+						Devices: []rufio.BootDevice{
+							rufio.PXE,
+						},
+						EFIBoot: efiBoot,
+					},
+				},
+				{
+					PowerAction: rufio.PowerOn.Ptr(),
+				},
+			}
 
-		r, err := s.handleJob(ctx, actions, name)
-		if s.workflow.Status.BootOptions.Jobs[name.String()].Complete && s.workflow.Status.State == v1alpha1.WorkflowStatePreparing {
-			s.workflow.Status.State = v1alpha1.WorkflowStatePending
+			r, err := s.handleJob(ctx, actions, name)
+			if s.workflow.Status.BootOptions.Jobs[name.String()].Complete && s.workflow.Status.State == v1alpha1.WorkflowStatePreparing {
+				s.workflow.Status.State = v1alpha1.WorkflowStatePending
+			}
+			return r, err
 		}
-		return r, err
 	case v1alpha1.BootModeISO:
-		journal.Log(ctx, "boot mode iso")
-		if s.hardware == nil {
-			return reconcile.Result{}, errors.New("hardware is nil")
-		}
-		if s.workflow.Spec.BootOptions.ISOURL == "" {
-			return reconcile.Result{}, errors.New("iso url must be a valid url")
-		}
-		name := jobName(fmt.Sprintf("%s-%s", jobNameISOMount, s.hardware.Name))
-		efiBoot := func() bool {
-			for _, iface := range s.hardware.Spec.Interfaces {
-				if iface.DHCP != nil && iface.DHCP.UEFI {
-					return true
-				}
+		name := jobName(fmt.Sprintf("%s-%s", jobNameISOMount, s.workflow.GetName()))
+		if j := s.workflow.Status.BootOptions.Jobs[name.String()]; !j.ExistingJobDeleted || j.UID == "" || !j.Complete {
+			journal.Log(ctx, "boot mode iso")
+			if s.workflow.Spec.BootOptions.ISOURL == "" {
+				return reconcile.Result{}, errors.New("iso url must be a valid url")
 			}
-			return false
-		}()
-		actions := []rufio.Action{
-			{
-				PowerAction: rufio.PowerHardOff.Ptr(),
-			},
-			{
-				VirtualMediaAction: &rufio.VirtualMediaAction{
-					MediaURL: "", // empty to unmount/eject the media
-					Kind:     rufio.VirtualMediaCD,
+			hw, err := hardwareFrom(ctx, s.client, s.workflow)
+			if err != nil {
+				return reconcile.Result{}, errors.Wrap(err, "failed to get hardware")
+			}
+			efiBoot := func() bool {
+				for _, iface := range hw.Spec.Interfaces {
+					if iface.DHCP != nil && iface.DHCP.UEFI {
+						return true
+					}
+				}
+				return false
+			}()
+			actions := []rufio.Action{
+				{
+					PowerAction: rufio.PowerHardOff.Ptr(),
 				},
-			},
-			{
-				VirtualMediaAction: &rufio.VirtualMediaAction{
-					MediaURL: s.workflow.Spec.BootOptions.ISOURL,
-					Kind:     rufio.VirtualMediaCD,
-				},
-			},
-			{
-				OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
-					Devices: []rufio.BootDevice{
-						rufio.CDROM,
+				{
+					VirtualMediaAction: &rufio.VirtualMediaAction{
+						MediaURL: "", // empty to unmount/eject the media
+						Kind:     rufio.VirtualMediaCD,
 					},
-					EFIBoot: efiBoot,
 				},
-			},
-			{
-				PowerAction: rufio.PowerOn.Ptr(),
-			},
-		}
+				{
+					VirtualMediaAction: &rufio.VirtualMediaAction{
+						MediaURL: s.workflow.Spec.BootOptions.ISOURL,
+						Kind:     rufio.VirtualMediaCD,
+					},
+				},
+				{
+					OneTimeBootDeviceAction: &rufio.OneTimeBootDeviceAction{
+						Devices: []rufio.BootDevice{
+							rufio.CDROM,
+						},
+						EFIBoot: efiBoot,
+					},
+				},
+				{
+					PowerAction: rufio.PowerOn.Ptr(),
+				},
+			}
 
-		r, err := s.handleJob(ctx, actions, name)
-		if s.workflow.Status.BootOptions.Jobs[name.String()].Complete && s.workflow.Status.State == v1alpha1.WorkflowStatePreparing {
-			s.workflow.Status.State = v1alpha1.WorkflowStatePending
+			r, err := s.handleJob(ctx, actions, name)
+			if s.workflow.Status.BootOptions.Jobs[name.String()].Complete && s.workflow.Status.State == v1alpha1.WorkflowStatePreparing {
+				s.workflow.Status.State = v1alpha1.WorkflowStatePending
+			}
+			return r, err
 		}
-		return r, err
 	}
 
 	return reconcile.Result{}, nil

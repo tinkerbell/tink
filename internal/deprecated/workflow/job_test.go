@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -90,10 +91,17 @@ func TestHandleJob(t *testing.T) {
 				},
 			},
 			name:       jobNameNetboot,
+			hardware:   new(v1alpha1.Hardware),
 			wantResult: reconcile.Result{Requeue: true},
 		},
 		"existing job deleted, create new job": {
 			workflow: &v1alpha1.Workflow{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: v1alpha1.WorkflowSpec{
+					HardwareRef: "test-hardware",
+				},
 				Status: v1alpha1.WorkflowStatus{
 					BootOptions: v1alpha1.BootOptionsStatus{
 						Jobs: map[string]v1alpha1.JobStatus{
@@ -176,7 +184,7 @@ func TestHandleJob(t *testing.T) {
 					AllowNetboot: v1alpha1.AllowNetbootStatus{},
 				},
 			},
-			hardware:   &v1alpha1.Hardware{},
+			hardware:   new(v1alpha1.Hardware),
 			actions:    []rufio.Action{},
 			name:       jobNameNetboot,
 			wantResult: reconcile.Result{},
@@ -200,17 +208,16 @@ func TestHandleJob(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			runtimescheme := runtime.NewScheme()
-			rufio.AddToScheme(runtimescheme)
-			v1alpha1.AddToScheme(runtimescheme)
-			clientBulider := GetFakeClientBuilder().WithScheme(runtimescheme)
+			scheme := runtime.NewScheme()
+			rufio.AddToScheme(scheme)
+			v1alpha1.AddToScheme(scheme)
+			clientBuilder := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(tc.hardware, tc.workflow)
 			if tc.job != nil {
-				clientBulider.WithRuntimeObjects(tc.job)
+				clientBuilder.WithRuntimeObjects(tc.job)
 			}
 			s := &state{
 				workflow: tc.workflow,
-				hardware: tc.hardware,
-				client:   clientBulider.Build(),
+				client:   clientBuilder.Build(),
 			}
 			ctx := context.Background()
 			r, err := s.handleJob(ctx, tc.actions, tc.name)
