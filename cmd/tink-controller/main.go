@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/internal/deprecated/controller"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/sdk/log"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -56,19 +60,53 @@ func NewRootCommand() *cobra.Command {
 	if err != nil {
 		panic(err)
 	}
-	logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
+	logger2 := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
 
 	cmd := &cobra.Command{
 		Use: "tink-controller",
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
-			viper, err := createViper(logger)
+			viper, err := createViper(logger2)
 			if err != nil {
 				return fmt.Errorf("config init: %w", err)
 			}
 			return applyViper(viper, cmd)
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			logger.Info("Starting controller version " + version)
+			os.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://192.168.2.50:4318")
+			os.Setenv("OTEL_EXPORTER_OTLP_INSECURE", "true")
+			os.Setenv("OTEL_SERVICE_NAME", "tink-controller")
+			ctx := cmd.Context()
+
+			oCfg := OConfig{
+				Servicename: "tink-controller",
+				Endpoint:    "192.168.2.50:4317",
+				Insecure:    true,
+			}
+			ctx, _, _ = Init(ctx, oCfg)
+			// Create the OTLP log exporter that sends logs to configured destination
+			logExporter, err := otlploghttp.New(ctx)
+			if err != nil {
+				panic("failed to initialize exporter")
+			}
+
+			// Create the logger provider
+			lp := log.NewLoggerProvider(
+				log.WithProcessor(
+					log.NewBatchProcessor(logExporter),
+				),
+			)
+
+			// Ensure the logger is shutdown before exiting so all pending logs are exported
+			defer lp.Shutdown(ctx)
+			handler := NewHandler("github.com/tinkerbell/tink", WithLoggerProvider(lp))
+
+			logger := logr.FromSlogHandler(handler)
+			tracer := otel.Tracer("my-tracer")
+			var span trace.Span
+			ctx, span = tracer.Start(ctx, "start up")
+			defer span.End()
+			// new stuff above
+			logger.Info("Starting controller version "+version, "TraceID", trace.SpanContextFromContext(ctx).TraceID())
 
 			ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 				&clientcmd.ClientConfigLoadingRules{ExplicitPath: config.Kubeconfig},
@@ -85,7 +123,7 @@ func NewRootCommand() *cobra.Command {
 			}
 
 			options := ctrl.Options{
-				Logger:                  logger,
+				Logger:                  logger2,
 				LeaderElection:          config.EnableLeaderElection,
 				LeaderElectionID:        "tink.tinkerbell.org",
 				LeaderElectionNamespace: namespace,
@@ -95,14 +133,14 @@ func NewRootCommand() *cobra.Command {
 				HealthProbeBindAddress: config.ProbeAddr,
 			}
 
-			ctrl.SetLogger(logger)
+			ctrl.SetLogger(logger2)
 
-			mgr, err := controller.NewManager(cfg, options)
+			mgr, err := controller.NewManager(cfg, options, logger)
 			if err != nil {
 				return fmt.Errorf("controller manager: %w", err)
 			}
 
-			return mgr.Start(cmd.Context())
+			return mgr.Start(ctx)
 		},
 	}
 	config.AddFlags(cmd.Flags())

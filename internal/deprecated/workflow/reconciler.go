@@ -4,11 +4,15 @@ import (
 	"context"
 	serrors "errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-logr/logr"
 	"github.com/tinkerbell/tink/api/v1alpha1"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,17 +28,21 @@ type Reconciler struct {
 	client  ctrlclient.Client
 	nowFunc func() time.Time
 	backoff *backoff.ExponentialBackOff
+	Logger  logr.Logger
+	props   propagation.TextMapPropagator
 }
 
 // TODO(jacobweinstock): add functional arguments to the signature.
 // TODO(jacobweinstock): write functional argument for customizing the backoff.
-func NewReconciler(client ctrlclient.Client) *Reconciler {
+func NewReconciler(client ctrlclient.Client, logger logr.Logger) *Reconciler {
 	return &Reconciler{
 		client:  client,
 		nowFunc: time.Now,
 		backoff: backoff.NewExponentialBackOff([]backoff.ExponentialBackOffOpts{
 			backoff.WithMaxInterval(5 * time.Second), // this should keep all NextBackOff's under 10 seconds
 		}...),
+		Logger: logger,
+		props:  otel.GetTextMapPropagator(),
 	}
 }
 
@@ -50,6 +58,7 @@ type state struct {
 	workflow *v1alpha1.Workflow
 	hardware *v1alpha1.Hardware
 	backoff  *backoff.ExponentialBackOff
+	logger   *slog.Logger
 }
 
 // +kubebuilder:rbac:groups=tinkerbell.org,resources=hardware;hardware/status,verbs=get;list;watch;update;patch
@@ -59,8 +68,15 @@ type state struct {
 
 // Reconcile handles Workflow objects. This includes Template rendering, optional Hardware allowPXE toggling, and optional Hardware one-time netbooting.
 func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	logger := ctrl.LoggerFrom(ctx)
-	logger.Info("Reconciling")
+	tracer := otel.Tracer("my-tracer")
+	var span trace.Span
+	ctx, span = tracer.Start(ctx, "reconcile", trace.WithNewRoot())
+	defer span.End()
+
+	logger := slog.New(logr.ToSlogHandler(r.Logger))
+	//logger = logger.With("TraceID", trace.SpanContextFromContext(ctx).TraceID())
+	//logger := ctrl.LoggerFrom(ctx).WithValues("TraceID", trace.SpanContextFromContext(ctx).TraceID())
+	logger.InfoContext(ctx, "In reconcile func")
 
 	stored := &v1alpha1.Workflow{}
 	if err := r.client.Get(ctx, req.NamespacedName, stored); err != nil {
@@ -78,12 +94,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 
 	wflow := stored.DeepCopy()
 
+	
+
 	switch wflow.Status.State {
 	case "":
+		logger.InfoContext(ctx, "new workflow")
 		resp, err := r.processNewWorkflow(ctx, logger, wflow)
 
 		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStatePreparing:
+		logger.InfoContext(ctx, "preparing workflow")
 		hw, err := hardwareFrom(ctx, r.client, wflow)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -93,15 +113,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			workflow: wflow,
 			hardware: hw,
 			backoff:  r.backoff,
+			logger:   logger,
 		}
 		resp, err := s.prepareWorkflow(ctx)
 
 		return resp, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, s.workflow))
 	case v1alpha1.WorkflowStateRunning:
+		logger.InfoContext(ctx, "process running workflow")
 		r.processRunningWorkflow(wflow)
 
 		return reconcile.Result{}, mergePatchStatus(ctx, r.client, stored, wflow)
 	case v1alpha1.WorkflowStatePost:
+		logger.InfoContext(ctx, "post actions")
 		hw, err := hardwareFrom(ctx, r.client, wflow)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -111,6 +134,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 			workflow: wflow,
 			hardware: hw,
 			backoff:  r.backoff,
+			logger:   logger,
 		}
 		rc, err := s.postActions(ctx)
 
@@ -133,12 +157,16 @@ func mergePatchStatus(ctx context.Context, cc ctrlclient.Client, original, updat
 	return nil
 }
 
-func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger, stored *v1alpha1.Workflow) (reconcile.Result, error) {
+func (r *Reconciler) processNewWorkflow(ctx context.Context, logger *slog.Logger, stored *v1alpha1.Workflow) (reconcile.Result, error) {
+	tracer := otel.Tracer("processNewWorkflow")
+	var span trace.Span
+	ctx, span = tracer.Start(ctx, "processNewWorkflow")
+	defer span.End()
 	tpl := &v1alpha1.Template{}
 	if err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.TemplateRef, Namespace: stored.Namespace}, tpl); err != nil {
 		if errors.IsNotFound(err) {
 			// Throw an error to raise awareness and take advantage of immediate requeue.
-			logger.Error(err, "error getting Template object in processNewWorkflow function")
+			logger.ErrorContext(ctx, "error getting Template object in processNewWorkflow function", "error", err)
 			stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 			stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 				Type:    v1alpha1.TemplateRenderedSuccess,
@@ -167,7 +195,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	var hardware v1alpha1.Hardware
 	err := r.client.Get(ctx, ctrlclient.ObjectKey{Name: stored.Spec.HardwareRef, Namespace: stored.Namespace}, &hardware)
 	if ctrlclient.IgnoreNotFound(err) != nil {
-		logger.Error(err, "error getting Hardware object in processNewWorkflow function")
+		logger.ErrorContext(ctx, "error getting Hardware object in processNewWorkflow function", "error", err)
 		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,
@@ -180,7 +208,7 @@ func (r *Reconciler) processNewWorkflow(ctx context.Context, logger logr.Logger,
 	}
 
 	if stored.Spec.HardwareRef != "" && errors.IsNotFound(err) {
-		logger.Error(err, "hardware not found in processNewWorkflow function")
+		logger.ErrorContext(ctx, "hardware not found in processNewWorkflow function", "error", err)
 		stored.Status.TemplateRendering = v1alpha1.TemplateRenderingFailed
 		stored.Status.SetCondition(v1alpha1.WorkflowCondition{
 			Type:    v1alpha1.TemplateRenderedSuccess,

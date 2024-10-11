@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
 	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"github.com/tinkerbell/tink/internal/deprecated/workflow"
@@ -28,7 +29,7 @@ func DefaultScheme() *runtime.Scheme {
 
 // NewManager creates a new controller manager with tink controller controllers pre-registered.
 // If opts.Scheme is nil, DefaultScheme() is used.
-func NewManager(cfg *rest.Config, opts ctrl.Options) (ctrl.Manager, error) {
+func NewManager(cfg *rest.Config, opts ctrl.Options, logger logr.Logger) (ctrl.Manager, error) {
 	if opts.Scheme == nil {
 		opts.Scheme = DefaultScheme()
 	}
@@ -46,7 +47,7 @@ func NewManager(cfg *rest.Config, opts ctrl.Options) (ctrl.Manager, error) {
 		return nil, fmt.Errorf("set up ready check: %w", err)
 	}
 
-	err = workflow.NewReconciler(mgr.GetClient()).SetupWithManager(mgr)
+	err = workflow.NewReconciler(mgr.GetClient(), logger).SetupWithManager(mgr)
 	if err != nil {
 		return nil, fmt.Errorf("setup workflow reconciler: %w", err)
 	}

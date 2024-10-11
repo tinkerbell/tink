@@ -3,10 +3,13 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	rufio "github.com/tinkerbell/rufio/api/v1alpha1"
 	"github.com/tinkerbell/tink/api/v1alpha1"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -26,9 +29,14 @@ func (j jobName) String() string {
 
 // this function will update the Workflow status.
 func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobName) (reconcile.Result, error) {
+	tracer := otel.Tracer("handleJob")
+	var span trace.Span
+	ctx, span = tracer.Start(ctx, "handleJob")
+	defer span.End()
 	// there are 3 phases. 1. Clean up existing 2. Create new 3. Track status
 	// 1. clean up existing job if it wasn't already deleted
 	if j := s.workflow.Status.BootOptions.Jobs[name.String()]; !j.ExistingJobDeleted {
+		s.logger.InfoContext(ctx, "deleting existing job", "name", name)
 		result, err := s.deleteExisting(ctx, name)
 		if err != nil {
 			return result, err
@@ -39,6 +47,7 @@ func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobN
 
 	// 2. create a new job
 	if uid := s.workflow.Status.BootOptions.Jobs[name.String()].UID; uid == "" {
+		s.logger.InfoContext(ctx, "no uid found for job", "name", name)
 		result, err := s.createJob(ctx, actions, name)
 		if err != nil {
 			s.workflow.Status.SetCondition(v1alpha1.WorkflowCondition{
@@ -62,6 +71,7 @@ func (s *state) handleJob(ctx context.Context, actions []rufio.Action, name jobN
 
 	// 3. track status
 	if !s.workflow.Status.BootOptions.Jobs[name.String()].Complete {
+		s.logger.InfoContext(ctx, "tracking job", "name", name)
 		// track status
 		r, tState, err := s.trackRunningJob(ctx, name)
 		if err != nil {
@@ -111,6 +121,10 @@ func (s *state) deleteExisting(ctx context.Context, name jobName) (reconcile.Res
 
 // This function will update the Workflow status.
 func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobName) (reconcile.Result, error) {
+	tracer := otel.Tracer("createJob")
+	var span trace.Span
+	ctx, span = tracer.Start(ctx, "createJob")
+	defer span.End()
 	// create a new job
 	// The assumption is that the UID is not set. UID checking is not handled here.
 	// 1. look up if there's an existing job with the same name, if so update the status with the UID and return
@@ -118,6 +132,12 @@ func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobN
 
 	rj := &rufio.Job{}
 	if err := s.client.Get(ctx, client.ObjectKey{Name: name.String(), Namespace: s.workflow.Namespace}, rj); err == nil {
+		s.logger.InfoContext(ctx, "job already exists", "name", name)
+		if !rj.DeletionTimestamp.IsZero() {
+			s.logger.InfoContext(ctx, "job is being deleted", "name", name)
+			return reconcile.Result{Requeue: true}, nil
+		}
+		//TODO(jacobweinstock): job exists means that the job name and uid from the status are the same. 
 		// get the UID and update the status
 		jStatus := s.workflow.Status.BootOptions.Jobs[name.String()]
 		jStatus.UID = rj.GetUID()
@@ -134,9 +154,10 @@ func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobN
 		return reconcile.Result{}, fmt.Errorf("hardware %q does not have a BMC", s.hardware.Name)
 	}
 
-	if err := create(ctx, s.client, name.String(), s.hardware, s.workflow.Namespace, actions); err != nil {
+	if err := create(ctx, s.logger, s.client, name.String(), s.hardware, s.workflow.Namespace, actions); err != nil {
 		return reconcile.Result{}, fmt.Errorf("error creating job: %w", err)
 	}
+	s.logger.InfoContext(ctx, "job created", "name", name)
 
 	return reconcile.Result{Requeue: true}, nil
 }
@@ -152,6 +173,10 @@ var (
 
 // This function will update the Workflow status.
 func (s *state) trackRunningJob(ctx context.Context, name jobName) (reconcile.Result, trackedState, error) {
+	tracer := otel.Tracer("trackRunningJob")
+	var span trace.Span
+	ctx, span = tracer.Start(ctx, "trackRunningJob")
+	defer span.End()
 	// track status
 	// get the job
 	rj := &rufio.Job{}
@@ -159,10 +184,12 @@ func (s *state) trackRunningJob(ctx context.Context, name jobName) (reconcile.Re
 		return reconcile.Result{}, trackedStateError, fmt.Errorf("error getting job: %w", err)
 	}
 	if rj.HasCondition(rufio.JobFailed, rufio.ConditionTrue) {
+		s.logger.InfoContext(ctx, "job failed", "name", name)
 		// job failed
 		return reconcile.Result{}, trackedStateFailed, fmt.Errorf("job failed")
 	}
 	if rj.HasCondition(rufio.JobCompleted, rufio.ConditionTrue) {
+		s.logger.InfoContext(ctx, "job completed", "name", name)
 		// job completed
 		jStatus := s.workflow.Status.BootOptions.Jobs[name.String()]
 		jStatus.Complete = true
@@ -171,11 +198,17 @@ func (s *state) trackRunningJob(ctx context.Context, name jobName) (reconcile.Re
 		return reconcile.Result{}, trackedStateComplete, nil
 	}
 	// still running
+	s.logger.InfoContext(ctx, "job still running", "name", name)
 	time.Sleep(s.backoff.NextBackOff())
 	return reconcile.Result{Requeue: true}, trackedStateRunning, nil
 }
 
-func create(ctx context.Context, cc client.Client, name string, hw *v1alpha1.Hardware, ns string, tasks []rufio.Action) error {
+func create(ctx context.Context, logger *slog.Logger, cc client.Client, name string, hw *v1alpha1.Hardware, ns string, tasks []rufio.Action) error {
+	tracer := otel.Tracer("create")
+	var span trace.Span
+	ctx, span = tracer.Start(ctx, "create")
+	defer span.End()
+	logger.InfoContext(ctx, "creating job", "name", name)
 	if err := cc.Create(ctx, &rufio.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,

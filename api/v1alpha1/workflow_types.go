@@ -146,6 +146,8 @@ type WorkflowStatus struct {
 	// +patchStrategy=merge
 	// +listType=atomic
 	Conditions []WorkflowCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+
+	TraceParent string `json:"traceParent,omitempty"`
 }
 
 // JobStatus holds the state of a specific job.bmc.tinkerbell.org object created.
