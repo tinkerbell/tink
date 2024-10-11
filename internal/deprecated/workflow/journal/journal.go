@@ -32,11 +32,14 @@ func Log(ctx context.Context, msg string, args ...any) {
 	t := time.Now().UTC().Format(time.RFC3339Nano)
 	m := make(map[string]any)
 	for i := 0; i < len(args); i += 2 {
-		m[args[i].(string)] = args[i+1]
+		k, ok := args[i].(string)
+		if !ok {
+			k = "invalid key"
+		}
+		m[k] = args[i+1]
 	}
 	e, ok := ctx.Value(Name).(*[]Entry)
 	if !ok {
-		e = &[]Entry{{Msg: msg, Args: m, Source: fileAndLine(), Time: t}}
 		return
 	}
 	*e = append(*e, Entry{Msg: msg, Args: m, Source: fileAndLine(), Time: t})

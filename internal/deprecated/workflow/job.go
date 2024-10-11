@@ -137,7 +137,7 @@ func (s *state) createJob(ctx context.Context, actions []rufio.Action, name jobN
 	}
 
 	// create a new job
-	hw , err := hardwareFrom(ctx, s.client, s.workflow)
+	hw, err := hardwareFrom(ctx, s.client, s.workflow)
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("error getting hardware: %w", err)
 	}
