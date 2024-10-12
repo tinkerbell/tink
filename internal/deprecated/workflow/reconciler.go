@@ -115,7 +115,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req reconcile.Request) (reco
 
 		return rc, serrors.Join(err, mergePatchStatus(ctx, r.client, stored, wflow))
 	case v1alpha1.WorkflowStatePending, v1alpha1.WorkflowStateTimeout, v1alpha1.WorkflowStateFailed, v1alpha1.WorkflowStateSuccess:
-		journal.Log(ctx, "workflow state will not trigger another reconcile", "state", wflow.Status.State)
+		journal.Log(ctx, "controller will not trigger another reconcile", "state", wflow.Status.State)
 		return reconcile.Result{}, nil
 	}
 

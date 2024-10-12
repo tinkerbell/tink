@@ -2,6 +2,7 @@ package journal
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"path/filepath"
 	"runtime"
@@ -34,7 +35,7 @@ func Log(ctx context.Context, msg string, args ...any) {
 	for i := 0; i < len(args); i += 2 {
 		k, ok := args[i].(string)
 		if !ok {
-			k = "invalid key"
+			k = fmt.Sprintf("%v", args[i])
 		}
 		m[k] = args[i+1]
 	}
