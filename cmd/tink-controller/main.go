@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tinkerbell/tink/internal/deprecated/controller"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,6 +28,7 @@ type Config struct {
 	MetricsAddr          string
 	ProbeAddr            string
 	EnableLeaderElection bool
+	LogLevel             int
 }
 
 func (c *Config) AddFlags(fs *pflag.FlagSet) {
@@ -40,6 +42,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	fs.IntVar(&c.LogLevel, "log-level", 0, "Log level (0: info, 1: debug)")
 }
 
 func main() {
@@ -52,15 +55,14 @@ func main() {
 func NewRootCommand() *cobra.Command {
 	var config Config
 
-	zlog, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
-	logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
-
 	cmd := &cobra.Command{
 		Use: "tink-controller",
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			zlog, err := zap.NewProduction()
+			if err != nil {
+				panic(err)
+			}
+			logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
 			viper, err := createViper(logger)
 			if err != nil {
 				return fmt.Errorf("config init: %w", err)
@@ -68,6 +70,19 @@ func NewRootCommand() *cobra.Command {
 			return applyViper(viper, cmd)
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			zc := zap.NewProductionConfig()
+			switch config.LogLevel {
+			case 1:
+				zc.Level = zap.NewAtomicLevelAt(zapcore.Level(-1))
+			default:
+				zc.Level = zap.NewAtomicLevelAt(zapcore.Level(0))
+			}
+			zlog, err := zc.Build()
+			if err != nil {
+				panic(err)
+			}
+
+			logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
 			logger.Info("Starting controller version " + version)
 
 			ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(

@@ -13,15 +13,17 @@ type (
 	WorkflowState         string
 	WorkflowConditionType string
 	TemplateRendering     string
+	BootMode              string
 )
 
 const (
-	WorkflowStateWaiting = WorkflowState("STATE_WAITING")
-	WorkflowStatePending = WorkflowState("STATE_PENDING")
-	WorkflowStateRunning = WorkflowState("STATE_RUNNING")
-	WorkflowStateSuccess = WorkflowState("STATE_SUCCESS")
-	WorkflowStateFailed  = WorkflowState("STATE_FAILED")
-	WorkflowStateTimeout = WorkflowState("STATE_TIMEOUT")
+	WorkflowStatePreparing = WorkflowState("STATE_PREPARING")
+	WorkflowStatePending   = WorkflowState("STATE_PENDING")
+	WorkflowStateRunning   = WorkflowState("STATE_RUNNING")
+	WorkflowStatePost      = WorkflowState("STATE_POST")
+	WorkflowStateSuccess   = WorkflowState("STATE_SUCCESS")
+	WorkflowStateFailed    = WorkflowState("STATE_FAILED")
+	WorkflowStateTimeout   = WorkflowState("STATE_TIMEOUT")
 
 	NetbootJobFailed        WorkflowConditionType = "NetbootJobFailed"
 	NetbootJobComplete      WorkflowConditionType = "NetbootJobComplete"
@@ -34,6 +36,9 @@ const (
 
 	TemplateRenderingSuccessful TemplateRendering = "successful"
 	TemplateRenderingFailed     TemplateRendering = "failed"
+
+	BootModeNetboot BootMode = "netboot"
+	BootModeISO     BootMode = "iso"
 )
 
 // +kubebuilder:subresource:status
@@ -86,18 +91,31 @@ type BootOptions struct {
 	// A HardwareRef must be provided.
 	// +optional
 	ToggleAllowNetboot bool `json:"toggleAllowNetboot,omitempty"`
-	// OneTimeNetboot indicates whether the controller should create a job.bmc.tinkerbell.org object for getting the associated hardware
-	// into a netbooting state.
+
+	// ISOURL is the URL of the ISO that will be one-time booted. When this field is set, the controller will create a job.bmc.tinkerbell.org object
+	// for getting the associated hardware into a CDROM booting state.
 	// A HardwareRef that contains a spec.BmcRef must be provided.
 	// +optional
-	OneTimeNetboot bool `json:"oneTimeNetboot,omitempty"`
+	// +kubebuilder:validation:Format=url
+	ISOURL string `json:"isoURL,omitempty"`
+
+	// BootMode is the type of booting that will be done.
+	// +optional
+	// +kubebuilder:validation:Enum=netboot;iso
+	BootMode BootMode `json:"bootMode,omitempty"`
 }
 
 // BootOptionsStatus holds the state of any boot options.
 type BootOptionsStatus struct {
-	// OneTimeNetboot holds the state of a specific job.bmc.tinkerbell.org object created.
-	// Only used when BootOptions.OneTimeNetboot is true.
-	OneTimeNetboot OneTimeNetbootStatus `json:"netbootJob,omitempty"`
+	// AllowNetboot holds the state of the the controller's interactions with the allowPXE field in a Hardware object.
+	AllowNetboot AllowNetbootStatus `json:"allowNetboot,omitempty"`
+	// Jobs holds the state of any job.bmc.tinkerbell.org objects created.
+	Jobs map[string]JobStatus `json:"jobs,omitempty"`
+}
+
+type AllowNetbootStatus struct {
+	ToggledTrue  bool `json:"toggledTrue,omitempty"`
+	ToggledFalse bool `json:"toggledFalse,omitempty"`
 }
 
 // WorkflowStatus defines the observed state of a Workflow.
@@ -130,8 +148,8 @@ type WorkflowStatus struct {
 	Conditions []WorkflowCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
-// OneTimeNetbootStatus holds the state of a specific job.bmc.tinkerbell.org object created.
-type OneTimeNetbootStatus struct {
+// JobStatus holds the state of a specific job.bmc.tinkerbell.org object created.
+type JobStatus struct {
 	// UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
 	// This is used to uniquely identify the job.bmc.tinkerbell.org object, as
 	// all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.

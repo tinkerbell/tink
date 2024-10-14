@@ -58,12 +58,19 @@ spec:
                 bootOptions:
                   description: BootOptions are options that control the booting of Hardware.
                   properties:
-                    oneTimeNetboot:
+                    bootMode:
+                      description: BootMode is the type of booting that will be done.
+                      enum:
+                        - netboot
+                        - iso
+                      type: string
+                    isoURL:
                       description: |-
-                        OneTimeNetboot indicates whether the controller should create a job.bmc.tinkerbell.org object for getting the associated hardware
-                        into a netbooting state.
+                        ISOURL is the URL of the ISO that will be one-time booted. When this field is set, the controller will create a job.bmc.tinkerbell.org object
+                        for getting the associated hardware into a CDROM booting state.
                         A HardwareRef that contains a spec.BmcRef must be provided.
-                      type: boolean
+                      format: url
+                      type: string
                     toggleAllowNetboot:
                       description: |-
                         ToggleAllowNetboot indicates whether the controller should toggle the field in the associated hardware for allowing PXE booting.
@@ -89,27 +96,36 @@ spec:
                 bootOptions:
                   description: BootOptions holds the state of any boot options.
                   properties:
-                    netbootJob:
-                      description: |-
-                        OneTimeNetboot holds the state of a specific job.bmc.tinkerbell.org object created.
-                        Only used when BootOptions.OneTimeNetboot is true.
+                    allowNetboot:
+                      description: AllowNetboot holds the state of the the controller's interactions with the allowPXE field in a Hardware object.
                       properties:
-                        complete:
-                          description: Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
+                        toggledFalse:
                           type: boolean
-                        existingJobDeleted:
-                          description: |-
-                            ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
-                            The name of each job.bmc.tinkerbell.org object created by the controller is the same, so only one can exist at a time.
-                            Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per Hardware/Machine.bmc.tinkerbell.org.
-                            This makes clean up easier and we dont just orphan jobs every time.
+                        toggledTrue:
                           type: boolean
-                        uid:
-                          description: |-
-                            UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
-                            This is used to uniquely identify the job.bmc.tinkerbell.org object, as
-                            all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.
-                          type: string
+                      type: object
+                    jobs:
+                      additionalProperties:
+                        description: JobStatus holds the state of a specific job.bmc.tinkerbell.org object created.
+                        properties:
+                          complete:
+                            description: Complete indicates whether the created job.bmc.tinkerbell.org has reported its conditions as complete.
+                            type: boolean
+                          existingJobDeleted:
+                            description: |-
+                              ExistingJobDeleted indicates whether any existing job.bmc.tinkerbell.org was deleted.
+                              The name of each job.bmc.tinkerbell.org object created by the controller is the same, so only one can exist at a time.
+                              Using the same name was chosen so that there is only ever 1 job.bmc.tinkerbell.org per Hardware/Machine.bmc.tinkerbell.org.
+                              This makes clean up easier and we dont just orphan jobs every time.
+                            type: boolean
+                          uid:
+                            description: |-
+                              UID is the UID of the job.bmc.tinkerbell.org object associated with this workflow.
+                              This is used to uniquely identify the job.bmc.tinkerbell.org object, as
+                              all objects for a specific Hardware/Machine.bmc.tinkerbell.org are created with the same name.
+                            type: string
+                        type: object
+                      description: Jobs holds the state of any job.bmc.tinkerbell.org objects created.
                       type: object
                   type: object
                 conditions:
