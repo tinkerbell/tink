@@ -13,9 +13,11 @@ import (
 	"github.com/tinkerbell/tink/internal/deprecated/controller"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
@@ -25,6 +27,7 @@ var version = "devel"
 type Config struct {
 	K8sAPI               string
 	Kubeconfig           string // only applies to out of cluster
+	Namespace            string
 	MetricsAddr          string
 	ProbeAddr            string
 	EnableLeaderElection bool
@@ -43,6 +46,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	fs.IntVar(&c.LogLevel, "log-level", 0, "Log level (0: info, 1: debug)")
+	fs.StringVar(&c.Namespace, "namespace", "", "The namespace to watch for resources. Use empty string (with a ClusterRole) to watch all namespaces.")
 }
 
 func main() {
@@ -85,16 +89,7 @@ func NewRootCommand() *cobra.Command {
 			logger := zapr.NewLogger(zlog).WithName("github.com/tinkerbell/tink")
 			logger.Info("Starting controller version " + version)
 
-			ccfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-				&clientcmd.ClientConfigLoadingRules{ExplicitPath: config.Kubeconfig},
-				&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: config.K8sAPI}})
-
-			cfg, err := ccfg.ClientConfig()
-			if err != nil {
-				return err
-			}
-
-			namespace, _, err := ccfg.Namespace()
+			cfg, namespace, err := config.getClient()
 			if err != nil {
 				return err
 			}
@@ -109,6 +104,9 @@ func NewRootCommand() *cobra.Command {
 				},
 				HealthProbeBindAddress: config.ProbeAddr,
 			}
+			if config.Namespace != "" {
+				options.Cache = cache.Options{DefaultNamespaces: map[string]cache.Config{namespace: {}}}
+			}
 
 			ctrl.SetLogger(logger)
 
@@ -122,6 +120,32 @@ func NewRootCommand() *cobra.Command {
 	}
 	config.AddFlags(cmd.Flags())
 	return cmd
+}
+
+func (c *Config) getClient() (*rest.Config, string, error) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+
+	overrides := &clientcmd.ConfigOverrides{
+		ClusterInfo: clientcmdapi.Cluster{
+			Server: c.K8sAPI,
+		},
+		Context: clientcmdapi.Context{
+			Namespace: c.Namespace,
+		},
+	}
+	loader := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides)
+
+	rc, err := loader.ClientConfig()
+	if err != nil {
+		return nil, "", fmt.Errorf("getting client config: %w", err)
+	}
+
+	ns, _, err := loader.Namespace()
+	if err != nil {
+		return nil, "", fmt.Errorf("getting namespace: %w", err)
+	}
+
+	return rc, ns, nil
 }
 
 func createViper(logger logr.Logger) (*viper.Viper, error) {
