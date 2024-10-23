@@ -87,6 +87,10 @@ type Interface struct {
 
 	//+optional
 	DHCP *DHCP `json:"dhcp,omitempty"`
+
+	// DisableDHCP disables DHCP for this interface.
+	// +kubebuilder:default=false
+	DisableDHCP bool `json:"disableDhcp,omitempty"`
 }
 
 // Netboot configuration.
