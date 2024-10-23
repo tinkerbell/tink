@@ -90,6 +90,7 @@ type Interface struct {
 
 	// DisableDHCP disables DHCP for this interface.
 	// +kubebuilder:default=false
+	// +optional
 	DisableDHCP bool `json:"disableDhcp,omitempty"`
 }
 
