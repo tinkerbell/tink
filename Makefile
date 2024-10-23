@@ -112,7 +112,7 @@ generate-manifests: generate-crds generate-rbac
 .PHONY: generate-crds
 generate-crds: $(CONTROLLER_GEN) $(YAMLFMT)
 	$(CONTROLLER_GEN) \
-		paths=./api/... \
+		paths=./api/v1alpha1/... \
 		crd:crdVersions=v1 \
 		output:crd:dir=./config/crd/bases \
 		output:webhook:dir=./config/webhook \
