@@ -31,6 +31,8 @@ type HardwareList struct {
 // +kubebuilder:resource:path=hardware,scope=Namespaced,categories=tinkerbell,singular=hardware,shortName=hw
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:JSONPath=".status.state",name=State,type=string
+// +kubebuilder:metadata:labels=clusterctl.cluster.x-k8s.io=
+// +kubebuilder:metadata:labels=clusterctl.cluster.x-k8s.io/move=
 
 // Hardware is the Schema for the Hardware API.
 type Hardware struct {
