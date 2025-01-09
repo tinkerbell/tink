@@ -121,6 +121,7 @@ func (s *state) prepareWorkflow(ctx context.Context) (reconcile.Result, error) {
 			return r, err
 		}
 	}
+	s.workflow.Status.State = v1alpha1.WorkflowStatePending
 
 	return reconcile.Result{}, nil
 }
