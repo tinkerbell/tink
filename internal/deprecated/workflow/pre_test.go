@@ -34,7 +34,11 @@ func TestPrepareWorkflow(t *testing.T) {
 			hardware:     &v1alpha1.Hardware{},
 			wantHardware: &v1alpha1.Hardware{},
 			workflow:     &v1alpha1.Workflow{},
-			wantWorkflow: &v1alpha1.Workflow{},
+			wantWorkflow: &v1alpha1.Workflow{
+				Status: v1alpha1.WorkflowStatus{
+					State: v1alpha1.WorkflowStatePending,
+				},
+			},
 		},
 		"toggle allowPXE": {
 			wantResult: reconcile.Result{},
@@ -82,6 +86,7 @@ func TestPrepareWorkflow(t *testing.T) {
 			},
 			wantWorkflow: &v1alpha1.Workflow{
 				Status: v1alpha1.WorkflowStatus{
+					State: v1alpha1.WorkflowStatePending,
 					BootOptions: v1alpha1.BootOptionsStatus{
 						AllowNetboot: v1alpha1.AllowNetbootStatus{
 							ToggledTrue: true,
