@@ -9,7 +9,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v27.3.1+incompatible
+	github.com/docker/docker v27.4.1+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.9
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.3.0
