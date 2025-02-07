@@ -27,7 +27,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tinkerbell/rufio v0.6.3
+	github.com/tinkerbell/rufio v0.6.4
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
