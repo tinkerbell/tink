@@ -2,7 +2,7 @@ module github.com/tinkerbell/tink
 
 go 1.22.0
 
-toolchain go1.22.2
+toolchain go1.24.1
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
@@ -22,7 +22,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
