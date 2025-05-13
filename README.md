@@ -19,7 +19,6 @@ The Tinkerbell community meets bi-weekly on Tuesday. The meeting details can be 
 
 Community Resources:
 
--   [Community Slack](https://eqix-metal-community.slack.com/)
 -   [CNCF #tinkerbell](https://app.slack.com/client/T08PSQ7BQ/C01SRB41GMT)
 -   [YouTube Channel (demos, meeting recordings, virtual meetups)](https://www.youtube.com/channel/UCTzWInTQPvzH21KHS8jrq7A/featured)
 
@@ -100,4 +99,4 @@ For complete documentation, please visit the Tinkerbell project hosted at [tinke
 [4]: https://github.com/tinkerbell/osie
 [5]: https://github.com/tinkerbell/hook
 [6]: https://github.com/tinkerbell/pbnj
-[7]: https://docs.google.com/document/d/1cEObfvQ9Tdp8zIIIg9O7P5i3CKaSj2t3JTxEufDxwWs/
+[7]: https://docs.google.com/document/d/1Hmqrhj2rPjZ5W0DvRynFNY2cJq6jFCbNOc4p26U5Dgg/edit?usp=sharing
