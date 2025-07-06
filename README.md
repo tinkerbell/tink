@@ -1,3 +1,8 @@
+> [!IMPORTANT]  
+> The Tink repo has been deprecated. All functionality has been moved to https://github.com/tinkerbell/tinkerbell.
+> For more details, see the roadmap issue [#41](https://github.com/tinkerbell/roadmap/issues/41).
+> This repository is scheduled for archive by the end of 2025.
+
 # Tinkerbell
 
 [![Build Status](https://github.com/tinkerbell/tink/actions/workflows/ci.yaml/badge.svg)](https://github.com/tinkerbell/tink/actions/workflows/ci.yaml)
